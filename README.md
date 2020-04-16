@@ -1,14 +1,17 @@
 # wp-optimizer
  Optimize your WordPress website
  
- Contributors: sh1zen
- Donate link: https://www.paypal.me/sh1zen
- Tags: optimize, image, optimize database, optimization, lossless, lossy
- Requires at least: 4.2
- Tested up to: 5.4
- Requires PHP: 5.6
- Stable tag: 5.2.5
- License: GPLv3 
+ [![Author](https://img.shields.io/badge/author-sh1zen-brightgreen)](https://sh1zen.github.io/)
+ ![License: CC-NC](https://img.shields.io/badge/License-CCNC-orange.svg)
+ [![Donate](https://img.shields.io/badge/Donate-PayPal-blue.svg)](https://paypal.me/sh1zen)
+ [![Repo Link](https://img.shields.io/badge/Repo-Link-black.svg)](https://github.com/sh1zen/wp-optimizer)
+ 
+    Tags: optimize, image, optimize database, optimization, lossless, lossy
+    Requires at least: 4.2
+    Tested up to: 5.4
+    Requires PHP: 5.6
+    Stable tag: 5.4
+    License: GPLv3
 
 ### Description 
 
