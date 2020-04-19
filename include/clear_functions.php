@@ -97,7 +97,11 @@ function wpopt_opti_dir_img($path)
     $uploads_dir = wp_upload_dir();
     $data = '';
 
-    $root = ($uploads_dir['basedir'] . '/' . $path . '/');
+    $root = realpath($uploads_dir['basedir'] . '/' . $path . '/');
+
+    if (!$root) {
+        return array();
+    }
 
     //Going through directiry recursevely
     $iter = new RecursiveIteratorIterator(
@@ -311,7 +315,11 @@ function wpopt_clean_uploads_from_nonattachments($year)
     $uploads_dir = wp_upload_dir();
 
     //You may want to take it by bites if your uploads is rather large (over 5 gb for example)
-    $root = ($uploads_dir['basedir'] . '/' . $year . '/');
+    $root = realpath($uploads_dir['basedir'] . '/' . $year . '/');
+
+    if (!$root) {
+        return;
+    }
 
     echo '<br>Selected path: ' . $root . '<br>';
 
