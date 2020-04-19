@@ -45,11 +45,11 @@ function wpopt_do_cron(&$args = array())
 
     if ($options['images']) {
 
-        $images = json_decode(get_option('wp-opt--todo'), true);
+        $images = get_option('wp-opt--todo');
 
         if (!empty($images)) {
             $full_report['images'] = wpopt_optimize_images($images);
-            update_option('wp-opt--todo', '', false);
+            update_option('wp-opt--todo', array(), false);
         }
     }
 
