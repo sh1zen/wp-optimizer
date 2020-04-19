@@ -7,7 +7,7 @@
  [![Repo Link](https://img.shields.io/badge/Repo-Link-black.svg)](https://github.com/sh1zen/wp-optimizer)
  
     Tags: optimize, image, optimize database, optimization, lossless, lossy
-    Requires at least: 4.2
+    Requires at least: 4.0.1
     Tested up to: 5.4
     Requires PHP: 5.6
     Stable tag: 5.4
