@@ -27,11 +27,10 @@ class wpopt_setup
         if ($environment == 'cron')
             return;
 
-        $this->menu_page = new wpopt_menu_page();
+        $this->menu_page = new wpopt_menu_page($this->option_name);
 
         // Admin sub-menu
         add_action('admin_init', array($this, 'admin_init'));
-        add_action('admin_menu', array($this, 'add_plugin_page'));
 
         // Listen for the activate event
         register_activation_hook(WP_OPT_FILE, array($this, 'activate'));
@@ -48,7 +47,11 @@ class wpopt_setup
 
     public function cron()
     {
-        wpopt_do_cron(get_option($this->option_name));
+        $args = get_option($this->option_name);
+        if($args)
+        {
+            wpopt_do_cron($args);
+        }
     }
 
     public function add_images_2_process($upload, $context)
@@ -58,14 +61,12 @@ class wpopt_setup
 
         $data = get_option('wp-opt--todo');
 
-        if (!$data or empty($data))
+        if (!$data)
             $data = array();
-        else
-            $data = json_decode($data, true);
 
         $data[] = $upload;
 
-        update_option('wp-opt--todo', json_encode($data), false);
+        update_option('wp-opt--todo', $data, false);
 
         return $upload;
     }
@@ -80,10 +81,8 @@ class wpopt_setup
         $data = get_option('wp-opt--todo');
         $upload_dir = wp_upload_dir();
 
-        if (!$data or empty($data))
+        if (!$data)
             $data = array();
-        else
-            $data = json_decode($data, true);
 
         $tmp = explode(DIRECTORY_SEPARATOR, $metadata['file']);
 
@@ -96,21 +95,9 @@ class wpopt_setup
             $data[] = array('file' => $upload_dir['path'] . '/' . $thumb['file'], 'type' => $thumb['mime-type']);
         }
 
-        update_option('wp-opt--todo', json_encode($data), false);
+        update_option('wp-opt--todo', $data, false);
 
         return $metadata;
-    }
-
-    public function add_plugin_page()
-    {
-        add_menu_page(
-            'WP Optimizer',
-            'WP Optimizer',
-            'manage_options',
-            'WP Optimizer',
-            array($this->menu_page, 'render_main'),
-            'dashicons-admin-site'
-        );
     }
 
     public function admin_init()
