@@ -43,7 +43,7 @@ Activate this plugin from the 'Plugin' menu inside WordPress.
 ## Upgrade Notice 
 In the next releases will be introduced tons of new features.
 
-### Roadmap
+## Roadmap
 * FAQ
 * Support for custom image optimization quality
 * Enable better database management ( backup, specific optimizations, ...)
