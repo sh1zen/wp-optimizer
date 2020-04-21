@@ -16,7 +16,7 @@
     License: GNU v3.0
     License URI: https://github.com/sh1zen/wp-optimizer/blob/master/LICENSE
 
-### Description 
+## Description 
 
  With wp-optimizer you will be able to optimize your WordPress database and your images.
  The Image Optimizer will increase your page speeds by way of image optimization driving to better search engine rankings and save you storage space and bandwidth. 
@@ -40,14 +40,6 @@ Speed up your website to better connect with your visitors. Properly compress im
 Upload this plugin in the directory '/wp-content/plugins/' or download this from your WordPress admin panel.
 Activate this plugin from the 'Plugin' menu inside WordPress.
 
-## Changelog 
-#### 1.1.0
-* code restructured
-* minor fixes
-
-#### 1.0.0 
-* Initial release
-
 ## Upgrade Notice 
 In the next releases will be introduced tons of new features.
 
@@ -57,4 +49,11 @@ In the next releases will be introduced tons of new features.
 * Enable better database management ( backup, specific optimizations, ...)
 * Enable HTML. JavaScript, CSS optimization
 
+## Changelog 
+#### 1.1.0
+* code restructured
+* minor fixes
+
+#### 1.0.0 
+* Initial release
 
