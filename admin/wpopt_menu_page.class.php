@@ -1,10 +1,4 @@
 <?php
-/**
- * Creates the menu page for the plugin.
- *
- * @package Custom_Admin_Settings
- */
-
 
 /**
  * Creates the menu page for the plugin.
@@ -24,18 +18,20 @@ class wpopt_menu_page
      */
     private $options;
 
-    public function __construct($option_name = 'wp-opt')
+    public function __construct($option_name = 'wpopt')
     {
         $this->option_name = $option_name;
 
         $this->options = get_option($this->option_name, array());
 
-        add_action('admin_menu', array($this, 'add_plugin_page'));
-
+        add_action('admin_menu', array($this, 'add_plugin_pages'));
     }
 
-    public function add_plugin_page()
+    public function add_plugin_pages()
     {
+        /**
+         * Main page
+         */
         add_menu_page(
             'WP Optimizer',
             'WP Optimizer',
@@ -45,22 +41,47 @@ class wpopt_menu_page
             'dashicons-admin-site'
         );
 
-        add_submenu_page('wp-optimizer', 'System Info', 'System Info', 'manage_options', 'wpopt-sysinfo', array($this, 'wpopt_info'));
+        /**
+         * Sub pages
+         */
+        foreach (wpopt_modules::getInstance()->modules as $class => $module) {
+            add_submenu_page('wp-optimizer', $module['page_title'], $module['menu_title'], 'manage_options', $module['slug'], array($this, 'render_module'));
+        }
     }
 
-    public function wpopt_info()
+
+    public function render_module()
     {
-        $this->enqueue_scripts();
+        $page = $_GET['page'];
 
-        require_once WP_OPT_PATH . '/include/wpopt-info.class.php';
+        $class = str_replace('-', '_', $page);
 
-        $info = new wpopt_info();
-        $info->render_system_info_page();
+        $file_name = str_replace('wpopt-', '', $page);
+
+        if (!class_exists($class)) {
+            if (!file_exists(WPOPT_ABSPATH . "/modules/{$file_name}.class.php"))
+                return;
+
+            require WPOPT_ABSPATH . "/modules/{$file_name}.class.php";
+        }
+
+        $object = new $class();
+
+        if (method_exists($object, "enqueue_scripts")) {
+            $object->enqueue_scripts();
+        }
+        else {
+            $this->enqueue_scripts();
+        }
+
+        if (method_exists($object, "render")) {
+            $object->render();
+        }
     }
 
     private function enqueue_scripts()
     {
-        wp_enqueue_style('wpopto_css', plugin_dir_url(WP_OPT_FILE) . "assets/style.css", array(), '1.0.0');
+        wp_enqueue_style('wpopt_css', plugin_dir_url(WPOPT_FILE) . "assets/style.css", array(), '1.0.0');
     }
 
     /**
@@ -72,6 +93,8 @@ class wpopt_menu_page
     {
         $this->enqueue_scripts();
 
+        $performer = wpopt_performer::getInstance();
+
         if (isset($_POST['wpopt-action'])) {
 
             if (!check_admin_referer('wpopt-nonce', md5(date("d/m/Y"))))
@@ -82,11 +105,11 @@ class wpopt_menu_page
             switch ($_POST['wpopt-action']) {
 
                 case 'clear-db':
-                    $data = wpopt_clear_database();
+                    $data = $performer->clear_database_full();
                     break;
 
                 case 'wpopt-do-cron':
-                    $args = get_option('wp-opt');
+                    $args = get_option('wpopt');
                     if ($args) {
                         $data = wpopt_do_cron($args);
                     }
@@ -101,11 +124,11 @@ class wpopt_menu_page
 
                     if (isset($_POST['opti-all-images'])) {
 
-                        $data = wpopt_optimize_images($rel_path);
+                        $data = $performer->optimize_images( $rel_path);
                     }
                     elseif (isset($_POST['clear-orphimgs'])) {
 
-                        $data = wpopt_clear_orphaned_images($rel_path);
+                        $data = $performer->clear_orphaned_images($rel_path);
                     }
 
                     break;
@@ -133,6 +156,9 @@ class wpopt_menu_page
 
             <section class="wpopt">
                 <h1>Optimize your WordPress site:</h1>
+
+                <?php $this->output_results($data); ?>
+
                 <block>
                     <form method="POST">
                         <?php wp_nonce_field('wpopt-nonce', md5(date("d/m/Y"))); ?>
@@ -164,19 +190,20 @@ class wpopt_menu_page
                     </form>
                 </block>
                 <block>
-                    <h1>Cron-Job setup:</h1>
+                    <h2>Cron-Job setup:</h2>
                     <form method="POST" action="options.php">
                         <input type="hidden" name="<?php echo $this->option_name ?>[change]" value="settings">
                         <?php
-                        settings_fields('wp-opt');
-                        do_settings_sections('wp-opt');
+                        settings_fields('wpopt');
+                        do_settings_sections('wpopt');
                         ?>
                         <table>
                             <tr>
                                 <td>
-                                    <div class="xi-text">Auto Clear Time:</div>
+                                    <p class="xi-text">Auto Clear Time:</p>
                                 </td>
                                 <td>
+                                    <label for="clear-time"></label>
                                     <input type="time" name="<?php echo $this->option_name ?>[clear-time]"
                                            id="clear-time"
                                            value="<?php echo $this->options['clear-time']; ?>">
@@ -185,38 +212,30 @@ class wpopt_menu_page
                             </tr>
                             <tr>
                                 <td>
-                                    <div class="xi-text">Active:</div>
+                                    <p class="xi-text">Active:</p>
                                 </td>
                                 <td>
+                                    <label for="active"></label>
                                     <input type="checkbox" name="<?php echo $this->option_name ?>[active]" id="active"
                                            value="1" <?php checked(1, $this->options['active'], true); ?> />
                                 </td>
                             </tr>
                             <tr>
                                 <td>
-                                    <div class="xi-text">
-                                        Auto optimize images
-
-                                        (
-                                        daily uploads
-
-                                        )
-                                        :
-                                    </div>
+                                    <p class="xi-text">Auto optimize images ( daily uploads ) :</p>
                                 </td>
                                 <td>
-                                    <input type="checkbox" name="<?php echo $this->option_name ?>[images]"
-                                           id="images"
+                                    <label for="images"></label>
+                                    <input type="checkbox" name="<?php echo $this->option_name ?>[images]" id="images"
                                            value="1" <?php checked(1, $this->options['images'], true); ?> />
                                 </td>
                             </tr>
                             <tr>
                                 <td>
-                                    <div class="xi-text">
-                                        Auto optimize Database:
-                                    </div>
+                                    <p class="xi-text"> Auto optimize Database:</p>
                                 </td>
                                 <td>
+                                    <label for="database"></label>
                                     <input type="checkbox" name="<?php echo $this->option_name ?>[database]"
                                            id="database"
                                            value="1" <?php checked(1, $this->options['database'], true); ?> />
@@ -225,34 +244,27 @@ class wpopt_menu_page
                             <br>
                             <tr>
                                 <td>
-                                    <div class="xi-text">Save optimization report:</div>
+                                    <p class="xi-text">Save optimization report:</p>
                                 </td>
                                 <td>
+                                    <label for="save_report"></label>
                                     <input type="checkbox" name="<?php echo $this->option_name ?>[save_report]"
                                            id="save_report"
                                            value="1" <?php checked(1, $this->options['save_report'], true); ?> />
                                 </td>
                             </tr>
                         </table>
-
                         <p class="submit">
                             <input type="submit" class="button-primary" value="<?php _e('Save Changes') ?>"/>
                         </p>
                     </form>
                 </block>
                 <block>
-
-                    <h1>Stats:</h1>
-                    <?php
-                    if (isset($data)) {
-                        print_r($data);
-                        echo '<hr class="xi-hr">';
-                    }
-                    ?>
+                    <h2>Stats:</h2>
                     <p>
                         <?php
-                        echo '<div>peak memory used: ' . $this->convert(memory_get_peak_usage(true)) . '</div><br>';
-                        echo '<div>line memory used: ' . $this->convert(memory_get_usage(true)) . '</div><br>';
+                        echo '<div>peak memory used: ' . wpopt_convert_size(memory_get_peak_usage(true)) . '</div><br>';
+                        echo '<div>line memory used: ' . wpopt_convert_size(memory_get_usage(true)) . '</div><br>';
                         ?>
                     </p>
                 </block>
@@ -261,17 +273,17 @@ class wpopt_menu_page
         <?php
     }
 
-    /**
-     * This function renders the contents of the page associated with the menu
-     * that invokes the render method. In the context of this plugin, this is the
-     * menu class.
-     */
-
-
-    private function convert($size)
+    private function output_results($result = array())
     {
-        $unit = array('b', 'kb', 'mb', 'gb', 'tb', 'pb');
-        return @round($size / pow(1024, ($i = floor(log($size, 1024)))), 2) . ' ' . $unit[$i];
+
+        if (isset($result)) {
+            echo "<block>";
+            echo " <h2>Operation results:</h2>";
+            echo "<hr class='xi-hr'>";
+            print_r($result);
+            echo "</block>";
+        }
+
     }
 
     private function output_option($option_name)
