@@ -58,11 +58,11 @@ Upload this plugin in the directory '/wp-content/plugins/' or download this from
 Activate this plugin from the 'Plugin' menu inside WordPress.
 
 ## Changelog 
-= 1.1.0 = 
+##### 1.1.0
 * code restructured
 * minor fixes
 
-= 1.0.0 = 
+#### 1.0.0 
 * Initial release
 
 ## Upgrade Notice 
