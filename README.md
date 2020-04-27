@@ -12,7 +12,7 @@
     Requires at least: 4.0.1
     Tested up to: 5.4
     Requires PHP: 5.6
-    Stable tag: 1.1.3
+    Stable tag: 1.1.4
     License: GNU v3.0
     License URI: https://github.com/sh1zen/wp-optimizer/blob/master/LICENSE
 
@@ -53,22 +53,19 @@ Speed up your website to better connect with your visitors. Properly compress im
 * Enable HTML. JavaScript, CSS optimization
 
 ## Changelog 
-##### 1.1.3
-* improved loading time and memory usage
-* improved core 
+##### 1.1.4
+* fixed some bugs
 
-##### 1.1.2
+##### 1.1.3
 * added multilingual support
 * added modules support
-* build a better ui for setting page
+* new ui for setting page
+* improved core performance
 
 ##### 1.1.1
 * added uninstall cleanup procedure
 * added settings page
-
-##### 1.1.0
 * code restructured
-* minor fixes
 
 ##### 1.0.0
 * Initial release
