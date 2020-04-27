@@ -1,5 +1,8 @@
 <?php
 
+if (!defined('ABSPATH'))
+    exit();
+
 /**
  * Main class
  * used to boot the plugin
@@ -10,77 +13,83 @@ class wpopt
 
     public $option_name = 'wpopt';
 
-    public $data = array();
-    public $modules = array();
     private $menu_page;
     private $monitor;
 
-    public function __construct($environment = '')
+    public function __construct()
     {
-        if ($environment == 'cron')
-            return;
-
         $this->option_name = 'wpopt';
 
-        $this->data = wp_parse_args(get_option('wpopt'), array(
-            'clear-time'  => '05:00:00',
-            'active'      => true,
-            'images'      => true,
-            'database'    => false,
-            'save_report' => false,
-            'lock'        => false,
-            'mime-types'  => array(
-                'jpg|jpeg|jpe' => 'image/jpeg',
-                'gif'          => 'image/gif',
-                'png'          => 'image/png',
-                'ico'          => 'image/x-icon',
-                'pjpeg'        => 'image/pjpeg'
-            )
-        ));
-
         $this->register_actions();
+
+        $this->load_textdomain('wpopt');
+
+        $this->register_wpopt_actions();
+    }
+
+    private function register_wpopt_actions()
+    {
 
     }
 
     private function register_actions()
     {
-        // Admin sub-menu
-        add_action('admin_init', array($this, 'admin_init'));
+        // cron job
+        add_action('wpopt-cron', array($this, 'cron'));
 
         // Listen for the activate event
         register_activation_hook(WPOPT_FILE, array($this, 'activate'));
 
         // Deactivation plugin
         register_deactivation_hook(WPOPT_FILE, array($this, 'deactivate'));
+    }
 
-        // cron job
-        add_action('wpopt-cron', array($this, 'cron'));
+    /**
+     * Loads text domain for the plugin.
+     *
+     * @param $domain
+     * @return bool
+     * @action plugins_loaded
+     *
+     * @access private
+     */
+    private function load_textdomain($domain)
+    {
+        $locale = apply_filters('plugin_locale', get_locale(), $domain);
+
+        $mo_file = $domain . '-' . $locale . '.mo';
+
+        if (load_textdomain($domain, WP_LANG_DIR . '/plugins/wp-optimzer/' . $mo_file))
+            return true;
+
+        return load_textdomain($domain, WPOPT_ABSPATH . '/languages/' . $mo_file);
     }
 
     public static function getInstance()
     {
-        if (!defined('ABSPATH'))
-            exit();
-
         if (!isset(self::$_instance)) {
+
             $object = self::$_instance = new self();
 
-            // enable cache support
-            require_once WPOPT_ABSPATH . '/inc/wpopt_plcache.class.php';
+            require_once WPOPT_INCPATH . '/wpoptMonitor.class.php';
+            $object->monitor = new wpoptMonitor();
+
+            /**
+             * Instancing all active modules
+             */
+            wpoptModuleHandler::getInstance()->create_instances();
 
             // todo move to modules
-            require_once WPOPT_ABSPATH . '/inc/wpopt_performer.class.php';
-
-            require_once WPOPT_ABSPATH . '/inc/wpopt_monitor.class.php';
-            $object->monitor = new wpopt_monitor();
+            require_once WPOPT_INCPATH . '/wpoptPerformer.class.php';
 
             if (is_admin()) {
 
-                require_once WPOPT_ABSPATH . '/inc/wpopt_modules.class.php';
-                wpopt_modules::getInstance();
+                require_once WPOPT_ADMIN . '/wpoptPagesHandler.class.php';
 
-                require_once WPOPT_ABSPATH . '/admin/wpopt_menu_page.class.php';
-                $object->menu_page = new wpopt_menu_page($object->option_name);
+                /**
+                 * Set up the admin page handler
+                 */
+                $object->menu_page = new wpoptPagesHandler();
             }
         }
 
@@ -89,57 +98,60 @@ class wpopt
 
     public function cron()
     {
-        $args = get_option($this->option_name);
+        $timer = new wpoptTimer();
 
-        if ($args) {
-            wpopt_do_cron($args);
+        $timer->start();
+
+        $full_report = array();
+
+        $performer = wpoptPerformer::getInstance();
+
+        $default = array(
+            'active'      => false,
+            'images'      => false,
+            'database'    => false,
+            'save_report' => false
+        );
+
+        $options = wpoptSettings::getInstance()->get_settings('cron', $default);
+
+        if ((bool)$options['active'] == false)
+            return false;
+
+        if ($options['images']) {
+
+            $images = get_option('wpopt-imgs--todo');
+
+            if (!empty($images)) {
+                $full_report['images'] = $performer->optimize_images($images);
+                update_option('wpopt-imgs--todo', array(), false);
+            }
         }
-    }
 
+        if ($options['database'])
+            $full_report['db'] = $performer->clear_database_full();
 
-    public function admin_init()
-    {
-        if (!is_admin() or !current_user_can('manage_options')) {
-            return;
-        }
+        $timer->stop();
 
-        register_setting('wpopt', $this->option_name, array($this, 'validate'));
+        if ($options['save_report'])
+            file_put_contents(WP_CONTENT_DIR . '/report.opt.txt', wpopt_generate_report($full_report, $timer = null), FILE_APPEND);
+
+        return array_merge(array('memory' => wpopt_convert_size($timer->get_memory()), 'time' => $timer->get_time()), $full_report);
     }
 
     public function activate()
     {
-        if (!get_option($this->option_name, false))
-            update_option($this->option_name, $this->data);
+        wpoptSettings::getInstance()->checkOption();
 
-        wp_clear_scheduled_hook('wpopt-cron');
+        $cron = wpoptModuleHandler::getInstance()->load_module('wpopt-cron');
 
-        if (!wp_next_scheduled('wpopt-cron')) {
-            wp_schedule_event(strtotime($this->data['clear-time']), 'daily', 'wpopt-cron');
-        }
+        $cron->activate();
     }
 
     public function deactivate()
     {
-        wp_clear_scheduled_hook('wpopt-cron');
-    }
+        $cron = wpoptModuleHandler::getInstance()->load_module('wpopt-cron');
 
-    public function validate($input)
-    {
-        $valid = (array)get_option($this->option_name);
-
-        if ($input['change'] == 'settings') {
-
-            $valid['clear-time'] = sanitize_text_field($input['clear-time']);
-
-            wp_clear_scheduled_hook('wpopt-cron');
-            wp_schedule_event(strtotime($valid['clear-time']), 'daily', 'wpopt-cron');
-
-            $valid['active'] = (bool)sanitize_text_field($input['active']);
-            $valid['images'] = (bool)sanitize_text_field($input['images']);
-            $valid['database'] = (bool)sanitize_text_field($input['database']);
-            $valid['save_report'] = (bool)sanitize_text_field($input['save_report']);
-        }
-
-        return $valid;
+        $cron->deactivate();
     }
 }
