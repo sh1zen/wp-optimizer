@@ -3,7 +3,7 @@
  * Timer that collects timing and memory usage.
  */
 
-class wpoptTimer
+class WOTimer
 {
     private $start = null;
     private $end = null;

@@ -12,7 +12,7 @@ if ( ! defined( 'WP_CLI' ) ) {
     return;
 }
 
-class wpoptCLI extends \WP_CLI_Command
+class WO_CLI extends \WP_CLI_Command
 {
     /**
      * Clears the cache.

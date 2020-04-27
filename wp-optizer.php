@@ -6,9 +6,9 @@
  * Author: sh1zen
  * Author URI: https://sh1zen.github.io/
  * Text Domain: gforms_file_uploader_plugin
- * Domain Path: /languages/
+ * Domain Path: /languages
  * Text Domain: wpopt
- * Version: 1.1.4
+ * Version: 1.1.7
  */
 
 define('WPOPT_FILE', __FILE__);
@@ -17,55 +17,55 @@ define('WPOPT_INCPATH', WPOPT_ABSPATH . '/inc');
 define('wpoptModules', WPOPT_ABSPATH . '/modules');
 define('WPOPT_ADMIN', WPOPT_ABSPATH . '/admin');
 
-define('WPOPT_DEBUG',  ($_SERVER["SERVER_ADDR"] == '127.0.0.1') ? false : true);
+define('WPOPT_DEBUG', $_SERVER["SERVER_ADDR"] == '127.0.0.1');
 
 /**
  * Require essential
  */
 require_once WPOPT_INCPATH . '/functions.php';
-require_once WPOPT_INCPATH . '/wpoptTimer.class.php';
-require_once WPOPT_INCPATH . '/wpoptPlCache.class.php';
-require_once WPOPT_ADMIN . '/wpoptSettings.class.php';
+require_once WPOPT_INCPATH . '/WOTimer.class.php';
+require_once WPOPT_INCPATH . '/WOPlCache.class.php';
+require_once WPOPT_ADMIN . '/WOSettings.class.php';
 
-require_once WPOPT_INCPATH . '/wpoptModuleHandler.class.php';
+require_once WPOPT_INCPATH . '/WOModuleHandler.class.php';
 
-$wpopt_timer = new wpoptTimer();
-$wpopt_timer->start();
+$wo_timer = new WOTimer();
+$wo_timer->start();
 
 /**
  * Initialize framework classes
  */
 
-wpoptPlCache::Initialize();
+WOPlCache::Initialize();
 
-wpoptSettings::Initialize();
+WOSettings::Initialize();
 
-wpoptModuleHandler::Initialize();
-
+WOModuleHandler::Initialize();
 
 /**
  * Load WP CLI command(s) on demand.
  */
 if (defined('WP_CLI') and WP_CLI) {
-    require WPOPT_ADMIN . '/wpoptCLI.php';
+    require WPOPT_ADMIN . '/WO_CLI.php';
 }
 
 /**
  * Load main class
  */
-require_once WPOPT_ADMIN . '/wpopt.class.php';
+require_once WPOPT_ADMIN . '/WO.class.php';
 
 /**
  * Starts the plugin.
  *
  * @since 1.0.0
  */
-wpopt::getInstance();
+WO::getInstance();
 
-$wpopt_timer->stop();
-
+$wo_timer->stop();
+/*
 if(WPOPT_DEBUG) {
-    var_dump($wpopt_timer->get_memory());
-    var_dump($wpopt_timer->get_time());
+    var_dump($wo_timer->get_memory());
+    var_dump($wo_timer->get_time());
 }
+*/
 

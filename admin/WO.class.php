@@ -7,7 +7,7 @@ if (!defined('ABSPATH'))
  * Main class
  * used to boot the plugin
  */
-class wpopt
+class WO
 {
     private static $_instance;
     public $plugin_basename;
@@ -73,25 +73,25 @@ class wpopt
 
             $object = self::$_instance = new self();
 
-            require_once WPOPT_INCPATH . '/wpoptMonitor.class.php';
-            $object->monitor = new wpoptMonitor();
+            require_once WPOPT_INCPATH . '/WOMonitor.class.php';
+            $object->monitor = new WOMonitor();
 
             /**
              * Instancing all active modules
              */
-            wpoptModuleHandler::getInstance()->create_instances();
+            WOModuleHandler::getInstance()->create_instances();
 
             // todo move to modules
-            require_once WPOPT_INCPATH . '/wpoptPerformer.class.php';
+            require_once WPOPT_INCPATH . '/WOPerformer.class.php';
 
             if (is_admin()) {
 
-                require_once WPOPT_ADMIN . '/wpoptPagesHandler.class.php';
+                require_once WPOPT_ADMIN . '/WOPagesHandler.class.php';
 
                 /**
                  * Set up the admin page handler
                  */
-                $object->menu_page = new wpoptPagesHandler();
+                $object->menu_page = new WOPagesHandler();
             }
         }
 
@@ -100,13 +100,13 @@ class wpopt
 
     public function cron()
     {
-        $timer = new wpoptTimer();
+        $timer = new WOTimer();
 
         $timer->start();
 
         $full_report = array();
 
-        $performer = wpoptPerformer::getInstance();
+        $performer = WOPerformer::getInstance();
 
         $default = array(
             'active'      => false,
@@ -115,7 +115,7 @@ class wpopt
             'save_report' => false
         );
 
-        $options = wpoptSettings::getInstance()->get_settings('cron', $default);
+        $options = WOSettings::getInstance()->get_settings('cron', $default);
 
         if ((bool)$options['active'] == false)
             return false;
@@ -143,16 +143,16 @@ class wpopt
 
     public function activate()
     {
-        wpoptSettings::getInstance()->checkOption();
+        WOSettings::getInstance()->checkOption();
 
-        $cron = wpoptModuleHandler::getInstance()->load_module('wpopt-cron');
+        $cron = WOModuleHandler::getInstance()->load_module('womod-cron');
 
         $cron->activate();
     }
 
     public function deactivate()
     {
-        $cron = wpoptModuleHandler::getInstance()->load_module('wpopt-cron');
+        $cron = WOModuleHandler::getInstance()->load_module('womod-cron');
 
         $cron->deactivate();
     }
@@ -168,7 +168,7 @@ class wpopt
      */
     public function donate_link( $plugin_meta, $plugin_file, $plugin_data, $status ) {
         if( $plugin_file == $this->plugin_basename )
-            $plugin_meta[] = '&hearts; <a href="https://www.paypal.me/sh1zen">Buy me a beer :o)</a>';
+            $plugin_meta[] = '&hearts; <a target="_blank" href="https://www.paypal.me/sh1zen">'. __('Buy me a beer', 'wpopt') .' :o)</a>';
         return $plugin_meta;
     }
 

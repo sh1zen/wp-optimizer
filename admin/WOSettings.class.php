@@ -3,7 +3,7 @@
 if (!defined('ABSPATH'))
     exit;
 
-class wpoptSettings
+class WOSettings
 {
 
     private static $_instance;
@@ -69,7 +69,7 @@ class wpoptSettings
 
     public function render_page()
     {
-        $mod_handler = wpoptModuleHandler::getInstance();
+        $mod_handler = WOModuleHandler::getInstance();
 
         /**
          * Consider only modules with settings handlers
@@ -125,11 +125,11 @@ class wpoptSettings
 
     private function generateHTML_panels($modules)
     {
-        $mod_handler = wpoptModuleHandler::getInstance();
+        $mod_handler = WOModuleHandler::getInstance();
 
         $aria_hidden = false;
 
-        foreach ($modules as $mod_name => $module) {
+        foreach ($modules as $module) {
             ?>
             <div id="settings-<?php echo $module['slug']; ?>" class="tab-content" role="tabpanel"
                  aria-hidden="<?php if ($aria_hidden) {
@@ -163,7 +163,7 @@ class wpoptSettings
     {
         ?>
         <form action="options.php" method="post">
-            <input type="hidden" name="<?php echo $this->option_name ?>[change]" value="<?php echo $module['slug']; ?>">
+            <input type="hidden" name="<?php echo "{$this->option_name}[change]" ?>" value="<?php echo $module['slug']; ?>">
             <?php
             settings_fields('wpopt-settings');
             ?>
@@ -202,7 +202,10 @@ class wpoptSettings
 
     public function validate($input)
     {
-        $object = wpoptModuleHandler::getInstance()->load_module($input['change']);
+        if(!isset($input['change']))
+            return $input;
+
+        $object = WOModuleHandler::getInstance()->load_module($input['change']);
 
         if(is_null($object))
             die();

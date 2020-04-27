@@ -3,7 +3,7 @@
 if (!defined('ABSPATH'))
     exit();
 
-class wpoptPerformer
+class WOPerformer
 {
     private static $_instance;
 

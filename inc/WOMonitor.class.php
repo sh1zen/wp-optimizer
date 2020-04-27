@@ -4,16 +4,16 @@
  * Used to monitor specific hooks to enable on-demand optimizations.
  *
  */
-class wpoptMonitor
+class WOMonitor
 {
     private $mime_types;
     private $cache;
 
     public function __construct()
     {
-        $this->mime_types = wpoptSettings::getInstance()->get_settings('mime-types');
+        $this->mime_types = WOSettings::getInstance()->get_settings('mime-types');
 
-        $this->cache = wpoptPlCache::getInstance();
+        $this->cache = WOPlCache::getInstance();
 
         add_filter('wp_handle_upload', array($this, 'add_images_2_process'), 10, 2);
         add_filter('wp_generate_attachment_metadata', array($this, 'add_images_2_process_thumbs'), 10, 3);

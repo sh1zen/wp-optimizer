@@ -1,12 +1,12 @@
 <?php
 
-class WOMod_Cron
+class WOMod_Database
 {
     public $inneropt_name;
 
     public function __construct()
     {
-        $this->inneropt_name = 'cron';
+        $this->inneropt_name = 'database';
     }
 
     public function setting_fields()

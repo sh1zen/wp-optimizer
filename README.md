@@ -12,7 +12,7 @@
     Requires at least: 4.0.1
     Tested up to: 5.4
     Requires PHP: 5.6
-    Stable tag: 1.1.4
+    Stable tag: 1.1.7
     License: GNU v3.0
     License URI: https://github.com/sh1zen/wp-optimizer/blob/master/LICENSE
 
@@ -53,7 +53,7 @@ Speed up your website to better connect with your visitors. Properly compress im
 * Enable HTML. JavaScript, CSS optimization
 
 ## Changelog 
-##### 1.1.4
+##### 1.1.7
 * fixed some bugs
 
 ##### 1.1.3

@@ -7,7 +7,7 @@
  * to the menu with which this page is associated.
  *
  */
-class wpoptPagesHandler
+class WOPagesHandler
 {
     public function __construct()
     {
@@ -30,7 +30,7 @@ class wpoptPagesHandler
         /**
          * Modules - sub pages
          */
-        foreach (wpoptModuleHandler::getInstance()->get_modules(array('methods' => 'render')) as $module) {
+        foreach (WOModuleHandler::getInstance()->get_modules(array('methods' => 'render')) as $module) {
 
             add_submenu_page('wp-optimizer', $module['page_title'], $module['menu_title'], 'manage_options', $module['slug'], array($this, 'render_module'));
 
@@ -47,7 +47,7 @@ class wpoptPagesHandler
     {
         $this->enqueue_scripts();
 
-        wpoptSettings::getInstance()->render_page();
+        WOSettings::getInstance()->render_page();
     }
 
     private function enqueue_scripts()
@@ -59,7 +59,7 @@ class wpoptPagesHandler
 
     public function render_module()
     {
-        $moduleHandler = wpoptModuleHandler::getInstance();
+        $moduleHandler = WOModuleHandler::getInstance();
 
         /**
          * Another check: Just to be sure
@@ -109,11 +109,11 @@ class wpoptPagesHandler
      */
     public function render_main()
     {
-        global $wpopt_timer;
+        global $wo_timer;
 
         $this->enqueue_scripts();
 
-        $performer = wpoptPerformer::getInstance();
+        $performer = WOPerformer::getInstance();
 
         $data = array();
 
@@ -130,7 +130,7 @@ class wpoptPagesHandler
 
                 case 'wpopt-do-cron':
 
-                    $data = wpopt::getInstance()->cron();
+                    $data = WO::getInstance()->cron();
 
                     break;
 
@@ -215,9 +215,9 @@ class wpoptPagesHandler
                     <h2>Stats:</h2>
                     <p>
                         <?php
-                        $wpopt_timer->stop();
-                        echo '<div>' . __('Memory used', 'wpopt') . ': ' . wpopt_convert_size(memory_get_peak_usage()) . '</div><br>';
-                        echo '<div>' . __('Elapsed time', 'wpopt') . ': ' . number_format_i18n($wpopt_timer->get_time(), 4) . ' s</div><br>';
+                        $wo_timer->lap();
+                        echo '<div>' . __('WordPress memory used', 'wpopt') . ': ' . wpopt_convert_size(memory_get_peak_usage()) . '</div><br>';
+                        echo '<div>' . __('Wordpress boot time', 'wpopt') . ': ' . number_format_i18n($wo_timer->get_time(), 4) . ' s</div><br>';
                         ?>
                     </p>
                 </block>

@@ -3,7 +3,7 @@
 if (!defined('ABSPATH'))
     exit();
 
-class wpoptModuleHandler
+class WOModuleHandler
 {
     private static $_instance;
 
@@ -13,7 +13,7 @@ class wpoptModuleHandler
 
     public function __construct()
     {
-        $this->modules_object = wpoptPlCache::getInstance();
+        $this->modules_object = WOPlCache::getInstance();
 
         $this->set_modules();
     }
@@ -22,21 +22,30 @@ class wpoptModuleHandler
     {
         $this->modules = array();
 
-        $this->modules['wpoptCron'] = array(
+        $this->modules[] = array(
             'page_title'     => 'Cron',
             'menu_title'     => 'Cron',
-            'slug'           => 'wpopt-cron',
+            'slug'           => 'womod-cron',
             'autoload'       => true,
             'autoload_admin' => true
         );
 
-        $this->modules['wpoptSysinfo'] = array(
+        $this->modules[] = array(
             'page_title'     => 'System Info',
             'menu_title'     => 'System Info',
-            'slug'           => 'wpopt-sysinfo',
+            'slug'           => 'womod-sysinfo',
             'autoload'       => false,
             'autoload_admin' => false,
         );
+/*
+        $this->modules[] = array(
+            'page_title'     => 'Database',
+            'menu_title'     => 'Database',
+            'slug'           => 'womod-database',
+            'autoload'       => false,
+            'autoload_admin' => false,
+        );
+*/
     }
 
     public static function Initialize()
@@ -119,7 +128,7 @@ class wpoptModuleHandler
     }
 
     /**
-     * Convert module name or wp-admin page name to class name if exist
+     * Convert module name or wp-admin page slug to class name if exist
      * @param $name
      * @return bool|string|string[]
      */
@@ -132,9 +141,12 @@ class wpoptModuleHandler
 
         $name = sanitize_text_field($name);
 
-        $class = str_replace('-', '', $name);
+        $file_name = str_replace('womod-', '', $name);
 
-        $file_name = str_replace('wpopt-', '', $name);
+        // to allow also class name as parameter
+        $file_name = str_replace('WOMod_', '', $file_name);
+
+        $class = "WOMod_" . $file_name;
 
         if (file_exists(WPOPT_ABSPATH . "/modules/{$file_name}.class.php")) {
 

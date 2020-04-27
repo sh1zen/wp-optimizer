@@ -3,7 +3,7 @@
 if (!defined('ABSPATH'))
     exit();
 
-class wpoptPlCache
+class WOPlCache
 {
     private static $_instance;
     private static $use_wp_cache = false;

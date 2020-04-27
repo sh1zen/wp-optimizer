@@ -9,7 +9,7 @@
  *
  * @access public
  */
-class wpoptSysinfo
+class WOMod_Sysinfo
 {
 
     public function __construct()

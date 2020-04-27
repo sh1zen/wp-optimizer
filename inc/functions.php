@@ -51,7 +51,7 @@ function wpopt_write_log($log)
     }
 }
 
-function wpopt_generate_report($data, wpoptTimer $timer = null)
+function wpopt_generate_report($data, WOTimer $timer = null)
 {
 
     $report = PHP_EOL . PHP_EOL;
