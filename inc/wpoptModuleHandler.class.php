@@ -20,8 +20,6 @@ class wpoptModuleHandler
 
     private function set_modules()
     {
-        $settings = wpoptSettings::getInstance();
-
         $this->modules = array();
 
         $this->modules['wpoptCron'] = array(

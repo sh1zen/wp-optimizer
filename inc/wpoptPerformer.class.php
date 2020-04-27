@@ -212,11 +212,10 @@ class wpoptPerformer
 
     public function clear_orphaned_images($directory = '')
     {
-        // already cleared: ~ 2019 2020
         if (empty($directory))
             $directory = date("Y", strtotime('last month')) . '/' . date('m', strtotime('last month'));
 
-        //pay attention that causes cpu heavy load
+        //pay attention that causes heavy cpu load
         $this->clean_uploads_from_nonattachments((string)$directory);
 
         return '';

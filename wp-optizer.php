@@ -8,7 +8,7 @@
  * Text Domain: gforms_file_uploader_plugin
  * Domain Path: /languages/
  * Text Domain: wpopt
- * Version: 1.1.3
+ * Version: 1.1.4
  */
 
 define('WPOPT_FILE', __FILE__);
@@ -16,6 +16,8 @@ define('WPOPT_ABSPATH', dirname(__FILE__));
 define('WPOPT_INCPATH', WPOPT_ABSPATH . '/inc');
 define('wpoptModules', WPOPT_ABSPATH . '/modules');
 define('WPOPT_ADMIN', WPOPT_ABSPATH . '/admin');
+
+define('WPOPT_DEBUG',  ($_SERVER["SERVER_ADDR"] == '127.0.0.1') ? false : true);
 
 /**
  * Require essential
@@ -28,7 +30,6 @@ require_once WPOPT_ADMIN . '/wpoptSettings.class.php';
 require_once WPOPT_INCPATH . '/wpoptModuleHandler.class.php';
 
 $wpopt_timer = new wpoptTimer();
-
 $wpopt_timer->start();
 
 /**
@@ -63,7 +64,8 @@ wpopt::getInstance();
 
 $wpopt_timer->stop();
 
-/*
-var_dump($wpopt_timer->get_memory());
-var_dump($wpopt_timer->get_time());
-*/
+if(WPOPT_DEBUG) {
+    var_dump($wpopt_timer->get_memory());
+    var_dump($wpopt_timer->get_time());
+}
+
