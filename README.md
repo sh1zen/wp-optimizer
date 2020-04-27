@@ -1,5 +1,5 @@
 # WP Optimizer
- Optimize your WordPress website easy
+ Optimize your WordPress website easily
  
  [![Author](https://img.shields.io/badge/author-sh1zen-brightgreen.svg)](https://sh1zen.github.io/)
  ![License: CC-NC](https://img.shields.io/badge/License-CCNC-orange.svg)
@@ -12,7 +12,7 @@
     Requires at least: 4.0.1
     Tested up to: 5.4
     Requires PHP: 5.6
-    Stable tag: 1.1.0
+    Stable tag: 1.1.3
     License: GNU v3.0
     License URI: https://github.com/sh1zen/wp-optimizer/blob/master/LICENSE
 
@@ -37,23 +37,39 @@
 Speed up your website to better connect with your visitors. Properly compress images. Includes lazy load, optimize the database and so on.
 
 ## Installation 
-Upload this plugin in the directory '/wp-content/plugins/' or download this from your WordPress admin panel.
-Activate this plugin from the 'Plugin' menu inside WordPress.
+1. Upload this plugin in the directory '/wp-content/plugins/' or download this from your WordPress admin panel.
+1. Activate this plugin from the 'Plugin' menu inside WordPress.
+1. Go to the new tab "WP Optimizer to view all options"
 
-## Upgrade Notice 
-In the next releases will be introduced tons of new features.
+## FAQ
+* What to do if I run in some issues after upgrade?
+
+  Deactivate the plugin and reactivate it, if this doesn't work try to uninstall and install again the plugin. That should work! 
+
 
 ## Roadmap
-* FAQ
 * Support for custom image optimization quality
 * Enable better database management ( backup, specific optimizations, ...)
 * Enable HTML. JavaScript, CSS optimization
 
 ## Changelog 
-#### 1.1.0
+##### 1.1.3
+* improved loading time and memory usage
+* improved core 
+
+##### 1.1.2
+* added multilingual support
+* added modules support
+* build a better ui for setting page
+
+##### 1.1.1
+* added uninstall cleanup procedure
+* added settings page
+
+##### 1.1.0
 * code restructured
 * minor fixes
 
-#### 1.0.0 
+##### 1.0.0
 * Initial release
 
