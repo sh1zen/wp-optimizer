@@ -9,17 +9,15 @@
  *
  * @access public
  */
-class wpopt_sysinfo
+class wpoptSysinfo
 {
 
     public function __construct()
     {
-
     }
 
     public function render()
     {
-
         $output = '<section class="wpopt-wrap">';
 
         $information = $this->get_info();
@@ -29,6 +27,7 @@ class wpopt_sysinfo
         $output .= "<block>";
 
         foreach ($information as $name => $value) {
+
             if ($value == '---') {
                 $output .= "</block><block>";
                 continue;
@@ -66,7 +65,7 @@ class wpopt_sysinfo
             'PHP Upload Max File size' => ini_get('upload_max_filesize'),
             'PHP Time Limit'           => ini_get('max_execution_time') . ' sec',
             '---',
-            'WP_DEBUG'                 => defined('WP_DEBUG') ? (WP_DEBUG ? 'Enabled' : 'Disabled') : 'Not set',
+            'WP_DEBUG'                 => defined('WP_DEBUG') ? (WP_DEBUG ? __('Enabled', 'wpopt') : __('Disabled', 'wpopt')) : __('Not set', 'wpopt'),
             'DISPLAY ERRORS'           => (ini_get('display_errors')) ? 'On (' . ini_get('display_errors') . ')' : 'N/A',
             '---',
             'WP Table Prefix'          => 'Length: ' . strlen($wpdb->prefix) . ' Status:' . (strlen($wpdb->prefix) > 16 ? ' ERROR: Too Long' : ' Acceptable'),
@@ -115,10 +114,10 @@ class wpopt_sysinfo
         foreach ($all_plugins as $plugin_path => $plugin) {
             // If the plugin isn't active, don't show it.
             if (!in_array($plugin_path, $active_plugins)) {
-                $plugins['INACTIVE PLUGINS'] .= $plugin['Name'] . ': ' . $plugin['Version'] . "<br />" . str_repeat(' ', 30);
+                $plugins['INACTIVE PLUGINS'] .= $plugin['Name'] . ': ' . $plugin['Version'] . "<br />";
             }
             else {
-                $plugins['ACTIVE PLUGINS'] .= $plugin['Name'] . ': ' . $plugin['Version'] . "<br />" . str_repeat(' ', 30);
+                $plugins['ACTIVE PLUGINS'] .= $plugin['Name'] . ': ' . $plugin['Version'] . "<br />";
             }
         }
 
@@ -127,15 +126,14 @@ class wpopt_sysinfo
 
     public function get_current_theme()
     {
-
         $current_theme = '';
         if (function_exists('wp_get_theme')) {
             $theme_data = wp_get_theme();
-            $current_theme = $theme_data->Name . ': ' . $theme_data->Version . "<br />" . str_repeat(' ', 30) . $theme_data->get('Author') . ' (' . $theme_data->get('AuthorURI') . ')';
+            $current_theme = $theme_data->get('Name') . ': ' . $theme_data->get('Version') . "<br />" . $theme_data->get('Author') . ' (' . $theme_data->get('AuthorURI') . ')';
         }
         else if (function_exists('get_theme_data')) {
             $theme_data = wp_get_theme(get_stylesheet_directory() . '/style.css');
-            $current_theme = $theme_data['Name'] . ': ' . $theme_data['Version'] . "<br />" . str_repeat(' ', 30) . $theme_data['Author'] . ' (' . $theme_data['AuthorURI'] . ')';
+            $current_theme = $theme_data['Name'] . ': ' . $theme_data['Version'] . "<br />" . $theme_data['Author'] . ' (' . $theme_data['AuthorURI'] . ')';
         }
 
         return $current_theme;
