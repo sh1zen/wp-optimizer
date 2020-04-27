@@ -12,7 +12,7 @@
     Requires at least: 4.0.1
     Tested up to: 5.4
     Requires PHP: 5.6
-    Stable tag: 1.1.3
+    Stable tag: 1.1.4
     License: GNU v3.0
     License URI: https://github.com/sh1zen/wp-optimizer/blob/master/LICENSE
 
