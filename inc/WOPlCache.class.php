@@ -10,16 +10,11 @@ class WOPlCache
 
     private $cache = array();
 
-    public function __construct()
-    {
-
-    }
-
     public static function Initialize($use_wp_cache = false)
     {
         self::$use_wp_cache = $use_wp_cache;
 
-        self::$_instance = new self();
+        return self::$_instance = new self();
     }
 
     public static function getInstance()
@@ -32,7 +27,7 @@ class WOPlCache
             ));
 
             // back compatibility
-            self::Initialize(false);
+            return self::Initialize(false);
         }
 
         return self::$_instance;
@@ -78,7 +73,7 @@ class WOPlCache
 
     private function cache_exists($key, $group)
     {
-        return isset($this->cache[$group]) && (isset($this->cache[$group][$key]) || array_key_exists($key, $this->cache[$group]));
+        return isset($this->cache[$group]) and (isset($this->cache[$group][$key]) or array_key_exists($key, $this->cache[$group]));
     }
 
     public function delete_cache($key, $group)

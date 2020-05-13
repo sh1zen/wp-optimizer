@@ -3,15 +3,14 @@
  * Timer that collects timing and memory usage.
  */
 
-class WOTimer
+class WOMeter
 {
     private $start = null;
-    private $end = null;
     private $laps = array();
 
-    public function __construct()
+    public function __construct($data = null)
     {
-
+        $this->start($data);
     }
 
     public function start($data = null)
@@ -19,7 +18,7 @@ class WOTimer
         $this->start = $this->collect($data);
     }
 
-    private function collect(array $data = null)
+    private function collect($data = null)
     {
         return array(
             'time'   => microtime(true),
@@ -28,15 +27,15 @@ class WOTimer
         );
     }
 
-    public function lap(array $data = null, $name = null)
+    public function lap($data = null, $name = null)
     {
         $lap = $this->collect($data);
 
-        if (!isset($name)) {
-            $name = sprintf(__('Lap %d', 'wpopt'), count($this->laps) + 1);
+        if (isset($name)) {
+            $this->laps[$name] = $lap;
         }
 
-        $this->laps[$name] = $lap;
+        $this->laps[] = $lap;
     }
 
     public function get_laps()
@@ -59,16 +58,19 @@ class WOTimer
 
     public function get_time()
     {
-        return $this->end['time'] - $this->start['time'];
+        return end($this->laps)['time'] - $this->start['time'];
     }
 
-    public function get_memory($convert = true)
+    public function get_memory($convert = true, $peak = false)
     {
-        $size = $this->end['memory'] - $this->start['memory'];
+        $size = end($this->laps)['memory'] - $this->start['memory'];
+
+        if($peak)
+            $size = memory_get_peak_usage();
 
         if($convert)
         {
-            $unit = array('b', 'kb', 'mb', 'gb', 'tb', 'pb');
+            $unit = array('B', 'KB', 'MB', 'GB', 'TB', 'PB');
             return @round($size / pow(1024, ($i = floor(log($size, 1024)))), 2) . ' ' . $unit[$i];
         }
 
@@ -84,20 +86,4 @@ class WOTimer
     {
         return $this->start['memory'];
     }
-
-    public function get_end_time()
-    {
-        return $this->end['time'];
-    }
-
-    public function get_end_memory()
-    {
-        return $this->end['memory'];
-    }
-
-    public function stop(array $data = null)
-    {
-        $this->end = $this->collect($data);
-    }
-
 }

@@ -6,6 +6,7 @@
  * Provides the functionality necessary for rendering the page corresponding
  * to the menu with which this page is associated.
  *
+ * since 1.1.3
  */
 class WOPagesHandler
 {
@@ -18,7 +19,7 @@ class WOPagesHandler
 
     public function add_plugin_pages()
     {
-        add_menu_page(
+        $hook = add_menu_page(
             'WP Optimizer',
             'WP Optimizer',
             'manage_options',
@@ -27,13 +28,14 @@ class WOPagesHandler
             'dashicons-admin-site'
         );
 
+        //add_action("load-$hook", array($this, 'register_assets'));
+
         /**
          * Modules - sub pages
          */
-        foreach (WOModuleHandler::getInstance()->get_modules(array('methods' => 'render')) as $module) {
+        foreach (WOModuleHandler::getInstance()->get_modules(array('scopes' => 'admin-page')) as $module) {
 
-            add_submenu_page('wp-optimizer', $module['page_title'], $module['menu_title'], 'manage_options', $module['slug'], array($this, 'render_module'));
-
+            add_submenu_page('wp-optimizer', $module['name'], $module['name'], 'manage_options', $module['slug'], array($this, 'render_module'));
         }
 
         /**
@@ -47,7 +49,7 @@ class WOPagesHandler
     {
         $this->enqueue_scripts();
 
-        WOSettings::getInstance()->render_page();
+        WOSettings::getInstance()->render();
     }
 
     private function enqueue_scripts()
@@ -59,45 +61,36 @@ class WOPagesHandler
 
     public function render_module()
     {
+        global $wo_meter;
+
         $moduleHandler = WOModuleHandler::getInstance();
 
-        /**
-         * Another check: Just to be sure
-         */
-        if (!$moduleHandler->module_has_method($_GET['page'], "render"))
+        $module_slug = sanitize_text_field($_GET['page']);
+
+        $object = $moduleHandler->module_object($module_slug);
+
+        if (is_null($object))
             return;
 
-        $object = $moduleHandler->load_module($_GET['page']);
-
-        if ($object == null)
-            return;
-
-        if (method_exists($object, "enqueue_scripts")) {
-            $object->enqueue_scripts();
-        }
-        else {
-            $this->enqueue_scripts();
-        }
+        $this->enqueue_scripts();
 
         $object->render();
+
+        $wo_meter->lap($module_slug);
     }
 
     public function register_assets()
     {
-        $assets_url = plugin_dir_url(WPOPT_FILE);
+        $assets_url = WO::getInstance()->plugin_base_url;
 
         wp_register_style('wpopt_css', $assets_url . 'assets/style.css');
 
-        wp_register_script('wpopt_js', plugin_dir_url(WPOPT_FILE) . 'assets/settings.js', array('jquery'));
+        wp_register_script('wpopt_js', $assets_url . 'assets/settings.js', array('jquery'));
 
         wp_localize_script('wpopt_js', 'WPOPT', array(
             'strings' => array(
                 'saved' => __('Settings Saved', 'wpopt'),
                 'error' => __('Error', 'wpopt')
-            ),
-            'api'     => array(
-                'url'   => esc_url_raw(rest_url('apex-api/v1/settings')),
-                'nonce' => wp_create_nonce('wp_rest')
             )
         ));
     }
@@ -109,7 +102,7 @@ class WOPagesHandler
      */
     public function render_main()
     {
-        global $wo_timer;
+        global $wo_meter;
 
         $this->enqueue_scripts();
 
@@ -119,19 +112,16 @@ class WOPagesHandler
 
         if (isset($_POST['wpopt-action'])) {
 
-            if (!check_admin_referer('wpopt-nonce', md5(date("d/m/Y"))))
+            if (!wpopt_verify_nonce('wpopt-nonce'))
                 return;
 
             switch ($_POST['wpopt-action']) {
 
-                case 'clear-db':
-                    $data = $performer->clear_database_full();
-                    break;
-
                 case 'wpopt-do-cron':
 
-                    $data = WO::getInstance()->cron();
+                    $object = WOModuleHandler::getInstance()->module_object('cron');
 
+                    $data = $object->exec_cron();
                     break;
 
                 case 'for-images':
@@ -149,51 +139,29 @@ class WOPagesHandler
 
                         $data = $performer->clear_orphaned_images($rel_path);
                     }
-
                     break;
             }
         }
 
         settings_errors();
         ?>
-        <section class="wpopt-wrap">
+        <section class="wpopt-home wpopt-wrap">
             <section class="wpopt">
-                <div class="dn-wrap">
-                    <div class="dn-title"><?php _e('Support this project, buy me a coffee.', 'wpopt'); ?></div>
-                    <br>
-                    <a href="https://www.paypal.me/sh1zen">
-                        <img src="https://www.paypalobjects.com/en_US/IT/i/btn/btn_donateCC_LG.gif"
-                             title="PayPal - The safer, easier way to pay online!" alt="Donate with PayPal button"/>
-                    </a>
-                    <div class="dn-hr"></div>
-                    <div class="dn-btc">
-                        <div class="dn-name">BTC:</div>
-                        <p class="dn-value">3QE5CyfTxb5kufKxWtx4QEw4qwQyr9J5eo</p>
-                    </div>
-                </div>
-            </section>
-
-            <section class="wpopt">
-                <h1><?php _e('WP Optimizer', 'wpopt'); ?></h1>
                 <?php
 
                 if (!empty($data))
                     $this->output_results($data);
 
                 ?>
-                <block>
-                    <form method="POST">
-                        <?php wp_nonce_field('wpopt-nonce', md5(date("d/m/Y"))); ?>
-                        <input type="hidden" name="wpopt-action" value="clear-db">
-                        <input name="submit" type="submit" value="Clear Database"
-                               class="button button-primary button-large">
-                    </form>
+                <block class="wpopt">
+                   <h1>WP Optimizer Dashboard</h1>
+                    <p><strong><?php _e('Optimize your WordPress site in few and easy steps.', 'wpopt'); ?></strong></p>
                 </block>
-                <block>
+                <block class="wpopt">
                     <h2><?php _e('Specify a path in wp-content where the optimization will run', 'wpopt'); ?></h2>
                     <pre>(<?php _e('is better to use bottom level paths due to high cpu usage', 'wpopt'); ?>)</pre>
                     <form method="POST">
-                        <?php wp_nonce_field('wpopt-nonce', md5(date("d/m/Y"))); ?>
+                        <?php wp_nonce_field('wpopt-nonce'); ?>
                         <input name="wp-dir" type="text"
                                value="<?php echo date("Y", strtotime('last month')) . '/' . date('m', strtotime('last month')); ?>">
                         <input type="hidden" name="wpopt-action" value="for-images">
@@ -203,25 +171,49 @@ class WOPagesHandler
                                class="button button-primary button-large">
                     </form>
                 </block>
-                <block>
+                <block class="wpopt">
                     <form method="POST">
-                        <?php wp_nonce_field('wpopt-nonce', md5(date("d/m/Y"))); ?>
+                        <?php wp_nonce_field('wpopt-nonce'); ?>
                         <input type="hidden" name="wpopt-action" value="wpopt-do-cron">
                         <input name="submit" type="submit" value="<?php _e('Auto optimize now', 'wpopt') ?>"
                                class="button button-primary button-large">
                     </form>
                 </block>
-                <block>
+                <block class="wpopt">
                     <h2>Stats:</h2>
                     <p>
                         <?php
-                        $wo_timer->lap();
-                        echo '<div>' . __('WordPress memory used', 'wpopt') . ': ' . wpopt_convert_size(memory_get_peak_usage()) . '</div><br>';
-                        echo '<div>' . __('Wordpress boot time', 'wpopt') . ': ' . number_format_i18n($wo_timer->get_time(), 4) . ' s</div><br>';
+                        $wo_meter->lap();
+                        echo '<div>' . __('WordPress memory used', 'wpopt') . ': ' . wpopt_bytes2size(memory_get_peak_usage()) . '</div><br>';
+                        echo '<div>' . __('Wordpress boot time', 'wpopt') . ': ' . number_format_i18n($wo_meter->get_time(), 4) . ' s</div><br>';
                         ?>
                     </p>
                 </block>
             </section>
+            <aside class="wpopt">
+                <section class="wpopt-box">
+                    <div class="dn-wrap">
+                        <div class="dn-title"><?php _e('Support this project, buy me a coffee.', 'wpopt'); ?></div>
+                        <br>
+                        <a href="https://www.paypal.me/sh1zen">
+                            <img src="https://www.paypalobjects.com/en_US/IT/i/btn/btn_donateCC_LG.gif"
+                                 title="PayPal - The safer, easier way to pay online!" alt="Donate with PayPal button"/>
+                        </a>
+                        <div class="dn-hr"></div>
+                        <div class="dn-btc">
+                            <div class="dn-name">BTC:</div>
+                            <p class="dn-value">3QE5CyfTxb5kufKxWtx4QEw4qwQyr9J5eo</p>
+                        </div>
+                    </div>
+                </section>
+                <section class="wpopt-box">
+                    <h3><?php _e('Want to support in other ways?', 'wpopt'); ?></h3>
+                   <ul class="wpopt">
+                       <li><a href="https://translate.wordpress.org/projects/wp-plugins/wp-optimizer/"><?php _e('Help me translating', 'wpopt'); ?></a></li>
+                       <li><a href="https://wordpress.org/support/plugin/wp-optimizer/reviews/?filter=5"><?php _e('Leave a review', 'wpopt'); ?></a></li>
+                   </ul>
+                </section>
+            </aside>
         </section>
         <?php
     }

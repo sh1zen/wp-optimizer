@@ -3,14 +3,15 @@
 if (!defined('ABSPATH'))
     exit();
 
+/**
+ * Scope of this class is to provide some useful methods to
+ * clean/optimize/repair databse and optimize images.
+ *
+ * It's just an executive class.
+ */
 class WOPerformer
 {
     private static $_instance;
-
-    public function __construct()
-    {
-
-    }
 
     public static function getInstance()
     {
@@ -19,6 +20,267 @@ class WOPerformer
         }
 
         return self::$_instance;
+    }
+
+    public static function execute_sql($sql_query)
+    {
+        global $wpdb;
+
+        if (preg_match("/LOAD_FILE/i", $sql_query))
+            return false;
+
+        if (preg_match("/^\\s*(select|drop|show|grant) /i", $sql_query))
+            return false;
+
+        if (preg_match("/^\\s*(insert|update|replace|delete|create|alter) /i", $sql_query)) {
+            return $wpdb->query($sql_query);
+        }
+
+        return false;
+    }
+
+    /**
+     * Does the sweeping/cleaning up
+     *
+     * @param string $name Sweep name.
+     * @param array $args
+     * @return string Processed message
+     * @since 1.0.0
+     *
+     * @access public
+     */
+    public static function sweep($name, $args = array())
+    {
+        global $wpdb;
+
+        $args = wp_parse_args($args, array(
+            'excluded_taxonomies' => array(),
+        ));
+
+        $query = array();
+
+        switch ($name) {
+
+            case 'revisions':
+                $query = $wpdb->get_col($wpdb->prepare("SELECT ID FROM $wpdb->posts WHERE post_type = %s", 'revision'));
+                if ($query) {
+                    foreach ($query as $id) {
+                        wp_delete_post_revision((int)$id);
+                    }
+                }
+                break;
+
+            case 'auto_drafts':
+            case 'deleted_posts':
+
+                if ($name == "auto_drafts")
+                    $query = $wpdb->get_col($wpdb->prepare("SELECT ID FROM $wpdb->posts WHERE post_status = %s", 'auto-draft'));
+                else
+                    $query = $wpdb->get_col($wpdb->prepare("SELECT ID FROM $wpdb->posts WHERE post_status = %s", 'trash'));
+
+                if ($query) {
+                    foreach ($query as $id) {
+                        wp_delete_post((int)$id, true);
+                    }
+                }
+                break;
+
+            case 'unapproved_comments':
+            case 'spam_comments':
+            case 'deleted_comments':
+
+                if ($name == 'unapproved_comments')
+                    $query = $wpdb->get_col($wpdb->prepare("SELECT comment_ID FROM $wpdb->comments WHERE comment_approved = %s", '0'));
+                elseif ($name == 'deleted_comments')
+                    $query = $wpdb->get_col($wpdb->prepare("SELECT comment_ID FROM $wpdb->comments WHERE (comment_approved = %s OR comment_approved = %s)", 'trash', 'post-trashed'));
+                else
+                    $query = $wpdb->get_col($wpdb->prepare("SELECT comment_ID FROM $wpdb->comments WHERE comment_approved = %s", 'spam'));
+
+
+                if ($query) {
+                    foreach ($query as $id) {
+                        wp_delete_comment((int)$id, true);
+                    }
+                }
+                break;
+
+            case 'transient_options':
+                $query = $wpdb->get_col($wpdb->prepare("SELECT option_id FROM $wpdb->options WHERE option_name LIKE(%s)", '%_transient_%'));
+                if (!empty($query)) {
+
+                    $wpdb->query("DELETE FROM $wpdb->options WHERE option_id IN (" . implode(', ', $query) . ") ");
+                }
+                break;
+
+            case 'orphan_postmeta':
+            case 'oembed_postmeta':
+
+                if ($name === 'orphan_postmeta')
+                    $query = $wpdb->get_col("SELECT meta_id FROM $wpdb->postmeta WHERE post_id NOT IN (SELECT ID FROM $wpdb->posts)");
+                else
+                    $query = $wpdb->get_col($wpdb->prepare("SELECT meta_id FROM $wpdb->postmeta WHERE meta_key LIKE (%s)", '%_oembed_%'));
+
+                if (!empty($query)) {
+
+                    $wpdb->query("DELETE FROM $wpdb->postmeta WHERE meta_id IN (" . implode(', ', $query) . ")");
+
+                }
+                break;
+
+            case 'orphan_commentmeta':
+                $query = $wpdb->get_col("SELECT meta_id FROM $wpdb->commentmeta WHERE comment_id NOT IN (SELECT comment_ID FROM $wpdb->comments)");
+
+                if (!empty($query)) {
+
+                    $wpdb->query("DELETE FROM $wpdb->commentmeta WHERE meta_id IN (" . implode(', ', $query) . ") ");
+                }
+                break;
+
+            case 'orphan_usermeta':
+                $query = $wpdb->get_col("SELECT umeta_id FROM $wpdb->usermeta WHERE user_id NOT IN (SELECT ID FROM $wpdb->users)");
+                if (!empty($query)) {
+
+                    $wpdb->query("DELETE FROM $wpdb->usermeta WHERE umeta_id IN (" . implode(', ', $query) . ")");
+                }
+                break;
+
+            case 'orphan_termmeta':
+                $query = $wpdb->get_col("SELECT meta_id FROM $wpdb->termmeta WHERE term_id NOT IN (SELECT term_id FROM $wpdb->terms)");
+                if (!empty($query)) {
+
+                    $wpdb->query("DELETE FROM $wpdb->termmeta WHERE meta_id IN (" . implode(', ', $query) . ") ");
+                }
+                break;
+
+            case 'orphan_term_relationships':
+                $query = $wpdb->get_results("SELECT tr.object_id, tr.term_taxonomy_id, tt.term_id, tt.taxonomy FROM $wpdb->term_relationships AS tr INNER JOIN $wpdb->term_taxonomy AS tt ON tr.term_taxonomy_id = tt.term_taxonomy_id WHERE tt.taxonomy NOT IN ('" . implode('\',\'', $args['excluded_taxonomies']) . "') AND tr.object_id NOT IN (SELECT ID FROM $wpdb->posts)"); // WPCS: unprepared SQL ok.
+                if ($query) {
+                    foreach ($query as $tax) {
+                        $wp_remove_object_terms = wp_remove_object_terms((int)$tax->object_id, (int)$tax->term_id, $tax->taxonomy);
+                        if (true !== $wp_remove_object_terms) {
+                            $wpdb->query($wpdb->prepare("DELETE FROM $wpdb->term_relationships WHERE object_id = %d AND term_taxonomy_id = %d", $tax->object_id, $tax->term_taxonomy_id));
+                        }
+                    }
+                }
+                break;
+
+            case 'unused_terms':
+                $query = $wpdb->get_results($wpdb->prepare("SELECT tt.term_taxonomy_id, t.term_id, tt.taxonomy FROM $wpdb->terms AS t INNER JOIN $wpdb->term_taxonomy AS tt ON t.term_id = tt.term_id WHERE tt.count = %d AND t.term_id", 0)); // WPCS: unprepared SQL ok.
+                if ($query) {
+                    $check_wp_terms = false;
+                    foreach ($query as $tax) {
+                        if (taxonomy_exists($tax->taxonomy)) {
+                            wp_delete_term((int)$tax->term_id, $tax->taxonomy);
+                        }
+                        else {
+                            $wpdb->query($wpdb->prepare("DELETE FROM $wpdb->term_taxonomy WHERE term_taxonomy_id = %d", (int)$tax->term_taxonomy_id));
+                            $check_wp_terms = true;
+                        }
+                    }
+                    // We need this for invalid taxonomies.
+                    if ($check_wp_terms) {
+                        $wpdb->get_results("DELETE FROM $wpdb->terms WHERE term_id NOT IN (SELECT term_id FROM $wpdb->term_taxonomy)");
+                    }
+                }
+                break;
+
+            case 'duplicated_postmeta':
+                $query = $wpdb->get_results($wpdb->prepare("SELECT GROUP_CONCAT(meta_id) AS ids, post_id, COUNT(*) AS count FROM $wpdb->postmeta GROUP BY post_id, meta_key, meta_value HAVING count > %d", 1));
+                if ($query) {
+                    foreach ($query as $meta) {
+                        $ids = array_map('intval', explode(',', $meta->ids));
+                        array_pop($ids);
+                        $wpdb->query($wpdb->prepare("DELETE FROM $wpdb->postmeta WHERE meta_id IN (" . implode(',', $ids) . ') AND post_id = %d', (int)$meta->post_id)); // WPCS: unprepared SQL ok.
+                    }
+                }
+                break;
+
+            case 'duplicated_commentmeta':
+                $query = $wpdb->get_results($wpdb->prepare("SELECT GROUP_CONCAT(meta_id) AS ids, comment_id, COUNT(*) AS count FROM $wpdb->commentmeta GROUP BY comment_id, meta_key, meta_value HAVING count > %d", 1));
+                if ($query) {
+                    foreach ($query as $meta) {
+                        $ids = array_map('intval', explode(',', $meta->ids));
+                        array_pop($ids);
+                        $wpdb->query($wpdb->prepare("DELETE FROM $wpdb->commentmeta WHERE meta_id IN (" . implode(',', $ids) . ') AND comment_id = %d', (int)$meta->comment_id)); // WPCS: unprepared SQL ok.
+                    }
+                }
+                break;
+
+            case 'duplicated_usermeta':
+                $query = $wpdb->get_results($wpdb->prepare("SELECT GROUP_CONCAT(umeta_id) AS ids, user_id, COUNT(*) AS count FROM $wpdb->usermeta GROUP BY user_id, meta_key, meta_value HAVING count > %d", 1));
+                if ($query) {
+                    foreach ($query as $meta) {
+                        $ids = array_map('intval', explode(',', $meta->ids));
+                        array_pop($ids);
+                        $wpdb->query($wpdb->prepare("DELETE FROM $wpdb->usermeta WHERE umeta_id IN (" . implode(',', $ids) . ') AND user_id = %d', (int)$meta->user_id)); // WPCS: unprepared SQL ok.
+                    }
+                }
+                break;
+
+            case 'duplicated_termmeta':
+                $query = $wpdb->get_results($wpdb->prepare("SELECT GROUP_CONCAT(meta_id) AS ids, term_id, COUNT(*) AS count FROM $wpdb->termmeta GROUP BY term_id, meta_key, meta_value HAVING count > %d", 1));
+                if ($query) {
+                    foreach ($query as $meta) {
+                        $ids = array_map('intval', explode(',', $meta->ids));
+                        array_pop($ids);
+                        $wpdb->query($wpdb->prepare("DELETE FROM $wpdb->termmeta WHERE meta_id IN (" . implode(',', $ids) . ') AND term_id = %d', (int)$meta->term_id)); // WPCS: unprepared SQL ok.
+                    }
+                }
+                break;
+        }
+
+        return empty($query) ? 0 : number_format_i18n(count($query));
+    }
+
+    public static function manage_tables($action, $tables = array())
+    {
+        global $wpdb;
+
+        if (empty($tables)) {
+            $tables = $wpdb->get_col('SHOW TABLES');
+        }
+
+        $status = true;
+
+        switch ($action) {
+
+            case 'delete':
+
+                $tables = implode(', ', $tables);
+                $wpdb->query("DROP TABLE {$tables}");
+                break;
+
+            case 'optimize':
+
+                $tables = implode(', ', $tables);
+                $wpdb->query("OPTIMIZE TABLE {$tables}");
+                break;
+
+            case 'empty':
+
+                $tables = implode(', ', $tables);
+                $wpdb->query("TRUNCATE TABLE {$tables}");
+                break;
+
+            case 'repair':
+
+                $cannot_repair = 0;
+                foreach ($tables as $table) {
+                    $query_result = $wpdb->get_results("REPAIR TABLE " . $table);
+                    foreach ($query_result as $row) {
+                        if ($row->Msg_type == 'error') {
+                            if (preg_match('/corrupt/i', $row->Msg_text)) {
+                                $cannot_repair++;
+                            }
+                        }
+                    }
+                }
+
+                $status = $cannot_repair == 0;
+                break;
+        }
+
+        return $status;
     }
 
     public function optimize_images($elements = array())
@@ -49,7 +311,7 @@ class WOPerformer
             RecursiveIteratorIterator::CATCH_GET_CHILD // Ignore "Permission denied"
         );
 
-        list($gifsicle_src, $optipng_src, $jpegtran_src, $pngquant_src, $webp_src) = $this->get_img_optimizers();
+        list($gifsicle_src, $optipng_src, $jpegtran_src, $webp_src) = $this->get_img_optimizers();
 
         foreach ($iter as $fileinfo) {
 
@@ -114,38 +376,32 @@ class WOPerformer
             $optimizers['gifsicle_src'] = escapeshellarg(WPOPT_ABSPATH . '/inc/executables/' . 'gifsicle.exe');
             $optimizers['optipng_src'] = escapeshellarg(WPOPT_ABSPATH . '/inc/executables/' . 'optipng.exe');
             $optimizers['jpegtran_src'] = escapeshellarg(WPOPT_ABSPATH . '/inc/executables/' . 'jpegtran.exe');
-            $optimizers['pngquant_src'] = escapeshellarg(WPOPT_ABSPATH . '/inc/executables/' . 'pngquant.exe');
             $optimizers['webp_src'] = escapeshellarg(WPOPT_ABSPATH . '/inc/executables/' . 'cwebp.exe');
         }
         elseif (PHP_OS === 'Darwin') {
             $optimizers['gifsicle_src'] = escapeshellarg(WPOPT_ABSPATH . '/inc/executables/' . 'gifsicle-mac');
             $optimizers['optipng_src'] = escapeshellarg(WPOPT_ABSPATH . '/inc/executables/' . 'optipng-mac');
             $optimizers['jpegtran_src'] = escapeshellarg(WPOPT_ABSPATH . '/inc/executables/' . 'jpegtran-mac');
-            $optimizers['pngquant_src'] = escapeshellarg(WPOPT_ABSPATH . '/inc/executables/' . 'pngquant-mac');
             $optimizers['webp_src'] = escapeshellarg(WPOPT_ABSPATH . '/inc/executables/' . 'cwebp-mac14');
         }
         elseif (PHP_OS === 'SunOS') {
             $optimizers['gifsicle_src'] = escapeshellarg(WPOPT_ABSPATH . '/inc/executables/' . 'gifsicle-sol');
             $optimizers['optipng_src'] = escapeshellarg(WPOPT_ABSPATH . '/inc/executables/' . 'optipng-sol');
             $optimizers['jpegtran_src'] = escapeshellarg(WPOPT_ABSPATH . '/inc/executables/' . 'jpegtran-sol');
-            $optimizers['pngquant_src'] = escapeshellarg(WPOPT_ABSPATH . '/inc/executables/' . 'pngquant-sol');
             $optimizers['webp_src'] = escapeshellarg(WPOPT_ABSPATH . '/inc/executables/' . 'cwebp-sol');
         }
         elseif (PHP_OS === 'FreeBSD') {
             $optimizers['gifsicle_src'] = escapeshellarg(WPOPT_ABSPATH . '/inc/executables/' . 'gifsicle-fbsd');
             $optimizers['optipng_src'] = escapeshellarg(WPOPT_ABSPATH . '/inc/executables/' . 'optipng-fbsd');
             $optimizers['jpegtran_src'] = escapeshellarg(WPOPT_ABSPATH . '/inc/executables/' . 'jpegtran-fbsd');
-            $optimizers['pngquant_src'] = escapeshellarg(WPOPT_ABSPATH . '/inc/executables/' . 'pngquant-fbsd');
             $optimizers['webp_src'] = escapeshellarg(WPOPT_ABSPATH . '/inc/executables/' . 'cwebp-fbsd');
         }
-        else { //if ( PHP_OS === 'Linux' ) {
+        elseif (PHP_OS === 'Linux') {
             $optimizers['gifsicle_src'] = escapeshellarg(WPOPT_ABSPATH . '/inc/executables/' . 'gifsicle-linux');
             $optimizers['optipng_src'] = escapeshellarg(WPOPT_ABSPATH . '/inc/executables/' . 'optipng-linux');
             $optimizers['jpegtran_src'] = escapeshellarg(WPOPT_ABSPATH . '/inc/executables/' . 'jpegtran-linux');
-            $optimizers['pngquant_src'] = escapeshellarg(WPOPT_ABSPATH . '/inc/executables/' . 'pngquant-linux');
             $optimizers['webp_src'] = escapeshellarg(WPOPT_ABSPATH . '/inc/executables/' . 'cwebp-linux');
         }
-
         return $optimizers;
     }
 
@@ -153,7 +409,7 @@ class WOPerformer
     {
         $data = array();
 
-        list($gifsicle_src, $optipng_src, $jpegtran_src, $pngquant_src, $webp_src) = $this->get_img_optimizers();
+        list($gifsicle_src, $optipng_src, $jpegtran_src, $webp_src) = $this->get_img_optimizers();
 
         foreach ($images as $image_data) {
 
@@ -301,9 +557,8 @@ class WOPerformer
         $results += $wpdb->query("DELETE from {$wpdb->prefix}comments WHERE comment_approved = '0';");
 
         /*
-         * Delete orphaned comments and akismet's stuff
+         * Delete orphaned comments
          */
-        //$results += $wpdb->query("DELETE FROM {$wpdb->prefix}commentmeta WHERE meta_key LIKE '%akismet%';");
         $results += $wpdb->query("DELETE FROM {$wpdb->prefix}commentmeta WHERE comment_id NOT IN (SELECT comment_id FROM {$wpdb->prefix}comments);");
 
         /*
@@ -351,66 +606,6 @@ class WOPerformer
         }
 
         return 'Row affected: ' . $results;
-    }
-
-    public function disable_updates()
-    {
-        remove_action('init', 'wp_version_check');
-
-        add_filter('pre_option_update_core', '__return_null');
-
-        // Remove updates page.
-        remove_submenu_page('index.php', 'update-core.php');
-
-        // Disable plugin API checks.
-        remove_all_filters('plugins_api');
-
-        // Disable theme checks.
-        remove_action('load-update-core.php', 'wp_update_themes');
-        remove_action('load-themes.php', 'wp_update_themes');
-        remove_action('load-update.php', 'wp_update_themes');
-        remove_action('wp_update_themes', 'wp_update_themes');
-        remove_action('admin_init', '_maybe_update_themes');
-        wp_clear_scheduled_hook('wp_update_themes');
-
-        // Disable plugin checks.
-        remove_action('load-update-core.php', 'wp_update_plugins');
-        remove_action('load-plugins.php', 'wp_update_plugins');
-        remove_action('load-update.php', 'wp_update_plugins');
-        remove_action('admin_init', '_maybe_update_plugins');
-        remove_action('wp_update_plugins', 'wp_update_plugins');
-        wp_clear_scheduled_hook('wp_update_plugins');
-
-        // Disable any other update/cron checks.
-        remove_action('wp_version_check', 'wp_version_check');
-        remove_action('admin_init', '_maybe_update_core');
-        remove_action('wp_maybe_auto_update', 'wp_maybe_auto_update');
-        remove_action('admin_init', 'wp_maybe_auto_update');
-        remove_action('admin_init', 'wp_auto_update_core');
-        wp_clear_scheduled_hook('wp_version_check');
-        wp_clear_scheduled_hook('wp_maybe_auto_update');
-
-        // Hide nag messages.
-        remove_action('admin_notices', 'update_nag', 3);
-        remove_action('network_admin_notices', 'update_nag', 3);
-        remove_action('admin_notices', 'maintenance_nag');
-        remove_action('network_admin_notices', 'maintenance_nag');
-
-        // Disable even other external updates related to core.
-        add_filter('auto_update_translation', '__return_false');
-        add_filter('automatic_updater_disabled', '__return_true');
-        add_filter('allow_minor_auto_core_updates', '__return_false');
-        add_filter('allow_major_auto_core_updates', '__return_false');
-        add_filter('allow_dev_auto_core_updates', '__return_false');
-        add_filter('auto_update_core', '__return_false');
-        add_filter('wp_auto_update_core', '__return_false');
-        add_filter('auto_update_plugin', '__return_false');
-        add_filter('auto_update_theme', '__return_false');
-        add_filter('auto_core_update_send_email', '__return_false');
-        add_filter('automatic_updates_send_debug_email ', '__return_false');
-        add_filter('send_core_update_notification_email', '__return_false');
-        add_filter('automatic_updates_is_vcs_checkout', '__return_true');
-
     }
 
 }

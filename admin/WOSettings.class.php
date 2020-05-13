@@ -5,17 +5,9 @@ if (!defined('ABSPATH'))
 
 class WOSettings
 {
-
     private static $_instance;
 
     private static $defaults = array(
-        'cron'       => array(
-            'clear-time'  => '05:00:00',
-            'active'      => false,
-            'images'      => false,
-            'database'    => false,
-            'save_report' => false
-        ),
         'mime-types' => array(
             'jpg|jpeg|jpe' => 'image/jpeg',
             'gif'          => 'image/gif',
@@ -25,17 +17,20 @@ class WOSettings
         )
     );
 
+    /**
+     * Plugin options name
+     */
+    public $option_name;
+
     private $settings;
 
-    private $option_name;
-
-    public function __construct($option_name = 'wpopt')
+    public function __construct()
     {
-        $this->option_name = $option_name;
+        $this->option_name = 'wpopt';
 
         $this->register_hooks();
 
-        $this->settings = wp_parse_args(get_option($option_name, array()), self::$defaults);
+        $this->settings = wp_parse_args(get_option($this->option_name, array()), self::$defaults);
     }
 
     private function register_hooks()
@@ -49,7 +44,7 @@ class WOSettings
     public static function getInstance()
     {
         if (!isset(self::$_instance)) {
-            self::Initialize();
+            return self::Initialize();
         }
 
         return self::$_instance;
@@ -67,27 +62,25 @@ class WOSettings
         }
     }
 
-    public function render_page()
+    public function render()
     {
         $mod_handler = WOModuleHandler::getInstance();
 
         /**
          * Consider only modules with settings handlers
          */
-        $modules = $mod_handler->get_modules(array('methods' => array('setting_fields')));
+        $modules = $mod_handler->get_modules(array('scopes' => array('settings')));
 
         settings_errors();
         ?>
         <section class="wpopt-wrap wpopt">
-            <h1>WP Optimizer - Settings</h1>
-            <block>
+            <h1><?php _e('WP Optimizer - Settings', 'wpopt'); ?></h1>
+            <block class="wpopt">
                 <?php
 
                 if (!empty($modules)) {
 
-                    $this->generateHTML_tabs($modules);
-                    $this->generateHTML_panels($modules);
-
+                    echo $this->generateHTML_tabpan($modules);
                 }
                 ?>
             </block>
@@ -95,145 +88,50 @@ class WOSettings
         <?php
     }
 
-    private function generateHTML_tabs($modules)
-    {
-        ?>
-        <div class="ar-tabs-container" id="ar-tabs">
-            <ul class="ar-tab-wrapper" aria-label="settings-menu" role="tablist">
-                <?php
-
-                $aria_selected = true;
-
-                foreach ($modules as $module) {
-                    ?>
-                    <li class="ar-tab" role="tab" tabindex="0" aria-controls="settings-<?php echo $module['slug']; ?>"
-                        aria-selected="<?php if ($aria_selected) {
-                            echo 'true';
-                            $aria_selected = false;
-                        }
-                        else echo 'false'; ?>">
-                        <?php _e($module['menu_title'], 'wpopt'); ?>
-                    </li>
-                    <?php
-                }
-
-                ?>
-            </ul>
-        </div>
-        <?php
-    }
-
-    private function generateHTML_panels($modules)
+    private function generateHTML_tabpan($modules)
     {
         $mod_handler = WOModuleHandler::getInstance();
 
-        $aria_hidden = false;
+        $fields = array();
 
         foreach ($modules as $module) {
-            ?>
-            <div id="settings-<?php echo $module['slug']; ?>" class="tab-content" role="tabpanel"
-                 aria-hidden="<?php if ($aria_hidden) {
-                     echo 'true';
-                 }
-                 else {
-                     echo 'false';
-                     $aria_hidden = true;
-                 } ?>">
-                <h2><?php _e($module['menu_title'] . " setup", 'wpopt'); ?></h2>
-                <p></p><?php
 
-                $object = $mod_handler->module_object($module);
+            $object = $mod_handler->module_object($module);
 
-                if (!is_null($object)) {
+            if (is_null($object))
+                continue;
 
-                    if ($mod_handler->module_has_method($module, 'render_settings')) {
-                        $object->render_settings();
-                    }
-                    else {
-                        $this->generateHTML_form($module, $object->setting_fields());
-                    }
-                }
-                ?>
-            </div>
-            <?php
+            $field = array(
+                'id'          => "settings-{$module['slug']}",
+                'tab-title'   => $module['name'],
+                'panel-title' => $module['name'] . " setup",
+            );
+
+            $field['callback'] = array($object, 'render_settings');
+
+            $fields[] = $field;
         }
-    }
 
-    private function generateHTML_form($module, $fields)
-    {
-        ?>
-        <form action="options.php" method="post">
-            <input type="hidden" name="<?php echo "{$this->option_name}[change]" ?>" value="<?php echo $module['slug']; ?>">
-            <?php
-            settings_fields('wpopt-settings');
-            ?>
-            <table>
-                <?php
-
-                foreach ($fields as $field) {
-                    ?>
-                    <tr>
-                        <td>
-                            <p><label for="<?php echo $field['id']; ?>"><?php _e($field['name'], 'wpopt'); ?>:</label>
-                                <?php
-                                switch ($field['type']) {
-                                    case "time":
-                                        echo "<input type='time' name='{$this->option_name}[{$field['id']}]' id='{$field['id']}' value='{$field['value']}'>";
-                                        break;
-                                    case "checkbox":
-                                        echo "<input class='apple-switch' type='checkbox' name='{$this->option_name}[{$field['id']}]' id='{$field['id']}' value='{$field['value']}'" . checked(1, $field['value'], false) . "/>";
-                                        break;
-
-                                } ?>
-                            </p>
-                        </td>
-                    </tr>
-                    <?php
-                }
-                ?>
-            </table>
-            <p class="submit">
-                <input type="submit" class="button-primary" value="<?php _e('Save Changes') ?>"/>
-            </p>
-        </form>
-
-        <?php
+        return wpopt_generateHTML_tabs_panels($fields);
     }
 
     public function validate($input)
     {
-        if(!isset($input['change']))
+        if (!isset($input['change']))
             return $input;
 
-        $object = WOModuleHandler::getInstance()->load_module($input['change']);
+        $module_slug = sanitize_text_field($input['change']);
 
-        if(is_null($object))
+        $object = WOModuleHandler::getInstance()->module_object($module_slug);
+
+        if (is_null($object))
             die();
 
-        $valid = $this->settings[$object->inneropt_name];
-
-        if(method_exists($object, 'validate_settings'))
-        {
-            $valid = $object->validate_settings($input, $valid);
-        }
-        else {
-
-            foreach ($object->setting_fields() as $field) {
-                switch ($field['type']) {
-                    case 'checkbox':
-                        $valid[$field['id']] = isset($input[$field['id']]);
-                        break;
-
-                    case 'time':
-                        $valid[$field['id']] = sanitize_text_field($input[$field['id']]);
-                        break;
-                }
-            }
-        }
+        $valid = $object->validate_settings($input, $object->settings);
 
         $valid = array_filter($valid);
 
-        $this->settings = wp_parse_args(array($object->inneropt_name => $valid), $this->settings);
+        $this->settings = wp_parse_args(array($object->slug => $valid), $this->settings);
 
         return $this->settings;
     }

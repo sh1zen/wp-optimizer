@@ -23,43 +23,42 @@ class WOModuleHandler
         $this->modules = array();
 
         $this->modules[] = array(
-            'page_title'     => 'Cron',
-            'menu_title'     => 'Cron',
-            'slug'           => 'womod-cron',
-            'autoload'       => true,
-            'autoload_admin' => true
+            'name'     => 'Cron',
+            'slug'     => 'cron',
+            'autoload' => true
         );
 
         $this->modules[] = array(
-            'page_title'     => 'System Info',
-            'menu_title'     => 'System Info',
-            'slug'           => 'womod-sysinfo',
-            'autoload'       => false,
-            'autoload_admin' => false,
+            'name'     => 'Database',
+            'slug'     => 'database',
+            'autoload' => false
         );
-/*
-        $this->modules[] = array(
-            'page_title'     => 'Database',
-            'menu_title'     => 'Database',
-            'slug'           => 'womod-database',
-            'autoload'       => false,
-            'autoload_admin' => false,
-        );
-*/
-    }
 
-    public static function Initialize()
-    {
-        return self::$_instance = new self();
+        $this->modules[] = array(
+            'name'     => 'Updates Manager',
+            'slug'     => 'updates',
+            'autoload' => true
+        );
+
+        $this->modules[] = array(
+            'name'     => 'System Info',
+            'slug'     => 'sysinfo',
+            'autoload' => false
+        );
     }
 
     public static function getInstance()
     {
         if (!isset(self::$_instance)) {
-            self::$_instance = new self();
+            return self::Initialize();
         }
 
         return self::$_instance;
+    }
+
+    public static function Initialize()
+    {
+        return self::$_instance = new self();
     }
 
     /**
@@ -79,27 +78,14 @@ class WOModuleHandler
         if (!empty($modules)) {
 
             foreach ($this->modules as $module) {
-
                 $this->load_module($module['slug']);
             }
-
             return;
         }
 
-        // todo handle if disabled by user
         foreach ($this->modules as $module) {
 
-            /**
-             * Instance the module only if non admin scope
-             */
-            if (!is_admin() and $module['autoload']) {
-                $this->load_module($module['slug']);
-            }
-
-            /**
-             * Instance the module only if admin scope
-             */
-            if (is_admin() and $module['autoload_admin']) {
+            if ($module['autoload']) {
                 $this->load_module($module['slug']);
             }
         }
@@ -108,17 +94,17 @@ class WOModuleHandler
     /**
      * Accept module name or wp-admin page name
      * @param string|array $name
-     * @return object|null
+     * @return WO_Module
      */
     public function load_module($name)
     {
         $class = $this->module2classname($name);
 
-        if ($object = $this->modules_object->get_cache($class, 'modules_object'))
-            return $object;
-
         if (!$class)
             return null;
+
+        if ($object = $this->modules_object->get_cache($class, 'modules_object'))
+            return $object;
 
         $object = new $class();
 
@@ -132,7 +118,7 @@ class WOModuleHandler
      * @param $name
      * @return bool|string|string[]
      */
-    private function module2classname($name)
+    public function module2classname($name)
     {
         if (is_array($name)) {
             // get the page name of the module
@@ -172,7 +158,7 @@ class WOModuleHandler
     /**
      * Get all modules filtered by:
      * methods -> available method
-     * status -> no autoload | autoload | admin autoload
+     * status -> 'autoload'
      *
      * @param array $filters
      * @return array
@@ -186,16 +172,25 @@ class WOModuleHandler
 
         $filters = wp_parse_args($filters, array(
             'methods' => false,
-            'status'  => 'autoload',
+            'scopes'  => false,
+            'vars'    => false,
         ));
 
         foreach ($modules as $name => $module) {
 
             if ($filters['methods']) {
-
                 if (!$this->module_has_method($module, $filters['methods']))
                     unset($modules[$name]);
+            }
 
+            if ($filters['vars']) {
+                if (!$this->module_has_var($module, $filters['vars']))
+                    unset($modules[$name]);
+            }
+
+            if ($filters['scopes']) {
+                if (!$this->module_has_scope($module, $filters['scopes']))
+                    unset($modules[$name]);
             }
         }
 
@@ -221,6 +216,53 @@ class WOModuleHandler
             return false;
 
         $methods = array_intersect($method, get_class_methods($class));
+
+        return !empty($methods);
+    }
+
+    /**
+     * Accepts module name or wp-admin page name
+     *
+     * @param $module
+     * @param $var
+     * @return bool
+     */
+    public function module_has_var($module, $var)
+    {
+        if (is_null($module) or empty($var))
+            return false;
+
+        if (!is_array($var))
+            $var = array($var);
+
+        if (!$class = $this->module2classname($module))
+            return false;
+
+        $methods = array_intersect($var, get_class_vars($class));
+
+        return !empty($methods);
+    }
+
+
+    /**
+     * Accepts module name or wp-admin page name
+     *
+     * @param $module
+     * @param $scope
+     * @return bool
+     */
+    public function module_has_scope($module, $scope)
+    {
+        if (is_null($module) or empty($scope))
+            return false;
+
+        if (!is_array($scope))
+            $scope = array($scope);
+
+        if (!$class = $this->module2classname($module))
+            return false;
+
+        $methods = array_intersect($scope, get_class_vars($class)['scopes']);
 
         return !empty($methods);
     }
