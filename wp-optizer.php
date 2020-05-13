@@ -8,7 +8,7 @@
  * Text Domain: gforms_file_uploader_plugin
  * Domain Path: /languages
  * Text Domain: wpopt
- * Version: 1.3.0
+ * Version: 1.3.1
  */
 
 define('WPOPT_FILE', __FILE__);
@@ -32,10 +32,7 @@ require_once WPOPT_INCPATH . '/WO_Module.php';
 require_once WPOPT_INCPATH . '/WOModuleHandler.class.php';
 require_once WPOPT_INCPATH . '/WOPerformer.class.php';
 
-if(WPOPT_DEBUG)
-{
-    $wo_meter = new WOMeter();
-}
+$wo_meter = new WOMeter();
 
 /**
  * Initialize framework classes
