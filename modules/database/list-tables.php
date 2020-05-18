@@ -50,7 +50,7 @@ class WO_DB_Tables_List extends WP_List_Table
     {
         switch ($column_name) {
             case 'table_name':
-                return "<span style='font-weight:bold;'>" .  $item[$column_name] . "</span>" ;
+                return "<span style='font-weight:bold;'>" . $item[$column_name] . "</span>";
                 break;
             case 'data_length':
             case 'data_free':
@@ -60,7 +60,6 @@ class WO_DB_Tables_List extends WP_List_Table
             case 'engine':
             case 'table_rows':
             case 'site_id':
-            case 'table_belongs_to':
                 return $item[$column_name];
             default:
                 return print_r($item, true); //Show the whole array for troubleshooting purposes
@@ -90,7 +89,9 @@ class WO_DB_Tables_List extends WP_List_Table
             'optimize' => __('Optimize', 'wpopt'),
             'repair'   => __('Repair', 'wpopt'),
             'empty'    => __('Empty rows', 'wpopt'),
-            'delete'   => __('Delete', 'wpopt')
+            'delete'   => __('Delete', 'wpopt'),
+            'innodb'   => __('Convert to InnoDB', 'wpopt'),
+            'myisam'   => __('Convert to MyISAM', 'wpopt')
         );
     }
 
@@ -127,7 +128,7 @@ class WO_DB_Tables_List extends WP_List_Table
      *
      * @return array
      */
-    function get_columns()
+    public function get_columns()
     {
         return array(
             'cb'               => '<input type="checkbox" />',
@@ -138,7 +139,6 @@ class WO_DB_Tables_List extends WP_List_Table
             'data_free'        => __('Space lost', 'wpopt'),
             'status'           => __('Status', 'wpopt'),
             'engine'           => __('Table engine', 'wpopt'),
-            'table_belongs_to' => __('Belongs to', 'wpopt')
         );
     }
 
@@ -172,6 +172,8 @@ class WO_DB_Tables_List extends WP_List_Table
 
     public function process_bulk_action()
     {
+        global $wpdb;
+
         if (!$this->current_action())
             return;
 
@@ -184,45 +186,32 @@ class WO_DB_Tables_List extends WP_List_Table
                 wp_die('Security check failed!');
         }
 
-        $tables = filter_input(INPUT_POST, 'bulk-tables', FILTER_SANITIZE_STRING, FILTER_REQUIRE_ARRAY);
-
-        if (!$tables)
-            return;
-
-        switch ($this->current_action()) {
-
-            case 'delete':
-
-                WOPerformer::manage_tables('delete', $tables);
-                $this->response_message = __('Selected tables cleaned successfully!', 'wpopt');
-
-                break;
-
-            case 'optimize':
-
-                WOPerformer::manage_tables('optimize', $tables);
-                $this->response_message = __('Selected tables optimized successfully!', 'wpopt');
-
-                break;
-            case 'empty':
-
-                WOPerformer::manage_tables('empty', $tables);
-                $this->response_message = __('Selected tables emptied successfully!', 'wpopt');
-
-                break;
-
-            case 'repair':
-
-                if (WOPerformer::manage_tables('repair', $tables)) {
-                    $this->response_message = __('Selected tables repaired successfully!', 'wpopt');
-                }
-                else {
-                    $this->response_type = "error";
-                    $this->response_message = __('Some of your tables cannot be repaired!', 'wpopt');
-                }
-
-                break;
+        if (empty($_POST['bulk-tables'])) {
+            $tables = $wpdb->get_col('SHOW TABLES');
         }
+        else {
+            $tables = filter_input(INPUT_POST, 'bulk-tables', FILTER_SANITIZE_STRING, FILTER_REQUIRE_ARRAY);
+
+            if (!$tables)
+                return;
+        }
+
+        $processed = WOPerformer::manage_tables($this->current_action(), $tables);
+
+        $action_translators = array(
+            'optimize' => __('optimized', 'wpopt'),
+            'repair'   => __('repaired', 'wpopt'),
+            'empty'    => __('emptied', 'wpopt'),
+            'delete'   => __('deleted', 'wpopt'),
+            'innodb'   => __('converted to InnoDB', 'wpopt'),
+            'myisam'   => __('converted to MyISAM', 'wpopt')
+        );
+
+        if ($processed != count($tables))
+            $this->response_type = 'error';
+
+        $this->response_message = "{$processed} / " . count($tables) . __(" tables where {$action_translators[$this->current_action()]} successfully!", 'wpopt');
+
     }
 
     /**
@@ -255,8 +244,7 @@ class WO_DB_Tables_List extends WP_List_Table
 
             $order_by = esc_sql($_GET['orderby']);
 
-            if(in_array($order_by, array("table_name", "table_rows", "data_length", "data_free", "engine", "site_id")))
-            {
+            if (in_array($order_by, array("table_name", "table_rows", "data_length", "data_free", "engine", "site_id"))) {
                 $order = empty($_GET['order']) ? "ASC" : esc_sql($_GET['order']);
 
                 $sql .= " ORDER BY {$order_by} {$order}";
@@ -268,9 +256,6 @@ class WO_DB_Tables_List extends WP_List_Table
         $sql .= ' OFFSET ' . ($current_page - 1) * $per_page;
 
         $items_to_display = array();
-
-        $plugin_name = __('Uncategorized', 'wpopt');
-        //__('Belongs to', 'wpopt')
 
         foreach ((array)$wpdb->get_results($sql, ARRAY_A) as $table) {
 
@@ -311,7 +296,6 @@ class WO_DB_Tables_List extends WP_List_Table
                 'status'           => $status,
                 'engine'           => $table['ENGINE'],
                 'site_id'          => $site_name,
-                'table_belongs_to' => $plugin_name
             );
         }
 
@@ -355,5 +339,17 @@ class WO_DB_Tables_List extends WP_List_Table
         return self::$_instance;
     }
 
+    protected function extra_tablenav($which)
+    {
+        if ($which == "top") : ?>
+            <div class="alignleft" style="background: #66b2e8; padding: 6px 1em;">
+                <p style="margin: 0">
+                    <strong>
+                        <?php _e('If no tables are selected, the action will run on all database tables. Be careful!', 'wpopt'); ?>
+                    </strong>
+                </p>
+            </div>
+        <?php endif;
+    }
 }
 

@@ -1,23 +1,17 @@
-# WP Optimizer
- Optimize your WordPress website easily
- 
- [![Author](https://img.shields.io/badge/author-sh1zen-brightgreen.svg)](https://sh1zen.github.io/)
- ![License: CC-NC](https://img.shields.io/badge/License-CCNC-orange.svg)
- [![Donate](https://img.shields.io/badge/Donate-PayPal-blue.svg)](https://paypal.me/sh1zen)
- [![Repo Link](https://img.shields.io/badge/Repo-Link-black.svg)](https://github.com/sh1zen/wp-optimizer)
- 
-    Contributors: sh1zen
-    Tags: optimize, database, images, media, minify, backup, repair, speed, seo, server, clean-up, updates 
-    Donate link: https://www.paypal.me/sh1zen
-    Requires at least: 4.0.1
-    Tested up to: 5.4
-    Requires PHP: 7.0.0
-    Stable tag: 1.3.3
-    License: GNU v3.0
-    License URI: https://github.com/sh1zen/wp-optimizer/blob/master/LICENSE
+=== WP Optimizer ===
+Contributors: sh1zen
+Tags: optimize, database, images, media, minify, backup, repair, speed, seo, server, clean-up, updates
+Donate link: https://www.paypal.me/sh1zen
+Requires at least: 4.7.0
+Tested up to: 5.4
+Requires PHP: 7.0.0
+Stable tag: 1.3.3
+License: GNU v3.0
+License URI: https://github.com/sh1zen/wp-optimizer/blob/master/LICENSE
 
-## Description 
+Allows you to remove unused media, optimize images, repair and backup your database, drop/empty tables and run selected queries. Supports automatic scheduling, WordPress updates manager, lazy load, HTML, JS & CSS compression and more.
 
+== Description ==
  With WP Optimizer you can optimize your WordPress in all aspects with few and easy steps.
  This plugin contains most requested features to keep your WordPress site run as fast as new, from database and images optimizer to updates blocker.
 
@@ -66,8 +60,7 @@ Furthermore, the clean-up feature will handle non used media and remove them, so
  This plugin is free and always will be, but if you are feeling generous and want to show your support, you can buy me a beer or coffee [here](https://www.paypal.me/sh1zen), I will really appreciate it.
 
 
-## Installation 
-
+== Installation ==
 
 This section describes how to install the plugin. In general, there are 3 ways to install this plugin like any other WordPress plugin.
 
@@ -102,17 +95,23 @@ This section describes how to install the plugin. In general, there are 3 ways t
     
 **INSTALLATION DONE, A NEW LABEL WILL BE DISPLAYED ON YOUR ADMIN MENU**
 
-## FAQ
+== Upgrade Notice ==
+
+In the next releases will be introduced tons of new features.
+
+**Roadmap**
+
+* Support for custom image optimization quality
+* Better reports
+* Enable HTML, JavaScript and CSS optimization
+* Reset WordPress
+
+== FAQ ==
 * What to do if I run in some issues after upgrade?
 
   Deactivate the plugin and reactivate it, if this doesn't work try to uninstall and install again the plugin. That should work! 
 
-
-## Roadmap
-* Support for custom image optimization quality
-* Enable better database management ( backup, specific optimizations, ...)
-* Enable HTML. JavaScript, CSS optimization
-
+== Changelog ==
 
 **1.3.3**
 * improved JavaScript handlers for Ajax requests
@@ -164,4 +163,10 @@ This section describes how to install the plugin. In general, there are 3 ways t
 
 **1.0.0**
 * Initial release
+
+== Screenshots ==
+1. Main page
+2. Info page
+3. Settings page
+
 

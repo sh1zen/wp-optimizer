@@ -19,7 +19,7 @@ function wpopt_verify_nonce($name = 'wpopt', $nonce = false)
  */
 function wpopt_bytes2size($size)
 {
-    if($size == 0)
+    if ($size == 0)
         return '0 B';
 
     $unit = array('B', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB');
@@ -29,15 +29,18 @@ function wpopt_bytes2size($size)
     return @round($size / pow(1024, $i), 2) . ' ' . $unit[$i];
 }
 
-function wpopt_size2bytes($val) {
-
+function wpopt_size2bytes($val)
+{
     $val = trim($val);
 
-    if(empty($val))
+    if (empty($val))
         return 0;
 
-    $last = strtolower($val[strlen($val)-1]);
-    switch($last) {
+    $last = strtolower($val[strlen($val) - 1]);
+
+    $val = substr($val, 0, -1);
+
+    switch ($last) {
         case 'g':
             $val *= 1024;
         case 'm':
@@ -91,10 +94,9 @@ function wpopt_generateHTML_tabs_panels($fields)
         foreach ($fields as $field) {
             ?>
             <div id="<?php echo $field['id']; ?>" class="ar-tabcontent" aria-hidden="true">
-                <h2><?php if (isset($field['panel-title'])) echo $field['panel-title']; ?></h2>
-                <p></p><?php
-                if (isset($field['callback']))
-                {
+                <p><br></p><?php
+                if (isset($field['panel-title'])) echo "<h2>{$field['panel-title']}</h2>";
+                if (isset($field['callback'])) {
                     $args = isset($field['args']) ? $field['args'] : array();
 
                     echo call_user_func_array($field['callback'], $args);
@@ -170,39 +172,77 @@ function wpopt_generate_report($data, WOMeter $timer = null)
 }
 
 
-function wpopt_is_function_disabled( $function_name ) {
-    return in_array( $function_name, array_map( 'trim', explode( ',', ini_get( 'disable_functions' ) ) ), true );
+function wpopt_is_function_disabled($function_name)
+{
+    return in_array($function_name, array_map('trim', explode(',', ini_get('disable_functions'))), true);
 }
 
 
-
-function wpopt_create_folder($path = WP_CONTENT_DIR . '/backup-db', $private = true) {
+function wpopt_create_folder($path = WP_CONTENT_DIR . '/backup-db', $private = true)
+{
 
     global $is_IIS;
-    $plugin_path =  __DIR__ ;
+    $plugin_path = __DIR__;
 
     // Create Backup Folder
-    $res = wp_mkdir_p( $path );
+    $res = wp_mkdir_p($path);
 
-    if( $private and is_dir( $path ) and wp_is_writable( $path ) ) {
+    if ($private and is_dir($path) and wp_is_writable($path)) {
 
-        if( $is_IIS ) {
-            if ( ! is_file( $path . '/Web.config' ) ) {
-                copy( $plugin_path . '/Web.config.txt', $path . '/Web.config' );
-            }
-        } else {
-            if( ! is_file( $path . '/.htaccess' ) ) {
-                copy( $plugin_path . '/htaccess.txt', $path . '/.htaccess' );
+        if ($is_IIS) {
+            if (!is_file($path . '/Web.config')) {
+                copy($plugin_path . '/Web.config.txt', $path . '/Web.config');
             }
         }
-        if( ! is_file( $path . '/index.php' ) ) {
-            file_put_contents( $path . '/index.php' , '<?php');
+        else {
+            if (!is_file($path . '/.htaccess')) {
+                copy($plugin_path . '/htaccess.txt', $path . '/.htaccess');
+            }
+        }
+        if (!is_file($path . '/index.php')) {
+            file_put_contents($path . '/index.php', '<?php');
         }
 
-        chmod( $path, 0750 );
+        chmod($path, 0750);
     }
 
     return $res;
+}
+
+function wpopt_download_file($file_path)
+{
+    $file_path = trim($file_path);
+
+    if (!file_exists($file_path) or headers_sent())
+        return false;
+
+    header('Expires: 0');
+    header("Cache-Control: public");
+    header('Cache-Control: must-revalidate, post-check=0, pre-check=0');
+    header('Content-Description: File Transfer');
+    header('Content-Type: application/force-download');
+    header('Content-Type: application/octet-stream');
+    header('Content-Type: application/download');
+    header('Content-Disposition: attachment; filename=' . basename($file_path) . ';');
+    header('Content-Transfer-Encoding: binary');
+    header('Content-Length: ' . filesize($file_path));
+
+    ob_clean();
+    flush();
+    //readfile($file_path);
+
+    $chunkSize = 1024 * 1024;
+    $handle = fopen($file_path, 'rb');
+
+    while (!feof($handle)) {
+        $buffer = fread($handle, $chunkSize);
+        echo $buffer;
+        ob_flush();
+        flush();
+    }
+    fclose($handle);
+
+    exit();
 }
 
 function wpopt_conform_dir($dir, $recursive = false)
@@ -250,6 +290,53 @@ function wpopt_is_shell_exec_available()
         return false;
 
     return true;
+}
+
+
+function wpopt_get_mysqlDump_command_path($mysqldump_locations = '')
+{
+    // Check shell_exec is available
+    if (!wpopt_is_shell_exec_available())
+        return false;
+
+    if (!empty($mysqldump_locations)) {
+
+        return @is_executable(wpopt_conform_dir($mysqldump_locations));
+    }
+
+    // check mysqldump command
+    if (is_null(shell_exec('hash mysqldump 2>&1'))) {
+
+        return 'mysqldump';
+    }
+
+    $mysqldump_locations = array(
+        '/usr/local/bin/mysqldump',
+        '/usr/local/mysql/bin/mysqldump',
+        '/usr/mysql/bin/mysqldump',
+        '/usr/bin/mysqldump',
+        '/opt/local/lib/mysql6/bin/mysqldump',
+        '/opt/local/lib/mysql5/bin/mysqldump',
+        '/opt/local/lib/mysql4/bin/mysqldump',
+        '/xampp/mysql/bin/mysqldump',
+        '/Program Files/xampp/mysql/bin/mysqldump',
+        '/Program Files/MySQL/MySQL Server 6.0/bin/mysqldump',
+        '/Program Files/MySQL/MySQL Server 5.5/bin/mysqldump',
+        '/Program Files/MySQL/MySQL Server 5.4/bin/mysqldump',
+        '/Program Files/MySQL/MySQL Server 5.1/bin/mysqldump',
+        '/Program Files/MySQL/MySQL Server 5.0/bin/mysqldump',
+        '/Program Files/MySQL/MySQL Server 4.1/bin/mysqldump'
+    );
+
+    $mysqldump_command_path = '';
+
+    // Find the one which works
+    foreach ((array)$mysqldump_locations as $location) {
+        if (@is_executable(wpopt_conform_dir($location)))
+            $mysqldump_command_path = $location;
+    }
+
+    return empty($mysqldump_command_path) ? false : $mysqldump_command_path;
 }
 
 function wpopt_flatMultiDA(&$mData)

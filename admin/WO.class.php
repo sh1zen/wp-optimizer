@@ -125,7 +125,7 @@ class WO
 
     public function setting_panel_url($panel = '')
     {
-        return admin_url("admin.php?page=wpopt-settings#settings-womod-{$panel}");
+        return admin_url("admin.php?page=wpopt-settings#settings-{$panel}");
     }
 
     /**

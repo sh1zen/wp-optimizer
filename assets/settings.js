@@ -1,3 +1,48 @@
+function flex_ajaxHandler($container, options, callback) {
+
+    $container.addClass("wpopt-loader");
+
+    let defaults = {
+        action: 'wpopt',
+        womod: 'generic',
+        wpopt_action: 'none',
+        wpopt_nonce: '',
+        wpopt_args: '',
+        wpopt_form: ''
+    };
+
+    options = jQuery.extend(defaults, options);
+
+    jQuery.get(ajaxurl, options, function (res) {
+
+        $container.removeClass("wpopt-loader");
+
+        callback(res);
+    });
+}
+
+function flex_defaultMessage(response, status, $mex_viewer = null) {
+
+    if($mex_viewer === null)
+        $mex_viewer = jQuery("#wpopt-ajax-message");
+
+    if (status) {
+
+        if (response.length > 0) {
+            $mex_viewer.append(response)
+        } else
+            $mex_viewer.append("<p class='success'>" + WPOPT.strings.success + "</p>");
+
+    } else {
+
+        if (response.length > 0)
+            $mex_viewer.append("<p class='error'>" + response + "</p>")
+        else
+            $mex_viewer.append("<p class='error'>" + WPOPT.strings.error + "</p>");
+
+    }
+}
+
 (function ($) {
 
     "use strict";
@@ -207,10 +252,71 @@
             }
 
         });
+    };
+
+    let flex_formHandler = function ($selector) {
+
+        $selector.each(function (e) {
+
+            $(this).on('submit', function (e) {
+
+                let $this = $(this);
+                let $submitter = $(e.originalEvent.submitter);
+
+                if ($submitter.data('explicit')) return;
+
+                e.preventDefault();
+
+                let action = $submitter.data('action');
+
+                let callback =  function(res) {
+
+                    let $mex_viewer = $("#wpopt-ajax-message");
+
+                    $mex_viewer.empty();
+                    $this.removeClass("wpopt-loader");
+
+
+                    if (res.success) {
+
+                        if (res.data.response.length > 0) {
+                            $mex_viewer.append(res.data.response)
+                        } else
+                            $mex_viewer.append("<p class='success'>" + WPOPT.strings.success + "</p>");
+
+                    } else {
+
+                        if (res.data.response.length > 0)
+                            $mex_viewer.append("<p class='error'>" + res.data.response + "</p>")
+                        else
+                            $mex_viewer.append("<p class='error'>" + WPOPT.strings.error + "</p>");
+
+                    }
+                };
+
+                flex_ajaxHandler($this, {
+                    womod : 'database',
+                    wpopt_action : action,
+                    wpopt_nonce : $this.data('nonce'),
+                    wpopt_args: $submitter.data('args'),
+                    wpopt_form: $this.serialize()
+                }, callback)
+
+            });
+        });
     }
 
     $(document).ready(function () {
+
         flex_tabHandler($('.ar-tabs'));
+
+    });
+
+    $(window).on('beforeunload', function (e) {
+        if ($body.hasClass('wpopt-doingAction')) {
+            (e || window.event).returnValue = WPOPT.strings.text_close_warning;
+            return WPOPT.strings.text_close_warning;
+        }
     });
 
 })(jQuery);

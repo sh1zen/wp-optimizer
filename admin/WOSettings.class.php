@@ -151,7 +151,7 @@ class WOSettings
 
     public function update_settings($option_data, $context)
     {
-        if (!isset($context) or empty($context))
+        if (empty($context))
             return false;
 
         $this->settings[$context] = wp_parse_args($option_data, $this->settings[$context]);

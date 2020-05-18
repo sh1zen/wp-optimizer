@@ -15,6 +15,35 @@ class WOPagesHandler
         add_action('admin_menu', array($this, 'add_plugin_pages'));
 
         add_action('admin_enqueue_scripts', array($this, 'register_assets'));
+
+        //$this->downloader();
+    }
+
+    /**
+     * Download page, direct access to protected file
+     * needs:
+     * downloader nonce: wpopt_downloader_nonce
+     * location identifier: loc
+     * file name: file
+     */
+    public function downloader()
+    {
+        if (!isset($_GET['wpopt_downloader']))
+            return;
+
+        if (!wpopt_verify_nonce('wpopt_downloader_nonce', $_GET['nonce']))
+            die("Wp Optimizer :: Invalid Access");
+
+        $file_path = '';
+
+        switch ($_GET['loc']) {
+            case 'db-backup':
+                $backup_path = WOSettings::getInstance()->get_settings('database')['backup']['path'];
+                $file_path = trailingslashit($backup_path) . sanitize_file_name($_GET['file']);
+                break;
+        }
+
+        wpopt_download_file($file_path);
     }
 
     public function add_plugin_pages()
@@ -44,12 +73,18 @@ class WOPagesHandler
         add_submenu_page('wp-optimizer', __('Settings', 'wpopt'), __('Settings', 'wpopt'), 'manage_options', 'wpopt-settings', array($this, 'render_settings'));
     }
 
-
     public function render_settings()
     {
+        global $wo_meter;
+
         $this->enqueue_scripts();
 
         WOSettings::getInstance()->render();
+
+        $wo_meter->lap('settings rendered');
+
+        if(WPOPT_DEBUG)
+            echo $wo_meter->get_time() . ' - ' . $wo_meter->get_memory(true, true);
     }
 
     private function enqueue_scripts()
@@ -77,6 +112,9 @@ class WOPagesHandler
         $object->render();
 
         $wo_meter->lap($module_slug);
+
+        if(WPOPT_DEBUG)
+            echo $wo_meter->get_time() . ' - ' . $wo_meter->get_memory(true, true);
     }
 
     public function register_assets()
@@ -89,8 +127,12 @@ class WOPagesHandler
 
         wp_localize_script('wpopt_js', 'WPOPT', array(
             'strings' => array(
-                'saved' => __('Settings Saved', 'wpopt'),
-                'error' => __('Error', 'wpopt')
+                'text_na'       => __('N/A', 'wpopt'),
+                'saved'   => __('Settings Saved', 'wpopt'),
+                'error'   => __('Request fail', 'wpopt'),
+                'success' => __('Request succeed', 'wpopt'),
+                'running' => __('Running', 'wpopt'),
+                'text_close_warning' => __('WP Optimizer is running an action. If you leave now, it will not be completed.', 'wpopt'),
             )
         ));
     }
@@ -154,7 +196,7 @@ class WOPagesHandler
 
                 ?>
                 <block class="wpopt">
-                   <h1>WP Optimizer Dashboard</h1>
+                    <h1>WP Optimizer Dashboard</h1>
                     <p><strong><?php _e('Optimize your WordPress site in few and easy steps.', 'wpopt'); ?></strong></p>
                 </block>
                 <block class="wpopt">
@@ -208,10 +250,14 @@ class WOPagesHandler
                 </section>
                 <section class="wpopt-box">
                     <h3><?php _e('Want to support in other ways?', 'wpopt'); ?></h3>
-                   <ul class="wpopt">
-                       <li><a href="https://translate.wordpress.org/projects/wp-plugins/wp-optimizer/"><?php _e('Help me translating', 'wpopt'); ?></a></li>
-                       <li><a href="https://wordpress.org/support/plugin/wp-optimizer/reviews/?filter=5"><?php _e('Leave a review', 'wpopt'); ?></a></li>
-                   </ul>
+                    <ul class="wpopt">
+                        <li>
+                            <a href="https://translate.wordpress.org/projects/wp-plugins/wp-optimizer/"><?php _e('Help me translating', 'wpopt'); ?></a>
+                        </li>
+                        <li>
+                            <a href="https://wordpress.org/support/plugin/wp-optimizer/reviews/?filter=5"><?php _e('Leave a review', 'wpopt'); ?></a>
+                        </li>
+                    </ul>
                 </section>
             </aside>
         </section>

@@ -30,7 +30,7 @@ class WOMod_Sysinfo extends WO_Module
             <?php foreach ($this->get_info() as $name => $table) : ?>
                 <block class="wpopt" id="<?php echo strtolower($name); ?>">
                     <h2 class="sysinfo-title"><?php echo $name; ?></h2>
-                    <table class="widefat">
+                    <table class="widefat wpopt">
                         <thead>
                         <tr>
                             <th><?php _e('Name', 'wpopt'); ?></th>

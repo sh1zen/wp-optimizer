@@ -52,7 +52,13 @@ class WO_Module
 
         $this->ajax_limit = isset($args['ajax_limit']) ? $args['ajax_limit'] : 100;
 
-        $this->settings = WOSettings::getInstance()->get_settings($this->slug, $this->default_setting);
+        $this->settings = WOSettings::getInstance()->get_settings($this->slug, false);
+
+        if(!$this->settings)
+        {
+            WOSettings::getInstance()->update_settings( $this->default_setting, $this->slug);
+            $this->settings = $this->default_setting;
+        }
 
         $this->on_screen = wpopt_is_on_screen($this->slug);
 
@@ -100,7 +106,7 @@ class WO_Module
             <?php
             settings_fields('wpopt-settings');
             ?>
-            <table class="wpopt">
+            <table class="wpopt wpopt-settings">
                 <tbody>
                 <?php
                 foreach ($this->setting_fields() as $field) {

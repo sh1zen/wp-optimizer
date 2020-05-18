@@ -1,7 +1,3 @@
-#wpcontent {
-    /* padding: 0 */
-}
-
 .hidden {
     display: none
 }
@@ -43,12 +39,32 @@
     margin: 1em 15px;
     padding: 10px 12px;
     border: 1px solid #ccd0d4;
-    border-left-width: 4px;
+    border-left-width: 4px
+}
+
+.wpopt-notice:empty {
+    display: none
+}
+
+.wpopt-notice p {
+    font-weight: 700
+}
+
+.wpopt-notice .error {
+    color: red
+}
+
+.wpopt-notice .success {
+    color: green
+}
+
+.wpopt-notice .info {
+    color: #00008b
 }
 
 .wpopt-notice--error {
     color: red;
-    border-left-color: #dc3232;
+    border-left-color: #dc3232
 }
 
 .alternate {
@@ -66,7 +82,7 @@
     color: #fff;
     -webkit-border-radius: 3px;
     -moz-border-radius: 3px;
-    border-radius: 3px;
+    border-radius: 3px
 }
 
 .dn-title {
@@ -75,16 +91,13 @@
     font-weight: 600
 }
 
-.dn-btc {
-}
-
 .dn-name {
     font-weight: 600
 }
 
 .dn-value {
     margin: 0;
-    font-weight: 600;
+    font-weight: 600
 }
 
 .dn-hr {
@@ -115,7 +128,7 @@ input.apple-switch {
     border-radius: 15px;
     border: none;
     box-shadow: inset 0 0 2px 1px rgba(0, 0, 0, .1);
-    transition: background-color .4s cubic-bezier(.275, -.45, .725, 1.45);
+    transition: background-color .4s cubic-bezier(.275, -.45, .725, 1.45)
 }
 
 input.apple-switch:after {
@@ -128,7 +141,7 @@ input.apple-switch:after {
     height: 22px;
     border-radius: 50%;
     box-shadow: 2px 0 4px rgba(0, 0, 0, .2);
-    transition: all .3s cubic-bezier(.275, -.45, .725, 1.45);
+    transition: all .3s cubic-bezier(.275, -.45, .725, 1.45)
 }
 
 input.apple-switch:checked {
@@ -140,7 +153,7 @@ input.apple-switch:checked:after {
     top: 2px;
     width: 22px;
     height: 22px;
-    box-shadow: -2px 0 4px rgba(0, 0, 0, .2);
+    box-shadow: -2px 0 4px rgba(0, 0, 0, .2)
 }
 
 .ar-tabs {
@@ -148,16 +161,13 @@ input.apple-switch:checked:after {
     width: 100%;
     margin: 0;
     padding: 0;
-    position: relative;
+    position: relative
 }
 
 .ar-tabcontent {
-
-    border-top: 2px solid #cacaca;
-
+    border-top: 2px solid #66b2e8;
     overflow: hidden;
-
-    box-sizing: border-box;
+    box-sizing: border-box
 }
 
 .ar-tablist {
@@ -168,7 +178,7 @@ input.apple-switch:checked:after {
     overflow-x: auto;
     overflow-y: hidden;
     width: 100%;
-    margin: 0;
+    margin: 0
 }
 
 .ar-tab {
@@ -178,7 +188,7 @@ input.apple-switch:checked:after {
     position: relative;
     cursor: pointer;
     margin: 0 2px 0 0;
-    outline: none;
+    outline: 0
 }
 
 .ar-tab_link {
@@ -190,30 +200,127 @@ input.apple-switch:checked:after {
     text-transform: uppercase;
     color: #717171;
     outline: 0;
-    transition: font-size 0.35s ease-in-out .15s;
+    transition: font-size .35s ease-in-out .15s
 }
 
 .ar-tab:hover .ar-tab_link {
     font-size: 13px;
-    color: #717171;
+    color: #717171
 }
 
 .ar-tab_link[aria-selected=true] {
     color: #2b2b2b;
-    background: #b7b7b7;
-    font-size: 13px;
+    background: #66b2e8;
+    font-size: 13px
 }
 
 div[aria-hidden=true] {
     display: none
 }
 
+.wpopt-loader {
+    position: relative;
+}
+
+.wpopt-loader:before {
+    content: "";
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    position: absolute;
+    background: #0000009e
+}
+
+.wpopt-loader:after {
+    content: "";
+    color: #5abaff;
+    font-size: 10px;
+    margin: auto;
+    width: 8px;
+    height: 8px;
+    top: 50%;
+    left: 50%;
+    border-radius: 50%;
+    position: absolute;
+    -webkit-animation: load4 1.1s infinite linear;
+    animation: load4 1.1s infinite linear;
+    -webkit-transform: translateZ(0);
+    -ms-transform: translateZ(0);
+    transform: translateZ(0)
+}
+
+@-webkit-keyframes load4 {
+    0%, 100% {
+        box-shadow: 0 -3em 0 .2em, 2em -2em 0 0, 3em 0 0 -1em, 2em 2em 0 -1em, 0 3em 0 -1em, -2em 2em 0 -1em, -3em 0 0 -1em, -2em -2em 0 0
+    }
+    12.5% {
+        box-shadow: 0 -3em 0 0, 2em -2em 0 .2em, 3em 0 0 0, 2em 2em 0 -1em, 0 3em 0 -1em, -2em 2em 0 -1em, -3em 0 0 -1em, -2em -2em 0 -1em
+    }
+    25% {
+        box-shadow: 0 -3em 0 -.5em, 2em -2em 0 0, 3em 0 0 .2em, 2em 2em 0 0, 0 3em 0 -1em, -2em 2em 0 -1em, -3em 0 0 -1em, -2em -2em 0 -1em
+    }
+    37.5% {
+        box-shadow: 0 -3em 0 -1em, 2em -2em 0 -1em, 3em 0 0 0, 2em 2em 0 .2em, 0 3em 0 0, -2em 2em 0 -1em, -3em 0 0 -1em, -2em -2em 0 -1em
+    }
+    50% {
+        box-shadow: 0 -3em 0 -1em, 2em -2em 0 -1em, 3em 0 0 -1em, 2em 2em 0 0, 0 3em 0 .2em, -2em 2em 0 0, -3em 0 0 -1em, -2em -2em 0 -1em
+    }
+    62.5% {
+        box-shadow: 0 -3em 0 -1em, 2em -2em 0 -1em, 3em 0 0 -1em, 2em 2em 0 -1em, 0 3em 0 0, -2em 2em 0 .2em, -3em 0 0 0, -2em -2em 0 -1em
+    }
+    75% {
+        box-shadow: 0 -3em 0 -1em, 2em -2em 0 -1em, 3em 0 0 -1em, 2em 2em 0 -1em, 0 3em 0 -1em, -2em 2em 0 0, -3em 0 0 .2em, -2em -2em 0 0
+    }
+    87.5% {
+        box-shadow: 0 -3em 0 0, 2em -2em 0 -1em, 3em 0 0 -1em, 2em 2em 0 -1em, 0 3em 0 -1em, -2em 2em 0 0, -3em 0 0 0, -2em -2em 0 .2em
+    }
+}
+
+@keyframes load4 {
+    0%, 100% {
+        box-shadow: 0 -3em 0 .2em, 2em -2em 0 0, 3em 0 0 -1em, 2em 2em 0 -1em, 0 3em 0 -1em, -2em 2em 0 -1em, -3em 0 0 -1em, -2em -2em 0 0
+    }
+    12.5% {
+        box-shadow: 0 -3em 0 0, 2em -2em 0 .2em, 3em 0 0 0, 2em 2em 0 -1em, 0 3em 0 -1em, -2em 2em 0 -1em, -3em 0 0 -1em, -2em -2em 0 -1em
+    }
+    25% {
+        box-shadow: 0 -3em 0 -.5em, 2em -2em 0 0, 3em 0 0 .2em, 2em 2em 0 0, 0 3em 0 -1em, -2em 2em 0 -1em, -3em 0 0 -1em, -2em -2em 0 -1em
+    }
+    37.5% {
+        box-shadow: 0 -3em 0 -1em, 2em -2em 0 -1em, 3em 0 0 0, 2em 2em 0 .2em, 0 3em 0 0, -2em 2em 0 -1em, -3em 0 0 -1em, -2em -2em 0 -1em
+    }
+    50% {
+        box-shadow: 0 -3em 0 -1em, 2em -2em 0 -1em, 3em 0 0 -1em, 2em 2em 0 0, 0 3em 0 .2em, -2em 2em 0 0, -3em 0 0 -1em, -2em -2em 0 -1em
+    }
+    62.5% {
+        box-shadow: 0 -3em 0 -1em, 2em -2em 0 -1em, 3em 0 0 -1em, 2em 2em 0 -1em, 0 3em 0 0, -2em 2em 0 .2em, -3em 0 0 0, -2em -2em 0 -1em
+    }
+    75% {
+        box-shadow: 0 -3em 0 -1em, 2em -2em 0 -1em, 3em 0 0 -1em, 2em 2em 0 -1em, 0 3em 0 -1em, -2em 2em 0 0, -3em 0 0 .2em, -2em -2em 0 0
+    }
+    87.5% {
+        box-shadow: 0 -3em 0 0, 2em -2em 0 -1em, 3em 0 0 -1em, 2em 2em 0 -1em, 0 3em 0 -1em, -2em 2em 0 0, -3em 0 0 0, -2em -2em 0 .2em
+    }
+}
+
+.wpopt textarea{
+    border-radius: 2px;
+    padding: 0.5em 1em;
+    transition: all 0.15s ease-in-out 0.35s;
+    box-shadow: none;
+}
+
+.wpopt textarea:focus{
+    box-shadow: 0 0 9px #424242;
+}
+
 ul.wpopt {
-    list-style: inside;
+    list-style: inside
 }
 
 section.wpopt-wrap {
-    padding: 0 20px 0 0;
+    padding: 0 20px 0 0
 }
 
 .wpopt-home {
@@ -222,11 +329,11 @@ section.wpopt-wrap {
     flex-wrap: wrap;
     align-items: flex-start;
     justify-content: space-around;
-    margin: 20px 0;
+    margin: 20px 0
 }
 
 .wpopt-home section.wpopt {
-    width: calc(100% - 410px);
+    width: calc(100% - 410px)
 }
 
 aside.wpopt {
@@ -234,27 +341,29 @@ aside.wpopt {
     display: flex;
     flex-direction: row;
     flex-wrap: wrap;
-    max-width: 370px;
+    max-width: 370px
 }
 
 aside.wpopt .wpopt-box {
     padding: 20px;
     margin: 25px 0 0 0;
     background: #fff;
-    box-shadow: 0 1px 6px 0 rgba(0, 0, 0, .3);
+    box-shadow: 0 0 3px rgba(0, 0, 0, 0.2);
     border: 1px solid #dcdcdc;
     width: 100%;
+    border-radius: 3px;
 }
 
 .wpopt h1 {
     width: 100%;
     margin: 1em auto;
     text-align: center;
-    background: #fafafa;
+    background: #296894;
+    color: #fff;
     line-height: 2em;
     -webkit-box-shadow: inset 0 0 3px 0 rgba(0, 0, 0, .75);
     -moz-box-shadow: inset 0 0 3px 0 rgba(0, 0, 0, .75);
-    box-shadow: inset 0 0 3px 0 rgba(0, 0, 0, .75)
+    box-shadow: inset 0 0 3px 0 rgba(0, 0, 0, .75);
 }
 
 .wpopt h2 {
@@ -276,7 +385,7 @@ block.wpopt {
     border: 1px solid #dcdcdc;
     box-shadow: 0 0 2px rgba(0, 0, 0, .2);
     overflow: hidden;
-    box-sizing: border-box;
+    box-sizing: border-box
 }
 
 block.wpopt line {
@@ -292,7 +401,7 @@ block.wpopt line {
 }
 
 block.wpopt p {
-    margin: 0 0 1em 0;
+    margin: 0 0 1em 0
 }
 
 block.wpopt b {
@@ -308,85 +417,111 @@ block.wpopt :after {
 }
 
 .table-sweep tbody tr {
-    height: 42px;
+    height: 42px
 }
 
 .table-sweep tbody tr td {
-    line-height: 32px;
+    line-height: 32px
 }
 
 .table-sweep thead th {
-    width: 12%;
+    width: 12%
 }
 
 .table-sweep thead th.col-sweep-details {
-    width: 56%;
+    width: 56%
 }
 
 .table-sweep thead th.col-sweep-action {
-    width: 20%;
+    width: 20%
 }
 
 .list-tables {
-    background: #efefef;
-    margin-bottom: 4em;
+    background: #fff;
+    margin: 2px 2px 4em 2px;
     overflow: hidden;
-    box-shadow: 0 0 3px 0 #212121;
+    box-shadow: 0 0 2px 0 #353535
 }
 
 .list-tables pre-table {
-    margin: 0 1em;
+    padding: 0 1em;
     display: block;
     overflow: hidden;
+    border-top: 1px solid #ccd0d4;
+    border-left: 1px solid #ccd0d4;
+    border-right: 1px solid #ccd0d4;
+    font-weight: 700
 }
 
 .wpopt-gridRow {
     display: flex;
     flex-direction: row;
     flex-wrap: wrap;
-    justify-content: space-between;
+    justify-content: space-between
 }
 
 .wpopt-gridRow li {
-    font-weight: bold;
-    margin-right: 3em;
+    font-weight: 700;
+    margin-right: 3em
 }
 
 .wpopt-submit {
-    margin: 2em 0 0 0 !important;
+    margin: 2em 0 0 0 !important
 }
 
 table.wpopt {
-    border-collapse: collapse;
     width: 100%;
     margin: auto;
-    /* background: #ecf6ff; */
+    border-collapse: collapse
 }
 
-table.wpopt tr {
-    line-height: 40px;
-    border-bottom: 2px solid #e0e0e0;
+.wpopt-thead, table.wpopt thead {
+    background: #417ba5
+}
+
+.wpopt-footer {
+    background: #2f5978
+}
+
+.wpopt-footer th, .wpopt-thead th, table.wpopt thead th {
+    font-weight: 700;
+    color: #fff
+}
+
+table.wpopt .wpopt-actions {
+    padding: 1.5em 0 1em 0
+}
+
+table.wpopt .wpopt-actions :not(:last-child) {
+    margin-right: 1em
+}
+
+table.wpopt-settings tr {
+    border-bottom: 2px solid #e0e0e0
 }
 
 table.wpopt td {
-    padding: 0 1em;
+    padding: 8px 10px
 }
 
 .wpopt-setting-header {
-    margin-top: 2em;
+    margin-top: 2em
+}
+
+.wpopt-centered {
+    text-align: center
 }
 
 @media only screen and (max-width: 1192px) {
-
     .wpopt-home section.wpopt {
         width: 100%;
-        padding: 0;
+        padding: 0
     }
 
     aside.wpopt {
         margin: 30px auto;
         max-width: 100%;
         width: 100%;
-        box-shadow: 0 0 2px 0 rgba(0, 0, 0, .75);
+        box-shadow: 0 0 2px 0 rgba(0, 0, 0, .75)
     }
 }

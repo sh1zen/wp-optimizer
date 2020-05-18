@@ -8,7 +8,7 @@
  * Text Domain: gforms_file_uploader_plugin
  * Domain Path: /languages
  * Text Domain: wpopt
- * Version: 1.3.1
+ * Version: 1.3.3
  */
 
 define('WPOPT_FILE', __FILE__);
@@ -23,6 +23,7 @@ define('WPOPT_DEBUG', $_SERVER["SERVER_ADDR"] == '127.0.0.1');
  * Require essential
  */
 require_once WPOPT_INCPATH . '/functions.php';
+require_once WPOPT_INCPATH . '/performers.php';
 require_once WPOPT_INCPATH . '/WOMeter.class.php';
 require_once WPOPT_INCPATH . '/WOPlCache.class.php';
 require_once WPOPT_ADMIN . '/WOSettings.class.php';
@@ -64,7 +65,7 @@ require_once WPOPT_ADMIN . '/WO.class.php';
 WO::Initialize();
 
 
-if(WPOPT_DEBUG and false) {
+if (WPOPT_DEBUG and false) {
 
     $wo_meter->lap();
 

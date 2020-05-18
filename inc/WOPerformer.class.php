@@ -5,14 +5,20 @@ if (!defined('ABSPATH'))
 
 /**
  * Scope of this class is to provide some useful methods to
- * clean/optimize/repair databse and optimize images.
+ * clean/optimize/repair database and optimize images.
  *
  * It's just an executive class.
  */
 class WOPerformer
 {
+    /**
+     * @var
+     */
     private static $_instance;
 
+    /**
+     * @return WOPerformer
+     */
     public static function getInstance()
     {
         if (!isset(self::$_instance)) {
@@ -232,55 +238,248 @@ class WOPerformer
         return empty($query) ? 0 : number_format_i18n(count($query));
     }
 
+    /**
+     * Manage database tables
+     *
+     * @param $action
+     * @param array $tables
+     * @return bool|int
+     */
     public static function manage_tables($action, $tables = array())
     {
         global $wpdb;
 
         if (empty($tables)) {
-            $tables = $wpdb->get_col('SHOW TABLES');
+            return false;
+            //$tables = $wpdb->get_col('SHOW TABLES');
         }
 
-        $status = true;
+        $succeeded = 0;
 
         switch ($action) {
 
+            case 'myisam':
+
+                foreach ($tables as $table) {
+                    if ($wpdb->query("ALTER TABLE {$table} ENGINE = MyISAM"))
+                        $succeeded++;
+                }
+                break;
+
+            case 'innodb':
+
+                foreach ($tables as $table) {
+                    if ($wpdb->query("ALTER TABLE {$table} ENGINE = InnoDB"))
+                        $succeeded++;
+                }
+                break;
+
             case 'delete':
 
-                $tables = implode(', ', $tables);
-                $wpdb->query("DROP TABLE {$tables}");
+                foreach ($tables as $table) {
+                    if ($wpdb->query("DROP TABLE {$table}"))
+                        $succeeded++;
+                }
                 break;
 
             case 'optimize':
 
-                $tables = implode(', ', $tables);
-                $wpdb->query("OPTIMIZE TABLE {$tables}");
+                foreach ($tables as $table) {
+                    if ($wpdb->query("OPTIMIZE TABLE {$table}"))
+                        $succeeded++;
+                }
                 break;
 
             case 'empty':
 
-                $tables = implode(', ', $tables);
-                $wpdb->query("TRUNCATE TABLE {$tables}");
+                foreach ($tables as $table) {
+                    if ($wpdb->query("TRUNCATE TABLE {$table}"))
+                        $succeeded++;
+                }
                 break;
 
             case 'repair':
 
-                $cannot_repair = 0;
                 foreach ($tables as $table) {
                     $query_result = $wpdb->get_results("REPAIR TABLE " . $table);
                     foreach ($query_result as $row) {
                         if ($row->Msg_type == 'error') {
-                            if (preg_match('/corrupt/i', $row->Msg_text)) {
-                                $cannot_repair++;
+                            if (!preg_match('/corrupt/i', $row->Msg_text)) {
+                                $succeeded++;
                             }
                         }
                     }
                 }
-
-                $status = $cannot_repair == 0;
                 break;
         }
 
-        return $status;
+        return $succeeded;
+    }
+
+    public static function restore_db($backup)
+    {
+        global $wpdb;
+
+        //$_wpdb = new wpdb('root', '', 'wp_test', '127.0.0.1');
+
+        $tables = $wpdb->get_col('SHOW TABLES');
+
+        foreach ($tables as $table) {
+            $wpdb->query("DROP TABLE {$table}");
+        }
+
+        $query = '';
+
+        $lines = file($backup);
+
+        foreach ($lines as $line) {
+
+            if (substr($line, 0, 2) == '--' || $line == '')
+                continue;
+
+            $query .= $line;
+
+            if (substr(trim($line), -1, 1) == ';') {
+
+                $wpdb->query($query);
+
+                $query = '';
+            }
+
+            set_time_limit(30);
+        }
+        return true;
+    }
+
+    public static function queryDump_db($SQLfilename, $_excluded_tables = array(), $row_number = 500)
+    {
+        global $wpdb;
+
+        $tables = $wpdb->get_col('SHOW TABLES');
+        $output = '';
+
+        if (file_exists($SQLfilename))
+            unlink($SQLfilename);
+
+        $file_descriptor = fopen($SQLfilename, 'w');
+
+        $available_memory = wpopt_size2bytes(@ini_get('memory_limit'));
+
+        foreach ($tables as $table) {
+
+            set_time_limit(60);
+
+            if (empty($_excluded_tables) or !(in_array($table, $_excluded_tables))) {
+
+                /**
+                 * Rules for CREATE TABLE
+                 */
+                $result = $wpdb->get_row('SHOW CREATE TABLE ' . $table, ARRAY_N);
+                $output .= $result[1] . ";" . PHP_EOL . PHP_EOL;
+
+                $iter = 0;
+
+                while ($result = $wpdb->get_results("SELECT * FROM {$table} LIMIT {$row_number} OFFSET " . ($iter++ * $row_number), ARRAY_N)) {
+
+                    $nres = count($result) - 1;
+
+                    $output .= 'INSERT INTO ' . $table . ' VALUES';
+                    foreach ($result as $n => $row) {
+
+                        $row = array_map(array($wpdb, '_real_escape'), $row);
+
+                        $output .= '( "' . implode('", "', $row) . '" )';
+
+                        if ($n < $nres) $output .= ', ';
+                    }
+
+                    $output .= ';' . PHP_EOL;
+
+                    if ($available_memory - memory_get_usage() < 10485760) {
+                        fwrite($file_descriptor, $output);
+                        $output = '';
+                        $wpdb->flush();
+                    }
+
+                }
+                fwrite($file_descriptor, $output);
+                $output = '';
+                $wpdb->flush();
+            }
+        }
+
+        $wpdb->flush();
+
+        fclose($file_descriptor);
+
+        return true;
+    }
+
+    public static function mysqlDump_db($SQLfilename, $_excluded_tables = array(), $mysqldump_locations = '')
+    {
+        set_time_limit(120);
+
+        $host = explode(':', DB_HOST);
+
+        $host = reset($host);
+        $port = strpos(DB_HOST, ':') ? end($host) : '';
+
+        // Path to the mysqldump executable
+        $cmd = escapeshellarg(wpopt_get_mysqlDump_command_path($mysqldump_locations));
+
+        // We don't want to create a new DB
+        $cmd .= ' --no-create-db --hex-blob';
+
+        // Username
+        $cmd .= ' -u ' . escapeshellarg(DB_USER);
+
+        // Don't pass the password if it's blank
+        if (DB_PASSWORD)
+            $cmd .= ' -p' . escapeshellarg(DB_PASSWORD);
+
+        // Set the host
+        $cmd .= ' -h ' . escapeshellarg($host);
+
+        // Set the port if it was set
+        if (!empty($port) && is_numeric($port))
+            $cmd .= ' -P ' . $port;
+
+        // The file we're saving too
+        $cmd .= ' -r ' . escapeshellarg($SQLfilename);
+
+        if (!empty($_excluded_tables)) {
+            $cmd .= implode(' --ignore-table=' . DB_NAME . '.', $_excluded_tables);
+        }
+
+        // The database we're dumping
+        $cmd .= ' ' . escapeshellarg(DB_NAME);
+
+        // Pipe STDERR to STDOUT
+        $cmd .= ' 2>&1';
+
+        $stderr = shell_exec($cmd);
+
+        // Skip the new password warning that is output in mysql > 5.6
+        if (trim($stderr) === 'Warning: Using a password on the command line interface can be insecure.') {
+            $stderr = '';
+        }
+
+        if ($stderr) {
+            wpopt_write_log($stderr);
+
+            if (file_exists($SQLfilename))
+                unlink($SQLfilename);
+
+            return false;
+        }
+
+        // If we have an empty file delete it
+        if (@filesize($SQLfilename) === 0) {
+            unlink($SQLfilename);
+            return false;
+        }
+
+        return true;
     }
 
     public function optimize_images($elements = array())
@@ -594,16 +793,6 @@ class WOPerformer
         */
         $results += $wpdb->query("DELETE tr FROM {$wpdb->prefix}term_taxonomy tr LEFT JOIN {$wpdb->prefix}terms ON tr.term_id = {$wpdb->prefix}terms.term_id WHERE {$wpdb->prefix}terms.term_id is NULL;");
         $results += $wpdb->query("DELETE tr FROM {$wpdb->prefix}term_relationships tr LEFT JOIN {$wpdb->prefix}posts ON tr.object_id = {$wpdb->prefix}posts.ID LEFT JOIN {$wpdb->prefix}term_taxonomy ON tr.term_taxonomy_id = {$wpdb->prefix}term_taxonomy.term_taxonomy_id WHERE {$wpdb->prefix}posts.ID is NULL AND ({$wpdb->prefix}term_taxonomy.taxonomy = 'category' OR {$wpdb->prefix}term_taxonomy.taxonomy is NULL);");
-
-        /*
-         * Optimize table
-         */
-        $mytables = $wpdb->get_results("SHOW TABLES", ARRAY_N);
-
-        foreach ($mytables as $id => $table_name) {
-            //$wpdb->query("ALTER TABLE `$table_name[0]` ENGINE=MyISAM");
-            $results += $wpdb->query("OPTIMIZE TABLE `$table_name[0]`");
-        }
 
         return 'Row affected: ' . $results;
     }
