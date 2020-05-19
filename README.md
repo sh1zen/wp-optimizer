@@ -12,7 +12,7 @@
     Requires at least: 4.0.1
     Tested up to: 5.4
     Requires PHP: 7.0.0
-    Stable tag: 1.3.3
+    Stable tag: 1.3.6
     License: GNU v3.0
     License URI: https://github.com/sh1zen/wp-optimizer/blob/master/LICENSE
 
@@ -113,6 +113,13 @@ This section describes how to install the plugin. In general, there are 3 ways t
 * Enable better database management ( backup, specific optimizations, ...)
 * Enable HTML. JavaScript, CSS optimization
 
+**1.3.6**
+* speed improvement
+
+**1.3.5**
+* fixed mysqldump error 1044, added single-transaction
+* fixed mysqldump error handling
+* fixed tables repair result, before always outputting fail
 
 **1.3.3**
 * improved JavaScript handlers for Ajax requests
