@@ -245,10 +245,10 @@ class WOMod_Database extends WO_Module
                         <th><?php _e('MYSQL Dump Location:', 'wpopt'); ?></th>
                         <td><span>
                             <?php
-                            if (!empty($settings['mysqldump_path']))
-                                echo stripslashes($settings['mysqldump_path']);
+                            if ($path = wpopt_get_mysqlDump_command_path())
+                                echo $path;
                             else
-                                echo 'No dumper found or not valid path set, using sql export method (slower).';
+                                echo 'No mysqldump found or not valid path set. Using sql export method will be slower.';
                             ?>
                         </span></td>
                     </tr>
@@ -346,8 +346,10 @@ class WOMod_Database extends WO_Module
     {
         if (is_array($_args))
             list($action, $args) = $_args;
-        else
+        else {
             $action = $_args;
+            $args = array();
+        }
 
         switch ($action) {
 
@@ -444,11 +446,13 @@ class WOMod_Database extends WO_Module
 
                 $backup_path = trailingslashit($options['path']) . substr(md5(time()), 0, 7) . '.sql';
 
+                $res = true;
+
                 if (wpopt_get_mysqlDump_command_path($options['mysqldump_path'])) {
 
                     $res = WOPerformer::mysqlDump_db($backup_path, $options['excluded_tables'], $options['mysqldump_path']);
                 }
-                else {
+                elseif (!$res) {
 
                     $res = WOPerformer::queryDump_db($backup_path, $options['excluded_tables']);
                 }
@@ -621,7 +625,7 @@ class WOMod_Database extends WO_Module
                 $count = $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM $wpdb->comments WHERE (comment_approved = %s OR comment_approved = %s)", 'trash', 'post-trashed'));
                 break;
             case 'transient_options':
-                $count = $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM $wpdb->options WHERE option_name LIKE(%s)", '%_transient_%'));
+                $count = $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM $wpdb->options WHERE option_name LIKE (%s)", '%_transient_%'));
                 break;
             case 'orphan_postmeta':
                 $count = $wpdb->get_var("SELECT COUNT(meta_id) FROM $wpdb->postmeta WHERE post_id NOT IN (SELECT ID FROM $wpdb->posts)");
@@ -754,6 +758,8 @@ class WOMod_Database extends WO_Module
             <block class="wpopt">
                 <?php
 
+                $tab = array();//isset($_REQUEST['tab']) ? array($_REQUEST['tab']) : array();
+
                 echo wpopt_generateHTML_tabs_panels(array(
 
                     array('id'          => 'db-tables',
@@ -761,10 +767,11 @@ class WOMod_Database extends WO_Module
                           'panel-title' => __('Database tables', 'wpopt'),
                           'callback'    => array($this, 'render_tablesList_panel')
                     ),
-                    array('id'          => 'db-sweeper',
-                          'tab-title'   => __('Database sweeper', 'wpopt'),
-                          'panel-title' => __('Database Sweeper', 'wpopt'),
-                          'callback'    => array($this, 'render_sweeper_panel'),
+                    array('id'            => 'db-sweeper',
+                          'tab-title'     => __('Database sweeper', 'wpopt'),
+                          'panel-title'   => __('Database Sweeper', 'wpopt'),
+                          'callback'      => array($this, 'render_sweeper_panel'),
+                          'ajax-callback' => array($this->slug, 'render_sweeper_panel'),
                     ),
                     array('id'          => 'db-backup',
                           'tab-title'   => __('Backup Manager', 'wpopt'),
@@ -778,7 +785,7 @@ class WOMod_Database extends WO_Module
                           'callback'    => array($this, 'render_execSQL_panel'),
                           'args'        => array($this->settings['backup'])
                     )
-                ));
+                ), $tab);
                 ?>
             </block>
         </section>
@@ -792,15 +799,15 @@ class WOMod_Database extends WO_Module
                   'type'   => 'posts',
                   'sweeps' => array(__('Revision', 'wpopt')      => 'revisions',
                                     __('Auto Draft', 'wpopt')    => 'auto_drafts',
-                                    __('Deleted Posts', 'wpopt') => 'deleted_posts'
+                                    __('Deleted Posts', 'wpopt') => 'deleted_posts',
                   )
             ),
 
-            array('title'  => __('Post Metas', 'wpopt'),
+            array('title'  => __('Posts Metas', 'wpopt'),
                   'type'   => 'postmeta',
-                  'sweeps' => array(__('Orphan Postmeta', 'wpopt')     => 'orphan_postmeta',
-                                    __('Duplicated Postmeta', 'wpopt') => 'duplicated_postmeta',
-                                    __('Oembed Postmeta', 'wpopt')     => 'oembed_postmeta'
+                  'sweeps' => array(__('Orphan Postmeta', 'wpopt') => 'orphan_postmeta',
+                                    //__('Duplicated Postmeta', 'wpopt') => 'duplicated_postmeta',
+                                    __('Oembed Postmeta', 'wpopt') => 'oembed_postmeta'
                   )
             ),
 
@@ -812,14 +819,14 @@ class WOMod_Database extends WO_Module
                   )
             ),
 
-            array('title'  => __('Comment Metas', 'wpopt'),
+            array('title'  => __('Comments Metas', 'wpopt'),
                   'type'   => 'commentmeta',
                   'sweeps' => array(__('Orphan Comments', 'wpopt')     => 'orphan_commentmeta',
                                     __('Duplicated Comments', 'wpopt') => 'duplicated_commentmeta'
                   )
             ),
 
-            array('title'  => __('User Metas', 'wpopt'),
+            array('title'  => __('Users Metas', 'wpopt'),
                   'type'   => 'usermeta',
                   'sweeps' => array(__('Orphaned User Meta', 'wpopt')   => 'orphan_usermeta',
                                     __('Duplicated User Meta', 'wpopt') => 'duplicated_usermeta'
@@ -828,10 +835,17 @@ class WOMod_Database extends WO_Module
 
             array('title'  => __('Terms', 'wpopt'),
                   'type'   => 'terms',
-                  'sweeps' => array(__('Orphaned Term Meta', 'wpopt')         => 'orphan_termmeta',
-                                    __('Duplicated Term Meta', 'wpopt')       => 'duplicated_termmeta',
-                                    __('Orphaned Term Relationship', 'wpopt') => 'orphan_term_relationships',
-                                    __('Unused Terms', 'wpopt')               => 'unused_terms'
+                  'sweeps' => array(__('Orphaned Term Relationship', 'wpopt')    => 'orphan_term_relationships',
+                                    __('Unused Terms', 'wpopt')                  => 'unused_terms',
+                                    //__('Unused Terms with no children', 'wpopt') => 'unused_terms_no_child'
+                  )
+            ),
+
+            array('title'  => __('Terms metas', 'wpopt'),
+                  'type'   => 'termmeta',
+                  'sweeps' => array(__('Orphaned Term Meta', 'wpopt')   => 'orphan_termmeta',
+                                    __('Duplicated Term Meta', 'wpopt') => 'duplicated_termmeta',
+
                   )
             ),
 
@@ -855,6 +869,8 @@ class WOMod_Database extends WO_Module
         foreach ($sweepers as $sweeper) {
 
             $total = $this->total_count($sweeper['type']);
+            if ($total == 0)
+                continue;
             ?>
             <section class="list-tables">
                 <pre-table>
@@ -876,6 +892,7 @@ class WOMod_Database extends WO_Module
                     <?php
                     $alternate = false;
                     foreach ($sweeper['sweeps'] as $name => $sweep_id) {
+
                         $count = $this->count($sweep_id);
                         ?>
                         <tr <?php echo $alternate ? "class='alternate'" : ''; ?>>
