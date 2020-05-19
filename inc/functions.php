@@ -71,11 +71,18 @@ function wpopt_format_percentage($current, $total)
 
 
 /**
+ * Renders for panel-tabs
+ * support specif tabs with $limit_ids arg
+ *
  * @param $fields
+ * @param array $limit_ids
  * @return false|string
  */
-function wpopt_generateHTML_tabs_panels($fields)
+function wpopt_generateHTML_tabs_panels($fields, $limit_ids = array())
 {
+    if (!is_array($limit_ids))
+        $limit_ids = array($limit_ids);
+
     ob_start();
     ?>
     <div class="ar-tabs" id="ar-tabs">
@@ -92,8 +99,16 @@ function wpopt_generateHTML_tabs_panels($fields)
             ?>
         </ul><?php
         foreach ($fields as $field) {
+            /**
+             * Support for limiting the rendering to only specific tab
+             */
+            if (!empty($limit_ids)) {
+                if (!in_array($field['id'], $limit_ids))
+                    continue;
+            }
             ?>
-            <div id="<?php echo $field['id']; ?>" class="ar-tabcontent" aria-hidden="true">
+            <div id="<?php echo $field['id']; ?>" class="ar-tabcontent" aria-hidden="true"
+                <?php echo isset($field['ajax-callback']) ? "aria-ajax='" . json_encode($field['ajax-callback']) . "'" : '' ?>>
                 <p><br></p><?php
                 if (isset($field['panel-title'])) echo "<h2>{$field['panel-title']}</h2>";
                 if (isset($field['callback'])) {
