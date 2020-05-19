@@ -113,7 +113,6 @@ class WOPerformer
             case 'transient_options':
                 $query = $wpdb->get_col($wpdb->prepare("SELECT option_id FROM $wpdb->options WHERE option_name LIKE(%s)", '%_transient_%'));
                 if (!empty($query)) {
-
                     $wpdb->query("DELETE FROM $wpdb->options WHERE option_id IN (" . implode(', ', $query) . ") ");
                 }
                 break;
@@ -302,11 +301,10 @@ class WOPerformer
 
                 foreach ($tables as $table) {
                     $query_result = $wpdb->get_results("REPAIR TABLE " . $table);
-                    foreach ($query_result as $row) {
-                        if ($row->Msg_type == 'error') {
-                            if (!preg_match('/corrupt/i', $row->Msg_text)) {
-                                $succeeded++;
-                            }
+                    $succeeded++;
+                    if ($query_result->Msg_type == 'error') {
+                        if (preg_match('/corrupt/i', $query_result->Msg_text)) {
+                            $succeeded--;
                         }
                     }
                 }
@@ -428,7 +426,7 @@ class WOPerformer
         $cmd = escapeshellarg(wpopt_get_mysqlDump_command_path($mysqldump_locations));
 
         // We don't want to create a new DB
-        $cmd .= ' --no-create-db --hex-blob';
+        $cmd .= ' --single-transaction --no-create-db --hex-blob';
 
         // Username
         $cmd .= ' -u ' . escapeshellarg(DB_USER);
@@ -457,15 +455,9 @@ class WOPerformer
         // Pipe STDERR to STDOUT
         $cmd .= ' 2>&1';
 
-        $stderr = shell_exec($cmd);
+        $gone_ok = @shell_exec($cmd);
 
-        // Skip the new password warning that is output in mysql > 5.6
-        if (trim($stderr) === 'Warning: Using a password on the command line interface can be insecure.') {
-            $stderr = '';
-        }
-
-        if ($stderr) {
-            wpopt_write_log($stderr);
+        if (!$gone_ok) {
 
             if (file_exists($SQLfilename))
                 unlink($SQLfilename);
@@ -730,8 +722,7 @@ class WOPerformer
         /*
          * Clear wp transients
          */
-        $results += $wpdb->query("DELETE FROM {$wpdb->prefix}options WHERE option_name LIKE '_transient_%';");
-        $results += $wpdb->query("DELETE FROM {$wpdb->prefix}options WHERE option_name LIKE '_site_transient_%';");
+        $results += $wpdb->query("DELETE FROM {$wpdb->prefix}options WHERE option_name LIKE '%_transient_%';");
 
         /*
          * Delete posts and pages revisions and auto-draft
@@ -798,4 +789,3 @@ class WOPerformer
     }
 
 }
-
