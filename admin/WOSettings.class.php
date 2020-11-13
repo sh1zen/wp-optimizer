@@ -1,8 +1,5 @@
 <?php
 
-if (!defined('ABSPATH'))
-    exit;
-
 class WOSettings
 {
     private static $_instance;
@@ -16,29 +13,24 @@ class WOSettings
             'pjpeg'        => 'image/pjpeg'
         )
     );
-
     /**
      * Plugin options name
      */
     public $option_name;
-
     private $settings;
 
     public function __construct()
     {
         $this->option_name = 'wpopt';
 
-        $this->register_hooks();
+        add_action('admin_init', array($this, 'register_hooks'));
 
-        $this->settings = wp_parse_args(get_option($this->option_name, array()), self::$defaults);
+        $this->settings = array_merge(self::$defaults, get_option($this->option_name, array()));
     }
 
-    private function register_hooks()
+    public static function check($settings, $key)
     {
-        register_setting('wpopt-settings', $this->option_name, array(
-            'type'              => 'array',
-            'sanitize_callback' => array($this, 'validate')
-        ));
+        return isset($settings[$key]) and $settings[$key];
     }
 
     public static function getInstance()
@@ -53,6 +45,14 @@ class WOSettings
     public static function Initialize()
     {
         return self::$_instance = new self();
+    }
+
+    public function register_hooks()
+    {
+        register_setting('wpopt-settings', $this->option_name, array(
+            'type'              => 'array',
+            'sanitize_callback' => array($this, 'validate')
+        ));
     }
 
     public function checkOption()
@@ -166,5 +166,4 @@ class WOSettings
         else
             echo $this->settings;
     }
-
 }

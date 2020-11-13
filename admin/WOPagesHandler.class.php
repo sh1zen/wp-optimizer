@@ -84,7 +84,7 @@ class WOPagesHandler
         $wo_meter->lap('settings rendered');
 
         if(WPOPT_DEBUG)
-            echo $wo_meter->get_time() . ' - ' . $wo_meter->get_memory(true, true);
+            echo $wo_meter->get_time() . ' - ' . $wo_meter->get_memory(true);
     }
 
     private function enqueue_scripts()

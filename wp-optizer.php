@@ -8,30 +8,31 @@
  * Text Domain: gforms_file_uploader_plugin
  * Domain Path: /languages
  * Text Domain: wpopt
- * Version: 1.3.6
+ * Version: 1.3.12
  */
 
 define('WPOPT_FILE', __FILE__);
-define('WPOPT_ABSPATH', dirname(__FILE__));
-define('WPOPT_INCPATH', WPOPT_ABSPATH . '/inc');
-define('WPOPT_MODULES', WPOPT_ABSPATH . '/modules');
-define('WPOPT_ADMIN', WPOPT_ABSPATH . '/admin');
+define('WPOPT_ABSPATH', dirname(__FILE__) . '/');
+define('WPOPT_INCPATH', WPOPT_ABSPATH . 'inc/');
+define('WPOPT_MODULES', WPOPT_ABSPATH . 'modules/');
+define('WPOPT_ADMIN', WPOPT_ABSPATH . 'admin/');
 
-define('WPOPT_DEBUG', $_SERVER["SERVER_ADDR"] == '127.0.0.1');
+define('WPOPT_DEBUG', $_SERVER["SERVER_ADDR"] === '127.0.0.1');
 
 /**
  * Require essential
  */
-require_once WPOPT_INCPATH . '/functions.php';
-require_once WPOPT_INCPATH . '/performers.php';
-require_once WPOPT_INCPATH . '/WOMeter.class.php';
-require_once WPOPT_INCPATH . '/WOPlCache.class.php';
-require_once WPOPT_ADMIN . '/WOSettings.class.php';
-require_once WPOPT_INCPATH . '/WOMonitor.class.php';
+require_once WPOPT_INCPATH . 'back-compat.php';
+require_once WPOPT_INCPATH . 'functions.php';
+require_once WPOPT_INCPATH . 'performers.php';
+require_once WPOPT_INCPATH . 'WOMeter.class.php';
+require_once WPOPT_INCPATH . 'WOPlCache.class.php';
+require_once WPOPT_ADMIN . 'WOSettings.class.php';
+require_once WPOPT_INCPATH . 'WOMonitor.class.php';
 
-require_once WPOPT_INCPATH . '/WO_Module.php';
-require_once WPOPT_INCPATH . '/WOModuleHandler.class.php';
-require_once WPOPT_INCPATH . '/WOPerformer.class.php';
+require_once WPOPT_INCPATH . 'WO_Module.php';
+require_once WPOPT_INCPATH . 'WOModuleHandler.class.php';
+require_once WPOPT_INCPATH . 'WOPerformer.class.php';
 
 $wo_meter = new WOMeter();
 
@@ -48,14 +49,13 @@ WOModuleHandler::Initialize();
  * Load WP CLI command(s) on demand.
  */
 if (defined('WP_CLI') and WP_CLI) {
-    require WPOPT_ADMIN . '/WO_CLI.php';
+    require_once WPOPT_ADMIN . 'WO_CLI.php';
 }
-
 
 /**
  * Load main class
  */
-require_once WPOPT_ADMIN . '/WO.class.php';
+require_once WPOPT_ADMIN . 'WO.class.php';
 
 /**
  * Starts the plugin.
@@ -63,7 +63,6 @@ require_once WPOPT_ADMIN . '/WO.class.php';
  * @since 1.0.0
  */
 WO::Initialize();
-
 
 if (WPOPT_DEBUG and false) {
 

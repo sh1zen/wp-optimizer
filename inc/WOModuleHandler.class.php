@@ -45,6 +45,12 @@ class WOModuleHandler
             'slug'     => 'sysinfo',
             'autoload' => false
         );
+
+        $this->modules[] = array(
+            'name'     => 'Folder Size',
+            'slug'     => 'folder_size',
+            'autoload' => true
+        );
     }
 
     public static function getInstance()
@@ -58,7 +64,11 @@ class WOModuleHandler
 
     public static function Initialize()
     {
-        return self::$_instance = new self();
+        if (!isset(self::$_instance)) {
+            self::$_instance = new self();
+        }
+
+        return self::$_instance;
     }
 
     /**
@@ -134,9 +144,9 @@ class WOModuleHandler
 
         $class = "WOMod_" . $file_name;
 
-        if (file_exists(WPOPT_ABSPATH . "/modules/{$file_name}.class.php")) {
+        if (file_exists(WPOPT_ABSPATH . "modules/{$file_name}.class.php")) {
 
-            include_once WPOPT_ABSPATH . "/modules/{$file_name}.class.php";
+            include_once WPOPT_ABSPATH . "modules/{$file_name}.class.php";
         }
 
         if (!class_exists($class))

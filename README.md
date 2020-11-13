@@ -9,10 +9,10 @@
     Contributors: sh1zen
     Tags: optimize, database, images, media, minify, backup, repair, speed, seo, server, clean-up, updates 
     Donate link: https://www.paypal.me/sh1zen
-    Requires at least: 4.0.1
-    Tested up to: 5.4
-    Requires PHP: 7.0.0
-    Stable tag: 1.3.6
+    Requires at least: 4.2.0
+    Tested up to: 5.5
+    Requires PHP: 5.6.0
+    Stable tag: 1.3.12
     License: GNU v3.0
     License URI: https://github.com/sh1zen/wp-optimizer/blob/master/LICENSE
 
@@ -54,6 +54,7 @@ Furthermore, the clean-up feature will handle non used media and remove them, so
 **WP Optimizer - Extra Features**
 
 * ***Server Info:*** a detailed useful information about your server, databse, php and WordPress
+* ***Dashboard installation size:*** a useful tool to know the size of your WordPress installation, to disable it go to settings
 
 **Note**
 
@@ -112,6 +113,24 @@ This section describes how to install the plugin. In general, there are 3 ways t
 * Support for custom image optimization quality
 * Enable better database management ( backup, specific optimizations, ...)
 * Enable HTML. JavaScript, CSS optimization
+
+
+**1.3.12**
+* added dashboard widget to show WordPress installation size
+* added edit link to term list in database cleaner
+* improved translations support
+* improved settings handling
+
+**1.3.10**
+* added deep scan for terms
+* extended time limit for database operations
+* fixed some bugs 
+
+**1.3.8**
+* extended support to WordPress 5.5
+
+**1.3.7**
+* extended support from PHP 5.6 and WordPress 4.2
 
 **1.3.6**
 * speed improvement

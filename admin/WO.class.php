@@ -66,7 +66,7 @@ class WO
         if (load_textdomain($domain, WP_LANG_DIR . '/plugins/wp-optimzer/' . $mo_file))
             return true;
 
-        return load_textdomain($domain, WPOPT_ABSPATH . '/languages/' . $mo_file);
+        return load_textdomain($domain, WPOPT_ABSPATH . 'languages/' . $mo_file);
     }
 
     public static function getInstance()
@@ -90,7 +90,7 @@ class WO
          */
         if (wp_doing_ajax()) {
 
-            require_once WPOPT_ADMIN . '/WOAjax.class.php';
+            require_once WPOPT_ADMIN . 'WOAjax.class.php';
 
             /**
              * Set up the WP Optimizer ajax handler
@@ -107,7 +107,7 @@ class WO
 
         if (is_admin()) {
 
-            require_once WPOPT_ADMIN . '/WOPagesHandler.class.php';
+            require_once WPOPT_ADMIN . 'WOPagesHandler.class.php';
 
             /**
              * Load the admin pages handler and store it here

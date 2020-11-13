@@ -114,7 +114,8 @@ function wpopt_generateHTML_tabs_panels($fields, $limit_ids = array())
                 if (isset($field['callback'])) {
                     $args = isset($field['args']) ? $field['args'] : array();
 
-                    echo call_user_func_array($field['callback'], $args);
+                    if(is_callable($field['callback']))
+                        echo call_user_func_array($field['callback'], $args);
                 }
                 ?>
             </div>

@@ -543,7 +543,10 @@ class WOMod_Database extends WO_Module
                 $details = $wpdb->get_col($wpdb->prepare("SELECT tt.taxonomy FROM $wpdb->term_relationships AS tr INNER JOIN $wpdb->term_taxonomy AS tt ON tr.term_taxonomy_id = tt.term_taxonomy_id WHERE tt.taxonomy NOT IN ('$orphan_term_relationships_sql') AND tr.object_id NOT IN (SELECT ID FROM $wpdb->posts) LIMIT %d", $this->ajax_limit)); // WPCS: unprepared SQL ok.
                 break;
             case 'unused_terms':
-                $details = $wpdb->get_col($wpdb->prepare("SELECT t.name FROM $wpdb->terms AS t INNER JOIN $wpdb->term_taxonomy AS tt ON t.term_id = tt.term_id WHERE tt.count = %d AND t.term_id LIMIT %d", 0, $this->ajax_limit)); // WPCS: unprepared SQL ok.
+                $ids = $wpdb->get_col($wpdb->prepare("SELECT tt.term_id FROM $wpdb->term_taxonomy AS tt WHERE tt.count = 0 AND tt.parent <> 0 AND tt.parent NOT IN (SELECT term_id FROM $wpdb->term_taxonomy WHERE count = 0 ) LIMIT %d", $this->ajax_limit)); // WPCS: unprepared SQL ok.
+                foreach ($ids as $term_id) {
+                    $details[] = "<a target='_blank' href='" . get_edit_term_link( $term_id ) . "'>{$term_id}</a>";
+                }
                 break;
             case 'duplicated_postmeta':
                 $query = $wpdb->get_results($wpdb->prepare("SELECT COUNT(*) AS count, meta_key FROM $wpdb->postmeta GROUP BY post_id, meta_key, meta_value HAVING count > %d LIMIT %d", 1, $this->ajax_limit));
@@ -644,7 +647,8 @@ class WOMod_Database extends WO_Module
                 $count = $wpdb->get_var("SELECT COUNT(object_id) FROM $wpdb->term_relationships AS tr INNER JOIN $wpdb->term_taxonomy AS tt ON tr.term_taxonomy_id = tt.term_taxonomy_id WHERE tt.taxonomy NOT IN ('$orphan_term_relationships_sql') AND tr.object_id NOT IN (SELECT ID FROM $wpdb->posts)"); // WPCS: unprepared SQL ok.
                 break;
             case 'unused_terms':
-                $count = $wpdb->get_var($wpdb->prepare("SELECT COUNT(t.term_id) FROM $wpdb->terms AS t INNER JOIN $wpdb->term_taxonomy AS tt ON t.term_id = tt.term_id WHERE tt.count = %d AND t.term_id ", 0)); // WPCS: unprepared SQL ok.
+                //SELECT * FROM wp_term_taxonomy AS tt WHERE tt.count = 0 AND tt.parent <> 0 AND tt.parent NOT IN (SELECT term_id FROM wp_term_taxonomy WHERE count = 0 )
+                $count = $wpdb->get_var("SELECT COUNT(tt.term_id) FROM $wpdb->term_taxonomy AS tt WHERE tt.count = 0 AND tt.parent <> 0 AND tt.parent NOT IN (SELECT term_id FROM $wpdb->term_taxonomy WHERE count = 0 )");
                 break;
             case 'duplicated_postmeta':
                 $query = $wpdb->get_col($wpdb->prepare("SELECT COUNT(meta_id) AS count FROM $wpdb->postmeta GROUP BY post_id, meta_key, meta_value HAVING count > %d", 1));
@@ -737,6 +741,7 @@ class WOMod_Database extends WO_Module
 
     public function render()
     {
+        set_time_limit(60);
         ?>
         <section class="wpopt-wrap">
             <section class='wpopt'><h1>Database Manager</h1></section>
@@ -802,7 +807,6 @@ class WOMod_Database extends WO_Module
                                     __('Deleted Posts', 'wpopt') => 'deleted_posts',
                   )
             ),
-
             array('title'  => __('Posts Metas', 'wpopt'),
                   'type'   => 'postmeta',
                   'sweeps' => array(__('Orphan Postmeta', 'wpopt') => 'orphan_postmeta',
@@ -835,9 +839,8 @@ class WOMod_Database extends WO_Module
 
             array('title'  => __('Terms', 'wpopt'),
                   'type'   => 'terms',
-                  'sweeps' => array(__('Orphaned Term Relationship', 'wpopt')    => 'orphan_term_relationships',
-                                    __('Unused Terms', 'wpopt')                  => 'unused_terms',
-                                    //__('Unused Terms with no children', 'wpopt') => 'unused_terms_no_child'
+                  'sweeps' => array(__('Orphaned Term Relationship', 'wpopt') => 'orphan_term_relationships',
+                                    __('Unused Terms', 'wpopt')               => 'unused_terms',
                   )
             ),
 
@@ -938,7 +941,7 @@ class WOMod_Database extends WO_Module
     public function setting_fields()
     {
         return array(
-            array('type' => 'checkbox', 'name' => 'Auto optimization', 'id' => 'cron', 'value' => $this->settings['cron'] === 'true'),
+            array('type' => 'checkbox', 'name' => 'Auto optimization', 'id' => 'cron', 'value' => $this->settings['cron']),
             array('type' => 'separator', 'name' => 'Sweeps:'),
         );
     }

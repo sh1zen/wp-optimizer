@@ -11,10 +11,10 @@ class WOMod_Cron extends WO_Module
     {
         $default = array(
             'clear-time'  => '05:00:00',
-            'active'      => 'false',
-            'images'      => 'false',
-            'database'    => 'false',
-            'save_report' => 'true'
+            'active'      => false,
+            'images'      => false,
+            'database'    => false,
+            'save_report' => true
         );
 
         parent::__construct(
@@ -31,10 +31,10 @@ class WOMod_Cron extends WO_Module
     {
         return array(
             array('type' => 'time', 'name' => 'Auto Clear Time', 'id' => 'clear-time', 'value' => $this->settings['clear-time']),
-            array('type' => 'checkbox', 'name' => 'Active', 'id' => 'active', 'value' => $this->settings['active'] === 'true'),
-            array('type' => 'checkbox', 'name' => 'Auto optimize images ( daily uploads )', 'id' => 'images', 'value' => $this->settings['images'] === 'true'),
-            array('type' => 'checkbox', 'name' => 'Auto optimize Database', 'id' => 'database', 'value' => $this->settings['database'] === 'true'),
-            array('type' => 'checkbox', 'name' => 'Save optimization report', 'id' => 'save_report', 'value' => $this->settings['save_report'] === 'true')
+            array('type' => 'checkbox', 'name' => 'Active', 'id' => 'active', 'value' => WOSettings::check($this->settings, 'active')),
+            array('type' => 'checkbox', 'name' => 'Auto optimize images ( daily uploads )', 'id' => 'images', 'value' => WOSettings::check($this->settings, 'images')),
+            array('type' => 'checkbox', 'name' => 'Auto optimize Database', 'id' => 'database', 'value' => WOSettings::check($this->settings, 'database')),
+            array('type' => 'checkbox', 'name' => 'Save optimization report', 'id' => 'save_report', 'value' => WOSettings::check($this->settings, 'save_report'))
         );
     }
 
@@ -44,10 +44,10 @@ class WOMod_Cron extends WO_Module
 
         $this->set_schedule(strtotime($valid['clear-time']));
 
-        $valid['active'] = isset($input['active']) ? 'true' : 'false';
-        $valid['images'] = isset($input['images']) ? 'true' : 'false';
-        $valid['database'] = isset($input['database']) ? 'true' : 'false';
-        $valid['save_report'] = isset($input['save_report']) ? 'true' : 'false';
+        $valid['active'] = isset($input['active']);
+        $valid['images'] = isset($input['images']);
+        $valid['database'] = isset($input['database']);
+        $valid['save_report'] = isset($input['save_report']);
 
         return $valid;
     }
@@ -80,10 +80,10 @@ class WOMod_Cron extends WO_Module
 
         $performer = WOPerformer::getInstance();
 
-        if ((bool)$this->settings['active'] == false)
+        if (!WOSettings::check($this->settings, 'active'))
             return false;
 
-        if ($this->settings['images']) {
+        if (WOSettings::check($this->settings, 'images')) {
 
             $images = get_option('wpopt-imgs--todo');
 
@@ -93,12 +93,12 @@ class WOMod_Cron extends WO_Module
             }
         }
 
-        if ($this->settings['database'])
+        if (WOSettings::check($this->settings, 'database'))
             $full_report['db'] = $performer->clear_database_full();
 
         $timer->lap();
 
-        if ($this->settings['save_report'])
+        if (WOSettings::check($this->settings, 'save_report'))
             file_put_contents(WP_CONTENT_DIR . '/report.opt.txt', wpopt_generate_report($full_report, $timer), FILE_APPEND);
 
         if (defined('DOING_CRON') and DOING_CRON)

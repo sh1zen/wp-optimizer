@@ -54,9 +54,8 @@ class WO_Module
 
         $this->settings = WOSettings::getInstance()->get_settings($this->slug, false);
 
-        if(!$this->settings)
-        {
-            WOSettings::getInstance()->update_settings( $this->default_setting, $this->slug);
+        if (!$this->settings) {
+            WOSettings::getInstance()->update_settings($this->default_setting, $this->slug);
             $this->settings = $this->default_setting;
         }
 
@@ -132,8 +131,14 @@ class WO_Module
                                     echo "<input type='time' name='{$option_name}[{$field['id']}]' id='{$field['id']}' value='{$field['value']}'>";
                                     break;
 
+                                case "text":
                                 case "checkbox":
-                                    echo "<input class='apple-switch' type='checkbox' name='{$option_name}[{$field['id']}]' id='{$field['id']}' value='{$field['value']}'" . checked(1, $field['value'], false) . "/>";
+
+                                    $class = '';
+                                    if ($field['type'] === 'checkbox')
+                                        $class = "class='apple-switch'";
+
+                                    echo "<input {$class} type='{$field['type']}' name='{$option_name}[{$field['id']}]' id='{$field['id']}' value='{$field['value']}'" . checked(1, $field['value'], false) . "/>";
                                     break;
                             } ?>
 
@@ -148,7 +153,7 @@ class WO_Module
                 <input type="submit" class="button-primary" value="<?php _e('Save Changes', 'wpopt') ?>"/>
             </p>
             <?php
-            if ($_footer)
+            if ((bool)$_footer)
                 echo "<h4 class='wpopt-setting-footer'>{$_footer}</h4>";
             ?>
         </form>
@@ -200,10 +205,11 @@ class WO_Module
 
             switch ($field['type']) {
                 case 'checkbox':
-                    $valid[$field['id']] = isset($input[$field['id']]) ? 'true' : 'false';
+                    $valid[$field['id']] = isset($input[$field['id']]);
                     break;
 
                 case 'time':
+                case 'text':
                     $valid[$field['id']] = sanitize_text_field($input[$field['id']]);
                     break;
 

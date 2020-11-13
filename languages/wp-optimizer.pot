@@ -3,7 +3,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: wpopt-translation\n"
 "Report-Msgid-Bugs-To: https://github.com/sh1zen/wp-optimizer/issues\n"
-"POT-Creation-Date: 2020-05-19 16:22+0200\n"
+"POT-Creation-Date: 2020-11-13 21:14+0100\n"
 "PO-Revision-Date: 2020-05-13 02:34+0200\n"
 "Last-Translator: sh1zen\n"
 "Language-Team: sh1zen\n"
@@ -11,7 +11,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Poedit 2.3.1\n"
+"X-Generator: Poedit 2.4.2\n"
 "X-Poedit-Basepath: ..\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Poedit-SourceCharset: UTF-8\n"
@@ -111,39 +111,39 @@ msgstr ""
 msgid "Cache flushed."
 msgstr ""
 
-#: inc/WO_Module.php:78
+#: inc/WO_Module.php:77
 msgid "WP Optimizer::ajax_handler -> empty ajax handler."
 msgstr ""
 
-#: inc/WO_Module.php:148
+#: inc/WO_Module.php:153
 msgid "Save Changes"
 msgstr ""
 
-#: inc/WO_Module.php:162
+#: inc/WO_Module.php:167
 msgid "This Module is disabled for you or for your settings."
 msgstr ""
 
-#: inc/functions.php:170
+#: inc/functions.php:171
 msgid "Report"
 msgstr ""
 
-#: inc/functions.php:173
+#: inc/functions.php:174
 msgid "Time elapsed"
 msgstr ""
 
-#: inc/functions.php:174
+#: inc/functions.php:175
 msgid "Memory used"
 msgstr ""
 
-#: inc/functions.php:177
+#: inc/functions.php:178
 msgid "Images cleaned inserted"
 msgstr ""
 
-#: inc/functions.php:179
+#: inc/functions.php:180
 msgid "Errors"
 msgstr ""
 
-#: inc/functions.php:181
+#: inc/functions.php:182
 msgid "Number"
 msgstr ""
 
@@ -265,7 +265,7 @@ msgstr ""
 msgid "Backup Database"
 msgstr ""
 
-#: modules/database.class.php:218 modules/database.class.php:852
+#: modules/database.class.php:218 modules/database.class.php:855
 msgid "Option"
 msgstr ""
 
@@ -375,169 +375,169 @@ msgstr ""
 msgid "Invalid request."
 msgstr ""
 
-#: modules/database.class.php:766 modules/database/list-tables.php:30
+#: modules/database.class.php:771 modules/database/list-tables.php:30
 msgid "Tables"
 msgstr ""
 
-#: modules/database.class.php:767
+#: modules/database.class.php:772
 msgid "Database tables"
 msgstr ""
 
-#: modules/database.class.php:771
+#: modules/database.class.php:776
 msgid "Database sweeper"
 msgstr ""
 
-#: modules/database.class.php:772
+#: modules/database.class.php:777
 msgid "Database Sweeper"
 msgstr ""
 
-#: modules/database.class.php:777
+#: modules/database.class.php:782
 msgid "Backup Manager"
 msgstr ""
 
-#: modules/database.class.php:778
+#: modules/database.class.php:783
 msgid "Backup your database"
 msgstr ""
 
-#: modules/database.class.php:783 modules/database.class.php:784
+#: modules/database.class.php:788 modules/database.class.php:789
 msgid "Run SQL Query"
 msgstr ""
 
-#: modules/database.class.php:798
+#: modules/database.class.php:803
 msgid "Posts"
 msgstr ""
 
-#: modules/database.class.php:800
+#: modules/database.class.php:805
 msgid "Revision"
 msgstr ""
 
-#: modules/database.class.php:801
+#: modules/database.class.php:806
 msgid "Auto Draft"
 msgstr ""
 
-#: modules/database.class.php:802
+#: modules/database.class.php:807
 msgid "Deleted Posts"
 msgstr ""
 
-#: modules/database.class.php:806
+#: modules/database.class.php:810
 msgid "Posts Metas"
 msgstr ""
 
-#: modules/database.class.php:808
+#: modules/database.class.php:812
 msgid "Orphan Postmeta"
 msgstr ""
 
-#: modules/database.class.php:810
+#: modules/database.class.php:814
 msgid "Oembed Postmeta"
 msgstr ""
 
-#: modules/database.class.php:814
+#: modules/database.class.php:818
 msgid "Comments"
 msgstr ""
 
-#: modules/database.class.php:816
+#: modules/database.class.php:820
 msgid "Unapproved Comments"
 msgstr ""
 
-#: modules/database.class.php:817
+#: modules/database.class.php:821
 msgid "Spam Comments"
 msgstr ""
 
-#: modules/database.class.php:818
+#: modules/database.class.php:822
 msgid "Deleted Comments"
 msgstr ""
 
-#: modules/database.class.php:822
+#: modules/database.class.php:826
 msgid "Comments Metas"
 msgstr ""
 
-#: modules/database.class.php:824
+#: modules/database.class.php:828
 msgid "Orphan Comments"
 msgstr ""
 
-#: modules/database.class.php:825
+#: modules/database.class.php:829
 msgid "Duplicated Comments"
 msgstr ""
 
-#: modules/database.class.php:829
+#: modules/database.class.php:833
 msgid "Users Metas"
 msgstr ""
 
-#: modules/database.class.php:831
+#: modules/database.class.php:835
 msgid "Orphaned User Meta"
 msgstr ""
 
-#: modules/database.class.php:832
+#: modules/database.class.php:836
 msgid "Duplicated User Meta"
 msgstr ""
 
-#: modules/database.class.php:836
+#: modules/database.class.php:840
 msgid "Terms"
 msgstr ""
 
-#: modules/database.class.php:838
+#: modules/database.class.php:842
 msgid "Orphaned Term Relationship"
 msgstr ""
 
-#: modules/database.class.php:839
+#: modules/database.class.php:843
 msgid "Unused Terms"
 msgstr ""
 
-#: modules/database.class.php:844
+#: modules/database.class.php:847
 msgid "Terms metas"
 msgstr ""
 
-#: modules/database.class.php:846
+#: modules/database.class.php:849
 msgid "Orphaned Term Meta"
 msgstr ""
 
-#: modules/database.class.php:847
+#: modules/database.class.php:850
 msgid "Duplicated Term Meta"
 msgstr ""
 
-#: modules/database.class.php:854
+#: modules/database.class.php:857
 msgid "Transient Options"
 msgstr ""
 
-#: modules/database.class.php:860
+#: modules/database.class.php:863
 #, php-format
 msgid "If you click Details will be shown only %s items."
 msgstr ""
 
-#: modules/database.class.php:862
+#: modules/database.class.php:865
 msgid ""
 "Before doing any sweep it's recommended to make a backup of whole "
 "database."
 msgstr ""
 
-#: modules/database.class.php:879
+#: modules/database.class.php:882
 #, php-format
 msgid ""
 "There are a total of <strong class=\"attention\"><span>%1$s</span></"
 "strong> "
 msgstr ""
 
-#: modules/database.class.php:885 modules/database.class.php:920
+#: modules/database.class.php:888 modules/database.class.php:923
 msgid "Details"
 msgstr ""
 
-#: modules/database.class.php:886
+#: modules/database.class.php:889
 msgid "Count"
 msgstr ""
 
-#: modules/database.class.php:887
+#: modules/database.class.php:890
 msgid "% Of"
 msgstr ""
 
-#: modules/database.class.php:888
+#: modules/database.class.php:891
 msgid "Action"
 msgstr ""
 
-#: modules/database.class.php:916
+#: modules/database.class.php:919
 msgid "Sweep"
 msgstr ""
 
-#: modules/database.class.php:922
+#: modules/database.class.php:925
 msgid "None"
 msgstr ""
 
@@ -627,6 +627,18 @@ msgstr ""
 msgid ""
 "If no tables are selected, the action will run on all database tables. "
 "Be careful!"
+msgstr ""
+
+#: modules/folder_size.class.php:234
+msgid "Total"
+msgstr ""
+
+#: modules/folder_size.class.php:298
+msgid "Clears both widgets caches"
+msgstr ""
+
+#: modules/folder_size.class.php:298
+msgid "Clear widget cache"
 msgstr ""
 
 #: modules/sysinfo.class.php:36 modules/sysinfo.class.php:38

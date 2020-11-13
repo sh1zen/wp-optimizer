@@ -59,6 +59,8 @@ class WOPerformer
     {
         global $wpdb;
 
+        set_time_limit(60);
+
         $args = wp_parse_args($args, array(
             'excluded_taxonomies' => array(),
         ));
@@ -170,7 +172,8 @@ class WOPerformer
                 break;
 
             case 'unused_terms':
-                $query = $wpdb->get_results($wpdb->prepare("SELECT tt.term_taxonomy_id, t.term_id, tt.taxonomy FROM $wpdb->terms AS t INNER JOIN $wpdb->term_taxonomy AS tt ON t.term_id = tt.term_id WHERE tt.count = %d AND t.term_id", 0)); // WPCS: unprepared SQL ok.
+                //SELECT tt.term_taxonomy_id, t.term_id, tt.taxonomy FROM $wpdb->terms AS t INNER JOIN $wpdb->term_taxonomy AS tt ON t.term_id = tt.term_id WHERE tt.count = %d AND t.term_id
+                $query = $wpdb->get_results("SELECT tt.term_id, tt.taxonomy, tt.term_taxonomy_id FROM $wpdb->term_taxonomy  AS tt WHERE tt.count = 0 AND tt.parent <> 0 AND tt.parent NOT IN (SELECT term_id FROM $wpdb->term_taxonomy WHERE count = 0 )"); // WPCS: unprepared SQL ok.
                 if ($query) {
                     $check_wp_terms = false;
                     foreach ($query as $tax) {
@@ -564,34 +567,34 @@ class WOPerformer
         $optimizers = array();
 
         if (PHP_OS === 'WINNT') {
-            $optimizers['gifsicle_src'] = escapeshellarg(WPOPT_ABSPATH . '/inc/executables/' . 'gifsicle.exe');
-            $optimizers['optipng_src'] = escapeshellarg(WPOPT_ABSPATH . '/inc/executables/' . 'optipng.exe');
-            $optimizers['jpegtran_src'] = escapeshellarg(WPOPT_ABSPATH . '/inc/executables/' . 'jpegtran.exe');
-            $optimizers['webp_src'] = escapeshellarg(WPOPT_ABSPATH . '/inc/executables/' . 'cwebp.exe');
+            $optimizers['gifsicle_src'] = escapeshellarg(WPOPT_ABSPATH . 'inc/executables/' . 'gifsicle.exe');
+            $optimizers['optipng_src'] = escapeshellarg(WPOPT_ABSPATH . 'inc/executables/' . 'optipng.exe');
+            $optimizers['jpegtran_src'] = escapeshellarg(WPOPT_ABSPATH . 'inc/executables/' . 'jpegtran.exe');
+            $optimizers['webp_src'] = escapeshellarg(WPOPT_ABSPATH . 'inc/executables/' . 'cwebp.exe');
         }
         elseif (PHP_OS === 'Darwin') {
-            $optimizers['gifsicle_src'] = escapeshellarg(WPOPT_ABSPATH . '/inc/executables/' . 'gifsicle-mac');
-            $optimizers['optipng_src'] = escapeshellarg(WPOPT_ABSPATH . '/inc/executables/' . 'optipng-mac');
-            $optimizers['jpegtran_src'] = escapeshellarg(WPOPT_ABSPATH . '/inc/executables/' . 'jpegtran-mac');
-            $optimizers['webp_src'] = escapeshellarg(WPOPT_ABSPATH . '/inc/executables/' . 'cwebp-mac14');
+            $optimizers['gifsicle_src'] = escapeshellarg(WPOPT_ABSPATH . 'inc/executables/' . 'gifsicle-mac');
+            $optimizers['optipng_src'] = escapeshellarg(WPOPT_ABSPATH . 'inc/executables/' . 'optipng-mac');
+            $optimizers['jpegtran_src'] = escapeshellarg(WPOPT_ABSPATH . 'inc/executables/' . 'jpegtran-mac');
+            $optimizers['webp_src'] = escapeshellarg(WPOPT_ABSPATH . 'inc/executables/' . 'cwebp-mac14');
         }
         elseif (PHP_OS === 'SunOS') {
-            $optimizers['gifsicle_src'] = escapeshellarg(WPOPT_ABSPATH . '/inc/executables/' . 'gifsicle-sol');
-            $optimizers['optipng_src'] = escapeshellarg(WPOPT_ABSPATH . '/inc/executables/' . 'optipng-sol');
-            $optimizers['jpegtran_src'] = escapeshellarg(WPOPT_ABSPATH . '/inc/executables/' . 'jpegtran-sol');
-            $optimizers['webp_src'] = escapeshellarg(WPOPT_ABSPATH . '/inc/executables/' . 'cwebp-sol');
+            $optimizers['gifsicle_src'] = escapeshellarg(WPOPT_ABSPATH . 'inc/executables/' . 'gifsicle-sol');
+            $optimizers['optipng_src'] = escapeshellarg(WPOPT_ABSPATH . 'inc/executables/' . 'optipng-sol');
+            $optimizers['jpegtran_src'] = escapeshellarg(WPOPT_ABSPATH . 'inc/executables/' . 'jpegtran-sol');
+            $optimizers['webp_src'] = escapeshellarg(WPOPT_ABSPATH . 'inc/executables/' . 'cwebp-sol');
         }
         elseif (PHP_OS === 'FreeBSD') {
-            $optimizers['gifsicle_src'] = escapeshellarg(WPOPT_ABSPATH . '/inc/executables/' . 'gifsicle-fbsd');
-            $optimizers['optipng_src'] = escapeshellarg(WPOPT_ABSPATH . '/inc/executables/' . 'optipng-fbsd');
-            $optimizers['jpegtran_src'] = escapeshellarg(WPOPT_ABSPATH . '/inc/executables/' . 'jpegtran-fbsd');
-            $optimizers['webp_src'] = escapeshellarg(WPOPT_ABSPATH . '/inc/executables/' . 'cwebp-fbsd');
+            $optimizers['gifsicle_src'] = escapeshellarg(WPOPT_ABSPATH . 'inc/executables/' . 'gifsicle-fbsd');
+            $optimizers['optipng_src'] = escapeshellarg(WPOPT_ABSPATH . 'inc/executables/' . 'optipng-fbsd');
+            $optimizers['jpegtran_src'] = escapeshellarg(WPOPT_ABSPATH . 'inc/executables/' . 'jpegtran-fbsd');
+            $optimizers['webp_src'] = escapeshellarg(WPOPT_ABSPATH . 'inc/executables/' . 'cwebp-fbsd');
         }
         elseif (PHP_OS === 'Linux') {
-            $optimizers['gifsicle_src'] = escapeshellarg(WPOPT_ABSPATH . '/inc/executables/' . 'gifsicle-linux');
-            $optimizers['optipng_src'] = escapeshellarg(WPOPT_ABSPATH . '/inc/executables/' . 'optipng-linux');
-            $optimizers['jpegtran_src'] = escapeshellarg(WPOPT_ABSPATH . '/inc/executables/' . 'jpegtran-linux');
-            $optimizers['webp_src'] = escapeshellarg(WPOPT_ABSPATH . '/inc/executables/' . 'cwebp-linux');
+            $optimizers['gifsicle_src'] = escapeshellarg(WPOPT_ABSPATH . 'inc/executables/' . 'gifsicle-linux');
+            $optimizers['optipng_src'] = escapeshellarg(WPOPT_ABSPATH . 'inc/executables/' . 'optipng-linux');
+            $optimizers['jpegtran_src'] = escapeshellarg(WPOPT_ABSPATH . 'inc/executables/' . 'jpegtran-linux');
+            $optimizers['webp_src'] = escapeshellarg(WPOPT_ABSPATH . 'inc/executables/' . 'cwebp-linux');
         }
         return $optimizers;
     }
