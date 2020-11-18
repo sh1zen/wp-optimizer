@@ -12,7 +12,7 @@
     Requires at least: 4.2.0
     Tested up to: 5.5
     Requires PHP: 5.6.0
-    Stable tag: 1.3.12
+    Stable tag: 1.3.14
     License: GNU v3.0
     License URI: https://github.com/sh1zen/wp-optimizer/blob/master/LICENSE
 
@@ -114,6 +114,11 @@ This section describes how to install the plugin. In general, there are 3 ways t
 * Enable better database management ( backup, specific optimizations, ...)
 * Enable HTML. JavaScript, CSS optimization
 
+
+**1.3.14**
+* improved handling for the dashboard widget introduced in version 1.3.12
+* improved module for handling auto image optimization
+* fixed a bug introduced in previous version
 
 **1.3.12**
 * added dashboard widget to show WordPress installation size
