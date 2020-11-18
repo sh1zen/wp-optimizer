@@ -2,7 +2,6 @@
 
 /**
  * Used to monitor specific hooks to enable on-demand optimizations.
- *
  */
 class WOMonitor
 {
@@ -15,8 +14,13 @@ class WOMonitor
 
         $this->cache = WOPlCache::getInstance();
 
-        add_filter('wp_handle_upload', array($this, 'add_images_2_process'), 10, 2);
-        add_filter('wp_generate_attachment_metadata', array($this, 'add_images_2_process_thumbs'), 10, 3);
+        $cron_settings = WOSettings::getInstance()->get_settings('cron');
+
+        if(WOSettings::check($cron_settings, 'images')) {
+
+            add_filter('wp_handle_upload', array($this, 'add_images_2_process'), 10, 2);
+            add_filter('wp_generate_attachment_metadata', array($this, 'add_images_2_process_thumbs'), 10, 3);
+        }
     }
 
     public function add_images_2_process($upload, $context)
