@@ -741,7 +741,10 @@ class WOMod_Database extends WO_Module
 
     public function render()
     {
-        set_time_limit(60);
+        if(WPOPT_DEBUG)
+            set_time_limit(0);
+        else
+            set_time_limit(60);
         ?>
         <section class="wpopt-wrap">
             <section class='wpopt'><h1>Database Manager</h1></section>
