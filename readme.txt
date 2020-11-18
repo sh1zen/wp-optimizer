@@ -1,0 +1,203 @@
+=== WP Optimizer ===
+Contributors: sh1zen
+Tags: optimize, database, images, media, minify, backup, repair, speed, seo, server, clean-up, updates
+Donate link: https://www.paypal.me/sh1zen
+Requires at least: 4.2.0
+Tested up to: 5.5
+Requires PHP: 5.6.0
+Stable tag: 1.3.14
+License: GNU v3.0
+License URI: https://github.com/sh1zen/wp-optimizer/blob/master/LICENSE
+
+Allows you to remove unused media, optimize images, repair and backup your database, drop/empty tables and run selected queries. Supports automatic scheduling, WordPress updates manager, lazy load, HTML, JS & CSS compression and more.
+
+== Description ==
+ With WP Optimizer you can optimize your WordPress in all aspects with few and easy steps.
+ This plugin contains most requested features to keep your WordPress site run as fast as new, from database and images optimizer to updates blocker.
+
+**WHY USING WP Optimizer?**
+
+* **All In One:** image optimization, media clean-up, database manager, database optimizer, updates manager, server info and  HTML, JavaScript, CSS minifier all in one plugin.
+* **Performances** This plugin is built taking care on performance.
+* **Privacy:** This plugin does not collect nor send any personally identifiable data.
+* **No subscription email asked or required.**
+* **Multisite support.**
+* **Clean uninstall.**
+
+**WHY USING WP Optimizer - Database feature?**
+
+* **Overview:** The plugin will help you get an overview of what is happening in your database. It will report all unused/orphaned items that should be cleaned.
+* **Auto optimize:** You can specify what items should be cleaned/optimized/repaired, the process will run automatically based on your settings.
+* **Backup Manager:** The plugin will help you handle your database backups.
+* **Benefits:**  
+If you have been using WordPress for a while, then you should think absolutely about a database cleanup. 
+Indeed, your database may be full of garbage that makes your site sluggish and bloated such as old revisions, orphaned post meta, spam comments, etc. 
+You should clean-up this unnecessary data to reduce your database size and improve website speed and performance. 
+In addition, you will have quicker database backup since the file of your backup will be smaller.
+
+**WHY USING WP Optimizer - Images feature?**
+
+* **Privacy:** Any optimization will run on your server using php module imagick (or if not available: jpegtran, optipng, pngout, gifsicle, cwebp) so that your stuff will remain yours.
+* **Smooth Handling** With pixel-perfect optimization using progressive rendering, your images will be looks great.
+* **Auto optimize:** You can set images optimization process run automatically on every file uploaded.
+* **Save space:** By optimizing images you will save lot of space in WordPress media library, and your site will load faster due to less heavy images.
+* **Benefits:**  
+Thanks to image optimization your website will load faster, and the WordPress installation will take up less space.
+Furthermore, the clean-up feature will handle non used media and remove them, so you can have much space available.
+
+**WP Optimizer - Extra Features**
+
+* ***Server Info:*** a detailed useful information about your server, databse, php and WordPress
+* ***Dashboard installation size:*** a useful tool to know the size of your WordPress installation, to disable it go to settings
+
+**Note**
+
+* **Speed up your website is great to better connect with your visitors and to gain more SEO scores.**
+
+* **Some features are still under development or test phase so may not currently be available, sorry for the inconvenience, I will bring them up as soon as possible.**
+
+**DONATIONS**
+
+ This plugin is free and always will be, but if you are feeling generous and want to show your support, you can buy me a beer or coffee [here](https://www.paypal.me/sh1zen), I will really appreciate it.
+
+
+== Installation ==
+
+This section describes how to install the plugin. In general, there are 3 ways to install this plugin like any other WordPress plugin.
+
+**1. VIA WORDPRESS DASHBOARD**
+
+* Click on ‘Add New’ in the plugins dashboard
+* Search for 'WP Optimizer'
+* Click ‘Install Now’ button
+* Activate the plugin from the same page or from the Plugins Dashboard
+    
+**2. VIA UPLOADING THE PLUGIN TO WORDPRESS DASHBOARD**
+
+* Download the plugin to your computer from [https://wordpress.org/plugins/wp-optimizer/](https://wordpress.org/plugins/wp-optimizer/)
+* Click on 'Add New' in the plugins dashboard
+* Click on 'Upload Plugin' button
+* Select the zip file of the plugin that you have downloaded to your computer before
+* Click 'Install Now'
+*  Activate the plugin from the Plugins Dashboard
+    
+**3. VIA FTP**
+
+* Download the plugin to your computer from [https://wordpress.org/plugins/wp-optimizer/](https://wordpress.org/plugins/wp-optimizer/)
+* Unzip the zip file, which will extract the main directory
+* Upload the main directory (included inside the extracted folder) to the /wp-content/plugins/ directory in your web space
+* Activate the plugin from the Plugins Dashboard
+    
+**FOR MULTISITE INSTALLATION**
+
+* Log in to your primary site and go to "My Sites" » "Network Admin" » "Plugins"
+* Install the plugin following one of the above ways
+* Network activate the plugin
+    
+**INSTALLATION DONE, A NEW LABEL WILL BE DISPLAYED ON YOUR ADMIN MENU**
+
+== Upgrade Notice ==
+
+In the next releases will be introduced tons of new features.
+
+**Roadmap**
+
+* Support for custom image optimization quality
+* Better reports
+* Enable HTML, JavaScript and CSS optimization
+* Fully reset WordPress module
+
+== FAQ ==
+* What to do if I run in some issues after upgrade?
+
+  Deactivate the plugin and reactivate it, if this doesn't work try to uninstall and install again the plugin. That should work! 
+
+== Changelog ==
+
+**1.3.14**
+* improved handling for the dashboard widget introduced in version 1.3.12
+* improved module for handling auto image optimization
+* fixed a bug introduced in previous version
+
+**1.3.12**
+* added dashboard widget to show WordPress installation size
+* added edit link to term list in database cleaner
+* improved translations support
+* improved settings handling
+
+**1.3.10**
+* added deep scan for terms
+* extended time limit for database operations
+* fixed some bugs 
+
+**1.3.8**
+* extended support to WordPress 5.5
+
+**1.3.7**
+* extended support from PHP 5.6 and WordPress 4.2
+
+**1.3.6**
+* speed improvement
+
+**1.3.5**
+* fixed mysqldump error 1044, added single-transaction
+* fixed mysqldump error handling
+* fixed tables repair result, before always outputting fail
+
+**1.3.3**
+* improved JavaScript handlers for Ajax requests
+* fixed memory conversion from size to bytes
+* fixed WordPress heartbeat during restore process
+
+**1.3.2**
+* added database backup options (restore, download, delete)
+* added database conversion: MyISAM / InnoDB
+* added database action for all tables
+* added css animations for Ajax modules
+
+**1.3.1**
+* added Ajax support to modules
+* fixed css enqueue
+
+**1.3.0**
+* added WordPress updates manager
+* major code restructure
+* improved modules handler
+* full multilingual friendly
+* designed a better UI
+
+**1.2.0**
+* added basic wp-cron settings
+* added database module
+* added ajax support
+* improved user configuration
+* improved info module
+
+**1.1.8**
+* added multisite support
+* fixed settings handler
+* fixed activation/deactivation after upgrade
+
+**1.1.4**
+* improved timer and memory meters 
+
+**1.1.3**
+* added multilingual support
+* added modules support
+* new ui for setting page
+* improved core performance
+
+**1.1.1**
+* added uninstall cleanup procedure
+* added settings page
+* added meters to ensure speed and memory test on development phase 
+
+**1.0.0**
+* Initial release
+
+== Screenshots ==
+1. Main page
+2. Info page
+3. Settings page
+
+
