@@ -45,15 +45,14 @@ class WOMod_Folder_Size extends WO_Module
             )
         );
 
+
         if (!WOSettings::check($this->settings, 'active'))
             return;
 
-        $this->paths = array_merge(array(
-            ABSPATH,
-            WP_CONTENT_DIR
-        ), $this->settings['paths']);
+        $this->paths = array_filter($this->settings['paths']);
 
-        $this->paths = array_filter($this->paths);
+        if(empty($this->paths))
+            return;
 
         add_action("wp_dashboard_setup", array($this, 'dashboard_setup'));
     }
@@ -62,14 +61,14 @@ class WOMod_Folder_Size extends WO_Module
     {
         return array(
             array('type' => 'checkbox', 'name' => 'Active', 'id' => 'active', 'value' => WOSettings::check($this->settings, 'active')),
-            //array('type' => 'text', 'name' => 'paths', 'id' => 'paths', 'value' => implode(', ', $this->settings['paths'])),
+            array('type' => 'textarea', 'name' => 'paths', 'id' => 'paths', 'value' => implode(PHP_EOL, $this->settings['paths'])),
         );
     }
 
     public function validate_settings($input, $valid)
     {
         $valid['active'] = isset($input['active']);
-        //$valid['paths'] = array_map('trim', explode(',', sanitize_text_field(isset($input['images']))));
+        $valid['paths'] = array_map('sanitize_text_field', explode(PHP_EOL, $input['paths']));
 
         return $valid;
     }
@@ -90,7 +89,7 @@ class WOMod_Folder_Size extends WO_Module
             wp_add_dashboard_widget($this->generate_id($path), basename($path) . " size", array($this, "widget"), array($this, 'widget_handle'), array('path' => $path));
         }
 
-        add_action('admin_head', array("head_style"));
+        add_action('admin_head', array($this, "head_style"));
     }
 
     private function generate_id($path)
