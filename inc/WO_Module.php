@@ -134,11 +134,20 @@ class WO_Module
                                 case "text":
                                 case "checkbox":
 
-                                    $class = '';
-                                    if ($field['type'] === 'checkbox')
-                                        $class = "class='apple-switch'";
+                                    $_field_html_args = '';
 
-                                    echo "<input {$class} type='{$field['type']}' name='{$option_name}[{$field['id']}]' id='{$field['id']}' value='{$field['value']}'" . checked(1, $field['value'], false) . "/>";
+                                    switch ($field['type']) {
+
+                                        case "checkbox":
+                                            $_field_html_args .= " class='apple-switch'";
+                                    }
+
+                                    echo "<input {$_field_html_args} type='{$field['type']}' name='{$option_name}[{$field['id']}]' id='{$field['id']}' value='{$field['value']}'" . checked(1, $field['value'], false) . "/>";
+                                    break;
+
+                                case "textarea":
+                                    echo "<textarea rows='4' cols='50' type='{$field['type']}' name='{$option_name}[{$field['id']}]' id='{$field['id']}'" . checked(1, $field['value'], false) . "/>{$field['value']}</textarea>";
+
                                     break;
                             } ?>
 
