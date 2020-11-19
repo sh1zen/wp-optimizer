@@ -74,7 +74,7 @@ class WOMod_Cron extends WO_Module
 
     public function exec_cron()
     {
-        $timer = WO::getInstance()->monitor;
+        global $wo_meter;
 
         $full_report = array();
 
@@ -96,14 +96,14 @@ class WOMod_Cron extends WO_Module
         if (WOSettings::check($this->settings, 'database'))
             $full_report['db'] = $performer->clear_database_full();
 
-        $timer->lap();
+        $wo_meter->lap();
 
         if (WOSettings::check($this->settings, 'save_report'))
-            file_put_contents(WP_CONTENT_DIR . '/report.opt.txt', wpopt_generate_report($full_report, $timer), FILE_APPEND);
+            file_put_contents(WP_CONTENT_DIR . '/report.opt.txt', wpopt_generate_report($full_report), FILE_APPEND);
 
         if (defined('DOING_CRON') and DOING_CRON)
             die();
 
-        return array_merge(array('memory' => $timer->get_memory(), 'time' => $timer->get_time()), $full_report);
+        return array_merge(array('memory' => $wo_meter->get_memory(), 'time' => $wo_meter->get_time()), $full_report);
     }
 }
