@@ -18,7 +18,7 @@ class WO
     public $plugin_basename;
 
     /**
-     * Holds the WOMeter instance
+     * Holds the WOMonitor instance
      */
     public $monitor;
 
