@@ -162,17 +162,18 @@ function wpopt_write_log($log)
 
 /**
  * @param $data
- * @param WOMeter|null $timer
  * @return string
  */
-function wpopt_generate_report($data, WOMeter $timer = null)
+function wpopt_generate_report($data)
 {
+    global $wo_meter;
+
     $report = PHP_EOL . PHP_EOL;
     $report .= ' ' . __('Report', 'wpopt') . ': ' . PHP_EOL . PHP_EOL;
 
-    if (!is_null($timer)) {
-        $report .= ' ' . __('Time elapsed', 'wpopt') . ': ' . $timer->get_time() . PHP_EOL;
-        $report .= ' ' . __('Memory used', 'wpopt') . ': ' . $timer->get_memory() . PHP_EOL;
+    if (!is_null($wo_meter)) {
+        $report .= ' ' . __('Time elapsed', 'wpopt') . ': ' . $wo_meter->get_time() . PHP_EOL;
+        $report .= ' ' . __('Memory used', 'wpopt') . ': ' . $wo_meter->get_memory() . PHP_EOL;
     }
 
     $report .= ' ' . __('Images cleaned inserted', 'wpopt') . ': ' . count($data['images']) . PHP_EOL;
