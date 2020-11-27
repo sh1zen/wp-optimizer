@@ -3,6 +3,7 @@
 class WPOPT_PostCache
 {
     private static $_Instance;
+    private static $_args;
 
     /**
      * @var array Allowed post types to cache
@@ -41,17 +42,22 @@ class WPOPT_PostCache
 
         // to load
         add_filter('posts_pre_query', array($this, 'action_posts_pre_query'), 10, 2);
-
     }
 
     /**
      * Return a singleton instance of the current class
      *
+     * @param array $args
      * @return WPOPT_PostCache
      */
-    public static function Initialize()
+    public static function Initialize($args = array())
     {
         if (!self::$_Instance) {
+
+            self::$_args = array_merge(array(
+                'lifespan' => MINUTE_IN_SECONDS * 15
+            ), $args);
+
             self::$_Instance = new self();
         }
 
@@ -201,7 +207,7 @@ class WPOPT_PostCache
             'found_posts' => $this->found_posts,
         );
 
-        $this->cache_set($key, $data, "WpQuery_postcache", MINUTE_IN_SECONDS * 15);
+        $this->cache_set($key, $data, "WpQuery_postcache", self::$_args['lifespan']);
 
         $this->reset();
 
@@ -264,5 +270,3 @@ class WPOPT_PostCache
     }
 }
 
-
-WPOPT_PostCache::Initialize();

@@ -28,6 +28,17 @@ function wpopt_delete_files($target) {
 }
 
 
+function wpopt_timestr2seconds($time = '')
+{
+    if(!$time)
+        return 0;
+
+    list($hour, $minute) = explode(':', $time);
+
+    return $hour * HOUR_IN_SECONDS + $minute * MINUTE_IN_SECONDS;
+}
+
+
 function wpopt_add_timezone($timestamp = false)
 {
     if(!$timestamp)

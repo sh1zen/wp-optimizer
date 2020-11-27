@@ -25,7 +25,11 @@ class WOSettings
 
         add_action('admin_init', array($this, 'register_hooks'));
 
-        $this->settings = array_merge(self::$defaults, get_option($this->option_name, array()));
+        $option = get_option($this->option_name, array());
+        if(empty($option))
+            $option = array();
+
+        $this->settings = array_merge(self::$defaults, $option);
     }
 
     public static function check($settings, $key)

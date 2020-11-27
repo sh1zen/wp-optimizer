@@ -8,7 +8,7 @@
  * Text Domain: gforms_file_uploader_plugin
  * Domain Path: /languages
  * Text Domain: wpopt
- * Version: 1.3.30
+ * Version: 1.3.31
  */
 
 define('WPOPT_FILE', __FILE__);

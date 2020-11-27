@@ -12,7 +12,7 @@
     Requires at least: 4.2.0
     Tested up to: 5.6
     Requires PHP: 5.6.0
-    Stable tag: 1.3.15
+    Stable tag: 1.3.31
     License: GNU v3.0
     License URI: https://github.com/sh1zen/wp-optimizer/blob/master/LICENSE
 
@@ -117,7 +117,7 @@ This section describes how to install the plugin. In general, there are 3 ways t
 * Fully reset WordPress module
 
 
-**1.3.30**
+**1.3.31**
 * added WP_Query posts caching system
 * added storage to the core
 * tested compatibility with WordPress 5.6

@@ -9,7 +9,8 @@ class WOMod_Cache extends WO_Module
     public function __construct()
     {
         $default = array(
-            'wp_query_posts' => true
+            'wp_query_posts'   => true,
+            'storage_lifespan' => "00:15:00"
         );
 
         parent::__construct(
@@ -27,6 +28,10 @@ class WOMod_Cache extends WO_Module
     {
         if (WOSettings::check($this->settings, 'wp_query_posts')) {
             require_once __DIR__ . '/cache/postcache.class.php';
+
+            WPOPT_PostCache::Initialize(array(
+                'lifespan' => wpopt_timestr2seconds($this->settings['storage_lifespan'])
+            ));
         }
     }
 
@@ -34,6 +39,7 @@ class WOMod_Cache extends WO_Module
     {
         return array(
             array('type' => 'checkbox', 'name' => 'Cache WP_Query posts', 'id' => 'wp_query_posts', 'value' => WOSettings::check($this->settings, 'wp_query_posts')),
+            array('type' => 'time', 'name' => 'Cache lifespan', 'id' => 'storage_lifespan', 'value' => $this->settings['storage_lifespan']),
         );
     }
 

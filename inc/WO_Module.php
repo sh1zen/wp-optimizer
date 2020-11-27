@@ -136,6 +136,11 @@ class WO_Module
 
                         continue;
                     }
+                    elseif ($field['type'] === 'hidden') {
+                        echo "<input type='hidden' name='{$option_name}[{$field['id']}]' id='{$field['id']}' value='{$field['value']}'>";
+                        continue;
+                    }
+
                     ?>
                     <tr>
                         <td class="option"><b><?php _e($field['name'], 'wpopt'); ?>:</b></td>
@@ -269,6 +274,7 @@ class WO_Module
 
                 case 'time':
                 case 'text':
+                case 'hidden':
                     $valid[$field['id']] = sanitize_text_field($input[$field['id']]);
                     break;
 
@@ -276,8 +282,6 @@ class WO_Module
                     die("Settings failed to validate '{$field['type']}':: WO_Module -> validate_settings");
             }
         }
-
-        var_dump($valid);
 
         return $valid;
     }
