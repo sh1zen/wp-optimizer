@@ -64,9 +64,24 @@ class WO_Module
         if ($this->on_screen) {
             $this->enqueue_scripts();
         }
+
+        if (isset($_POST['wpopt-exec-action'])) {
+
+            /**
+             * check if the request has been generated in the last 24hs
+             */
+            if ($_POST['wpopt-exec-module'] === $this->slug and md5(date("d/m/Y")) === $_POST['wpopt-exec-action']) {
+                $this->process_custom_options($_POST);
+            }
+        }
     }
 
     public function enqueue_scripts()
+    {
+    }
+
+
+    protected function process_custom_options($options)
     {
     }
 
@@ -88,7 +103,6 @@ class WO_Module
         }
 
         $_header = $this->get_setting_content('header');
-        $_footer = $this->get_setting_content('footer');
         //$_sidebar = $this->get_setting_content('sidebar');
 
         $option_name = WOSettings::getInstance()->option_name;
@@ -106,6 +120,9 @@ class WO_Module
             settings_fields('wpopt-settings');
             ?>
             <table class="wpopt wpopt-settings">
+                <thead>
+                <tr></tr>
+                </thead>
                 <tbody>
                 <?php
                 foreach ($this->setting_fields() as $field) {
@@ -121,8 +138,8 @@ class WO_Module
                     }
                     ?>
                     <tr>
-                        <td><b><?php _e($field['name'], 'wpopt'); ?>:</b></td>
-                        <td>
+                        <td class="option"><b><?php _e($field['name'], 'wpopt'); ?>:</b></td>
+                        <td class="value">
                             <label for="<?php echo $field['id'] ?>"></label>
                             <?php
                             switch ($field['type']) {
@@ -161,11 +178,9 @@ class WO_Module
             <p class="submit wpopt-submit">
                 <input type="submit" class="button-primary" value="<?php _e('Save Changes', 'wpopt') ?>"/>
             </p>
-            <?php
-            if ((bool)$_footer)
-                echo "<h4 class='wpopt-setting-footer'>{$_footer}</h4>";
-            ?>
         </form>
+        <hr class="wpopt-hr">
+        <?php echo "<section class='wpopt-setting-footer'>" . $this->get_setting_content('footer') . "</section>"; ?>
         <?php
         return ob_get_clean();
     }
@@ -186,12 +201,47 @@ class WO_Module
      */
     public function get_setting_content($context)
     {
-        return false;
+        return '';
     }
 
     public function setting_fields()
     {
         return array();
+    }
+
+    public function custom_options_form($options = array())
+    {
+        ob_start();
+        ?>
+        <form method="POST">
+            <block class="submit">
+                <input type="hidden" name="wpopt-exec-action" value="<?php echo md5(date("d/m/Y")); ?>">
+                <input type="hidden" name="wpopt-exec-module" value="<?php echo $this->slug; ?>">
+                <p>
+                    <?php
+                    foreach ($options as $option) {
+                        if (empty($option)) {
+                            echo '<br class="clear"><br class="clear">';
+                        }
+                        elseif ($option === 'hr') {
+                            echo '<hr class="wpopt-hr">';
+                        }
+                        else {
+                            $option = array_merge(array(
+                                'name'         => '',
+                                'value'        => '',
+                                'button_types' => '',
+                            ), $option);
+
+                            echo "<input name='{$option['name']}' type='submit' value='{$option['value']}' class='button {$option['button_types']} button-large'>";
+                        }
+                    }
+                    ?>
+                </p>
+            </block>
+        </form>
+        <?php
+        return ob_get_clean();
     }
 
     public function render()
@@ -226,6 +276,8 @@ class WO_Module
                     die("Settings failed to validate '{$field['type']}':: WO_Module -> validate_settings");
             }
         }
+
+        var_dump($valid);
 
         return $valid;
     }

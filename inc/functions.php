@@ -13,6 +13,31 @@ function wpopt_verify_nonce($name = 'wpopt', $nonce = false)
     return wp_verify_nonce($nonce, $name);
 }
 
+function wpopt_delete_files($target) {
+    if(is_dir($target)){
+        $files = glob( $target . '*', GLOB_MARK ); //GLOB_MARK adds a slash to directories returned
+
+        foreach( $files as $file ){
+            wpopt_delete_files( $file );
+        }
+
+        rmdir( $target );
+    } elseif(is_file($target)) {
+        unlink( $target );
+    }
+}
+
+
+function wpopt_add_timezone($timestamp = false)
+{
+    if(!$timestamp)
+        $timestamp = time();
+
+    $timezone = get_option('gmt_offset') * HOUR_IN_SECONDS;
+
+    return $timestamp - $timezone;
+}
+
 /**
  * @param $size
  * @return string
@@ -180,7 +205,9 @@ function wpopt_generate_report($data)
     $report .= ' ' . $data['db'] . PHP_EOL;
     $report .= ' ' . __('Errors', 'wpopt') . ': ' . PHP_EOL;
     $report .= ' --------------------------------- ' . PHP_EOL;
-    $report .= ' ' . __('Number', 'wpopt') . ': ' . count($data['errors']) . PHP_EOL;
+
+    if(isset($data['errors']))
+        $report .= ' ' . __('Number', 'wpopt') . ': ' . count($data['errors']) . PHP_EOL;
 
     foreach ($data['errors'] as $error)
         $report .= ' - ' . $error . PHP_EOL;

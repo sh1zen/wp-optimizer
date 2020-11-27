@@ -51,6 +51,12 @@ class WOModuleHandler
             'slug'     => 'folder_size',
             'autoload' => true
         );
+
+        $this->modules[] = array(
+            'name'     => 'Cache',
+            'slug'     => 'cache',
+            'autoload' => true
+        );
     }
 
     public static function getInstance()

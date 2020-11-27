@@ -466,13 +466,24 @@ block.wpopt :after {
 }
 
 .wpopt-submit {
-    margin: 2em 0 0 0 !important
+    margin: 2em 0 0 0 !important;
+    padding: 0;
 }
 
 table.wpopt {
     width: 100%;
     margin: auto;
     border-collapse: collapse
+}
+
+table.wpopt tbody td.option {
+    text-align: left;
+    width: 40%;
+}
+
+table.wpopt tbody td.value {
+    text-align: right;
+    width: 60%;
 }
 
 .wpopt-thead, table.wpopt thead {
@@ -510,6 +521,12 @@ table.wpopt td {
 
 .wpopt-centered {
     text-align: center
+}
+
+.wpopt-hr{
+    border-top: none;
+    border-bottom: 2px solid #66b2e8;
+    margin: 2em 0;
 }
 
 @media only screen and (max-width: 1192px) {

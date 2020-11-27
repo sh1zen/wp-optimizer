@@ -8,7 +8,7 @@
  * Text Domain: gforms_file_uploader_plugin
  * Domain Path: /languages
  * Text Domain: wpopt
- * Version: 1.3.15
+ * Version: 1.3.30
  */
 
 define('WPOPT_FILE', __FILE__);
@@ -33,12 +33,15 @@ require_once WPOPT_INCPATH . 'WOMonitor.class.php';
 require_once WPOPT_INCPATH . 'WO_Module.php';
 require_once WPOPT_INCPATH . 'WOModuleHandler.class.php';
 require_once WPOPT_INCPATH . 'WOPerformer.class.php';
+require_once WPOPT_INCPATH . 'WOStorage.class.php';
 
 $wo_meter = new WOMeter();
 
 /**
  * Initialize framework classes
  */
+WOStorage::getInstance();
+
 WOPlCache::Initialize();
 
 WOSettings::Initialize();

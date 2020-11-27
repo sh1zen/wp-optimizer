@@ -10,7 +10,7 @@
     Tags: optimize, database, images, media, minify, backup, repair, speed, seo, server, clean-up, updates 
     Donate link: https://www.paypal.me/sh1zen
     Requires at least: 4.2.0
-    Tested up to: 5.5
+    Tested up to: 5.6
     Requires PHP: 5.6.0
     Stable tag: 1.3.15
     License: GNU v3.0
@@ -55,6 +55,7 @@ Furthermore, the clean-up feature will handle non used media and remove them, so
 
 * ***Server Info:*** a detailed useful information about your server, databse, php and WordPress
 * ***Dashboard installation size:*** a useful tool to know the size of your WordPress installation, to disable it go to settings
+* ***Query caching system:*** a useful tool to speed up your WordPress loading time, works by caching WordPress query for some time, set by user
 
 **Note**
 
@@ -111,9 +112,16 @@ This section describes how to install the plugin. In general, there are 3 ways t
 
 ## Roadmap
 * Support for custom image optimization quality
-* Enable better database management ( backup, specific optimizations, ...)
-* Enable HTML. JavaScript, CSS optimization
+* Better reports
+* Enable HTML, JavaScript and CSS optimization
+* Fully reset WordPress module
 
+
+**1.3.30**
+* added WP_Query posts caching system
+* added storage to the core
+* tested compatibility with WordPress 5.6
+* fixed some bugs and performance related issues
 
 **1.3.15**
 * improved handling for the dashboard widget introduced in version 1.3.12

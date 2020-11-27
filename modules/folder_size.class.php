@@ -51,7 +51,7 @@ class WOMod_Folder_Size extends WO_Module
 
         $this->paths = array_filter($this->settings['paths']);
 
-        if(empty($this->paths))
+        if (empty($this->paths))
             return;
 
         add_action("wp_dashboard_setup", array($this, 'dashboard_setup'));
@@ -103,7 +103,6 @@ class WOMod_Folder_Size extends WO_Module
      *
      * @since 1.0
      * @access public
-     * @uses MP6 Special rules if the plugin is active
      */
     public function head_style()
     {
@@ -165,8 +164,6 @@ class WOMod_Folder_Size extends WO_Module
 
     /**
      * Iterates through a folder and get its size
-     *
-     * From: http://stackoverflow.com/a/18288029
      *
      * @param string $directory
      * @return string Formatted size
@@ -283,18 +280,17 @@ class WOMod_Folder_Size extends WO_Module
      *
      * @since 1.0
      * @access public
-     * @uses delete_transient Reset cache
      */
     public function widget_handle()
     {
         if (isset($_POST[$this->transient_prefix])) {
 
             foreach ($this->paths as $path) {
-                delete_transient($this->transient_prefix . $this->generate_id($path));
+                delete_transient($this->transient_prefix . basename($path));
             }
         }
         $name = $this->transient_prefix;
-        $cache_msg = count($this->paths) > 1 ? __('Clears both widgets caches', 'wpopt') : __('Clear widget cache', 'wpopt');
-        echo "<p><label><input name='$name' id='$name' type='checkbox' value='1' /> Check to empty the cache</label><br /><em style='margin-left: 23px'>$cache_msg</em></p>";
+        $cache_msg = count($this->paths) > 1 ? __('Clears all widgets caches', 'wpopt') : __('Clear widget cache', 'wpopt');
+        echo "<p><label><input name='$name' id='$name' type='checkbox' value='1' />" . __('Check to empty the cache', 'wpopt') . "</label><br /><em style='margin-left: 23px'>$cache_msg</em></p>";
     }
 }

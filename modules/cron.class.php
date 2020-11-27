@@ -54,11 +54,13 @@ class WOMod_Cron extends WO_Module
 
     public function set_schedule($time, $recurrence = 'daily')
     {
+        $time = wpopt_add_timezone($time);
+
         $this->deactivate();
 
         if (!wp_next_scheduled('wpopt-cron')) {
 
-            wp_schedule_event($time + 60, $recurrence, 'wpopt-cron');
+            wp_schedule_event($time, $recurrence, 'wpopt-cron');
         }
     }
 

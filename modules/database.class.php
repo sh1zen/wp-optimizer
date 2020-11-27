@@ -1,7 +1,5 @@
 <?php
 
-define('WPOPT_DB_PATH', __DIR__);
-
 class WOMod_Database extends WO_Module
 {
     public $scopes = array('admin-page');

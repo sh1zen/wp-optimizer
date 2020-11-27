@@ -154,6 +154,9 @@ class WOSettings
         if (empty($context))
             return false;
 
+        if(!isset($this->settings[$context]))
+            $this->settings[$context] = array();
+
         $this->settings[$context] = wp_parse_args($option_data, $this->settings[$context]);
 
         return update_option($this->option_name, $this->settings);
