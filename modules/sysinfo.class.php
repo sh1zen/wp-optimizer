@@ -1,11 +1,6 @@
 <?php
 
-/**
- * Host info
- *
- * @since 1.1.0
- * @access public
- */
+
 class WOMod_Sysinfo extends WO_Module
 {
     public static $name = "System Info";

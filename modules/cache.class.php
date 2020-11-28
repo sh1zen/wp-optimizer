@@ -8,7 +8,7 @@ class WOMod_Cache extends WO_Module
     {
         $default = array(
             'wp_query_posts'   => true,
-            'storage_lifespan' => "00:15:00"
+            'storage_lifespan' => "01:00:00"
         );
 
         parent::__construct(
@@ -16,6 +16,9 @@ class WOMod_Cache extends WO_Module
                 'settings' => $default
             )
         );
+
+        add_action('save_post', array($this, 'flusher_cache'), 10, 0);
+        add_action('delete_post', array($this, 'flusher_cache'), 10, 0);
 
         if (!(is_admin() or wp_doing_ajax() or wp_doing_cron())) {
 
@@ -67,9 +70,12 @@ class WOMod_Cache extends WO_Module
     protected function process_custom_options($options)
     {
         if (isset($options['reset_cache'])) {
-            WOStorage::getInstance()->remove("WpQuery_postcache");
+            $this->flusher_cache();
         }
     }
 
-
+    public function flusher_cache()
+    {
+        WOStorage::getInstance()->remove("WpQuery_postcache");
+    }
 }

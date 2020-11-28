@@ -4,7 +4,7 @@ class WOMod_Folder_Size extends WO_Module
 {
     public static $name = "Directory Size";
 
-    public $scopes = array('settings');
+    public $scopes = array('settings', 'autoload');
 
     /**
      * Transient time 8 hours
