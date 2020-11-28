@@ -8,6 +8,8 @@
  */
 class WOMod_Sysinfo extends WO_Module
 {
+    public static $name = "System Info";
+
     public $scopes = array('admin-page');
 
     public function __construct()

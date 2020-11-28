@@ -125,7 +125,10 @@ class WOStorage
     {
         $path = $this->generate_path($context, $key);
 
-        return flex_calc_folder_size($path);
+        if(!file_exists($path))
+            return "0 B";
+
+        return wpopt_bytes2size(wpopt_calc_folder_size($path));
     }
 
     public function autosave()

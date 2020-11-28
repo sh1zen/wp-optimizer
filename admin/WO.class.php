@@ -103,7 +103,7 @@ class WO
         /**
          * Instancing all active modules
          */
-        WOModuleHandler::getInstance()->create_instances();
+        WOModuleHandler::getInstance()->setup_modules();
 
         if (is_admin()) {
 

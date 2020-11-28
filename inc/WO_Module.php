@@ -3,6 +3,11 @@
 class WO_Module
 {
     /**
+     * set the module name
+    */
+    public static $name = null;
+
+    /**
      * List of Module active set
      * values: settings, admin-page, autoload, cron
      * default: empty
@@ -233,12 +238,21 @@ class WO_Module
                         }
                         else {
                             $option = array_merge(array(
+                                'before'       => false,
                                 'name'         => '',
                                 'value'        => '',
                                 'button_types' => '',
                             ), $option);
 
+                            if ($option['before']) {
+                                echo "<p><block class='wpopt-options--before'>{$option['before']}</block>";
+                            }
+
                             echo "<input name='{$option['name']}' type='submit' value='{$option['value']}' class='button {$option['button_types']} button-large'>";
+
+                            if ($option['before']) {
+                                echo '</p>';
+                            }
                         }
                     }
                     ?>

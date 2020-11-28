@@ -543,7 +543,7 @@ class WOMod_Database extends WO_Module
             case 'unused_terms':
                 $ids = $wpdb->get_col($wpdb->prepare("SELECT tt.term_id FROM $wpdb->term_taxonomy AS tt WHERE tt.count = 0 AND tt.parent <> 0 AND tt.parent NOT IN (SELECT term_id FROM $wpdb->term_taxonomy WHERE count = 0 ) LIMIT %d", $this->ajax_limit)); // WPCS: unprepared SQL ok.
                 foreach ($ids as $term_id) {
-                    $details[] = "<a target='_blank' href='" . get_edit_term_link( $term_id ) . "'>{$term_id}</a>";
+                    $details[] = "<a target='_blank' href='" . get_edit_term_link($term_id) . "'>{$term_id}</a>";
                 }
                 break;
             case 'duplicated_postmeta':
@@ -739,7 +739,7 @@ class WOMod_Database extends WO_Module
 
     public function render()
     {
-        if(WPOPT_DEBUG)
+        if (WPOPT_DEBUG)
             set_time_limit(0);
         else
             set_time_limit(60);

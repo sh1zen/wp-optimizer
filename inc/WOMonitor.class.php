@@ -12,7 +12,7 @@ class WOMonitor
     {
         $this->mime_types = WOSettings::getInstance()->get_settings('mime-types');
 
-        $this->cache = WOPlCache::getInstance();
+        $this->cache = WOCache::getInstance();
 
         $cron_settings = WOSettings::getInstance()->get_settings('cron');
 

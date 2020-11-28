@@ -1,7 +1,5 @@
 <?php
 
-define('WPOPT_CACHE_PATH', __DIR__);
-
 class WOMod_Cache extends WO_Module
 {
     public $scopes = array('settings', 'autoload');
@@ -20,6 +18,7 @@ class WOMod_Cache extends WO_Module
         );
 
         if (!(is_admin() or wp_doing_ajax() or wp_doing_cron())) {
+
             $this->loader();
         }
     }
@@ -39,7 +38,7 @@ class WOMod_Cache extends WO_Module
     {
         return array(
             array('type' => 'checkbox', 'name' => 'Cache WP_Query posts', 'id' => 'wp_query_posts', 'value' => WOSettings::check($this->settings, 'wp_query_posts')),
-            array('type' => 'time', 'name' => 'Cache lifespan', 'id' => 'storage_lifespan', 'value' => $this->settings['storage_lifespan']),
+            array('type' => 'time', 'name' => 'Cache Lifespan', 'id' => 'storage_lifespan', 'value' => $this->settings['storage_lifespan']),
         );
     }
 
@@ -54,7 +53,12 @@ class WOMod_Cache extends WO_Module
     private function footer_options()
     {
         $options = array(
-            array('name' => 'reset cache', 'value' => 'reset', 'button_types' => 'button-danger')
+            array(
+                'before'       => "<b>" . WOStorage::getInstance()->get_size('WpQuery_postcache') . "</b>",
+                'name'         => 'reset cache',
+                'value'        => 'Reset Cache',
+                'button_types' => 'button-danger'
+            )
         );
 
         return $this->custom_options_form($options);

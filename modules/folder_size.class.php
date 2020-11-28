@@ -2,6 +2,8 @@
 
 class WOMod_Folder_Size extends WO_Module
 {
+    public static $name = "Directory Size";
+
     public $scopes = array('settings');
 
     /**
@@ -44,7 +46,6 @@ class WOMod_Folder_Size extends WO_Module
                 'settings' => $default
             )
         );
-
 
         if (!WOSettings::check($this->settings, 'active'))
             return;

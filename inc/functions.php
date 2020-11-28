@@ -27,6 +27,28 @@ function wpopt_delete_files($target) {
     }
 }
 
+/**
+ * @param $directory
+ * @return false|int|mixed
+ */
+function wpopt_calc_folder_size($directory)
+{
+    $totalSize = 0;
+    $directoryArray = scandir($directory);
+
+    foreach ($directoryArray as $key => $fileName) {
+        if ($fileName != ".." and $fileName != ".") {
+            if (is_dir($directory . "/" . $fileName)) {
+                $totalSize = $totalSize + wpopt_calc_folder_size($directory . "/" . $fileName);
+            }
+            else if (is_file($directory . "/" . $fileName)) {
+                $totalSize = $totalSize + filesize($directory . "/" . $fileName);
+            }
+        }
+    }
+    return $totalSize;
+}
+
 
 function wpopt_timestr2seconds($time = '')
 {

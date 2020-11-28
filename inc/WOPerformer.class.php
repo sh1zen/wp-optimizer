@@ -61,9 +61,9 @@ class WOPerformer
 
         set_time_limit(60);
 
-        $args = wp_parse_args($args, array(
+        $args = array_merge(array(
             'excluded_taxonomies' => array(),
-        ));
+        ), $args);
 
         $query = array();
 

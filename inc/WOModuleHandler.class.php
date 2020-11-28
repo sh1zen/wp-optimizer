@@ -1,8 +1,5 @@
 <?php
 
-if (!defined('ABSPATH'))
-    exit();
-
 class WOModuleHandler
 {
     private static $_instance;
@@ -11,52 +8,9 @@ class WOModuleHandler
 
     private $modules_object;
 
-    public function __construct()
+    private function __construct()
     {
-        $this->modules_object = WOPlCache::getInstance();
-
-        $this->set_modules();
-    }
-
-    private function set_modules()
-    {
-        $this->modules = array();
-
-        $this->modules[] = array(
-            'name'     => 'Cron',
-            'slug'     => 'cron',
-            'autoload' => true
-        );
-
-        $this->modules[] = array(
-            'name'     => 'Database',
-            'slug'     => 'database',
-            'autoload' => false
-        );
-
-        $this->modules[] = array(
-            'name'     => 'Updates Manager',
-            'slug'     => 'updates',
-            'autoload' => true
-        );
-
-        $this->modules[] = array(
-            'name'     => 'System Info',
-            'slug'     => 'sysinfo',
-            'autoload' => false
-        );
-
-        $this->modules[] = array(
-            'name'     => 'Folder Size',
-            'slug'     => 'folder_size',
-            'autoload' => true
-        );
-
-        $this->modules[] = array(
-            'name'     => 'Cache',
-            'slug'     => 'cache',
-            'autoload' => true
-        );
+        $this->modules_object = WOCache::getInstance();
     }
 
     public static function getInstance()
@@ -85,48 +39,34 @@ class WOModuleHandler
      * If a user disable some modules, they will be loaded anyway.
      * Each module has to handle user settings
      *
-     * If array of modules is passed, theme will be loaded without any check
-     *
-     * @param array $modules
      */
-    public function create_instances($modules = array())
+    public function setup_modules()
     {
-        if (!empty($modules)) {
+        $this->modules = array();
 
-            foreach ($this->modules as $module) {
-                $this->load_module($module['slug']);
-            }
-            return;
-        }
+        foreach (glob(WPOPT_MODULES . '*.php') as $file) {
+            $module_name = basename($file, '.class.php');
 
-        foreach ($this->modules as $module) {
+            $this->modules[] = array(
+                'slug' => $module_name,
+                'name' => $this->get_module_name($module_name, ucfirst($module_name))
+            );
 
-            if ($module['autoload']) {
-                $this->load_module($module['slug']);
+            if ($this->module_has_scope($module_name, 'autoload')) {
+                $this->load_module($module_name);
             }
         }
     }
 
-    /**
-     * Accept module name or wp-admin page name
-     * @param string|array $name
-     * @return WO_Module
-     */
-    public function load_module($name)
+    private function get_module_name($module, $default = '')
     {
-        $class = $this->module2classname($name);
+        if (!$class = $this->module2classname($module))
+            return $default;
 
-        if (!$class)
-            return null;
+        if (!isset($class::$name))
+            return $default;
 
-        if ($object = $this->modules_object->get_cache($class, 'modules_object'))
-            return $object;
-
-        $object = new $class();
-
-        $this->modules_object->set_cache($class, $object, 'modules_object');
-
-        return $object;
+        return is_null($class::$name) ? $default : $class::$name;
     }
 
     /**
@@ -150,15 +90,60 @@ class WOModuleHandler
 
         $class = "WOMod_" . $file_name;
 
-        if (file_exists(WPOPT_ABSPATH . "modules/{$file_name}.class.php")) {
+        if (file_exists(WPOPT_MODULES . "{$file_name}.class.php")) {
 
-            include_once WPOPT_ABSPATH . "modules/{$file_name}.class.php";
+            include_once WPOPT_MODULES . "{$file_name}.class.php";
         }
 
         if (!class_exists($class))
             return false;
 
         return $class;
+    }
+
+    /**
+     * Accepts module name or wp-admin page name
+     *
+     * @param $module
+     * @param $scope
+     * @return bool
+     */
+    public function module_has_scope($module, $scope)
+    {
+        if (is_null($module) or empty($scope))
+            return false;
+
+        if (!is_array($scope))
+            $scope = array($scope);
+
+        if (!$class = $this->module2classname($module))
+            return false;
+
+        $methods = array_intersect($scope, get_class_vars($class)['scopes']);
+
+        return !empty($methods);
+    }
+
+    /**
+     * Accept module name or wp-admin page name
+     * @param string|array $name
+     * @return WO_Module
+     */
+    public function load_module($name)
+    {
+        $class = $this->module2classname($name);
+
+        if (!$class)
+            return null;
+
+        if ($object = $this->modules_object->get_cache($class, 'modules_object'))
+            return $object;
+
+        $object = new $class();
+
+        $this->modules_object->set_cache($class, $object, 'modules_object');
+
+        return $object;
     }
 
     /**
@@ -186,11 +171,11 @@ class WOModuleHandler
 
         $modules = $this->modules;
 
-        $filters = wp_parse_args($filters, array(
+        $filters = array_merge(array(
             'methods' => false,
             'scopes'  => false,
             'vars'    => false,
-        ));
+        ), $filters);
 
         foreach ($modules as $name => $module) {
 
@@ -255,30 +240,6 @@ class WOModuleHandler
             return false;
 
         $methods = array_intersect($var, get_class_vars($class));
-
-        return !empty($methods);
-    }
-
-
-    /**
-     * Accepts module name or wp-admin page name
-     *
-     * @param $module
-     * @param $scope
-     * @return bool
-     */
-    public function module_has_scope($module, $scope)
-    {
-        if (is_null($module) or empty($scope))
-            return false;
-
-        if (!is_array($scope))
-            $scope = array($scope);
-
-        if (!$class = $this->module2classname($module))
-            return false;
-
-        $methods = array_intersect($scope, get_class_vars($class)['scopes']);
 
         return !empty($methods);
     }
