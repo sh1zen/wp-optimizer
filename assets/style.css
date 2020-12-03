@@ -178,7 +178,8 @@ input.apple-switch:checked:after {
     overflow-x: auto;
     overflow-y: hidden;
     width: 100%;
-    margin: 0
+    margin: 0;
+    height: 39px;
 }
 
 .ar-tab {
@@ -203,15 +204,10 @@ input.apple-switch:checked:after {
     transition: font-size .35s ease-in-out .15s
 }
 
-.ar-tab:hover .ar-tab_link {
-    font-size: 13px;
-    color: #717171
-}
-
 .ar-tab_link[aria-selected=true] {
     color: #2b2b2b;
     background: #66b2e8;
-    font-size: 13px
+    font-size: 13px;
 }
 
 div[aria-hidden=true] {
@@ -219,7 +215,7 @@ div[aria-hidden=true] {
 }
 
 .wpopt-loader {
-    position: relative;
+    position: relative
 }
 
 .wpopt-loader:before {
@@ -304,15 +300,15 @@ div[aria-hidden=true] {
     }
 }
 
-.wpopt textarea{
+.wpopt textarea {
     border-radius: 2px;
-    padding: 0.5em 1em;
-    transition: all 0.15s ease-in-out 0.35s;
-    box-shadow: none;
+    padding: .5em 1em;
+    transition: all .15s ease-in-out .35s;
+    box-shadow: none
 }
 
-.wpopt textarea:focus{
-    box-shadow: 0 0 9px #424242;
+.wpopt textarea:focus {
+    box-shadow: 0 0 9px #424242
 }
 
 ul.wpopt {
@@ -348,10 +344,10 @@ aside.wpopt .wpopt-box {
     padding: 20px;
     margin: 25px 0 0 0;
     background: #fff;
-    box-shadow: 0 0 3px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 0 3px rgba(0, 0, 0, .2);
     border: 1px solid #dcdcdc;
     width: 100%;
-    border-radius: 3px;
+    border-radius: 3px
 }
 
 .wpopt h1 {
@@ -363,7 +359,7 @@ aside.wpopt .wpopt-box {
     line-height: 2em;
     -webkit-box-shadow: inset 0 0 3px 0 rgba(0, 0, 0, .75);
     -moz-box-shadow: inset 0 0 3px 0 rgba(0, 0, 0, .75);
-    box-shadow: inset 0 0 3px 0 rgba(0, 0, 0, .75);
+    box-shadow: inset 0 0 3px 0 rgba(0, 0, 0, .75)
 }
 
 .wpopt h2 {
@@ -467,7 +463,7 @@ block.wpopt :after {
 
 .wpopt-submit {
     margin: 2em 0 0 0 !important;
-    padding: 0;
+    padding: 0
 }
 
 table.wpopt {
@@ -478,12 +474,12 @@ table.wpopt {
 
 table.wpopt tbody td.option {
     text-align: left;
-    width: 40%;
+    width: 40%
 }
 
 table.wpopt tbody td.value {
     text-align: right;
-    width: 60%;
+    width: 60%
 }
 
 .wpopt-thead, table.wpopt thead {
@@ -515,6 +511,10 @@ table.wpopt td {
     padding: 8px 10px
 }
 
+table.wpopt tr.blank-row {
+    height: 20px !important
+}
+
 .wpopt-setting-header {
     margin-top: 2em
 }
@@ -523,14 +523,22 @@ table.wpopt td {
     text-align: center
 }
 
-.wpopt-hr{
+.wpopt-hr {
     border-top: none;
     border-bottom: 2px solid #66b2e8;
+    margin: 2em 0
+}
+
+.wpopt-options--before {
+    margin-right: 2em
+}
+
+.wpopt-custom-action {
     margin: 2em 0;
 }
 
-.wpopt-options--before{
-    margin-right: 2em;
+#wpopt-uoptions {
+    max-width: 50%;
 }
 
 @media only screen and (max-width: 1192px) {
@@ -539,10 +547,28 @@ table.wpopt td {
         padding: 0
     }
 
+    #wpopt-uoptions {
+        max-width: 100%;
+    }
+
     aside.wpopt {
         margin: 30px auto;
         max-width: 100%;
         width: 100%;
         box-shadow: 0 0 2px 0 rgba(0, 0, 0, .75)
+    }
+}
+
+@media only screen and (max-width: 1024px) {
+
+    table.wpopt tbody td.value, table.wpopt tbody td.option {
+        text-align: left;
+        width: 100%;
+    }
+
+    table.wpopt-settings tr {
+        display: flex;
+        flex-direction: row;
+        flex-wrap: wrap;
     }
 }

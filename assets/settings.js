@@ -11,19 +11,25 @@ function flex_ajaxHandler($container, options, callback) {
         wpopt_form: ''
     };
 
-    options = jQuery.extend(defaults, options);
+    options = Object.assign(defaults, options);
 
-    jQuery.get(ajaxurl, options, function (res) {
-
-        $container.removeClass("wpopt-loader");
-
-        callback(res);
+    jQuery.ajax({
+        url: ajaxurl,
+        type: "GET",
+        dataType: "json",
+        global: false,
+        cache: false,
+        data: options,
+        success: function (res) {
+            $container.removeClass("wpopt-loader");
+            callback(res);
+        }
     });
 }
 
 function flex_defaultMessage(response, status, $mex_viewer = null) {
 
-    if($mex_viewer === null)
+    if ($mex_viewer === null)
         $mex_viewer = jQuery("#wpopt-ajax-message");
 
     if (status) {
@@ -51,10 +57,10 @@ function flex_defaultMessage(response, status, $mex_viewer = null) {
         $document = $('document'),
         $body = $("body");
 
-    // Store current URL hash.
-    let hash = window.location.hash.replace("#", "");
-
     let flex_tabHandler = function ($tabs) {
+
+        // Store current URL hash.
+        let hash = window.location.hash.substring(1);
 
         if (!$tabs instanceof $) {
             console.log("Error initializing flex_tabHandler");
@@ -68,6 +74,8 @@ function flex_defaultMessage(response, status, $mex_viewer = null) {
 
         if ($tab_list.length === 0)
             return;
+
+        let form_action = 'options.php';
 
         /**
          * Initialize aria attr
@@ -109,25 +117,33 @@ function flex_defaultMessage(response, status, $mex_viewer = null) {
             "aria-hidden": "true", // all hidden
             //"tabindex": -1
         }).each(function () {
-            let $this = $(this),
-                $this_id = $this.attr("id");
+            let $this = $(this), $this_id = $this.attr("id");
             // label by link
             $this.attr("aria-labelledby", "lbl_" + $this_id);
         });
 
 
         // search if hash is ON not disabled tab
-        if (hash !== "" && $("#" + hash + ".ar-tabcontent").length !== 0) {
+        if (hash !== "") {
 
-            if ($("#lbl_" + hash + ".ar-tab_link:not([aria-disabled='true'])").length) {
+            let $tab_content = $("#" + hash + ".ar-tabcontent");
 
-                // display not disabled
-                $("#" + hash + ".ar-tabcontent").removeAttr("aria-hidden");
-                // selection menu
-                $("#lbl_" + hash + ".ar-tab_link").attr({
-                    "aria-selected": "true",
-                    "tabindex": 0
-                });
+            if ($tab_content.length !== 0) {
+
+                if ($("#lbl_" + hash + ".ar-tab_link:not([aria-disabled='true'])").length) {
+
+                    // display not disabled
+                    $tab_content.removeAttr("aria-hidden");
+
+                    // selection menu
+                    $("#lbl_" + hash + ".ar-tab_link").attr({
+                        "aria-selected": "true",
+                        "tabindex": 0
+                    });
+
+                    $tab_content.find('#wpopt-uoptions').attr('action', form_action + '#' + hash);
+
+                }
             }
         }
 
@@ -154,13 +170,16 @@ function flex_defaultMessage(response, status, $mex_viewer = null) {
         });
 
         $body.on("click", ".ar-tab_link:not([aria-disabled='true'])", function (event) {
+
             let $this = $(this),
                 $hash_to_update = $this.attr("aria-controls"),
                 $tab_content_linked = $("#" + $this.attr("aria-controls")),
                 $parent = $this.closest(".ar-tabs"),
 
                 $all_tab_links = $parent.find(".ar-tab_link"),
-                $all_tab_contents = $parent.find(".ar-tabcontent");
+                $all_tab_contents = $parent.find(".ar-tabcontent"),
+
+                $form = $tab_content_linked.find('#wpopt-uoptions');
 
             // aria selected false on all links
             $all_tab_links.attr({
@@ -176,6 +195,10 @@ function flex_defaultMessage(response, status, $mex_viewer = null) {
 
             // add aria-hidden on all tabs contents
             $all_tab_contents.attr("aria-hidden", "true");
+
+            if (typeof $form !== 'undefined') {
+                $form.attr('action', form_action + '#' + $hash_to_update);
+            }
 
             // remove aria-hidden on tab linked
             $tab_content_linked.removeAttr("aria-hidden");
@@ -269,50 +292,42 @@ function flex_defaultMessage(response, status, $mex_viewer = null) {
 
                 let action = $submitter.data('action');
 
-                let callback =  function(res) {
+                let callback = function (res) {
 
                     let $mex_viewer = $("#wpopt-ajax-message");
 
                     $mex_viewer.empty();
                     $this.removeClass("wpopt-loader");
 
-
                     if (res.success) {
-
                         if (res.data.response.length > 0) {
                             $mex_viewer.append(res.data.response)
                         } else
                             $mex_viewer.append("<p class='success'>" + WPOPT.strings.success + "</p>");
-
                     } else {
-
                         if (res.data.response.length > 0)
                             $mex_viewer.append("<p class='error'>" + res.data.response + "</p>")
                         else
                             $mex_viewer.append("<p class='error'>" + WPOPT.strings.error + "</p>");
-
                     }
                 };
 
                 flex_ajaxHandler($this, {
-                    womod : 'database',
-                    wpopt_action : action,
-                    wpopt_nonce : $this.data('nonce'),
+                    womod: 'database',
+                    wpopt_action: action,
+                    wpopt_nonce: $this.data('nonce'),
                     wpopt_args: $submitter.data('args'),
                     wpopt_form: $this.serialize()
                 }, callback)
-
             });
         });
     }
 
-    $(document).ready(function () {
-
+    $document.ready(function () {
         flex_tabHandler($('.ar-tabs'));
-
     });
 
-    $(window).on('beforeunload', function (e) {
+    $window.on('beforeunload', function (e) {
         if ($body.hasClass('wpopt-doingAction')) {
             (e || window.event).returnValue = WPOPT.strings.text_close_warning;
             return WPOPT.strings.text_close_warning;
