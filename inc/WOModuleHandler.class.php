@@ -6,41 +6,12 @@ class WOModuleHandler
 
     private $modules;
 
-    private $modules_object;
-
     private function __construct()
     {
-        $this->modules_object = WOCache::getInstance();
+        $this->init_modules();
     }
 
-    public static function getInstance()
-    {
-        if (!isset(self::$_instance)) {
-            return self::Initialize();
-        }
-
-        return self::$_instance;
-    }
-
-    public static function Initialize()
-    {
-        if (!isset(self::$_instance)) {
-            self::$_instance = new self();
-        }
-
-        return self::$_instance;
-    }
-
-    /**
-     * Load active modules so they can perform their actions
-     * Some modules can be loaded only if requested.
-     *
-     * The activation of a module is set by code.
-     * If a user disable some modules, they will be loaded anyway.
-     * Each module has to handle user settings
-     *
-     */
-    public function setup_modules()
+    private function init_modules()
     {
         $this->modules = array();
 
@@ -49,18 +20,14 @@ class WOModuleHandler
 
             $this->modules[] = array(
                 'slug' => $module_name,
-                'name' => $this->get_module_name($module_name, ucfirst($module_name))
+                'name' => self::get_module_name($module_name, ucfirst($module_name))
             );
-
-            if ($this->module_has_scope($module_name, 'autoload')) {
-                $this->load_module($module_name);
-            }
         }
     }
 
-    private function get_module_name($module, $default = '')
+    private static function get_module_name($module, $default = '')
     {
-        if (!$class = $this->module2classname($module))
+        if (!$class = self::module2classname($module))
             return $default;
 
         if (!isset($class::$name))
@@ -74,7 +41,7 @@ class WOModuleHandler
      * @param $name
      * @return bool|string|string[]
      */
-    public function module2classname($name)
+    public static function module2classname($name)
     {
         if (is_array($name)) {
             // get the page name of the module
@@ -101,49 +68,13 @@ class WOModuleHandler
         return $class;
     }
 
-    /**
-     * Accepts module name or wp-admin page name
-     *
-     * @param $module
-     * @param $scope
-     * @return bool
-     */
-    public function module_has_scope($module, $scope)
+    public static function getInstance()
     {
-        if (is_null($module) or empty($scope))
-            return false;
+        if (!isset(self::$_instance)) {
+            self::$_instance = new self();
+        }
 
-        if (!is_array($scope))
-            $scope = array($scope);
-
-        if (!$class = $this->module2classname($module))
-            return false;
-
-        $methods = array_intersect($scope, get_class_vars($class)['scopes']);
-
-        return !empty($methods);
-    }
-
-    /**
-     * Accept module name or wp-admin page name
-     * @param string|array $name
-     * @return WO_Module
-     */
-    public function load_module($name)
-    {
-        $class = $this->module2classname($name);
-
-        if (!$class)
-            return null;
-
-        if ($object = $this->modules_object->get_cache($class, 'modules_object'))
-            return $object;
-
-        $object = new $class();
-
-        $this->modules_object->set_cache($class, $object, 'modules_object');
-
-        return $object;
+        return self::$_instance;
     }
 
     /**
@@ -151,9 +82,77 @@ class WOModuleHandler
      * @param $module
      * @return object|null
      */
-    public function module_object($module)
+    public static function get_module_instance($module)
     {
-        return $this->load_module($module);
+        return self::load_module($module);
+    }
+
+    /**
+     * Accept module name or wp-admin page name
+     * @param string|array $name
+     * @return WO_Module
+     */
+    private static function load_module($name)
+    {
+        $class = self::module2classname($name);
+
+        if (!$class)
+            return null;
+
+        if ($object = WOCache::getInstance()->get_cache($class, 'modules_object'))
+            return $object;
+
+        $object = new $class();
+
+        WOCache::getInstance()->set_cache($class, $object, 'modules_object');
+
+        return $object;
+    }
+
+    /**
+     * Load active modules so they can perform their actions
+     * Some modules can be loaded only if requested.
+     *
+     * The activation of a module is set by code.
+     * If a user disable some modules, they will be loaded anyway.
+     * Each module has to handle user settings
+     * @param string $scope
+     */
+    public function setup_modules($scope)
+    {
+        foreach ($this->modules as $index => $module) {
+
+            if ($this->module_has_scope($module['slug'], $scope) or $scope === 'all') {
+                self::load_module($module['slug']);
+            }
+        }
+    }
+
+    /**
+     * Accepts module name or wp-admin page name
+     *
+     * @param $module
+     * @param $scope
+     * @param string $compare
+     * @return bool
+     */
+    private function module_has_scope($module, $scope, $compare = 'AND')
+    {
+        if (is_null($module) or empty($scope))
+            return false;
+
+        if (!is_array($scope))
+            $scope = array($scope);
+
+        if (!$class = self::module2classname($module))
+            return false;
+
+        $found = array_intersect($scope, get_class_vars($class)['scopes']);
+
+        if($compare === 'AND')
+            return count($found) === count($scope);
+        else
+           return !empty($found);
     }
 
     /**
@@ -169,33 +168,34 @@ class WOModuleHandler
         if (empty($filters))
             return $this->modules;
 
-        $modules = $this->modules;
-
         $filters = array_merge(array(
             'methods' => false,
             'scopes'  => false,
             'vars'    => false,
+            'compare' => 'AND'
         ), $filters);
 
-        foreach ($modules as $name => $module) {
+        $modules = array();
+
+        foreach ($this->modules as $index => $module) {
 
             if ($filters['methods']) {
-                if (!$this->module_has_method($module, $filters['methods']))
-                    unset($modules[$name]);
+                if ($this->module_has_method($module, $filters['methods']))
+                    $modules[] = $module;
             }
 
             if ($filters['vars']) {
-                if (!$this->module_has_var($module, $filters['vars']))
-                    unset($modules[$name]);
+                if ($this->module_has_var($module, $filters['vars']))
+                    $modules[] = $module;
             }
 
             if ($filters['scopes']) {
-                if (!$this->module_has_scope($module, $filters['scopes']))
-                    unset($modules[$name]);
+                if ($this->module_has_scope($module, $filters['scopes'], $filters['compare']))
+                    $modules[] = $module;
             }
         }
 
-        return array_filter($modules);
+        return $modules;
     }
 
     /**
@@ -205,7 +205,7 @@ class WOModuleHandler
      * @param $method
      * @return bool
      */
-    public function module_has_method($module, $method)
+    private function module_has_method($module, $method)
     {
         if (is_null($module) or empty($method))
             return false;
@@ -213,7 +213,7 @@ class WOModuleHandler
         if (!is_array($method))
             $method = array($method);
 
-        if (!$class = $this->module2classname($module))
+        if (!$class = self::module2classname($module))
             return false;
 
         $methods = array_intersect($method, get_class_methods($class));
@@ -228,7 +228,7 @@ class WOModuleHandler
      * @param $var
      * @return bool
      */
-    public function module_has_var($module, $var)
+    private function module_has_var($module, $var)
     {
         if (is_null($module) or empty($var))
             return false;
@@ -236,7 +236,7 @@ class WOModuleHandler
         if (!is_array($var))
             $var = array($var);
 
-        if (!$class = $this->module2classname($module))
+        if (!$class = self::module2classname($module))
             return false;
 
         $methods = array_intersect($var, get_class_vars($class));

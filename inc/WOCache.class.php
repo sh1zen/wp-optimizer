@@ -1,8 +1,5 @@
 <?php
 
-if (!defined('ABSPATH'))
-    exit();
-
 class WOCache
 {
     private static $_instance;
@@ -10,24 +7,16 @@ class WOCache
 
     private $cache = array();
 
-    public static function Initialize($use_wp_cache = false)
+    private function __construct()
     {
-        self::$use_wp_cache = $use_wp_cache;
-
-        return self::$_instance = new self();
     }
 
-    public static function getInstance()
+    public static function getInstance($use_wp_cache = false)
     {
         if (!isset(self::$_instance)) {
-            wpopt_write_log(array(
-                'class'    => 'wpoptPlCache',
-                'function' => 'getInstance',
-                'text'     => 'call Initialize first'
-            ));
 
-            // back compatibility
-            return self::Initialize(false);
+            self::$use_wp_cache = $use_wp_cache;
+            self::$_instance = new self();
         }
 
         return self::$_instance;
@@ -43,7 +32,7 @@ class WOCache
         return $this->set_cache($key, $data, 'wpopt_core', true);
     }
 
-    public function get_cache($key, $group = 'plcache')
+    public function get_cache($key, $group = 'plcache', $default = false)
     {
         if (self::$use_wp_cache)
             return wp_cache_get($key, $group);
@@ -57,7 +46,7 @@ class WOCache
             }
         }
 
-        return false;
+        return $default;
     }
 
     public function set_cache($key, $data, $group = 'plcache', $force = false)

@@ -13,17 +13,21 @@ function wpopt_verify_nonce($name = 'wpopt', $nonce = false)
     return wp_verify_nonce($nonce, $name);
 }
 
-function wpopt_delete_files($target) {
-    if(is_dir($target)){
-        $files = glob( $target . '*', GLOB_MARK ); //GLOB_MARK adds a slash to directories returned
+function wpopt_delete_files($target, $identifier = '')
+{
+    $identifier .= '*';
 
-        foreach( $files as $file ){
-            wpopt_delete_files( $file );
+    if (is_dir($target)) {
+        $files = glob($target . $identifier, GLOB_MARK); //GLOB_MARK adds a slash to directories returned
+
+        foreach ($files as $file) {
+            wpopt_delete_files($file);
         }
 
-        rmdir( $target );
-    } elseif(is_file($target)) {
-        unlink( $target );
+        rmdir($target);
+    }
+    elseif (is_file($target)) {
+        unlink($target);
     }
 }
 
@@ -52,7 +56,7 @@ function wpopt_calc_folder_size($directory)
 
 function wpopt_timestr2seconds($time = '')
 {
-    if(!$time)
+    if (!$time)
         return 0;
 
     list($hour, $minute) = explode(':', $time);
@@ -63,7 +67,7 @@ function wpopt_timestr2seconds($time = '')
 
 function wpopt_add_timezone($timestamp = false)
 {
-    if(!$timestamp)
+    if (!$timestamp)
         $timestamp = time();
 
     $timezone = get_option('gmt_offset') * HOUR_IN_SECONDS;
@@ -115,7 +119,6 @@ function wpopt_size2bytes($val)
  * @param int $current Current number.
  * @param int $total Total number.
  * @return string Number in percentage
- * @since 1.0.2
  *
  * @access public
  */
@@ -172,7 +175,7 @@ function wpopt_generateHTML_tabs_panels($fields, $limit_ids = array())
                 if (isset($field['callback'])) {
                     $args = isset($field['args']) ? $field['args'] : array();
 
-                    if(is_callable($field['callback']))
+                    if (is_callable($field['callback']))
                         echo call_user_func_array($field['callback'], $args);
                 }
                 ?>
@@ -239,7 +242,7 @@ function wpopt_generate_report($data)
     $report .= ' ' . __('Errors', 'wpopt') . ': ' . PHP_EOL;
     $report .= ' --------------------------------- ' . PHP_EOL;
 
-    if(isset($data['errors']))
+    if (isset($data['errors']))
         $report .= ' ' . __('Number', 'wpopt') . ': ' . count($data['errors']) . PHP_EOL;
 
     foreach ($data['errors'] as $error)
@@ -257,8 +260,8 @@ function wpopt_is_function_disabled($function_name)
 
 function wpopt_create_folder($path = WP_CONTENT_DIR . '/backup-db', $private = true)
 {
-
     global $is_IIS;
+
     $plugin_path = __DIR__;
 
     // Create Backup Folder
@@ -284,6 +287,17 @@ function wpopt_create_folder($path = WP_CONTENT_DIR . '/backup-db', $private = t
     }
 
     return $res;
+}
+
+
+function wpopt_module_panel_url($module = '', $panel = '')
+{
+    return admin_url("admin.php?page={$module}#{$panel}");
+}
+
+function wpopt_setting_panel_url($panel = '')
+{
+    return admin_url("admin.php?page=wpopt-settings#settings-{$panel}");
 }
 
 function wpopt_download_file($file_path)
@@ -345,7 +359,6 @@ function wpopt_conform_dir($dir, $recursive = false)
 
 function wpopt_is_safe_mode_active($ini_get_callback = 'ini_get')
 {
-
     if (($safe_mode = @call_user_func($ini_get_callback, 'safe_mode')) && strtolower($safe_mode) != 'off')
         return true;
 
@@ -397,6 +410,7 @@ function wpopt_get_mysqlDump_command_path($mysqldump_locations = '')
         '/opt/local/lib/mysql4/bin/mysqldump',
         '/xampp/mysql/bin/mysqldump',
         '/Program Files/xampp/mysql/bin/mysqldump',
+        '/Program Files/MySQL/MySQL Server 8.0/bin/mysqldump',
         '/Program Files/MySQL/MySQL Server 6.0/bin/mysqldump',
         '/Program Files/MySQL/MySQL Server 5.5/bin/mysqldump',
         '/Program Files/MySQL/MySQL Server 5.4/bin/mysqldump',
@@ -420,7 +434,7 @@ function wpopt_flatMultiDA(&$mData)
 {
     if (is_array($mData)) {
 
-        if (isset($mData[0]) && count($mData) == 1) {
+        if (isset($mData[0]) and count($mData) == 1) {
 
             $mData = $mData[0];
             if (is_array($mData)) {
