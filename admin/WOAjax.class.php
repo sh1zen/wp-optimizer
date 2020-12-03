@@ -1,8 +1,5 @@
 <?php
 
-if (!defined('ABSPATH'))
-    exit;
-
 /**
  * Generic Ajax Handler for all WOModules
  *
@@ -10,7 +7,6 @@ if (!defined('ABSPATH'))
  * action: must be wpopt
  * womod: module slug
  *
- * since 1.2.0
  */
 class WOAjax
 {
@@ -18,7 +14,7 @@ class WOAjax
 
     public function __construct()
     {
-        add_action('wp_ajax_wpopt', array($this, 'ajax_handler'));
+        add_action('wp_ajax_wpopt', array($this, 'ajax_handler'), 10, 1);
     }
 
     public static function getInstance()
@@ -44,7 +40,7 @@ class WOAjax
 
             $module = sanitize_text_field($_GET['womod']);
 
-            $object = WOModuleHandler::getInstance()->load_module($module);
+            $object = WOModuleHandler::get_module_instance($module);
 
             if (!is_null($object)) {
                 $object->ajax_handler();
