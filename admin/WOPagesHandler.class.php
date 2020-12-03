@@ -5,8 +5,6 @@
  *
  * Provides the functionality necessary for rendering the page corresponding
  * to the menu with which this page is associated.
- *
- * since 1.1.3
  */
 class WOPagesHandler
 {
@@ -15,40 +13,11 @@ class WOPagesHandler
         add_action('admin_menu', array($this, 'add_plugin_pages'));
 
         add_action('admin_enqueue_scripts', array($this, 'register_assets'));
-
-        //$this->downloader();
-    }
-
-    /**
-     * Download page, direct access to protected file
-     * needs:
-     * downloader nonce: wpopt_downloader_nonce
-     * location identifier: loc
-     * file name: file
-     */
-    public function downloader()
-    {
-        if (!isset($_GET['wpopt_downloader']))
-            return;
-
-        if (!wpopt_verify_nonce('wpopt_downloader_nonce', $_GET['nonce']))
-            die("Wp Optimizer :: Invalid Access");
-
-        $file_path = '';
-
-        switch ($_GET['loc']) {
-            case 'db-backup':
-                $backup_path = WOSettings::getInstance()->get_settings('database')['backup']['path'];
-                $file_path = trailingslashit($backup_path) . sanitize_file_name($_GET['file']);
-                break;
-        }
-
-        wpopt_download_file($file_path);
     }
 
     public function add_plugin_pages()
     {
-        $hook = add_menu_page(
+        add_menu_page(
             'WP Optimizer',
             'WP Optimizer',
             'manage_options',
@@ -56,8 +25,6 @@ class WOPagesHandler
             array($this, 'render_main'),
             'dashicons-admin-site'
         );
-
-        //add_action("load-$hook", array($this, 'register_assets'));
 
         /**
          * Modules - sub pages
@@ -68,7 +35,7 @@ class WOPagesHandler
         }
 
         /**
-         * Last: the setting page
+         * setting page
          */
         add_submenu_page('wp-optimizer', __('Settings', 'wpopt'), __('Settings', 'wpopt'), 'manage_options', 'wpopt-settings', array($this, 'render_settings'));
     }
@@ -79,11 +46,13 @@ class WOPagesHandler
 
         $this->enqueue_scripts();
 
+        $wo_meter->lap('settings pre render');
+
         WOSettings::getInstance()->render();
 
         $wo_meter->lap('settings rendered');
 
-        if(WPOPT_DEBUG)
+        if (WPOPT_DEBUG)
             echo $wo_meter->get_time() . ' - ' . $wo_meter->get_memory(true);
     }
 
@@ -98,22 +67,20 @@ class WOPagesHandler
     {
         global $wo_meter;
 
-        $moduleHandler = WOModuleHandler::getInstance();
-
         $module_slug = sanitize_text_field($_GET['page']);
 
-        $object = $moduleHandler->module_object($module_slug);
+        $object = WOModuleHandler::get_module_instance($module_slug);
 
         if (is_null($object))
             return;
 
         $this->enqueue_scripts();
 
-        $object->render();
+        $object->render_admin_page();
 
         $wo_meter->lap($module_slug);
 
-        if(WPOPT_DEBUG)
+        if (WPOPT_DEBUG)
             echo $wo_meter->get_time() . ' - ' . $wo_meter->get_memory(true, true);
     }
 
@@ -127,11 +94,11 @@ class WOPagesHandler
 
         wp_localize_script('wpopt_js', 'WPOPT', array(
             'strings' => array(
-                'text_na'       => __('N/A', 'wpopt'),
-                'saved'   => __('Settings Saved', 'wpopt'),
-                'error'   => __('Request fail', 'wpopt'),
-                'success' => __('Request succeed', 'wpopt'),
-                'running' => __('Running', 'wpopt'),
+                'text_na'            => __('N/A', 'wpopt'),
+                'saved'              => __('Settings Saved', 'wpopt'),
+                'error'              => __('Request fail', 'wpopt'),
+                'success'            => __('Request succeed', 'wpopt'),
+                'running'            => __('Running', 'wpopt'),
                 'text_close_warning' => __('WP Optimizer is running an action. If you leave now, it will not be completed.', 'wpopt'),
             )
         ));
@@ -161,7 +128,7 @@ class WOPagesHandler
 
                 case 'wpopt-do-cron':
 
-                    $object = WOModuleHandler::getInstance()->module_object('cron');
+                    $object = WOModuleHandler::get_module_instance('cron');
 
                     $data = $object->exec_cron();
                     break;
@@ -273,7 +240,5 @@ class WOPagesHandler
             print_r($result);
             echo "</block>";
         }
-
     }
-
 }
