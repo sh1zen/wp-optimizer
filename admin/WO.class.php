@@ -1,12 +1,7 @@
 <?php
 
-if (!defined('ABSPATH'))
-    exit();
-
 /**
  * Main class, used to boot the plugin
- *
- * since 1.0.0
  */
 class WO
 {
@@ -16,11 +11,6 @@ class WO
      * Holds the plugin base name
      */
     public $plugin_basename;
-
-    /**
-     * Holds the WOMonitor instance
-     */
-    public $monitor;
 
     /**
      * Holds the plugin base url
@@ -45,7 +35,7 @@ class WO
         register_activation_hook(WPOPT_FILE, array($this, 'plugin_activation'));
         register_deactivation_hook(WPOPT_FILE, array($this, 'plugin_deactivation'));
 
-        add_filter("plugin_action_links_{$this->plugin_basename}", array($this, 'settings_plugin_link'), 10, 2);
+        add_filter("plugin_action_links_{$this->plugin_basename}", array($this, 'extra_plugin_link'), 10, 2);
 
         add_filter('plugin_row_meta', array($this, 'donate_link'), 10, 4);
     }
@@ -82,8 +72,6 @@ class WO
     {
         $object = self::$_instance = new self();
 
-        $object->monitor = new WOMonitor();
-
         /**
          * Keep Ajax requests fast:
          * if doing ajax : load only ajax handler and return
@@ -97,15 +85,19 @@ class WO
              */
             WOAjax::Initialize();
 
-            return self::$_instance;
+            /**
+             * Instancing all modules that need to interact in the Ajax process
+             */
+            WOModuleHandler::getInstance()->setup_modules('ajax');
         }
+        elseif (wp_doing_cron()) {
 
-        /**
-         * Instancing all active modules
-         */
-        WOModuleHandler::getInstance()->setup_modules();
-
-        if (is_admin()) {
+            /**
+             * Instancing all modules that need to interact in the cron process
+             */
+            WOModuleHandler::getInstance()->setup_modules('cron');
+        }
+        elseif (is_admin()) {
 
             require_once WPOPT_ADMIN . 'WOPagesHandler.class.php';
 
@@ -113,19 +105,26 @@ class WO
              * Load the admin pages handler and store it here
              */
             $object->pages_handler = new WOPagesHandler();
+
+            /**
+             * Instancing all modules that need to interact in admin area
+             */
+            WOModuleHandler::getInstance()->setup_modules('admin');
+        }
+        else {
+
+            /**
+             * Instancing all modules that need to interact only on the web-view
+             */
+            WOModuleHandler::getInstance()->setup_modules('web-view');
         }
 
+        /**
+         * Instancing all modules that need to be always loaded
+         */
+        WOModuleHandler::getInstance()->setup_modules('autoload');
+
         return self::$_instance;
-    }
-
-    public function module_panel_url($module = '', $panel = '')
-    {
-        return admin_url("admin.php?page={$module}#{$panel}");
-    }
-
-    public function setting_panel_url($panel = '')
-    {
-        return admin_url("admin.php?page=wpopt-settings#settings-{$panel}");
     }
 
     /**
@@ -133,21 +132,18 @@ class WO
      *
      * @param boolean $network_wide Is network wide.
      * @return void
-     * @since 1.0.0
      *
      * @access public
      */
     public function plugin_activation($network_wide)
     {
-        if (is_multisite() && $network_wide) {
+        if (is_multisite() and $network_wide) {
             $ms_sites = (array)get_sites();
 
-            if (0 < count($ms_sites)) {
-                foreach ($ms_sites as $ms_site) {
-                    switch_to_blog($ms_site->blog_id);
-                    $this->activate();
-                    restore_current_blog();
-                }
+            foreach ($ms_sites as $ms_site) {
+                switch_to_blog($ms_site->blog_id);
+                $this->activate();
+                restore_current_blog();
             }
         }
         else {
@@ -157,11 +153,15 @@ class WO
 
     private function activate()
     {
-        WOSettings::getInstance()->checkOption();
+        WOSettings::getInstance()->activate();
 
-        $cron = WOModuleHandler::getInstance()->load_module('cron');
+        WOCron::getInstance()->activate();
 
-        $cron->activate();
+        /**
+         * Hook for the plugin activation
+         * @since 0.0.9
+         */
+        do_action('wpopt-activate');
     }
 
     /**
@@ -169,21 +169,18 @@ class WO
      *
      * @param boolean $network_wide Is network wide.
      * @return void
-     * @since 1.0.0
      *
      * @access public
      */
     public function plugin_deactivation($network_wide)
     {
-        if (is_multisite() && $network_wide) {
+        if (is_multisite() and $network_wide) {
             $ms_sites = (array)get_sites();
 
-            if (0 < count($ms_sites)) {
-                foreach ($ms_sites as $ms_site) {
-                    switch_to_blog($ms_site->blog_id);
-                    $this->deactivate();
-                    restore_current_blog();
-                }
+            foreach ($ms_sites as $ms_site) {
+                switch_to_blog($ms_site->blog_id);
+                $this->deactivate();
+                restore_current_blog();
             }
         }
         else {
@@ -193,9 +190,13 @@ class WO
 
     private function deactivate()
     {
-        $cron = WOModuleHandler::getInstance()->load_module('cron');
+        WOCron::getInstance()->deactivate();
 
-        $cron->deactivate();
+        /**
+         * Hook for the plugin deactivation
+         * @since 0.0.9
+         */
+        do_action('wpopt-deactivate');
     }
 
     /**
@@ -222,7 +223,7 @@ class WO
      * @param $file
      * @return mixed
      */
-    public function settings_plugin_link($links, $file)
+    public function extra_plugin_link($links, $file)
     {
         $links[] = sprintf(
             '<a href="%s">%s</a>',
