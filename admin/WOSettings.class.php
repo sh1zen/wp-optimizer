@@ -2,34 +2,24 @@
 
 class WOSettings
 {
-    private static $_instance;
-
-    private static $defaults = array(
-        'mime-types' => array(
-            'jpg|jpeg|jpe' => 'image/jpeg',
-            'gif'          => 'image/gif',
-            'png'          => 'image/png',
-            'ico'          => 'image/x-icon',
-            'pjpeg'        => 'image/pjpeg'
-        )
-    );
     /**
      * Plugin options name
      */
-    public $option_name;
+    public static $option_name = 'wpopt';
+
+    private static $_instance;
+
     private $settings;
 
     public function __construct()
     {
-        $this->option_name = 'wpopt';
+        $this->settings = get_option(self::$option_name);
+
+        //necessary check
+        if (!$this->settings)
+            $this->settings = array();
 
         add_action('admin_init', array($this, 'register_hooks'));
-
-        $option = get_option($this->option_name, array());
-        if(empty($option))
-            $option = array();
-
-        $this->settings = array_merge(self::$defaults, $option);
     }
 
     public static function check($settings, $key)
@@ -40,30 +30,18 @@ class WOSettings
     public static function getInstance()
     {
         if (!isset(self::$_instance)) {
-            return self::Initialize();
+            self::$_instance = new self();
         }
 
         return self::$_instance;
     }
 
-    public static function Initialize()
-    {
-        return self::$_instance = new self();
-    }
-
     public function register_hooks()
     {
-        register_setting('wpopt-settings', $this->option_name, array(
+        register_setting('wpopt-settings', self::$option_name, array(
             'type'              => 'array',
             'sanitize_callback' => array($this, 'validate')
         ));
-    }
-
-    public function checkOption()
-    {
-        if (!get_option($this->option_name, false)) {
-            update_option($this->option_name, $this->settings);
-        }
     }
 
     public function render()
@@ -85,6 +63,7 @@ class WOSettings
                 if (!empty($modules)) {
 
                     echo $this->generateHTML_tabpan($modules);
+
                 }
                 ?>
             </block>
@@ -92,15 +71,34 @@ class WOSettings
         <?php
     }
 
+    public function activate()
+    {
+        $options = get_option(self::$option_name, array());
+
+        if (empty($options)) {
+
+            /**
+             * Load all modules to be allow them to set up their options
+             */
+            WOModuleHandler::getInstance()->setup_modules('all');
+
+            $this->reset_options($this->settings);
+        }
+    }
+
+    public function reset_options($options = array())
+    {
+        $this->settings = $options;
+        return update_option(self::$option_name, $options);
+    }
+
     private function generateHTML_tabpan($modules)
     {
-        $mod_handler = WOModuleHandler::getInstance();
-
         $fields = array();
 
         foreach ($modules as $module) {
 
-            $object = $mod_handler->module_object($module);
+            $object = WOModuleHandler::get_module_instance($module);
 
             if (is_null($object))
                 continue;
@@ -126,21 +124,25 @@ class WOSettings
 
         $module_slug = sanitize_text_field($input['change']);
 
-        $object = WOModuleHandler::getInstance()->module_object($module_slug);
+        $object = WOModuleHandler::get_module_instance($module_slug);
 
         if (is_null($object))
             die();
 
         $valid = $object->validate_settings($input, $object->settings);
 
-        $valid = array_filter($valid);
-
         $this->settings = wp_parse_args(array($object->slug => $valid), $this->settings);
 
         return $this->settings;
     }
 
-    public function get_settings($context = '', $default = array())
+    /**
+     * @param string $context
+     * @param array $default
+     * @param bool $update -> if no option were found, update theme, with defaults values
+     * @return array|object|string
+     */
+    public function get_settings($context = '', $default = array(), $update = false)
     {
         if (empty($context))
             return $this->settings;
@@ -148,7 +150,12 @@ class WOSettings
         if (isset($this->settings[$context]))
             $options = $this->settings[$context];
         else
+        {
+            if($update) {
+                $this->update_settings($default, $context);
+            }
             $options = array();
+        }
 
         return wp_parse_args($options, $default);
     }
@@ -158,19 +165,16 @@ class WOSettings
         if (empty($context))
             return false;
 
-        if(!isset($this->settings[$context]))
+        if (!isset($this->settings[$context]))
             $this->settings[$context] = array();
 
         $this->settings[$context] = wp_parse_args($option_data, $this->settings[$context]);
 
-        return update_option($this->option_name, $this->settings);
+        return $this->reset_options($this->settings);
     }
 
-    private function output_options()
+    public function export()
     {
-        if (is_array($this->settings))
-            echo implode(PHP_EOL, $this->settings);
-        else
-            echo $this->settings;
+        return serialize($this->settings);
     }
 }
