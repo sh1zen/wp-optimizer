@@ -2,80 +2,124 @@
 
 class WOMod_Cache extends WO_Module
 {
+    public static $storage_internal = 'cache';
+
     public $scopes = array('settings', 'autoload');
 
     public function __construct()
     {
+        require_once __DIR__ . '/cache/cache_dispatcher.class.php';
+        require_once __DIR__ . '/cache/WPQuery_Cache.class.php';
+
         $default = array(
-            'wp_query_posts'   => true,
+            'wp_query'         => false,
+            'wp_db_cache'      => false,
+            'wp_object_cache'  => false,
             'storage_lifespan' => "01:00:00"
         );
 
-        parent::__construct(
-            array(
-                'settings' => $default
-            )
-        );
+        parent::__construct(array(
+            'settings' => $default
+        ));
 
-        add_action('save_post', array($this, 'flusher_cache'), 10, 0);
-        add_action('delete_post', array($this, 'flusher_cache'), 10, 0);
+        $this->check_status();
 
-        if (!(is_admin() or wp_doing_ajax() or wp_doing_cron())) {
+        $this->loader();
+    }
 
-            $this->loader();
-        }
+    private function check_status()
+    {
+        WPQuery_Cache::check_status();
+
+        add_action('clean_site_cache', array($this, 'flush_cache'), 10, 1); //blog_id
+        add_action('clean_network_cache', array($this, 'flush_cache'), 10, 1); //network_id
     }
 
     private function loader()
     {
-        if (WOSettings::check($this->settings, 'wp_query_posts')) {
-            require_once __DIR__ . '/cache/postcache.class.php';
+        $args = array(
+            'lifespan' => wpopt_timestr2seconds($this->settings['storage_lifespan'])
+        );
 
-            WPOPT_PostCache::Initialize(array(
-                'lifespan' => wpopt_timestr2seconds($this->settings['storage_lifespan'])
-            ));
+        if (WOSettings::check($this->settings, 'wp_query')) {
+
+            WPQuery_Cache::Initialize($args);
         }
     }
 
-    public function setting_fields()
+    public function validate_settings($input, $valid)
+    {
+        if ($this->deactivating('wp_query', $input)) {
+            WPQuery_Cache::clear_cache();
+        }
+
+        if ($this->deactivating('wp_object_cache', $input)) {
+            WPOPT_Object_Cache::clear_cache();
+            wpopt_delete_files(WP_CONTENT_DIR . DIRECTORY_SEPARATOR . "object-cache.php");
+        }
+
+        if ($this->deactivating('wp_db_cache', $input)) {
+            WPOPT_DB::clear_cache();
+            wpopt_delete_files(WP_CONTENT_DIR . DIRECTORY_SEPARATOR . "db.php");
+        }
+
+        if ($this->activating('wp_object_cache', $input)) {
+            file_put_contents(
+                WP_CONTENT_DIR . DIRECTORY_SEPARATOR . "object-cache.php",
+                "<?php" . PHP_EOL . PHP_EOL . "include_once('" . WP_PLUGIN_DIR . DIRECTORY_SEPARATOR . "wp-optimizer/modules/cache/object-cache.php');"
+            );
+        }
+
+        if ($this->activating('wp_db_cache', $input)) {
+            file_put_contents(
+                WP_CONTENT_DIR . DIRECTORY_SEPARATOR . "db.php",
+                "<?php" . PHP_EOL . PHP_EOL . "include_once('" . WP_PLUGIN_DIR . DIRECTORY_SEPARATOR . "wp-optimizer/modules/cache/db.php');"
+            );
+        }
+
+        $valid['wp_query'] = isset($input['wp_query']);
+        $valid['wp_db_cache'] = isset($input['wp_db_cache']);
+        $valid['wp_object_cache'] = isset($input['wp_object_cache']);
+        $valid['storage_lifespan'] = sanitize_text_field($input['storage_lifespan']);
+
+        return $valid;
+    }
+
+    protected function setting_fields()
     {
         return array(
-            array('type' => 'checkbox', 'name' => 'Cache WP_Query posts', 'id' => 'wp_query_posts', 'value' => WOSettings::check($this->settings, 'wp_query_posts')),
-            array('type' => 'time', 'name' => 'Cache Lifespan', 'id' => 'storage_lifespan', 'value' => $this->settings['storage_lifespan']),
+            array('type' => 'checkbox', 'name' => __('Cache WP_Query', 'wpopt'), 'id' => 'wp_query', 'value' => WOSettings::check($this->settings, 'wp_query')),
+            //array('type' => 'checkbox', 'name' => __('Object Cache', 'wpopt'), 'id' => 'wp_object_cache', 'value' => WOSettings::check($this->settings, 'wp_object_cache')),
+            array('type' => 'checkbox', 'name' => __('Database Query Cache', 'wpopt'), 'id' => 'wp_db_cache', 'value' => WOSettings::check($this->settings, 'wp_db_cache')),
+            array('type' => 'time', 'name' => __('Cache Lifespan', 'wpopt'), 'id' => 'storage_lifespan', 'value' => $this->settings['storage_lifespan']),
         );
     }
 
-    public function get_setting_content($context)
+    protected function custom_actions()
     {
-        if ($context === 'footer')
-            return $this->footer_options();
-
-        return '';
-    }
-
-    private function footer_options()
-    {
-        $options = array(
+        return array(
             array(
-                'before'       => "<b>" . WOStorage::getInstance()->get_size('WpQuery_postcache') . "</b>",
-                'name'         => 'reset cache',
+                'before'       => "<b>" . WOStorage::getInstance()->get_size(self::$storage_internal) . "</b>",
+                'name'         => 'reset_cache',
                 'value'        => 'Reset Cache',
                 'button_types' => 'button-danger'
             )
         );
-
-        return $this->custom_options_form($options);
     }
 
-    protected function process_custom_options($options)
+    protected function process_custom_actions($action, $options)
     {
-        if (isset($options['reset_cache'])) {
-            $this->flusher_cache();
+        switch ($action) {
+
+            case 'reset_cache':
+                return $this->flush_cache();
         }
+
+        return false;
     }
 
-    public function flusher_cache()
+    public function flush_cache($blog_id = 0)
     {
-        WOStorage::getInstance()->remove("WpQuery_postcache");
+        return WOStorage::getInstance()->delete(self::$storage_internal, '', $blog_id);
     }
 }

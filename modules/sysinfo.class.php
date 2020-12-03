@@ -1,6 +1,5 @@
 <?php
 
-
 class WOMod_Sysinfo extends WO_Module
 {
     public static $name = "System Info";
@@ -9,18 +8,11 @@ class WOMod_Sysinfo extends WO_Module
 
     public function __construct()
     {
-        parent::__construct(array(
-                'disabled' => false //!current_user_can('administrator')
-        ));
+        parent::__construct();
     }
 
-    public function render()
+    public function render_admin_page()
     {
-        if($this->disabled)
-        {
-            $this->render_disabled();
-            return;
-        }
         ?>
         <section class="wpopt-wrap">
             <section class='wpopt'><h1>System Info </h1></section>

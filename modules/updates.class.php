@@ -1,10 +1,7 @@
 <?php
 
 /**
- * Host info
- *
- * @since 1.1.0
- * @access public
+ * Module for updates handling
  */
 class WOMod_Updates extends WO_Module
 {
@@ -22,17 +19,14 @@ class WOMod_Updates extends WO_Module
             'mail-updates'      => true
         );
 
-        parent::__construct(
-            array(
-                'disabled' => false, //!current_user_can('administrator'),
-                'settings' => $default,
-            )
-        );
+        parent::__construct(array(
+            'settings' => $default,
+        ));
 
         $this->disable_updates();
     }
 
-    public function disable_updates()
+    private function disable_updates()
     {
         if (!WOSettings::check($this->settings, 'core-updates')) {
             remove_action('init', 'wp_version_check');
@@ -133,7 +127,7 @@ class WOMod_Updates extends WO_Module
         }
     }
 
-    public function get_setting_content($context)
+    protected function get_setting_form_content($context)
     {
         $response = false;
 
@@ -145,17 +139,22 @@ class WOMod_Updates extends WO_Module
         return $response;
     }
 
-    public function setting_fields()
+    protected function setting_fields()
     {
         return array(
-            array('type' => 'checkbox', 'name' => 'Wordpress Core Updates', 'id' => 'core-updates', 'value' => WOSettings::check($this->settings, 'core-updates')),
-            array('type' => 'checkbox', 'name' => 'Plugins Updates', 'id' => 'plugin-updates', 'value' => WOSettings::check($this->settings, 'plugin-updates')),
-            array('type' => 'checkbox', 'name' => 'Themes Updates', 'id' => 'theme-updates', 'value' => WOSettings::check($this->settings, 'theme-updates')),
-            array('type' => 'checkbox', 'name' => 'Updates Messages', 'id' => 'message-updates', 'value' => WOSettings::check($this->settings, 'message-updates')),
-            array('type' => 'checkbox', 'name' => 'Updates Page', 'id' => 'page-updates', 'value' => WOSettings::check($this->settings, 'page-updates')),
-            array('type' => 'checkbox', 'name' => 'Automatic Updates', 'id' => 'automatic-updates', 'value' => WOSettings::check($this->settings, 'automatic-updates')),
-            array('type' => 'checkbox', 'name' => 'Allow WordPress send updates notices mail', 'id' => 'mail-updates', 'value' => WOSettings::check($this->settings, 'mail-updates')),
+            array('type' => 'checkbox', 'name' => __('Wordpress Core Updates', 'wpopt'), 'id' => 'core-updates', 'value' => WOSettings::check($this->settings, 'core-updates')),
+            array('type' => 'checkbox', 'name' => __('Plugins Updates', 'wpopt'), 'id' => 'plugin-updates', 'value' => WOSettings::check($this->settings, 'plugin-updates')),
+            array('type' => 'checkbox', 'name' => __('Themes Updates', 'wpopt'), 'id' => 'theme-updates', 'value' => WOSettings::check($this->settings, 'theme-updates')),
+            array('type' => 'checkbox', 'name' => __('Updates Messages', 'wpopt'), 'id' => 'message-updates', 'value' => WOSettings::check($this->settings, 'message-updates')),
+            array('type' => 'checkbox', 'name' => __('Updates Page', 'wpopt'), 'id' => 'page-updates', 'value' => WOSettings::check($this->settings, 'page-updates')),
+            array('type' => 'checkbox', 'name' => __('Automatic Updates', 'wpopt'), 'id' => 'automatic-updates', 'value' => WOSettings::check($this->settings, 'automatic-updates')),
+            array('type' => 'checkbox', 'name' => __('Allow WordPress send updates notices mail', 'wpopt'), 'id' => 'mail-updates', 'value' => WOSettings::check($this->settings, 'mail-updates')),
         );
+    }
+
+    protected function restricted_access($context = '')
+    {
+        return !current_user_can('administrator');
     }
 
 }

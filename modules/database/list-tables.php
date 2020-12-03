@@ -196,7 +196,7 @@ class WO_DB_Tables_List extends WP_List_Table
                 return;
         }
 
-        $processed = WOPerformer::manage_tables($this->current_action(), $tables);
+        $processed = WO_DBSupport::manage_tables($this->current_action(), $tables);
 
         $action_translators = array(
             'optimize' => __('optimized', 'wpopt'),

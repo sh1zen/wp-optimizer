@@ -91,6 +91,7 @@
             $(this).on('submit', function (e) {
 
                 let $this = $(this);
+
                 let $submitter = $(e.originalEvent.submitter);
 
                 if ($submitter.data('explicit')) return;
@@ -99,23 +100,15 @@
 
                 let action = $submitter.data('action');
 
-                switch (action) {
-
-                    case 'restore':
-                        wp.heartbeat.suspend = true;
-                        break;
-                }
+                wp.heartbeat.suspend = true;
 
                 let callback = function (res) {
                     let $mex_viewer = $("#wpopt-ajax-message");
 
                     $mex_viewer.empty();
+                    wp.heartbeat.suspend = false;
 
                     switch (action) {
-
-                        case 'restore':
-                            wp.heartbeat.suspend = false;
-                            break;
 
                         case 'download':
                             let a = document.createElement('a');
@@ -151,7 +144,6 @@
 
             });
         });
-
     });
 
 })(jQuery);

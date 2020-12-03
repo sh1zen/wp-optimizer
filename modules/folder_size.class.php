@@ -4,19 +4,15 @@ class WOMod_Folder_Size extends WO_Module
 {
     public static $name = "Directory Size";
 
-    public $scopes = array('settings', 'autoload');
+    public $scopes = array('settings', 'admin');
 
     /**
      * Transient time 8 hours
-     *
-     * @since   1.0
      */
     private $time = 28800;
 
     /**
      * Transient prefix
-     *
-     * @since   1.0
      */
     private $transient_prefix = 'wpopt_folder_sizes_';
 
@@ -30,8 +26,6 @@ class WOMod_Folder_Size extends WO_Module
      * Adds actions and such.
      *
      * @uses    add_action
-     * @since   1.0
-     * @access  public
      */
     public function __construct()
     {
@@ -40,12 +34,9 @@ class WOMod_Folder_Size extends WO_Module
             'paths'  => array(ABSPATH, WP_CONTENT_DIR)
         );
 
-        parent::__construct(
-            array(
-                'disabled' => false, //!current_user_can('install_plugins'),
-                'settings' => $default
-            )
-        );
+        parent::__construct(array(
+            'settings' => $default
+        ));
 
         if (!WOSettings::check($this->settings, 'active'))
             return;
@@ -56,14 +47,6 @@ class WOMod_Folder_Size extends WO_Module
             return;
 
         add_action("wp_dashboard_setup", array($this, 'dashboard_setup'));
-    }
-
-    public function setting_fields()
-    {
-        return array(
-            array('type' => 'checkbox', 'name' => 'Active', 'id' => 'active', 'value' => WOSettings::check($this->settings, 'active')),
-            array('type' => 'textarea', 'name' => 'paths', 'id' => 'paths', 'value' => implode(PHP_EOL, $this->settings['paths'])),
-        );
     }
 
     public function validate_settings($input, $valid)
@@ -78,10 +61,6 @@ class WOMod_Folder_Size extends WO_Module
      * Hooked into `template_redirect`.  Adds the admin bar stick/unstick
      * button if we're on a single post page and the current user can edit
      * the post
-     *
-     * @since   1.0
-     * @access  public
-     * @uses    add_action
      */
     public function dashboard_setup()
     {
@@ -102,7 +81,6 @@ class WOMod_Folder_Size extends WO_Module
     /**
      * Prints table styles in dashboard head
      *
-     * @since 1.0
      * @access public
      */
     public function head_style()
@@ -146,7 +124,6 @@ class WOMod_Folder_Size extends WO_Module
      * @param string $root Initial directory to scan
      * @param array $dir_list Directory list of folders
      *
-     * @since 1.0
      * @access private
      * @uses set_transient
      */
@@ -168,9 +145,6 @@ class WOMod_Folder_Size extends WO_Module
      *
      * @param string $directory
      * @return string Formatted size
-     *
-     * @since 1.0
-     * @access private
      */
     private function dirSize($directory)
     {
@@ -186,9 +160,6 @@ class WOMod_Folder_Size extends WO_Module
      *
      * @param integer $size
      * @return string
-     *
-     * @since 1.0
-     * @access private
      */
     private function format_size($size)
     {
@@ -208,8 +179,6 @@ class WOMod_Folder_Size extends WO_Module
      *
      * @param $dir_list
      * @param $root_size
-     * @since 1.0
-     * @access private
      */
     private function printTable($title, $dir_list, $root_size)
     {
@@ -240,9 +209,6 @@ class WOMod_Folder_Size extends WO_Module
      * Prints the list of folders and its sizes
      *
      * @param array $directories List of folders inside a directory
-     *
-     * @since 1.0
-     * @access private
      */
     private function printDirectoryList($directories)
     {
@@ -278,9 +244,6 @@ class WOMod_Folder_Size extends WO_Module
 
     /**
      * Used for both Widgets configuration
-     *
-     * @since 1.0
-     * @access public
      */
     public function widget_handle()
     {
@@ -293,5 +256,13 @@ class WOMod_Folder_Size extends WO_Module
         $name = $this->transient_prefix;
         $cache_msg = count($this->paths) > 1 ? __('Clears all widgets caches', 'wpopt') : __('Clear widget cache', 'wpopt');
         echo "<p><label><input name='$name' id='$name' type='checkbox' value='1' />" . __('Check to empty the cache', 'wpopt') . "</label><br /><em style='margin-left: 23px'>$cache_msg</em></p>";
+    }
+
+    protected function setting_fields()
+    {
+        return array(
+            array('type' => 'checkbox', 'name' => __('Active', 'wpopt'), 'id' => 'active', 'value' => WOSettings::check($this->settings, 'active')),
+            array('type' => 'textarea', 'name' => __('Paths', 'wpopt'), 'id' => 'paths', 'value' => implode(PHP_EOL, $this->settings['paths'])),
+        );
     }
 }

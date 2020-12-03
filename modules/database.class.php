@@ -2,32 +2,62 @@
 
 class WOMod_Database extends WO_Module
 {
-    public $scopes = array('admin-page');
+    public $scopes = array('admin-page', 'cron', 'settings');
 
     private $performer_response = array();
 
+    private $ajax_limit;
+
     public function __construct()
     {
+        require_once __DIR__ . '/database/dbperformer.class.php';
+
         $default = array(
-            'cron'   => array(
-                'active' => false
-            ),
             'backup' => array(
                 'path'            => wpopt_conform_dir(WP_CONTENT_DIR . '/backup-db'),
                 'excluded_tables' => array(),
                 'mysqldump_path'  => ''
             ),
             'sweep'  => array(
-                'excluded_taxonomies' => array()
+                'excluded_taxonomies' => array(),
             )
+        );
+
+        $default_cron = array(
+            'active' => false
         );
 
         parent::__construct(
             array(
-                'disabled' => !current_user_can('manage_database'),
-                'settings' => $default
+                'settings'      => $default,
+                'cron_settings' => $default_cron
             )
         );
+
+        $this->ajax_limit = 100;
+    }
+
+    public function cron_handler($wo_meter = null)
+    {
+        return WO_DBSupport::cron_job();
+    }
+
+
+    public function cron_setting_fields($cron_settings)
+    {
+        $cron_settings[] = array('type' => 'checkbox', 'name' => __('Auto optimize Database', 'wpopt'), 'id' => 'database_active', 'value' => WOSettings::check($this->cron_settings, 'active'));
+
+        return $cron_settings;
+    }
+
+
+    public function cron_validate_settings($valid, $input)
+    {
+        $valid['database'] = array(
+            'active' => isset($input['database_active']),
+        );
+
+        return $valid;
     }
 
     /**
@@ -47,7 +77,7 @@ class WOMod_Database extends WO_Module
         }
 
         ?>
-        <form method="post" action="<?php echo WO::getInstance()->module_panel_url("database", "db-tables"); ?>">
+        <form method="post" action="<?php echo wpopt_module_panel_url("database", "db-tables"); ?>">
             <?php $table_list_obj->search_box('Search', 'search'); ?>
             <?php $table_list_obj->display(); ?>
         </form>
@@ -65,7 +95,7 @@ class WOMod_Database extends WO_Module
         ?>
         <form class="wpopt-ajax-db" method="post" data-module="<?php echo $this->slug ?>"
               data-nonce="<?php echo wp_create_nonce('wpopt-ajax-nonce') ?>"
-              action="<?php echo WO::getInstance()->module_panel_url("database", "db-runsql"); ?>">
+              action="<?php echo wpopt_module_panel_url("database", "db-runsql"); ?>">
             <div>
                 <strong><?php _e('Separate multiple queries with "<u>####</u>"', 'wpopt'); ?></strong><br/>
                 <p style="color: green;"><?php _e('Use only INSERT, UPDATE, REPLACE, DELETE, CREATE and ALTER statements.', 'wpopt'); ?></p>
@@ -129,7 +159,7 @@ class WOMod_Database extends WO_Module
         <section>
             <form class="wpopt-ajax-db" method="post" data-module="<?php echo $this->slug ?>"
                   data-nonce="<?php echo wp_create_nonce('wpopt-ajax-nonce') ?>"
-                  action="<?php echo WO::getInstance()->module_panel_url('database', 'db-backup'); ?>">
+                  action="<?php echo wpopt_module_panel_url('database', 'db-backup'); ?>">
                 <?php wp_nonce_field('wpopt-db-backup-manage'); ?>
                 <input type="hidden" name="wpopt-db-do" value="db-manage-backup">
 
@@ -205,10 +235,9 @@ class WOMod_Database extends WO_Module
                     </tr>
                 </table>
             </form>
-
             <form class="wpopt-ajax-db" method="post" data-module="<?php echo $this->slug ?>"
                   data-nonce="<?php echo wp_create_nonce('wpopt-ajax-nonce') ?>"
-                  action="<?php echo WO::getInstance()->module_panel_url('database', 'db-backup'); ?>">
+                  action="<?php echo wpopt_module_panel_url('database', 'db-backup'); ?>">
                 <h3><?php _e('Backup Database', 'wpopt'); ?></h3>
                 <table class="widefat wpopt">
                     <thead>
@@ -256,7 +285,7 @@ class WOMod_Database extends WO_Module
                                    value="<?php _e('Backup now', 'wpopt'); ?>"
                                    class="button"/>
                             <a class="button"
-                               href="<?php echo WO::getInstance()->setting_panel_url('database') ?>">Settings</a>
+                               href="<?php echo wpopt_setting_panel_url('database') ?>">Settings</a>
                         </td>
                     </tr>
                 </table>
@@ -272,11 +301,9 @@ class WOMod_Database extends WO_Module
 
             if (!wpopt_verify_nonce('wpopt-ajax-nonce', $_GET['wpopt_nonce'])) {
 
-                wp_send_json_error(
-                    array(
-                        'response' => __('It seems that you are not allowed to do this request.', 'wpopt'),
-                    )
-                );
+                wp_send_json_error(array(
+                    'response' => __('It seems that you are not allowed to do this request.', 'wpopt'),
+                ));
             }
 
             $response = '';
@@ -289,17 +316,13 @@ class WOMod_Database extends WO_Module
             switch ($action) {
 
                 case 'exec-sql':
-                    $this->ajax_performer(array(
-                        'exec-sql', array('query' => $form_data['sql_query'])
-                    ));
+                    $this->ajax_performer($action, array('query' => $form_data['sql_query']));
                     break;
 
                 case 'delete':
                 case 'download':
                 case 'restore':
-                    $this->ajax_performer(array(
-                        $action, array('file' => $form_data['file'])
-                    ));
+                    $this->ajax_performer($action, array('file' => $form_data['file']));
                     break;
 
                 case 'backup':
@@ -307,14 +330,15 @@ class WOMod_Database extends WO_Module
                     break;
 
                 case 'sweep_details':
-                    wp_send_json_success($this->details($action_args['sweep-name']));
+                    wp_send_json_success(WO_DBSupport::details($action_args['sweep-name']));
                     break;
 
                 case 'sweep':
-                    $sweep = WOPerformer::sweep($action_args['sweep-name'], $this->get_excluded_taxonomies());
+                    $sweep = WO_DBSupport::sweep($action_args['sweep-name'], $this->settings['sweep']);
 
-                    $count = $this->count($action_args['sweep-name']);
-                    $total_count = $this->total_count($action_args['sweep-type']);
+                    $count = WO_DBSupport::count($action_args['sweep-name'], $this->settings['sweep']);
+
+                    $total_count = WO_DBSupport::total_count($action_args['sweep-type']);
 
                     wp_send_json_success(
                         array(
@@ -340,15 +364,8 @@ class WOMod_Database extends WO_Module
         }
     }
 
-    private function ajax_performer($_args = array())
+    private function ajax_performer($action, $args = array())
     {
-        if (is_array($_args))
-            list($action, $args) = $_args;
-        else {
-            $action = $_args;
-            $args = array();
-        }
-
         switch ($action) {
 
             case 'exec-sql':
@@ -384,7 +401,7 @@ class WOMod_Database extends WO_Module
 
                 foreach ($sql_queries as $sql_query) {
 
-                    if (WOPerformer::execute_sql($sql_query)) {
+                    if (WO_DBSupport::execute_sql($sql_query)) {
                         $success_query++;
                         $this->performer_response[] = array($sql_query, 'success');
                     }
@@ -448,11 +465,11 @@ class WOMod_Database extends WO_Module
 
                 if (wpopt_get_mysqlDump_command_path($options['mysqldump_path'])) {
 
-                    $res = WOPerformer::mysqlDump_db($backup_path, $options['excluded_tables'], $options['mysqldump_path']);
+                    $res = WO_DBSupport::mysqlDump_db($backup_path, $options['excluded_tables'], $options['mysqldump_path']);
                 }
                 elseif (!$res) {
 
-                    $res = WOPerformer::queryDump_db($backup_path, $options['excluded_tables']);
+                    $res = WO_DBSupport::queryDump_db($backup_path, $options['excluded_tables']);
                 }
 
                 if ($res)
@@ -473,7 +490,7 @@ class WOMod_Database extends WO_Module
 
                 $file_path = trailingslashit($this->settings['backup']['path']) . $database_file;
 
-                if (WOPerformer::restore_db($file_path)) {
+                if (WO_DBSupport::restore_db($file_path)) {
                     $this->performer_response[] = array(__('Database restored.', 'wpopt'), 'success');
                 }
                 else {
@@ -483,253 +500,9 @@ class WOMod_Database extends WO_Module
 
             default:
                 $this->performer_response[] = array(__('Invalid request.', 'wpopt'), 'error');
-
         }
 
         return true;
-    }
-
-    /**
-     * Return details about a sweep
-     *
-     * @param string $name
-     * @return array
-     * @since 1.2.0
-     */
-    private function details($name)
-    {
-        global $wpdb;
-
-        $details = array();
-
-        switch ($name) {
-            case 'revisions':
-                $details = $wpdb->get_col($wpdb->prepare("SELECT post_title FROM $wpdb->posts WHERE post_type = %s LIMIT %d", 'revision', $this->ajax_limit));
-                break;
-            case 'auto_drafts':
-                $details = $wpdb->get_col($wpdb->prepare("SELECT post_title FROM $wpdb->posts WHERE post_status = %s LIMIT %d", 'auto-draft', $this->ajax_limit));
-                break;
-            case 'deleted_posts':
-                $details = $wpdb->get_col($wpdb->prepare("SELECT post_title FROM $wpdb->posts WHERE post_status = %s LIMIT %d", 'trash', $this->ajax_limit));
-                break;
-            case 'unapproved_comments':
-                $details = $wpdb->get_col($wpdb->prepare("SELECT comment_author FROM $wpdb->comments WHERE comment_approved = %s LIMIT %d", '0', $this->ajax_limit));
-                break;
-            case 'spam_comments':
-                $details = $wpdb->get_col($wpdb->prepare("SELECT comment_author FROM $wpdb->comments WHERE comment_approved = %s LIMIT %d", 'spam', $this->ajax_limit));
-                break;
-            case 'deleted_comments':
-                $details = $wpdb->get_col($wpdb->prepare("SELECT comment_author FROM $wpdb->comments WHERE (comment_approved = %s OR comment_approved = %s) LIMIT %d", 'trash', 'post-trashed', $this->ajax_limit));
-                break;
-            case 'transient_options':
-                $details = $wpdb->get_col($wpdb->prepare("SELECT option_name FROM $wpdb->options WHERE option_name LIKE(%s) LIMIT %d", '%_transient_%', $this->ajax_limit));
-                break;
-            case 'orphan_postmeta':
-                $details = $wpdb->get_col($wpdb->prepare("SELECT meta_key FROM $wpdb->postmeta WHERE post_id NOT IN (SELECT ID FROM $wpdb->posts) LIMIT %d", $this->ajax_limit));
-                break;
-            case 'orphan_commentmeta':
-                $details = $wpdb->get_col($wpdb->prepare("SELECT meta_key FROM $wpdb->commentmeta WHERE comment_id NOT IN (SELECT comment_ID FROM $wpdb->comments) LIMIT %d", $this->ajax_limit));
-                break;
-            case 'orphan_usermeta':
-                $details = $wpdb->get_col($wpdb->prepare("SELECT meta_key FROM $wpdb->usermeta WHERE user_id NOT IN (SELECT ID FROM $wpdb->users) LIMIT %d", $this->ajax_limit));
-                break;
-            case 'orphan_termmeta':
-                $details = $wpdb->get_col($wpdb->prepare("SELECT meta_key FROM $wpdb->termmeta WHERE term_id NOT IN (SELECT term_id FROM $wpdb->terms) LIMIT %d", $this->ajax_limit));
-                break;
-            case 'orphan_term_relationships':
-                $orphan_term_relationships_sql = implode("','", array_map('esc_sql', $this->get_excluded_taxonomies()));
-                $details = $wpdb->get_col($wpdb->prepare("SELECT tt.taxonomy FROM $wpdb->term_relationships AS tr INNER JOIN $wpdb->term_taxonomy AS tt ON tr.term_taxonomy_id = tt.term_taxonomy_id WHERE tt.taxonomy NOT IN ('$orphan_term_relationships_sql') AND tr.object_id NOT IN (SELECT ID FROM $wpdb->posts) LIMIT %d", $this->ajax_limit)); // WPCS: unprepared SQL ok.
-                break;
-            case 'unused_terms':
-                $ids = $wpdb->get_col($wpdb->prepare("SELECT tt.term_id FROM $wpdb->term_taxonomy AS tt WHERE tt.count = 0 AND tt.parent <> 0 AND tt.parent NOT IN (SELECT term_id FROM $wpdb->term_taxonomy WHERE count = 0 ) LIMIT %d", $this->ajax_limit)); // WPCS: unprepared SQL ok.
-                foreach ($ids as $term_id) {
-                    $details[] = "<a target='_blank' href='" . get_edit_term_link($term_id) . "'>{$term_id}</a>";
-                }
-                break;
-            case 'duplicated_postmeta':
-                $query = $wpdb->get_results($wpdb->prepare("SELECT COUNT(*) AS count, meta_key FROM $wpdb->postmeta GROUP BY post_id, meta_key, meta_value HAVING count > %d LIMIT %d", 1, $this->ajax_limit));
-                if ($query) {
-                    foreach ($query as $meta) {
-                        $details[] = $meta->meta_key;
-                    }
-                }
-                break;
-            case 'duplicated_commentmeta':
-                $query = $wpdb->get_results($wpdb->prepare("SELECT COUNT(*) AS count, meta_key FROM $wpdb->commentmeta GROUP BY comment_id, meta_key, meta_value HAVING count > %d LIMIT %d", 1, $this->ajax_limit));
-                if ($query) {
-                    foreach ($query as $meta) {
-                        $details[] = $meta->meta_key;
-                    }
-                }
-                break;
-            case 'duplicated_usermeta':
-                $query = $wpdb->get_results($wpdb->prepare("SELECT COUNT(*) AS count, meta_key FROM $wpdb->usermeta GROUP BY user_id, meta_key, meta_value HAVING count > %d LIMIT %d", 1, $this->ajax_limit));
-                if ($query) {
-                    foreach ($query as $meta) {
-                        $details[] = $meta->meta_key;
-                    }
-                }
-                break;
-            case 'duplicated_termmeta':
-                $query = $wpdb->get_results($wpdb->prepare("SELECT COUNT(*) AS count, meta_key FROM $wpdb->termmeta GROUP BY term_id, meta_key, meta_value HAVING count > %d LIMIT %d", 1, $this->ajax_limit));
-                if ($query) {
-                    foreach ($query as $meta) {
-                        $details[] = $meta->meta_key;
-                    }
-                }
-                break;
-            case 'oembed_postmeta':
-                $details = $wpdb->get_col($wpdb->prepare("SELECT meta_key FROM $wpdb->postmeta WHERE meta_key LIKE(%s) LIMIT %d", '%_oembed_%', $this->ajax_limit));
-                break;
-        }
-
-        return $details;
-    }
-
-    private function get_excluded_taxonomies()
-    {
-        return $this->settings['sweep']['excluded_taxonomies'];
-    }
-
-    /**
-     * Count the number of items for each sweep
-     *
-     * @param string $name
-     * @return int
-     * @since 1.2.0
-     *
-     * @access public
-     */
-    private function count($name)
-    {
-        global $wpdb;
-
-        $count = 0;
-
-        switch ($name) {
-            case 'revisions':
-                $count = $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM $wpdb->posts WHERE post_type = %s", 'revision'));
-                break;
-            case 'auto_drafts':
-                $count = $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM $wpdb->posts WHERE post_status = %s", 'auto-draft'));
-                break;
-            case 'deleted_posts':
-                $count = $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM $wpdb->posts WHERE post_status = %s", 'trash'));
-                break;
-            case 'unapproved_comments':
-                $count = $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM $wpdb->comments WHERE comment_approved = %s", '0'));
-                break;
-            case 'spam_comments':
-                $count = $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM $wpdb->comments WHERE comment_approved = %s", 'spam'));
-                break;
-            case 'deleted_comments':
-                $count = $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM $wpdb->comments WHERE (comment_approved = %s OR comment_approved = %s)", 'trash', 'post-trashed'));
-                break;
-            case 'transient_options':
-                $count = $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM $wpdb->options WHERE option_name LIKE (%s)", '%_transient_%'));
-                break;
-            case 'orphan_postmeta':
-                $count = $wpdb->get_var("SELECT COUNT(meta_id) FROM $wpdb->postmeta WHERE post_id NOT IN (SELECT ID FROM $wpdb->posts)");
-                break;
-            case 'orphan_commentmeta':
-                $count = $wpdb->get_var("SELECT COUNT(meta_id) FROM $wpdb->commentmeta WHERE comment_id NOT IN (SELECT comment_ID FROM $wpdb->comments)");
-                break;
-            case 'orphan_usermeta':
-                $count = $wpdb->get_var("SELECT COUNT(umeta_id) FROM $wpdb->usermeta WHERE user_id NOT IN (SELECT ID FROM $wpdb->users)");
-                break;
-            case 'orphan_termmeta':
-                $count = $wpdb->get_var("SELECT COUNT(meta_id) FROM $wpdb->termmeta WHERE term_id NOT IN (SELECT term_id FROM $wpdb->terms)");
-                break;
-            case 'orphan_term_relationships':
-                $orphan_term_relationships_sql = implode("','", array_map('esc_sql', $this->get_excluded_taxonomies()));
-                $count = $wpdb->get_var("SELECT COUNT(object_id) FROM $wpdb->term_relationships AS tr INNER JOIN $wpdb->term_taxonomy AS tt ON tr.term_taxonomy_id = tt.term_taxonomy_id WHERE tt.taxonomy NOT IN ('$orphan_term_relationships_sql') AND tr.object_id NOT IN (SELECT ID FROM $wpdb->posts)"); // WPCS: unprepared SQL ok.
-                break;
-            case 'unused_terms':
-                //SELECT * FROM wp_term_taxonomy AS tt WHERE tt.count = 0 AND tt.parent <> 0 AND tt.parent NOT IN (SELECT term_id FROM wp_term_taxonomy WHERE count = 0 )
-                $count = $wpdb->get_var("SELECT COUNT(tt.term_id) FROM $wpdb->term_taxonomy AS tt WHERE tt.count = 0 AND tt.parent <> 0 AND tt.parent NOT IN (SELECT term_id FROM $wpdb->term_taxonomy WHERE count = 0 )");
-                break;
-            case 'duplicated_postmeta':
-                $query = $wpdb->get_col($wpdb->prepare("SELECT COUNT(meta_id) AS count FROM $wpdb->postmeta GROUP BY post_id, meta_key, meta_value HAVING count > %d", 1));
-                if (is_array($query)) {
-                    $count = array_sum(array_map('intval', $query));
-                }
-                break;
-            case 'duplicated_commentmeta':
-                $query = $wpdb->get_col($wpdb->prepare("SELECT COUNT(meta_id) AS count FROM $wpdb->commentmeta GROUP BY comment_id, meta_key, meta_value HAVING count > %d", 1));
-                if (is_array($query)) {
-                    $count = array_sum(array_map('intval', $query));
-                }
-                break;
-            case 'duplicated_usermeta':
-                $query = $wpdb->get_col($wpdb->prepare("SELECT COUNT(umeta_id) AS count FROM $wpdb->usermeta GROUP BY user_id, meta_key, meta_value HAVING count > %d", 1));
-                if (is_array($query)) {
-                    $count = array_sum(array_map('intval', $query));
-                }
-                break;
-            case 'duplicated_termmeta':
-                $query = $wpdb->get_col($wpdb->prepare("SELECT COUNT(meta_id) AS count FROM $wpdb->termmeta GROUP BY term_id, meta_key, meta_value HAVING count > %d", 1));
-                if (is_array($query)) {
-                    $count = array_sum(array_map('intval', $query));
-                }
-                break;
-            case 'oembed_postmeta':
-                $count = $wpdb->get_var($wpdb->prepare("SELECT COUNT(meta_id) FROM $wpdb->postmeta WHERE meta_key LIKE(%s)", '%_oembed_%'));
-                break;
-        }
-
-        return $count;
-    }
-
-    /**
-     * Count the number of total items
-     *
-     * @param string $name
-     * @return int
-     * @since 1.2.0
-     */
-    public function total_count($name)
-    {
-        global $wpdb;
-
-        $count = 0;
-
-        switch ($name) {
-            case 'posts':
-                $count = $wpdb->get_var("SELECT COUNT(*) FROM $wpdb->posts");
-                break;
-            case 'postmeta':
-                $count = $wpdb->get_var("SELECT COUNT(*) FROM $wpdb->postmeta");
-                break;
-            case 'comments':
-                $count = $wpdb->get_var("SELECT COUNT(*) FROM $wpdb->comments");
-                break;
-            case 'commentmeta':
-                $count = $wpdb->get_var("SELECT COUNT(*) FROM $wpdb->commentmeta");
-                break;
-            case 'users':
-                $count = $wpdb->get_var("SELECT COUNT(*) FROM $wpdb->users");
-                break;
-            case 'usermeta':
-                $count = $wpdb->get_var("SELECT COUNT(*) FROM $wpdb->usermeta");
-                break;
-            case 'term_relationships':
-                $count = $wpdb->get_var("SELECT COUNT(*) FROM $wpdb->term_relationships");
-                break;
-            case 'term_taxonomy':
-                $count = $wpdb->get_var("SELECT COUNT(*) FROM $wpdb->term_taxonomy");
-                break;
-            case 'terms':
-                $count = $wpdb->get_var("SELECT COUNT(*) FROM $wpdb->terms");
-                break;
-            case 'termmeta':
-                $count = $wpdb->get_var("SELECT COUNT(*) FROM $wpdb->termmeta");
-                break;
-            case 'options':
-                $count = $wpdb->get_var("SELECT COUNT(*) FROM $wpdb->options");
-                break;
-        }
-
-        return $count;
     }
 
     public function enqueue_scripts()
@@ -737,7 +510,7 @@ class WOMod_Database extends WO_Module
         wp_enqueue_script('wpopt-db-sweep', plugin_dir_url(WPOPT_FILE) . 'modules/database/database.js', array('jquery'), false, true);
     }
 
-    public function render()
+    public function render_admin_page()
     {
         if (WPOPT_DEBUG)
             set_time_limit(0);
@@ -872,7 +645,7 @@ class WOMod_Database extends WO_Module
 
         foreach ($sweepers as $sweeper) {
 
-            $total = $this->total_count($sweeper['type']);
+            $total = WO_DBSupport::total_count($sweeper['type']);
             if ($total == 0)
                 continue;
             ?>
@@ -897,7 +670,7 @@ class WOMod_Database extends WO_Module
                     $alternate = false;
                     foreach ($sweeper['sweeps'] as $name => $sweep_id) {
 
-                        $count = $this->count($sweep_id);
+                        $count = WO_DBSupport::count($sweep_id);
                         ?>
                         <tr <?php echo $alternate ? "class='alternate'" : ''; ?>>
                             <td>
@@ -939,12 +712,31 @@ class WOMod_Database extends WO_Module
         }
     }
 
-    public function setting_fields()
+    public function validate_settings($input, $valid)
+    {
+        $valid['sweep'] = array(
+            'excluded_taxonomies' => array_map('trim', explode(',', $input['excluded_taxonomies']))
+        );
+
+        $valid['backup'] = array(
+            'excluded_tables' => array_map('trim', explode(',', $input['excluded_tables']))
+        );
+
+        return $valid;
+    }
+
+    protected function setting_fields()
     {
         return array(
-            array('type' => 'checkbox', 'name' => 'Auto optimization', 'id' => 'cron', 'value' => $this->settings['cron']),
-            array('type' => 'separator', 'name' => 'Sweeps:'),
+            array('type' => 'separator', 'name' => __('Sweeps:', 'wpopt')),
+            array('type' => 'textarea', 'name' => __('Excluded Taxonomies (comma separated)', 'wpopt'), 'id' => 'excluded_taxonomies', 'value' => implode(', ', $this->settings['sweep']['excluded_taxonomies'])),
+            array('type' => 'separator', 'name' => __('Backups:', 'wpopt')),
+            array('type' => 'textarea', 'name' => __('Excluded Tables (comma separated)', 'wpopt'), 'id' => 'excluded_tables', 'value' => implode(', ', $this->settings['backup']['excluded_tables'])),
         );
     }
 
+    protected function restricted_access($context = 'settings')
+    {
+        return !current_user_can('administrator');
+    }
 }

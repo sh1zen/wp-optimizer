@@ -1,111 +1,49 @@
 <?php
 
-if (!defined('ABSPATH'))
-    exit();
-
 class WOMod_Cron extends WO_Module
 {
-    public $scopes = array('settings', 'cron', 'autoload');
+    public $scopes = array('settings');
 
     public function __construct()
     {
-        $default = array(
-            'clear-time'  => '05:00:00',
-            'active'      => false,
-            'images'      => false,
-            'database'    => false,
-            'save_report' => true
-        );
+        /**
+         * we need to load all modules with cron scope
+         */
+        WOModuleHandler::getInstance()->setup_modules('cron');
 
-        parent::__construct(
-            array(
-                'settings' => $default,
-            )
-        );
-
-        // cron job
-        add_action('wpopt-cron', array($this, 'exec_cron'));
-    }
-
-    public function setting_fields()
-    {
-        return array(
-            array('type' => 'time', 'name' => 'Auto Clear Time', 'id' => 'clear-time', 'value' => $this->settings['clear-time']),
-            array('type' => 'checkbox', 'name' => 'Active', 'id' => 'active', 'value' => WOSettings::check($this->settings, 'active')),
-            array('type' => 'checkbox', 'name' => 'Auto optimize images ( daily uploads )', 'id' => 'images', 'value' => WOSettings::check($this->settings, 'images')),
-            array('type' => 'checkbox', 'name' => 'Auto optimize Database', 'id' => 'database', 'value' => WOSettings::check($this->settings, 'database')),
-            array('type' => 'checkbox', 'name' => 'Save optimization report', 'id' => 'save_report', 'value' => WOSettings::check($this->settings, 'save_report'))
-        );
+        parent::__construct();
     }
 
     public function validate_settings($input, $valid)
     {
-        $valid['clear-time'] = sanitize_text_field($input['clear-time']);
-
-        $this->set_schedule(strtotime($valid['clear-time']));
-
-        $valid['active'] = isset($input['active']);
-        $valid['images'] = isset($input['images']);
-        $valid['database'] = isset($input['database']);
-        $valid['save_report'] = isset($input['save_report']);
-
-        return $valid;
+        /**
+         * Filters all modules cron settings validation
+         * @since 0.0.9
+         */
+        return apply_filters('wpopt_validate_cron_settings', $valid, $input);
     }
 
-    public function set_schedule($time, $recurrence = 'daily')
+    protected function setting_fields()
     {
-        $time = wpopt_add_timezone($time);
+        $cron_settings = array();
 
-        $this->deactivate();
+        /**
+         * Filters all modules cron settings
+         * @since 0.0.9
+         */
+        return apply_filters('wpopt_cron_settings_fields', $cron_settings);
+    }
 
-        if (!wp_next_scheduled('wpopt-cron')) {
+    protected function restricted_access($context = '')
+    {
+        switch ($context) {
 
-            wp_schedule_event($time, $recurrence, 'wpopt-cron');
+            case 'settings':
+                return !current_user_can('administrator');
+
+            default:
+                return false;
         }
     }
 
-    public function deactivate()
-    {
-        wp_clear_scheduled_hook('wpopt-cron');
-    }
-
-    public function activate()
-    {
-        $this->set_schedule(strtotime($this->settings['clear-time']));
-    }
-
-    public function exec_cron()
-    {
-        global $wo_meter;
-
-        $full_report = array();
-
-        $performer = WOPerformer::getInstance();
-
-        if (!WOSettings::check($this->settings, 'active'))
-            return false;
-
-        if (WOSettings::check($this->settings, 'images')) {
-
-            $images = get_option('wpopt-imgs--todo');
-
-            if (!empty($images)) {
-                $full_report['images'] = $performer->optimize_images($images);
-                update_option('wpopt-imgs--todo', array(), false);
-            }
-        }
-
-        if (WOSettings::check($this->settings, 'database'))
-            $full_report['db'] = $performer->clear_database_full();
-
-        $wo_meter->lap();
-
-        if (WOSettings::check($this->settings, 'save_report'))
-            file_put_contents(WP_CONTENT_DIR . '/report.opt.txt', wpopt_generate_report($full_report), FILE_APPEND);
-
-        if (defined('DOING_CRON') and DOING_CRON)
-            die();
-
-        return array_merge(array('memory' => $wo_meter->get_memory(), 'time' => $wo_meter->get_time()), $full_report);
-    }
 }
