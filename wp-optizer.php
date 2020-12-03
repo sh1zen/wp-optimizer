@@ -8,7 +8,7 @@
  * Text Domain: gforms_file_uploader_plugin
  * Domain Path: /languages
  * Text Domain: wpopt
- * Version: 1.3.36
+ * Version: 0.0.10
  */
 
 define('WPOPT_FILE', __FILE__);
@@ -16,6 +16,7 @@ define('WPOPT_ABSPATH', dirname(__FILE__) . '/');
 define('WPOPT_INCPATH', WPOPT_ABSPATH . 'inc/');
 define('WPOPT_MODULES', WPOPT_ABSPATH . 'modules/');
 define('WPOPT_ADMIN', WPOPT_ABSPATH . 'admin/');
+define('WPOPT_STORAGE', WP_CONTENT_DIR . '/wpopt-storage/');
 
 define('WPOPT_DEBUG', $_SERVER["SERVER_ADDR"] === '127.0.0.1');
 
@@ -28,7 +29,8 @@ require_once WPOPT_INCPATH . 'WOMeter.class.php';
 require_once WPOPT_INCPATH . 'WOCache.class.php';
 require_once WPOPT_INCPATH . 'WOStorage.class.php';
 require_once WPOPT_ADMIN . 'WOSettings.class.php';
-require_once WPOPT_INCPATH . 'WOMonitor.class.php';
+
+require_once WPOPT_ADMIN . 'WOCron.class.php';
 
 require_once WPOPT_INCPATH . 'WO_Module.php';
 require_once WPOPT_INCPATH . 'WOModuleHandler.class.php';
@@ -42,11 +44,13 @@ $wo_meter = new WOMeter();
  */
 WOStorage::getInstance();
 
-WOCache::Initialize();
+WOCache::getInstance();
 
-WOSettings::Initialize();
+WOSettings::getInstance();
 
-WOModuleHandler::Initialize();
+WOModuleHandler::getInstance();
+
+WOCron::getInstance();
 
 /**
  * Load main class
@@ -55,7 +59,6 @@ require_once WPOPT_ADMIN . 'WO.class.php';
 
 /**
  * Starts the plugin.
- *
- * @since 1.0.0
  */
 WO::Initialize();
+
