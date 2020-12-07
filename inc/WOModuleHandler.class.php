@@ -20,20 +20,22 @@ class WOModuleHandler
 
             $this->modules[] = array(
                 'slug' => $module_name,
-                'name' => self::get_module_name($module_name, ucfirst($module_name))
+                'name' => self::get_module_name($module_name, $module_name)
             );
         }
     }
 
     private static function get_module_name($module, $default = '')
     {
-        if (!$class = self::module2classname($module))
-            return $default;
+        $module_name = $default;
 
-        if (!isset($class::$name))
-            return $default;
+        if ($class = self::module2classname($module)) {
 
-        return is_null($class::$name) ? $default : $class::$name;
+            if (isset($class::$name) and !is_null($class::$name))
+                $module_name = $default;
+        }
+
+        return ucwords(str_replace('_', ' ', $module_name));
     }
 
     /**
@@ -117,10 +119,11 @@ class WOModuleHandler
      * If a user disable some modules, they will be loaded anyway.
      * Each module has to handle user settings
      * @param string $scope
+     * @param bool $only_active
      */
-    public function setup_modules($scope)
+    public function setup_modules($scope, $only_active = true)
     {
-        foreach ($this->modules as $index => $module) {
+        foreach ($this->get_modules(array('scopes' => 'all'), $only_active) as $index => $module) {
 
             if ($this->module_has_scope($module['slug'], $scope) or $scope === 'all') {
                 self::load_module($module['slug']);
@@ -129,69 +132,52 @@ class WOModuleHandler
     }
 
     /**
-     * Accepts module name or wp-admin page name
-     *
-     * @param $module
-     * @param $scope
-     * @param string $compare
-     * @return bool
-     */
-    private function module_has_scope($module, $scope, $compare = 'AND')
-    {
-        if (is_null($module) or empty($scope))
-            return false;
-
-        if (!is_array($scope))
-            $scope = array($scope);
-
-        if (!$class = self::module2classname($module))
-            return false;
-
-        $found = array_intersect($scope, get_class_vars($class)['scopes']);
-
-        if($compare === 'AND')
-            return count($found) === count($scope);
-        else
-           return !empty($found);
-    }
-
-    /**
      * Get all modules filtered by:
      * methods -> available method
      * status -> 'autoload'
      *
      * @param array $filters
+     * @param bool $only_active
      * @return array
      */
-    public function get_modules($filters = array())
+    public function get_modules($filters = array(), $only_active = true)
     {
-        if (empty($filters))
-            return $this->modules;
+        $modules = array();
 
         $filters = array_merge(array(
             'methods' => false,
             'scopes'  => false,
-            'vars'    => false,
+            'excepts' => false,
             'compare' => 'AND'
         ), $filters);
 
-        $modules = array();
+        if ($filters['excepts'] and !($filters['scopes'] or $filters['methods']))
+            $filters['scopes'] = 'all';
 
         foreach ($this->modules as $index => $module) {
 
-            if ($filters['methods']) {
-                if ($this->module_has_method($module, $filters['methods']))
-                    $modules[] = $module;
+            if ($only_active and !$this->module_is_active($module['slug'])) {
+                continue;
             }
 
-            if ($filters['vars']) {
-                if ($this->module_has_var($module, $filters['vars']))
-                    $modules[] = $module;
+            if ($filters['excepts'] and in_array($module['slug'], (array)$filters['excepts'])) {
+                continue;
             }
 
-            if ($filters['scopes']) {
-                if ($this->module_has_scope($module, $filters['scopes'], $filters['compare']))
-                    $modules[] = $module;
+            if ($filters['scopes'] === 'all') {
+                $modules[] = $module;
+            }
+            else {
+
+                if ($filters['methods']) {
+                    if ($this->module_has_method($module, $filters['methods'], $filters['compare']))
+                        $modules[] = $module;
+                }
+
+                if ($filters['scopes']) {
+                    if ($this->module_has_scope($module, $filters['scopes'], $filters['compare']))
+                        $modules[] = $module;
+                }
             }
         }
 
@@ -199,13 +185,29 @@ class WOModuleHandler
     }
 
     /**
+     * check if passed module slug has settings and if active parameter is true
+     * @param $module_slug
+     * @return bool
+     */
+    private function module_is_active($module_slug)
+    {
+        $module_settings = WOSettings::getInstance()->get_settings('modules_handler');
+
+        if (isset($module_settings[$module_slug]) and !$module_settings[$module_slug])
+            return false;
+
+        return true;
+    }
+
+    /**
      * Accepts module name or wp-admin page name
      *
      * @param $module
      * @param $method
+     * @param string $compare
      * @return bool
      */
-    private function module_has_method($module, $method)
+    public function module_has_method($module, $method, $compare = 'AND')
     {
         if (is_null($module) or empty($method))
             return false;
@@ -218,29 +220,36 @@ class WOModuleHandler
 
         $methods = array_intersect($method, get_class_methods($class));
 
-        return !empty($methods);
+        if ($compare === 'AND')
+            return count($methods) === count($methods);
+        else
+            return !empty($methods);
     }
 
     /**
      * Accepts module name or wp-admin page name
      *
      * @param $module
-     * @param $var
+     * @param $scope
+     * @param string $compare
      * @return bool
      */
-    private function module_has_var($module, $var)
+    public function module_has_scope($module, $scope, $compare = 'AND')
     {
-        if (is_null($module) or empty($var))
+        if (is_null($module) or empty($scope))
             return false;
 
-        if (!is_array($var))
-            $var = array($var);
+        if (!is_array($scope))
+            $scope = array($scope);
 
         if (!$class = self::module2classname($module))
             return false;
 
-        $methods = array_intersect($var, get_class_vars($class));
+        $found = array_intersect($scope, get_class_vars($class)['scopes']);
 
-        return !empty($methods);
+        if ($compare === 'AND')
+            return count($found) === count($scope);
+        else
+            return !empty($found);
     }
 }

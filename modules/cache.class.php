@@ -99,10 +99,11 @@ class WOMod_Cache extends WO_Module
     {
         return array(
             array(
-                'before'       => "<b>" . WOStorage::getInstance()->get_size(self::$storage_internal) . "</b>",
+                'before'       => "<b>" . __('Cache size', 'wpopt') . " : " . WOStorage::getInstance()->get_size(self::$storage_internal) . "</b>",
                 'name'         => 'reset_cache',
                 'value'        => 'Reset Cache',
-                'button_types' => 'button-danger'
+                'button_types' => 'button-danger',
+                'context'      => 'action'
             )
         );
     }

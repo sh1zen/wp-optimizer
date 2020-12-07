@@ -159,7 +159,7 @@ class WO
 
         /**
          * Hook for the plugin activation
-         * @since 0.0.9
+         * @since 1.4.0
          */
         do_action('wpopt-activate');
     }
@@ -194,7 +194,7 @@ class WO
 
         /**
          * Hook for the plugin deactivation
-         * @since 0.0.9
+         * @since 1.4.0
          */
         do_action('wpopt-deactivate');
     }
@@ -227,7 +227,7 @@ class WO
     {
         $links[] = sprintf(
             '<a href="%s">%s</a>',
-            admin_url('admin.php?page=wpopt-settings'),
+            admin_url('admin.php?page=wpopt-modules-settings'),
             __('Settings', 'wpopt')
         );
 

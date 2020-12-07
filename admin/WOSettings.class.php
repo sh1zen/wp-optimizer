@@ -44,7 +44,7 @@ class WOSettings
         ));
     }
 
-    public function render()
+    public function render_modules_settings()
     {
         $mod_handler = WOModuleHandler::getInstance();
 
@@ -56,40 +56,21 @@ class WOSettings
         settings_errors();
         ?>
         <section class="wpopt-wrap wpopt">
-            <h1><?php _e('WP Optimizer - Settings', 'wpopt'); ?></h1>
+            <h1><?php _e('Modules Settings', 'wpopt'); ?></h1>
             <block class="wpopt">
                 <?php
 
                 if (!empty($modules)) {
-
                     echo $this->generateHTML_tabpan($modules);
-
                 }
+                else {
+                    echo "<h2>" . __("No modules enabled. To enable them go <a href='" . admin_url('admin.php?page=wpopt-settings') . "'>here</a>.", 'wpopt') . "</h2>";
+                }
+
                 ?>
             </block>
         </section>
         <?php
-    }
-
-    public function activate()
-    {
-        $options = get_option(self::$option_name, array());
-
-        if (empty($options)) {
-
-            /**
-             * Load all modules to be allow them to set up their options
-             */
-            WOModuleHandler::getInstance()->setup_modules('all');
-
-            $this->reset_options($this->settings);
-        }
-    }
-
-    public function reset_options($options = array())
-    {
-        $this->settings = $options;
-        return update_option(self::$option_name, $options);
     }
 
     private function generateHTML_tabpan($modules)
@@ -115,6 +96,53 @@ class WOSettings
         }
 
         return wpopt_generateHTML_tabs_panels($fields);
+    }
+
+    public function render_core_settings()
+    {
+        $mod_handler = WOModuleHandler::getInstance();
+
+        /**
+         * Consider only modules with settings handlers
+         */
+        $modules = $mod_handler->get_modules(array('scopes' => array('core-settings')));
+
+        settings_errors();
+        ?>
+        <section class="wpopt-wrap wpopt">
+            <h1><?php _e('Core Settings', 'wpopt'); ?></h1>
+            <block class="wpopt">
+                <?php
+
+                if (!empty($modules)) {
+                    echo $this->generateHTML_tabpan($modules);
+                }
+
+                ?>
+            </block>
+        </section>
+        <?php
+    }
+
+    public function activate()
+    {
+        $options = get_option(self::$option_name, array());
+
+        if (empty($options)) {
+
+            /**
+             * Load all modules to be allow them to set up their options
+             */
+            WOModuleHandler::getInstance()->setup_modules('all');
+
+            $this->reset_options($this->settings);
+        }
+    }
+
+    public function reset_options($options = array())
+    {
+        $this->settings = $options;
+        return update_option(self::$option_name, $options);
     }
 
     public function validate($input)
@@ -149,9 +177,8 @@ class WOSettings
 
         if (isset($this->settings[$context]))
             $options = $this->settings[$context];
-        else
-        {
-            if($update) {
+        else {
+            if ($update) {
                 $this->update_settings($default, $context);
             }
             $options = array();
@@ -175,6 +202,16 @@ class WOSettings
 
     public function export()
     {
-        return serialize($this->settings);
+        return base64_encode(serialize($this->settings));
+    }
+
+    public function import($import_settings)
+    {
+        $settings = unserialize(base64_decode($import_settings));
+
+        if (!$settings or !is_array($settings))
+            return false;
+
+        return $this->reset_options($settings);
     }
 }

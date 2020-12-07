@@ -17,7 +17,9 @@ class WOMod_WP_Customizer extends WO_Module
             'core-sitemap'   => true,
             'show-admin-bar' => true,
             'feed-links'     => true,
-            'wpautop'        => true
+            'wpautop'        => true,
+            'wp-version'     => true,
+            'wp-blog-panel'  => true
         );
 
         parent::__construct(
@@ -101,19 +103,46 @@ class WOMod_WP_Customizer extends WO_Module
         if (!WOSettings::check($this->settings, 'show-admin-bar')) {
             add_filter('show_admin_bar', '__return_false');
         }
+
+        if (!WOSettings::check($this->settings, 'wp-version')) {
+            // remove version from head
+            remove_action('wp_head', 'wp_generator');
+            // remove version from rss
+            add_filter('the_generator', '__return_empty_string');
+        }
+
+        if (!WOSettings::check($this->settings, 'wp-blog-panel')) {
+            remove_action('welcome_panel', 'wp_welcome_panel');
+        }
+    }
+
+    protected function get_setting_form_content($context)
+    {
+        $response = false;
+
+        switch ($context) {
+            case 'header':
+                $response = 'Active functionalities:';
+        }
+
+        return $response;
     }
 
     protected function setting_fields()
     {
         return array(
+            array('type' => 'checkbox', 'name' => __('Dashboard Welcome Panel', 'wpopt'), 'id' => 'welcome-panel', 'value' => WOSettings::check($this->settings, 'welcome-panel')),
+            array('type' => 'checkbox', 'name' => __('Dashboard WordPress Blog', 'wpopt'), 'id' => 'wp-blog-panel', 'value' => WOSettings::check($this->settings, 'wp-blog-panel')),
+            array('type' => 'checkbox', 'name' => __('Show Admin Bar', 'wpopt'), 'id' => 'show-admin-bar', 'value' => WOSettings::check($this->settings, 'show-admin-bar')),
+            array('type' => 'divide'),
             array('type' => 'checkbox', 'name' => __('Block Editor (Gutenberg)', 'wpopt'), 'id' => 'blocks-editor', 'value' => WOSettings::check($this->settings, 'blocks-editor')),
             array('type' => 'checkbox', 'name' => __('Core Blocks', 'wpopt'), 'id' => 'core-blocks', 'value' => WOSettings::check($this->settings, 'core-blocks')),
-            array('type' => 'checkbox', 'name' => __('Dashboard Welcome Panel', 'wpopt'), 'id' => 'welcome-panel', 'value' => WOSettings::check($this->settings, 'welcome-panel')),
-            array('type' => 'checkbox', 'name' => __('Emoji', 'wpopt'), 'id' => 'emoji', 'value' => WOSettings::check($this->settings, 'emoji')),
             array('type' => 'checkbox', 'name' => __('Core Sitemap', 'wpopt'), 'id' => 'core-sitemap', 'value' => WOSettings::check($this->settings, 'core-sitemap')),
-            array('type' => 'checkbox', 'name' => __('Show Admin Bar', 'wpopt'), 'id' => 'show-admin-bar', 'value' => WOSettings::check($this->settings, 'show-admin-bar')),
+            array('type' => 'checkbox', 'name' => __('Auto Paragraph', 'wpopt'), 'id' => 'wpautop', 'value' => WOSettings::check($this->settings, 'wpautop')),
+            array('type' => 'checkbox', 'name' => __('Show WordPress Version', 'wpopt'), 'id' => 'wp-version', 'value' => WOSettings::check($this->settings, 'wp-version')),
+            array('type' => 'divide'),
+            array('type' => 'checkbox', 'name' => __('Emoji', 'wpopt'), 'id' => 'emoji', 'value' => WOSettings::check($this->settings, 'emoji')),
             array('type' => 'checkbox', 'name' => __('Feed links', 'wpopt'), 'id' => 'feed-links', 'value' => WOSettings::check($this->settings, 'feed-links')),
-            array('type' => 'checkbox', 'name' => __('Disable wpautop', 'wpopt'), 'id' => 'wpautop', 'value' => WOSettings::check($this->settings, 'wpautop')),
         );
     }
 

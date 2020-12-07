@@ -144,16 +144,16 @@ class WOStorage
     {
         $context = $this->filter_context($context, $blog_id);
 
-        // auto add time() to expire if passed just lifespan
-        if ($expire <= YEAR_IN_SECONDS) {
-            $expire += time();
-        }
-
         if (!$force and isset($this->cache[$context][$key])) {
             $force = md5(serialize($data)) !== md5(serialize($this->cache[$context][$key]['data']));
 
             if (!$force)
                 return;
+        }
+
+        // auto add time() to expire if passed just lifespan
+        if ($expire <= YEAR_IN_SECONDS) {
+            $expire += time();
         }
 
         $args = array(

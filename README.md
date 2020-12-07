@@ -12,7 +12,7 @@
     Requires at least: 4.2.0
     Tested up to: 5.6
     Requires PHP: 5.6.0
-    Stable tag: 0.0.10
+    Stable tag: 1.4.1
     License: GNU v3.0
     License URI: https://github.com/sh1zen/wp-optimizer/blob/master/LICENSE
 
@@ -116,22 +116,27 @@ This section describes how to install the plugin. In general, there are 3 ways t
 * Enable HTML, JavaScript and CSS optimization
 * Fully reset WordPress module
 
-**0.0.10**
-* added a module to disable (Gutenberg, Dashboard welcome panel, Core Sitemap, wpautop, Admin Bar, Feed links)
-* added option to export and reset settings 
-* improved user-experience with panels
-* fixed some issues while saving settings
+**1.4.1**
+* added setting panel to allow modules deactivation
+* added option to import settings
+* added an option in WP-Customizer module to hide WordPress versions from web-page 
+* added an option in WP-Customizer module to hide WordPress welcome panel in the admin dashboard
+* divided modules settings from core-plugin settings
+* improved some core functionality
+* optimized modules loading system
 
-**0.0.9**
+**1.4.0**
+* added a module to disable (Gutenberg, Dashboard welcome panel, Core Sitemap, wpautop, Admin Bar, Feed links)
+* added option to export and reset settings
 * added WP_Term_Query and Database Query caching system
 * added restrictions to some features based on user roles
 * improved Cron handling for modules
-* improved the query caching systems
+* improved user-experience with panels
 * updated language filters
-* optimized plugin modules loading system
-* fixed settings handler
+* fixed some issues while saving settings
+* major code restructure 
 
-**0.0.8**
+**1.3.8**
 * added WP_Query posts caching system
 * added storage to the core
 * tested compatibility with WordPress 5.6
@@ -140,7 +145,7 @@ This section describes how to install the plugin. In general, there are 3 ways t
 * fixed some bugs and performance related issues
 * fixed cron bug 
 
-**0.0.7**
+**1.3.6**
 * added deep database scan for hierarchical terms
 * added dashboard widget to show WordPress installation size
 * added edit link to term list in database cleaner
@@ -149,7 +154,7 @@ This section describes how to install the plugin. In general, there are 3 ways t
 * improved settings handling
 * fixed some bugs 
 
-**0.0.6**
+**1.3.5**
 * improved plugin speed 
 * extended support to WordPress 5.5
 * extended support from PHP 5.3 and WordPress 4.2
@@ -157,7 +162,7 @@ This section describes how to install the plugin. In general, there are 3 ways t
 * fixed mysqldump error handling
 * fixed tables repair result, before always outputting fail
 
-**0.0.5**
+**1.3.3**
 * added some database backup options (restore, download, delete)
 * added database conversion: MyISAM / InnoDB
 * added database action for all tables
@@ -166,7 +171,7 @@ This section describes how to install the plugin. In general, there are 3 ways t
 * fixed memory conversion from size to bytes
 * fixed WordPress heartbeat during restore process
 
-**0.0.4**
+**1.3.0**
 * added Ajax support to modules
 * added WordPress updates manager
 * major code restructure
@@ -175,7 +180,7 @@ This section describes how to install the plugin. In general, there are 3 ways t
 * designed a better UI
 * fixed css enqueue
 
-**0.0.3**
+**1.2.3**
 * added basic wp-cron settings
 * added database module
 * added ajax support
@@ -186,7 +191,7 @@ This section describes how to install the plugin. In general, there are 3 ways t
 * fixed settings handler
 * fixed activation/deactivation after upgrade
 
-**0.0.2**
+**1.2.0**
 * added uninstall cleanup procedure
 * added settings page
 * added meters to ensure speed and memory test on development phase 
@@ -194,6 +199,3 @@ This section describes how to install the plugin. In general, there are 3 ways t
 * added modules support
 * new ui for setting page
 * improved core performance
-
-**0.0.1**
-* Initial release

@@ -3,7 +3,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: wpopt-translation\n"
 "Report-Msgid-Bugs-To: https://github.com/sh1zen/wp-optimizer/issues\n"
-"POT-Creation-Date: 2020-12-03 23:03+0100\n"
+"POT-Creation-Date: 2020-12-07 22:11+0100\n"
 "PO-Revision-Date: 2020-05-13 02:34+0200\n"
 "Last-Translator: sh1zen\n"
 "Language-Team: sh1zen\n"
@@ -24,7 +24,7 @@ msgstr ""
 msgid "Buy me a beer"
 msgstr ""
 
-#: admin/WO.class.php:231 admin/WOPagesHandler.class.php:40
+#: admin/WO.class.php:231 admin/WOPagesHandler.class.php:45
 msgid "Settings"
 msgstr ""
 
@@ -32,94 +32,114 @@ msgstr ""
 msgid "WP Optimizer wrong ajax request."
 msgstr ""
 
-#: admin/WOPagesHandler.class.php:97 modules/sysinfo.class.php:178
+#: admin/WOPagesHandler.class.php:40
+msgid "Modules Options"
+msgstr ""
+
+#: admin/WOPagesHandler.class.php:118 modules/sysinfo.class.php:178
 #: modules/sysinfo.class.php:201
 msgid "N/A"
 msgstr ""
 
-#: admin/WOPagesHandler.class.php:98
+#: admin/WOPagesHandler.class.php:119
 msgid "Settings Saved"
 msgstr ""
 
-#: admin/WOPagesHandler.class.php:99
+#: admin/WOPagesHandler.class.php:120
 msgid "Request fail"
 msgstr ""
 
-#: admin/WOPagesHandler.class.php:100
+#: admin/WOPagesHandler.class.php:121
 msgid "Request succeed"
 msgstr ""
 
-#: admin/WOPagesHandler.class.php:101
+#: admin/WOPagesHandler.class.php:122
 msgid "Running"
 msgstr ""
 
-#: admin/WOPagesHandler.class.php:102
+#: admin/WOPagesHandler.class.php:123
 msgid ""
 "WP Optimizer is running an action. If you leave now, it will not be "
 "completed."
 msgstr ""
 
-#: admin/WOPagesHandler.class.php:167
+#: admin/WOPagesHandler.class.php:186
 msgid "Optimize your WordPress site in few and easy steps."
 msgstr ""
 
-#: admin/WOPagesHandler.class.php:170
+#: admin/WOPagesHandler.class.php:189
 msgid "Specify a path in wp-content where the optimization will run"
 msgstr ""
 
-#: admin/WOPagesHandler.class.php:171
+#: admin/WOPagesHandler.class.php:190
 msgid "is better to use bottom level paths due to high cpu usage"
 msgstr ""
 
-#: admin/WOPagesHandler.class.php:187
+#: admin/WOPagesHandler.class.php:206
 msgid "Auto optimize now"
 msgstr ""
 
-#: admin/WOPagesHandler.class.php:196
+#: admin/WOPagesHandler.class.php:215
 msgid "WordPress memory used"
 msgstr ""
 
-#: admin/WOPagesHandler.class.php:197
+#: admin/WOPagesHandler.class.php:216
 msgid "Wordpress boot time"
 msgstr ""
 
-#: admin/WOPagesHandler.class.php:205
+#: admin/WOPagesHandler.class.php:224
 msgid "Support this project, buy me a coffee."
 msgstr ""
 
-#: admin/WOPagesHandler.class.php:219
+#: admin/WOPagesHandler.class.php:238
 msgid "Want to support in other ways?"
 msgstr ""
 
-#: admin/WOPagesHandler.class.php:222
+#: admin/WOPagesHandler.class.php:241
 msgid "Help me translating"
 msgstr ""
 
-#: admin/WOPagesHandler.class.php:225
+#: admin/WOPagesHandler.class.php:244
 msgid "Leave a review"
 msgstr ""
 
-#: admin/WOSettings.class.php:59
-msgid "WP Optimizer - Settings"
+#: admin/WOPagesHandler.class.php:250
+msgid "Source code"
 msgstr ""
 
-#: inc/WO_Module.php:124
-msgid "Action was correctly executed"
+#: admin/WOPagesHandler.class.php:253
+msgid "About me"
+msgstr ""
+
+#: admin/WOSettings.class.php:59
+msgid "Modules Settings"
+msgstr ""
+
+#: admin/WOSettings.class.php:67
+msgid "No modules enabled. To enable them go <a href='"
+msgstr ""
+
+#: admin/WOSettings.class.php:113
+msgid "Core Settings"
 msgstr ""
 
 #: inc/WO_Module.php:126
+msgid "Action was correctly executed"
+msgstr ""
+
+#: inc/WO_Module.php:128
 msgid "Action execution failed"
 msgstr ""
 
-#: inc/WO_Module.php:149
+#: inc/WO_Module.php:151
 msgid "WP Optimizer::ajax_handler -> empty ajax handler for "
 msgstr ""
 
-#: inc/WO_Module.php:247
+#: inc/WO_Module.php:199
 msgid "Save Changes"
 msgstr ""
 
-#: inc/WO_Module.php:284
+#: inc/WO_Module.php:236
 msgid "This Module is disabled for you or for your settings."
 msgstr ""
 
@@ -135,15 +155,15 @@ msgstr ""
 msgid "Memory used"
 msgstr ""
 
-#: inc/functions.php:240
+#: inc/functions.php:241
 msgid "Images cleaned inserted"
 msgstr ""
 
-#: inc/functions.php:242
+#: inc/functions.php:246
 msgid "Errors"
 msgstr ""
 
-#: inc/functions.php:246
+#: inc/functions.php:250
 msgid "Number"
 msgstr ""
 
@@ -157,6 +177,10 @@ msgstr ""
 
 #: modules/cache.class.php:94
 msgid "Cache Lifespan"
+msgstr ""
+
+#: modules/cache.class.php:102
+msgid "Cache size"
 msgstr ""
 
 #: modules/database.class.php:48
@@ -686,15 +710,19 @@ msgid "Paths"
 msgstr ""
 
 #: modules/images.class.php:58
-msgid "Auto optimize images ( daily uploads )"
+msgid "Auto optimize images (daily uploads)"
 msgstr ""
 
 #: modules/settings.class.php:29
 msgid "Reset Plugin options"
 msgstr ""
 
-#: modules/settings.class.php:34
+#: modules/settings.class.php:35
 msgid "Export Plugin options"
+msgstr ""
+
+#: modules/settings.class.php:47
+msgid "Import Plugin options"
 msgstr ""
 
 #: modules/sysinfo.class.php:25 modules/sysinfo.class.php:27
@@ -942,34 +970,42 @@ msgstr ""
 msgid "Allow WordPress send updates notices mail"
 msgstr ""
 
-#: modules/wp_customizer.class.php:109
-msgid "Block Editor (Gutenberg)"
-msgstr ""
-
-#: modules/wp_customizer.class.php:110
-msgid "Core Blocks"
-msgstr ""
-
-#: modules/wp_customizer.class.php:111
+#: modules/wp_customizer.class.php:134
 msgid "Dashboard Welcome Panel"
 msgstr ""
 
-#: modules/wp_customizer.class.php:112
-msgid "Emoji"
+#: modules/wp_customizer.class.php:135
+msgid "Dashboard WordPress Blog"
 msgstr ""
 
-#: modules/wp_customizer.class.php:113
-msgid "Core Sitemap"
-msgstr ""
-
-#: modules/wp_customizer.class.php:114
+#: modules/wp_customizer.class.php:136
 msgid "Show Admin Bar"
 msgstr ""
 
-#: modules/wp_customizer.class.php:115
-msgid "Feed links"
+#: modules/wp_customizer.class.php:138
+msgid "Block Editor (Gutenberg)"
 msgstr ""
 
-#: modules/wp_customizer.class.php:116
-msgid "Disable wpautop"
+#: modules/wp_customizer.class.php:139
+msgid "Core Blocks"
+msgstr ""
+
+#: modules/wp_customizer.class.php:140
+msgid "Core Sitemap"
+msgstr ""
+
+#: modules/wp_customizer.class.php:141
+msgid "Auto Paragraph"
+msgstr ""
+
+#: modules/wp_customizer.class.php:142
+msgid "Show WordPress Version"
+msgstr ""
+
+#: modules/wp_customizer.class.php:144
+msgid "Emoji"
+msgstr ""
+
+#: modules/wp_customizer.class.php:145
+msgid "Feed links"
 msgstr ""

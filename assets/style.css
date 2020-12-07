@@ -179,7 +179,16 @@ input.apple-switch:checked:after {
     overflow-y: hidden;
     width: 100%;
     margin: 0;
-    height: 39px;
+    height: 39px
+}
+
+.ar-tablist::-webkit-scrollbar-thumb {
+    background-color: #505050
+}
+
+.ar-tablist::-webkit-scrollbar {
+    height: .3rem;
+    background: 0 0
 }
 
 .ar-tab {
@@ -207,7 +216,7 @@ input.apple-switch:checked:after {
 .ar-tab_link[aria-selected=true] {
     color: #2b2b2b;
     background: #66b2e8;
-    font-size: 13px;
+    font-size: 13px
 }
 
 div[aria-hidden=true] {
@@ -512,7 +521,7 @@ table.wpopt td {
 }
 
 table.wpopt tr.blank-row {
-    height: 20px !important
+    height: 2em !important
 }
 
 .wpopt-setting-header {
@@ -521,6 +530,10 @@ table.wpopt tr.blank-row {
 
 .wpopt-centered {
     text-align: center
+}
+
+.wpopt-block{
+    display: block;
 }
 
 .wpopt-hr {
@@ -534,11 +547,11 @@ table.wpopt tr.blank-row {
 }
 
 .wpopt-custom-action {
-    margin: 2em 0;
+    margin: 2em 0
 }
 
 #wpopt-uoptions {
-    max-width: 50%;
+    max-width: 50%
 }
 
 @media only screen and (max-width: 1192px) {
@@ -548,7 +561,7 @@ table.wpopt tr.blank-row {
     }
 
     #wpopt-uoptions {
-        max-width: 100%;
+        max-width: 100%
     }
 
     aside.wpopt {
@@ -560,15 +573,14 @@ table.wpopt tr.blank-row {
 }
 
 @media only screen and (max-width: 1024px) {
-
-    table.wpopt tbody td.value, table.wpopt tbody td.option {
+    table.wpopt tbody td.option, table.wpopt tbody td.value {
         text-align: left;
-        width: 100%;
+        width: 100%
     }
 
     table.wpopt-settings tr {
         display: flex;
         flex-direction: row;
-        flex-wrap: wrap;
+        flex-wrap: wrap
     }
 }

@@ -2,7 +2,7 @@
 
 class WOMod_Cron extends WO_Module
 {
-    public $scopes = array('settings');
+    public $scopes = array('core-settings');
 
     public function __construct()
     {
@@ -18,7 +18,7 @@ class WOMod_Cron extends WO_Module
     {
         /**
          * Filters all modules cron settings validation
-         * @since 0.0.9
+         * @since 1.4.0
          */
         return apply_filters('wpopt_validate_cron_settings', $valid, $input);
     }
@@ -29,7 +29,7 @@ class WOMod_Cron extends WO_Module
 
         /**
          * Filters all modules cron settings
-         * @since 0.0.9
+         * @since 1.4.0
          */
         return apply_filters('wpopt_cron_settings_fields', $cron_settings);
     }

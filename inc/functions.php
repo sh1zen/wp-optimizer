@@ -237,16 +237,21 @@ function wpopt_generate_report($data)
         $report .= ' ' . __('Memory used', 'wpopt') . ': ' . $wo_meter->get_memory() . PHP_EOL;
     }
 
-    $report .= ' ' . __('Images cleaned inserted', 'wpopt') . ': ' . count($data['images']) . PHP_EOL;
-    $report .= ' ' . $data['db'] . PHP_EOL;
+    if (isset($data['images']))
+        $report .= ' ' . __('Images cleaned inserted', 'wpopt') . ': ' . count($data['images']) . PHP_EOL;
+
+    if (isset($data['db']))
+        $report .= ' ' . $data['db'] . PHP_EOL;
+
     $report .= ' ' . __('Errors', 'wpopt') . ': ' . PHP_EOL;
     $report .= ' --------------------------------- ' . PHP_EOL;
 
-    if (isset($data['errors']))
+    if (isset($data['errors'])) {
         $report .= ' ' . __('Number', 'wpopt') . ': ' . count($data['errors']) . PHP_EOL;
 
-    foreach ($data['errors'] as $error)
-        $report .= ' - ' . $error . PHP_EOL;
+        foreach ($data['errors'] as $error)
+            $report .= ' - ' . $error . PHP_EOL;
+    }
 
     return $report;
 }
@@ -255,6 +260,115 @@ function wpopt_generate_report($data)
 function wpopt_is_function_disabled($function_name)
 {
     return in_array($function_name, array_map('trim', explode(',', ini_get('disable_functions'))), true);
+}
+
+
+function wpopt_generate_fields($args, $display = true)
+{
+    if (is_callable($args)) {
+        return call_user_func($args);
+    }
+
+    if (is_string($args)) {
+        return "<block class='wpopt-options--before'>$args</block>";
+    }
+
+    $args = array_merge(array(
+        'before'      => false,
+        'after'       => false,
+        'id'          => '',
+        'name'        => '',
+        'value'       => '',
+        'type'        => '',
+        'classes'     => '',
+        'context'     => 'table',
+        'name_prefix' => false
+    ), $args);
+
+    $context = $args['context'];
+
+    $output = $_oBefore = $_oAfter = $_field_html_args = '';;
+
+    if ($args['before']) {
+        $output .= wpopt_generate_fields($args['before'], false);
+    }
+
+    $input_name = $args['id'];
+
+    if ($args['name_prefix']) {
+        $input_name = "{$args['name_prefix']}[{$input_name}]";
+    }
+
+    if ($context === 'action') {
+        $output .= "<input name='action' type='hidden' value='{$args['id']}'>";
+
+        if (empty($args['type']))
+            $args['type'] = 'submit';
+    }
+    elseif ($context === 'table') {
+        $_oBefore = "<tr><td class='option'><b>{$args['name']}:</b></td><td class='value'><label for='{$args['id']}'></label>";
+        $_oAfter = "</td></tr>";
+    }
+    else {
+        $args['classes'] .= " wpopt-{$context}";
+    }
+
+    if (!empty($args['classes'])) {
+        $_field_html_args = " class='" . trim($args['classes']) . "' ";
+    }
+
+    switch ($args['type']) {
+
+        case 'divide':
+            $_oAfter = $_oBefore = '';
+            if ($context === 'table') {
+                $output .= "<tr class='blank-row'></tr>";
+            }
+
+            break;
+
+        case 'separator':
+            $_oAfter = $_oBefore = '';
+            if ($context === 'table') {
+                $output .= "</tbody></table>";
+
+                if (isset($field['name']))
+                    $output .= "<h3 class='wpopt-setting-header'>{$field['name']}</h3>";
+
+                $output .= "<table class='wpopt wpopt-settings'><tbody>";
+            }
+            break;
+
+        case "time":
+        case 'hidden':
+        case "text":
+        case "checkbox":
+        case "button":
+        case "submit":
+
+            if ($args['type'] === 'checkbox') {
+                $_field_html_args = "class='apple-switch' ";
+                $_field_html_args .= checked(1, $args['value'], false);
+            }
+
+            $output .= "<input {$_field_html_args} type='{$args['type']}' name='{$input_name}' id='{$args['id']}' value='{$args['value']}'/>";
+            break;
+
+        case "textarea":
+            $output .= "<textarea {$_field_html_args} rows='4' cols='50' type='{$args['type']}' name='{$input_name}' id='{$args['id']}'/>{$args['value']}</textarea>";
+            break;
+    }
+
+    $output = "{$_oBefore}{$output}{$_oAfter}";
+
+    if ($args['after']) {
+        $output .= wpopt_generate_fields($args['after'], false);
+    }
+
+    if ($display)
+        echo $output;
+
+    return $output;
 }
 
 

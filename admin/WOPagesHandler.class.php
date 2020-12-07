@@ -35,22 +35,27 @@ class WOPagesHandler
         }
 
         /**
-         * setting page
+         * Modules options page
          */
-        add_submenu_page('wp-optimizer', __('Settings', 'wpopt'), __('Settings', 'wpopt'), 'manage_options', 'wpopt-settings', array($this, 'render_settings'));
+        add_submenu_page('wp-optimizer', __('Modules Options', 'wpopt'), __('Modules Options', 'wpopt'), 'manage_options', 'wpopt-modules-settings', array($this, 'render_modules_settings'));
+
+        /**
+         * Plugin core settings
+         */
+        add_submenu_page('wp-optimizer', __('Settings', 'wpopt'), __('Settings', 'wpopt'), 'manage_options', 'wpopt-settings', array($this, 'render_core_settings'));
     }
 
-    public function render_settings()
+    public function render_modules_settings()
     {
         global $wo_meter;
 
         $this->enqueue_scripts();
 
-        $wo_meter->lap('settings pre render');
+        $wo_meter->lap('Modules settings pre render');
 
-        WOSettings::getInstance()->render();
+        WOSettings::getInstance()->render_modules_settings();
 
-        $wo_meter->lap('settings rendered');
+        $wo_meter->lap('Modules settings rendered');
 
         if (WPOPT_DEBUG)
             echo $wo_meter->get_time() . ' - ' . $wo_meter->get_memory(true);
@@ -61,6 +66,22 @@ class WOPagesHandler
         wp_enqueue_style('wpopt_css');
 
         wp_enqueue_script('wpopt_js');
+    }
+
+    public function render_core_settings()
+    {
+        global $wo_meter;
+
+        $this->enqueue_scripts();
+
+        $wo_meter->lap('Core settings pre render');
+
+        WOSettings::getInstance()->render_core_settings();
+
+        $wo_meter->lap('Core settings rendered');
+
+        if (WPOPT_DEBUG)
+            echo $wo_meter->get_time() . ' - ' . $wo_meter->get_memory(true);
     }
 
     public function render_module()
@@ -115,8 +136,6 @@ class WOPagesHandler
 
         $this->enqueue_scripts();
 
-        $performer = WOPerformer::getInstance();
-
         $data = array();
 
         if (isset($_POST['wpopt-action'])) {
@@ -128,12 +147,12 @@ class WOPagesHandler
 
                 case 'wpopt-do-cron':
 
-                    $object = WOModuleHandler::get_module_instance('cron');
-
-                    $data = $object->exec_cron();
+                    $data = WOCron::getInstance()->exec_cron();
                     break;
 
                 case 'for-images':
+
+                    $performer = WOPerformer::getInstance();
 
                     /**
                      * each function will use realpath to ensure path consistency
@@ -223,6 +242,15 @@ class WOPagesHandler
                         </li>
                         <li>
                             <a href="https://wordpress.org/support/plugin/wp-optimizer/reviews/?filter=5"><?php _e('Leave a review', 'wpopt'); ?></a>
+                        </li>
+                    </ul>
+                    <h3>WP-Optimizer:</h3>
+                    <ul class="wpopt">
+                        <li>
+                            <a href="https://github.com/sh1zen/wp-optimizer/"><?php _e('Source code', 'wpopt'); ?></a>
+                        </li>
+                        <li>
+                            <a href="https://sh1zen.github.io/"><?php _e('About me', 'wpopt'); ?></a>
                         </li>
                     </ul>
                 </section>

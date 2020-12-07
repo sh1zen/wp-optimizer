@@ -55,7 +55,7 @@ class WOMod_Images extends WO_Module
 
     public function cron_setting_fields($cron_settings)
     {
-        $cron_settings[] = array('type' => 'checkbox', 'name' => __('Auto optimize images ( daily uploads )', 'wpopt'), 'id' => 'images_active', 'value' => WOSettings::check($this->cron_settings, 'active'));
+        $cron_settings[] = array('type' => 'checkbox', 'name' => __('Auto optimize images (daily uploads)', 'wpopt'), 'id' => 'images_active', 'value' => WOSettings::check($this->cron_settings, 'active'));
 
         return $cron_settings;
     }

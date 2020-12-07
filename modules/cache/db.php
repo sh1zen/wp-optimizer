@@ -3,11 +3,10 @@
 require_once ABSPATH . WPINC . '/wp-db.php';
 require_once WP_CONTENT_DIR . "/plugins/wp-optimizer/inc/WOStorage.class.php";
 
-
 // no caching during activation
 $is_installing = (defined('WP_INSTALLING') and WP_INSTALLING);
 
-if ($is_installing ){//or is_admin()) {
+if ($is_installing or is_admin()) {
     $GLOBALS['wpdb'] = new wpdb(DB_USER, DB_PASSWORD, DB_NAME, DB_HOST);
 }
 else {
@@ -40,6 +39,12 @@ class WPOPT_DB extends wpdb
         add_action('clean_page_cache', 'WPOPT_DB::clear_cache', 10, 0);
         add_action('clean_attachment_cache', 'WPOPT_DB::clear_cache', 10, 0);
         add_action('clean_comment_cache', 'WPOPT_DB::clear_cache', 10, 0);
+
+        add_action('clean_term_cache', 'WPOPT_DB::clear_cache', 10, 0);
+        add_action('clean_object_term_cache', 'WPOPT_DB::clear_cache', 10, 0);
+        add_action('clean_taxonomy_cache', 'WPOPT_DB::clear_cache', 10, 0);
+
+        add_action('clean_user_cache', 'WPOPT_DB::clear_cache', 10, 0);
     }
 
     public static function clear_cache()

@@ -18,8 +18,10 @@ class WO_Module
      * web-view -> to be loaded in website view context
      * autoload -> to be loaded in every context
      *
-     * settings -> used to display settings in wpopt-settings page,
-     *             load occurs when setting page is rendering
+     * settings -> used to display settings in wpopt-modules-options page,
+     *             load occurs when module setting page is rendering
+     * core-settings -> used to display settings in wpopt-settings page,
+     *                  load occurs when setting page is rendering
      * admin-page -> to be loaded if needs a admin page, load occurs after admin_menu hook
      *
      * default: empty - never loaded
@@ -86,9 +88,9 @@ class WO_Module
             $this->enqueue_scripts();
         }
 
-        add_action('init', array($this, 'handle_process_custom_actions'), 10, 0);
+        add_action('init', array($this, 'handle_process_custom_actions'));
 
-        add_action('admin_notices', array($this, 'admin_notices'), 10, 0);
+        add_action('admin_notices', array($this, 'admin_notices'));
     }
 
     public function enqueue_scripts()
@@ -186,59 +188,9 @@ class WO_Module
                     <?php
                     foreach ($_setting_fields as $field) {
 
-                        if ($field['type'] === 'divide') {
-                            echo "<tr class='blank-row'></tr>";
-                            continue;
-                        }
-                        elseif ($field['type'] === 'separator') {
-                            echo "</tbody></table>";
+                        $field['name_prefix'] = $option_name;
 
-                            if (isset($field['name']))
-                                echo "<h3 class='wpopt-setting-header'>{$field['name']}</h3>";
-
-                            echo "<table class='wpopt wpopt-settings'><tbody>";
-
-                            continue;
-                        }
-                        elseif ($field['type'] === 'hidden') {
-                            echo "<input type='hidden' name='{$option_name}[{$field['id']}]' id='{$field['id']}' value='{$field['value']}'>";
-                            continue;
-                        }
-                        ?>
-                        <tr>
-                            <td class="option"><b><?php _e($field['name'], 'wpopt'); ?>:</b></td>
-                            <td class="value">
-                                <label for="<?php echo $field['id'] ?>"></label>
-                                <?php
-                                switch ($field['type']) {
-
-                                    case "time":
-                                        echo "<input type='time' name='{$option_name}[{$field['id']}]' id='{$field['id']}' value='{$field['value']}'>";
-                                        break;
-
-                                    case "text":
-                                    case "checkbox":
-
-                                        $_field_html_args = '';
-
-                                        switch ($field['type']) {
-
-                                            case "checkbox":
-                                                $_field_html_args .= " class='apple-switch'";
-                                        }
-
-                                        echo "<input {$_field_html_args} type='{$field['type']}' name='{$option_name}[{$field['id']}]' id='{$field['id']}' value='{$field['value']}'" . checked(1, $field['value'], false) . "/>";
-                                        break;
-
-                                    case "textarea":
-                                        echo "<textarea rows='4' cols='50' type='{$field['type']}' name='{$option_name}[{$field['id']}]' id='{$field['id']}'" . checked(1, $field['value'], false) . "/>{$field['value']}</textarea>";
-
-                                        break;
-                                } ?>
-
-                            </td>
-                        </tr>
-                        <?php
+                        wpopt_generate_fields($field);
                     }
                     ?>
                     </tbody>
@@ -314,28 +266,19 @@ class WO_Module
         foreach ($options as $option) {
             ?>
             <form class="wpopt-custom-action" method="POST">
-                <input type="hidden" name="<?php echo "wpopt-{$this->slug}-custom-action"; ?>"
-                       value="<?php echo wp_create_nonce("wpopt-{$this->slug}-custom-action"); ?>">
                 <?php
 
-                $option = array_merge(array(
-                    'before'       => false,
-                    'name'         => '',
-                    'value'        => '',
-                    'button_types' => '',
-                ), $option);
+                wpopt_generate_fields(array(
+                    'type'    => 'hidden',
+                    'id'      => "wpopt-{$this->slug}-custom-action",
+                    'value'   => wp_create_nonce("wpopt-{$this->slug}-custom-action"),
+                    'context' => 'nonce'
+                ));
 
-                echo "<p>";
+                $option['classes'] = "button {$option['button_types']} button-large";
+                $option['context'] = "action";
 
-                if ($option['before']) {
-                    echo "<block class='wpopt-options--before'>{$option['before']}</block>";
-                }
-
-                echo "<input name='action' type='hidden' value='{$option['name']}'>";
-
-                echo "<input name='{$option['name']}' type='submit' value='{$option['value']}' class='button {$option['button_types']} button-large'>";
-
-                echo '</p>';
+                echo "<p>" . wpopt_generate_fields($option, false) . "</p>";
                 ?>
             </form>
             <?php

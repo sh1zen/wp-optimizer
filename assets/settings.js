@@ -205,7 +205,7 @@ function flex_defaultMessage(response, status, $mex_viewer = null) {
 
             setTimeout(function () {
                 history.pushState(null, null, location.pathname + location.search + '#' + $hash_to_update)
-            }, 600);
+            }, 300);
 
             event.preventDefault();
         });

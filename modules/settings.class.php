@@ -2,7 +2,7 @@
 
 class WOMod_Settings extends WO_Module
 {
-    public $scopes = array('settings', 'admin');
+    public $scopes = array('core-settings', 'admin');
 
     public function __construct()
     {
@@ -25,18 +25,29 @@ class WOMod_Settings extends WO_Module
     {
         return array(
             array(
-                'name'         => 'reset_options',
+                'id'           => 'reset_options',
                 'value'        => __('Reset Plugin options', 'wpopt'),
-                'button_types' => 'button-danger'
+                'button_types' => 'button-danger',
+                'after'        => '<hr>'
             ),
             array(
-                'name'         => 'export_options',
+                'id'           => 'export_options',
                 'value'        => __('Export Plugin options', 'wpopt'),
-                'button_types' => 'button-primary'
+                'button_types' => 'button-primary',
+                'after'        => '<hr>'
+            ),
+            array(
+                'before'       => array(
+                    'id'      => 'conf_data',
+                    'type'    => 'textarea',
+                    'context' => 'block'
+                ),
+                'id'           => 'import_options',
+                'button_types' => 'button-primary',
+                'value'        => __('Import Plugin options', 'wpopt'),
             )
         );
     }
-
 
     protected function process_custom_actions($action, $options)
     {
@@ -50,6 +61,9 @@ class WOMod_Settings extends WO_Module
                     return true;
                 }
                 break;
+
+            case 'import_options':
+                return WOSettings::getInstance()->import($options['conf_data']);
         }
 
         return false;
