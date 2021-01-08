@@ -1,6 +1,6 @@
 <?php
 
-class WOMod_Modules_Handler extends WO_Module
+class WOMod_Modules_Handler extends WOModule
 {
     public $scopes = array('core-settings');
 
@@ -23,19 +23,20 @@ class WOMod_Modules_Handler extends WO_Module
     {
         $settings = array();
 
-        foreach ($this->settings as $key => $value) {
-            $settings[] = array('type' => 'checkbox', 'name' => $this->modules_slug2name[$key], 'id' => $key, 'value' => $value);
+        foreach ($this->option() as $key => $value) {
+            if(isset($this->modules_slug2name[$key]))
+                $settings[] = array('type' => 'checkbox', 'name' => $this->modules_slug2name[$key], 'id' => $key, 'value' => $value);
         }
 
         return $settings;
     }
 
-    protected function restricted_access($context = '')
+    public function restricted_access($context = '')
     {
         switch ($context) {
 
             case 'settings':
-                return !current_user_can('administrator');
+                return !current_user_can('manage_options');
 
             default:
                 return false;

@@ -11,7 +11,6 @@ class WOPagesHandler
     public function __construct()
     {
         add_action('admin_menu', array($this, 'add_plugin_pages'));
-
         add_action('admin_enqueue_scripts', array($this, 'register_assets'));
     }
 
@@ -20,7 +19,7 @@ class WOPagesHandler
         add_menu_page(
             'WP Optimizer',
             'WP Optimizer',
-            'manage_options',
+            'customize',
             'wp-optimizer',
             array($this, 'render_main'),
             'dashicons-admin-site'
@@ -31,18 +30,23 @@ class WOPagesHandler
          */
         foreach (WOModuleHandler::getInstance()->get_modules(array('scopes' => 'admin-page')) as $module) {
 
-            add_submenu_page('wp-optimizer', $module['name'], $module['name'], 'manage_options', $module['slug'], array($this, 'render_module'));
+            add_submenu_page('wp-optimizer', 'WPOPT ' . $module['name'], $module['name'], 'customize', $module['slug'], array($this, 'render_module'));
         }
 
         /**
          * Modules options page
          */
-        add_submenu_page('wp-optimizer', __('Modules Options', 'wpopt'), __('Modules Options', 'wpopt'), 'manage_options', 'wpopt-modules-settings', array($this, 'render_modules_settings'));
+        add_submenu_page('wp-optimizer', __('WPOPT Modules Options', 'wpopt'), __('Modules Options', 'wpopt'), 'manage_options', 'wpopt-modules-settings', array($this, 'render_modules_settings'));
 
         /**
          * Plugin core settings
          */
-        add_submenu_page('wp-optimizer', __('Settings', 'wpopt'), __('Settings', 'wpopt'), 'manage_options', 'wpopt-settings', array($this, 'render_core_settings'));
+        add_submenu_page('wp-optimizer', __('WPOPT Settings', 'wpopt'), __('Settings', 'wpopt'), 'manage_options', 'wpopt-settings', array($this, 'render_core_settings'));
+
+        /**
+         * Plugin core settings
+         */
+        add_submenu_page('wp-optimizer', __('WPOPT FAQ', 'wpopt'), __('FAQ', 'wpopt'), 'edit_posts', 'wpopt-faqs', array($this, 'render_faqs'));
     }
 
     public function render_modules_settings()
@@ -58,7 +62,7 @@ class WOPagesHandler
         $wo_meter->lap('Modules settings rendered');
 
         if (WPOPT_DEBUG)
-            echo $wo_meter->get_time() . ' - ' . $wo_meter->get_memory(true);
+            echo $wo_meter->get_time() . ' - ' . $wo_meter->get_memory();
     }
 
     private function enqueue_scripts()
@@ -76,12 +80,12 @@ class WOPagesHandler
 
         $wo_meter->lap('Core settings pre render');
 
-        WOSettings::getInstance()->render_core_settings();
+        WOSettings::render_core_settings();
 
         $wo_meter->lap('Core settings rendered');
 
         if (WPOPT_DEBUG)
-            echo $wo_meter->get_time() . ' - ' . $wo_meter->get_memory(true);
+            echo $wo_meter->get_time() . ' - ' . $wo_meter->get_memory();
     }
 
     public function render_module()
@@ -125,6 +129,42 @@ class WOPagesHandler
         ));
     }
 
+    public function render_faqs()
+    {
+        $this->enqueue_scripts();
+        ?>
+        <section class="wpopt wpopt-wrap">
+            <block class="wpopt">
+                <h1>FAQ</h1>
+                <br>
+                <div class="wpopt-faq-list">
+                    <div class="wpopt-faq-item">
+                        <div class="wpopt-faq-question-wrapper ">
+                            <div class="wpopt-faq-question wpopt-collapse-handler"><?= __('Where can I configure optimization parameters?', 'wpopt') ?>
+                                <icon class="wpopt-collapse-icon">+</icon>
+                            </div>
+                            <div class="wpopt-faq-answer wpopt-collapse">
+                                <p><?= sprintf(__('Any module option is configurable in <a href="%s">Modules Options panel</a>.', 'wpopt'), admin_url('admin.php?page=wpopt-modules-settings#media')); ?></p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="wpopt-faq-item">
+                        <div class="wpopt-faq-question-wrapper ">
+                            <div class="wpopt-faq-question wpopt-collapse-handler"><?= __('How optimization works?', 'wpopt') ?>
+                                <icon class="wpopt-collapse-icon">+</icon>
+                            </div>
+                            <div class="wpopt-faq-answer wpopt-collapse">
+                                <p><?= __('Optimization when launched from here will run in background for any found on the specified path on this server.', 'wpopt'); ?></p>
+                                <p><?= __('Optimization when launched from here will run in background for any found on the specified path on this server.', 'wpopt'); ?></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </block>
+        </section>
+        <?php
+    }
+
     /**
      * This function renders the contents of the page associated with the menu
      * that invokes the render method. In the context of this plugin, this is the
@@ -146,34 +186,14 @@ class WOPagesHandler
             switch ($_POST['wpopt-action']) {
 
                 case 'wpopt-do-cron':
-
-                    $data = WOCron::getInstance()->exec_cron();
-                    break;
-
-                case 'for-images':
-
-                    $performer = WOPerformer::getInstance();
-
-                    /**
-                     * each function will use realpath to ensure path consistency
-                     */
-                    $rel_path = sanitize_text_field($_POST['wp-dir']);
-
-                    if (isset($_POST['opti-all-images'])) {
-
-                        $data = $performer->optimize_images($rel_path);
-                    }
-                    elseif (isset($_POST['clear-orphimgs'])) {
-
-                        $data = $performer->clear_orphaned_images($rel_path);
-                    }
+                    WOCron::run_event('wpopt-cron');
                     break;
             }
         }
 
         settings_errors();
         ?>
-        <section class="wpopt-home wpopt-wrap">
+        <section class="wpopt-wrap-flex wpopt-wrap wpopt-home">
             <section class="wpopt">
                 <?php
 
@@ -186,20 +206,6 @@ class WOPagesHandler
                     <p><strong><?php _e('Optimize your WordPress site in few and easy steps.', 'wpopt'); ?></strong></p>
                 </block>
                 <block class="wpopt">
-                    <h2><?php _e('Specify a path in wp-content where the optimization will run', 'wpopt'); ?></h2>
-                    <pre>(<?php _e('is better to use bottom level paths due to high cpu usage', 'wpopt'); ?>)</pre>
-                    <form method="POST">
-                        <?php wp_nonce_field('wpopt-nonce'); ?>
-                        <input name="wp-dir" type="text"
-                               value="<?php echo date("Y", strtotime('last month')) . '/' . date('m', strtotime('last month')); ?>">
-                        <input type="hidden" name="wpopt-action" value="for-images">
-                        <input name="clear-orphimgs" type="submit" value="Clear Orphaned images"
-                               class="button button-primary button-large">
-                        <input name="opti-all-images" type="submit" value="Optimize All Images"
-                               class="button button-primary button-large">
-                    </form>
-                </block>
-                <block class="wpopt">
                     <form method="POST">
                         <?php wp_nonce_field('wpopt-nonce'); ?>
                         <input type="hidden" name="wpopt-action" value="wpopt-do-cron">
@@ -208,12 +214,24 @@ class WOPagesHandler
                     </form>
                 </block>
                 <block class="wpopt">
-                    <h2>Stats:</h2>
+                    <h2><?php _e('Modules:', 'wpopt'); ?></h2>
+                    <p>
+                        <?php
+                        echo '<div><b>' . __('This plugin uses modules, so you can disable non necessary one to not weigh down WordPress.', 'wpopt') . '</b></div><br>';
+                        $modules = WOModuleHandler::getInstance()->get_modules(array('excepts' => array('cron', 'modules_handler', 'settings')));
+                        $modules = array_column($modules, 'name');
+                        $modules = str_replace(' ', '_', $modules);
+                        echo '<div><b>' . __('Currently active:', 'wpopt') . '</b> <code>' . implode(', ', $modules) . '</code></div><br>';
+                        echo '<div><b>' . sprintf(__('Manage modules: <a href="%s">here</a>.', 'wpopt'), admin_url('admin.php?page=wpopt-settings#settings-modules_handler')) . '</b></div><br>';
+                        echo '<div><b>' . sprintf(__('Configure them: <a href="%s">here</a>.', 'wpopt'), admin_url('admin.php?page=wpopt-modules-settings')) . '</b></div><br>';
+                        ?>
+                    </p>
+                    <h2><?php _e('Stats:', 'wpopt'); ?></h2>
                     <p>
                         <?php
                         $wo_meter->lap();
-                        echo '<div>' . __('WordPress memory used', 'wpopt') . ': ' . wpopt_bytes2size(memory_get_peak_usage()) . '</div><br>';
-                        echo '<div>' . __('Wordpress boot time', 'wpopt') . ': ' . number_format_i18n($wo_meter->get_time(), 4) . ' s</div><br>';
+                        echo '<div>' . sprintf(__('WordPress used memory: %s', 'wpopt'), wpopt_bytes2size(memory_get_peak_usage())) . '</div><br>';
+                        echo '<div>' . sprintf(__('Wordpress boot time: %s s', 'wpopt'), number_format_i18n($wo_meter->get_time(), 4)) . '</div><br>';
                         ?>
                     </p>
                 </block>

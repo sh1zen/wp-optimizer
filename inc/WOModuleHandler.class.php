@@ -92,7 +92,7 @@ class WOModuleHandler
     /**
      * Accept module name or wp-admin page name
      * @param string|array $name
-     * @return WO_Module
+     * @return WOModule
      */
     private static function load_module($name)
     {
@@ -126,6 +126,7 @@ class WOModuleHandler
         foreach ($this->get_modules(array('scopes' => 'all'), $only_active) as $index => $module) {
 
             if ($this->module_has_scope($module['slug'], $scope) or $scope === 'all') {
+
                 self::load_module($module['slug']);
             }
         }
@@ -143,6 +144,9 @@ class WOModuleHandler
     public function get_modules($filters = array(), $only_active = true)
     {
         $modules = array();
+
+        if ($filters === 'all')
+            $filters = array('scopes' => 'all');
 
         $filters = array_merge(array(
             'methods' => false,
@@ -191,7 +195,7 @@ class WOModuleHandler
      */
     private function module_is_active($module_slug)
     {
-        $module_settings = WOSettings::getInstance()->get_settings('modules_handler');
+        $module_settings = WOSettings::get('modules_handler');
 
         if (isset($module_settings[$module_slug]) and !$module_settings[$module_slug])
             return false;
@@ -221,7 +225,7 @@ class WOModuleHandler
         $methods = array_intersect($method, get_class_methods($class));
 
         if ($compare === 'AND')
-            return count($methods) === count($methods);
+            return count($methods) === count($method);
         else
             return !empty($methods);
     }

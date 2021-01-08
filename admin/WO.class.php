@@ -24,9 +24,14 @@ class WO
         $this->plugin_basename = plugin_basename(WPOPT_FILE);
         $this->plugin_base_url = plugin_dir_url(WPOPT_FILE);
 
-        $this->register_actions();
+        if (is_admin()) {
 
-        $this->load_textdomain('wpopt');
+            $this->register_actions();
+
+            $this->load_textdomain('wpopt');
+        }
+
+        $this->maybe_upgrade();
     }
 
     private function register_actions()
@@ -36,7 +41,6 @@ class WO
         register_deactivation_hook(WPOPT_FILE, array($this, 'plugin_deactivation'));
 
         add_filter("plugin_action_links_{$this->plugin_basename}", array($this, 'extra_plugin_link'), 10, 2);
-
         add_filter('plugin_row_meta', array($this, 'donate_link'), 10, 4);
     }
 
@@ -57,6 +61,16 @@ class WO
             return true;
 
         return load_textdomain($domain, WPOPT_ABSPATH . 'languages/' . $mo_file);
+    }
+
+    private function maybe_upgrade()
+    {
+        $version = WOSettings::getInstance()->get('ver', false);
+
+        // need upgrade
+        if (!$version or version_compare($version, WPOPT_VERSION, '<')) {
+            require_once dirname(__FILE__) . '/upgrader.php';
+        }
     }
 
     public static function getInstance()
@@ -212,6 +226,7 @@ class WO
     {
         if ($plugin_file == $this->plugin_basename)
             $plugin_meta[] = '&hearts; <a target="_blank" href="https://www.paypal.me/sh1zen">' . __('Buy me a beer', 'wpopt') . ' :o)</a>';
+
         return $plugin_meta;
     }
 

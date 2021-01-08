@@ -1,6 +1,6 @@
 <?php
 
-class WOMod_Database extends WO_Module
+class WOMod_Database extends WOModule
 {
     public $scopes = array('admin-page', 'cron', 'settings');
 
@@ -10,11 +10,11 @@ class WOMod_Database extends WO_Module
 
     public function __construct()
     {
-        require_once __DIR__ . '/database/dbperformer.class.php';
+        require_once __DIR__ . '/database/WO_DBSupport.class.php';
 
         $default = array(
             'backup' => array(
-                'path'            => wpopt_conform_dir(WP_CONTENT_DIR . '/backup-db'),
+                'path'            => WO_UtilEnv::normalize_path(WP_CONTENT_DIR . '/backup-db'),
                 'excluded_tables' => array(),
                 'mysqldump_path'  => ''
             ),
@@ -37,9 +37,9 @@ class WOMod_Database extends WO_Module
         $this->ajax_limit = 100;
     }
 
-    public function cron_handler($wo_meter = null)
+    public function cron_handler($args = array())
     {
-        return WO_DBSupport::cron_job();
+        WO_DBSupport::cron_job();
     }
 
 
@@ -53,7 +53,7 @@ class WOMod_Database extends WO_Module
 
     public function cron_validate_settings($valid, $input)
     {
-        $valid['database'] = array(
+        $valid[$this->slug] = array(
             'active' => isset($input['database_active']),
         );
 
@@ -66,9 +66,9 @@ class WOMod_Database extends WO_Module
      */
     public function render_tablesList_panel($settings = array())
     {
-        require_once __DIR__ . '/database/list-tables.php';
+        require_once __DIR__ . '/database/WO_DB_List_Table.class.php';
 
-        $table_list_obj = new WO_DB_Tables_List();
+        $table_list_obj = new WO_DB_List_Table();
 
         list($message, $status) = $table_list_obj->prepare_items();
 
@@ -143,7 +143,7 @@ class WOMod_Database extends WO_Module
             <span>(<strong><?php echo $settings['path']; ?></strong>)</span> ...
             <?php
 
-            if (wpopt_create_folder($settings['path'])) {
+            if (WODisk::make_path($settings['path'])) {
                 echo '<span style="color: green;">' . __("OK", 'wpopt') . '</span>';
             }
             else {
@@ -152,10 +152,6 @@ class WOMod_Database extends WO_Module
             }
             ?>
         </section>
-        <?php
-
-        $backup = $this->settings['backup'];
-        ?>
         <section>
             <form class="wpopt-ajax-db" method="post" data-module="<?php echo $this->slug ?>"
                   data-nonce="<?php echo wp_create_nonce('wpopt-ajax-nonce') ?>"
@@ -179,7 +175,7 @@ class WOMod_Database extends WO_Module
                     $no = 0;
                     $totalsize = 0;
 
-                    $backup_path = trailingslashit($backup['path']);
+                    $backup_path = trailingslashit($this->option('backup.path', ''));
 
                     if (is_readable($backup_path) and count(scandir($backup_path)) > 2) {
 
@@ -295,73 +291,64 @@ class WOMod_Database extends WO_Module
         return ob_get_clean();
     }
 
-    public function ajax_handler()
+    public function ajax_handler($args = array())
     {
-        if (!empty($action = sanitize_text_field($_GET['wpopt_action']))) {
+        $response = '';
 
-            if (!wpopt_verify_nonce('wpopt-ajax-nonce', $_GET['wpopt_nonce'])) {
+        $action_args = empty($args['options']) ? '' : unserialize(base64_decode($args['options']));
 
-                wp_send_json_error(array(
-                    'response' => __('It seems that you are not allowed to do this request.', 'wpopt'),
+        $form_data = array();
+        parse_str($args['form_data'], $form_data);
+
+        switch ($args['action']) {
+
+            case 'exec-sql':
+                $this->ajax_performer($args['action'], array('query' => $form_data['sql_query']));
+                break;
+
+            case 'delete':
+            case 'download':
+            case 'restore':
+                $this->ajax_performer($args['action'], array('file' => $form_data['file']));
+                break;
+
+            case 'backup':
+                $this->ajax_performer($args['action']);
+                break;
+
+            case 'sweep_details':
+                wp_send_json_success(WO_DBSupport::details($action_args['sweep-name']));
+                break;
+
+            case 'sweep':
+                $sweep = WO_DBSupport::sweep($action_args['sweep-name'], $this->option('sweep', array()));
+
+                $count = WO_DBSupport::count($action_args['sweep-name'], $this->option('sweep', array()));
+
+                $total_count = WO_DBSupport::total_count($action_args['sweep-type']);
+
+                wp_send_json_success(array(
+                    'sweep'      => $sweep,
+                    'count'      => $count,
+                    'total'      => $total_count,
+                    'percentage' => wpopt_format_percentage($sweep, $total_count)
                 ));
-            }
+                break;
 
-            $response = '';
-
-            $action_args = isset($_GET['wpopt_args']) ? unserialize(base64_decode($_GET['wpopt_args'])) : array();
-            $form_data = array();
-
-            parse_str($_GET['wpopt_form'], $form_data);
-
-            switch ($action) {
-
-                case 'exec-sql':
-                    $this->ajax_performer($action, array('query' => $form_data['sql_query']));
-                    break;
-
-                case 'delete':
-                case 'download':
-                case 'restore':
-                    $this->ajax_performer($action, array('file' => $form_data['file']));
-                    break;
-
-                case 'backup':
-                    $this->ajax_performer($action);
-                    break;
-
-                case 'sweep_details':
-                    wp_send_json_success(WO_DBSupport::details($action_args['sweep-name']));
-                    break;
-
-                case 'sweep':
-                    $sweep = WO_DBSupport::sweep($action_args['sweep-name'], $this->settings['sweep']);
-
-                    $count = WO_DBSupport::count($action_args['sweep-name'], $this->settings['sweep']);
-
-                    $total_count = WO_DBSupport::total_count($action_args['sweep-type']);
-
-                    wp_send_json_success(
-                        array(
-                            'sweep'      => $sweep,
-                            'count'      => $count,
-                            'total'      => $total_count,
-                            'percentage' => wpopt_format_percentage($sweep, $total_count)
-                        )
-                    );
-                    break;
-            }
-
-            foreach ($this->performer_response as $res) {
-                list($text, $status) = $res;
-                $response .= "<p class='{$status}'> {$text} </p>";
-            }
-
-            wp_send_json_success(
-                array(
-                    'response' => $response
-                )
-            );
+            default:
+                wp_send_json_error(array(
+                    'response' => __('Action not supported', 'wpopt'),
+                ));
         }
+
+        foreach ($this->performer_response as $res) {
+            list($text, $status) = $res;
+            $response .= "<p class='{$status}'> {$text} </p>";
+        }
+
+        wp_send_json_success(array(
+            'response' => $response
+        ));
     }
 
     private function ajax_performer($action, $args = array())
@@ -424,7 +411,7 @@ class WOMod_Database extends WO_Module
                     break;
                 }
 
-                $file_path = trailingslashit($this->settings['backup']['path']) . $database_file;
+                $file_path = trailingslashit($this->option('backup.path', '')) . $database_file;
 
                 if (wpopt_download_file($file_path))
                     $this->performer_response[] = array(__('Download started.', 'wpopt'), 'success');
@@ -442,7 +429,7 @@ class WOMod_Database extends WO_Module
                     break;
                 }
 
-                $file_path = trailingslashit($this->settings['backup']['path']) . $database_file;
+                $file_path = trailingslashit($this->option('backup.path', '')) . $database_file;
 
                 if (is_file($file_path)) {
 
@@ -457,18 +444,18 @@ class WOMod_Database extends WO_Module
 
             case 'backup':
 
-                $options = $this->settings['backup'];
+                $options = $this->option('backup', array());
 
                 $backup_path = trailingslashit($options['path']) . substr(md5(time()), 0, 7) . '.sql';
 
-                $res = true;
+                $res = false;
 
                 if (wpopt_get_mysqlDump_command_path($options['mysqldump_path'])) {
 
                     $res = WO_DBSupport::mysqlDump_db($backup_path, $options['excluded_tables'], $options['mysqldump_path']);
                 }
-                elseif (!$res) {
 
+                if (!$res) {
                     $res = WO_DBSupport::queryDump_db($backup_path, $options['excluded_tables']);
                 }
 
@@ -488,7 +475,7 @@ class WOMod_Database extends WO_Module
                     break;
                 }
 
-                $file_path = trailingslashit($this->settings['backup']['path']) . $database_file;
+                $file_path = trailingslashit($this->option('backup.path', '')) . $database_file;
 
                 if (WO_DBSupport::restore_db($file_path)) {
                     $this->performer_response[] = array(__('Database restored.', 'wpopt'), 'success');
@@ -536,35 +523,35 @@ class WOMod_Database extends WO_Module
             ?>
             <block class="wpopt">
                 <?php
-
-                $tab = array();//isset($_REQUEST['tab']) ? array($_REQUEST['tab']) : array();
-
                 echo wpopt_generateHTML_tabs_panels(array(
 
-                    array('id'          => 'db-tables',
-                          'tab-title'   => __('Tables', 'wpopt'),
-                          'panel-title' => __('Database tables', 'wpopt'),
-                          'callback'    => array($this, 'render_tablesList_panel')
+                    array(
+                        'id'          => 'db-tables',
+                        'tab-title'   => __('Tables', 'wpopt'),
+                        'panel-title' => __('Database tables', 'wpopt'),
+                        'callback'    => array($this, 'render_tablesList_panel')
                     ),
-                    array('id'            => 'db-sweeper',
-                          'tab-title'     => __('Database sweeper', 'wpopt'),
-                          'panel-title'   => __('Database Sweeper', 'wpopt'),
-                          'callback'      => array($this, 'render_sweeper_panel'),
-                          'ajax-callback' => array($this->slug, 'render_sweeper_panel'),
+                    array(
+                        'id'          => 'db-sweeper',
+                        'tab-title'   => __('Database sweeper', 'wpopt'),
+                        'panel-title' => __('Database Sweeper', 'wpopt'),
+                        'callback'    => array($this, 'render_sweeper_panel'),
                     ),
-                    array('id'          => 'db-backup',
-                          'tab-title'   => __('Backup Manager', 'wpopt'),
-                          'panel-title' => __('Backup your database', 'wpopt'),
-                          'callback'    => array($this, 'render_backup_panel'),
-                          'args'        => array($this->settings['backup'])
+                    array(
+                        'id'          => 'db-backup',
+                        'tab-title'   => __('Backup Manager', 'wpopt'),
+                        'panel-title' => __('Backup your database', 'wpopt'),
+                        'callback'    => array($this, 'render_backup_panel'),
+                        'args'        => array($this->option('backup', array()))
                     ),
-                    array('id'          => 'db-runsql',
-                          'tab-title'   => __('Run SQL Query', 'wpopt'),
-                          'panel-title' => __('Run SQL Query', 'wpopt'),
-                          'callback'    => array($this, 'render_execSQL_panel'),
-                          'args'        => array($this->settings['backup'])
+                    array(
+                        'id'          => 'db-runsql',
+                        'tab-title'   => __('Run SQL Query', 'wpopt'),
+                        'panel-title' => __('Run SQL Query', 'wpopt'),
+                        'callback'    => array($this, 'render_execSQL_panel'),
+                        'args'        => array($this->option('backup', array()))
                     )
-                ), $tab);
+                ));
                 ?>
             </block>
         </section>
@@ -576,65 +563,73 @@ class WOMod_Database extends WO_Module
         $sweepers = array(
             array('title'  => __('Posts', 'wpopt'),
                   'type'   => 'posts',
-                  'sweeps' => array(__('Revision', 'wpopt')      => 'revisions',
-                                    __('Auto Draft', 'wpopt')    => 'auto_drafts',
-                                    __('Deleted Posts', 'wpopt') => 'deleted_posts',
+                  'sweeps' => array(
+                      __('Revision', 'wpopt')      => 'revisions',
+                      __('Auto Draft', 'wpopt')    => 'auto_drafts',
+                      __('Deleted Posts', 'wpopt') => 'deleted_posts',
                   )
             ),
             array('title'  => __('Posts Metas', 'wpopt'),
                   'type'   => 'postmeta',
-                  'sweeps' => array(__('Orphan Postmeta', 'wpopt') => 'orphan_postmeta',
-                                    //__('Duplicated Postmeta', 'wpopt') => 'duplicated_postmeta',
-                                    __('Oembed Postmeta', 'wpopt') => 'oembed_postmeta'
+                  'sweeps' => array(
+                      __('Orphan Postmeta', 'wpopt')     => 'orphan_postmeta',
+                      __('Duplicated Postmeta', 'wpopt') => 'duplicated_postmeta',
+                      __('Oembed Postmeta', 'wpopt')     => 'oembed_postmeta'
                   )
             ),
 
             array('title'  => __('Comments', 'wpopt'),
                   'type'   => 'comments',
-                  'sweeps' => array(__('Unapproved Comments', 'wpopt') => 'unapproved_comments',
-                                    __('Spam Comments', 'wpopt')       => 'spam_comments',
-                                    __('Deleted Comments', 'wpopt')    => 'deleted_comments'
+                  'sweeps' => array(
+                      __('Unapproved Comments', 'wpopt') => 'unapproved_comments',
+                      __('Spam Comments', 'wpopt')       => 'spam_comments',
+                      __('Deleted Comments', 'wpopt')    => 'deleted_comments'
                   )
             ),
 
             array('title'  => __('Comments Metas', 'wpopt'),
                   'type'   => 'commentmeta',
-                  'sweeps' => array(__('Orphan Comments', 'wpopt')     => 'orphan_commentmeta',
-                                    __('Duplicated Comments', 'wpopt') => 'duplicated_commentmeta'
+                  'sweeps' => array(
+                      __('Orphan Comments', 'wpopt')     => 'orphan_commentmeta',
+                      __('Duplicated Comments', 'wpopt') => 'duplicated_commentmeta'
                   )
             ),
 
             array('title'  => __('Users Metas', 'wpopt'),
                   'type'   => 'usermeta',
-                  'sweeps' => array(__('Orphaned User Meta', 'wpopt')   => 'orphan_usermeta',
-                                    __('Duplicated User Meta', 'wpopt') => 'duplicated_usermeta'
+                  'sweeps' => array(
+                      __('Orphaned User Meta', 'wpopt')   => 'orphan_usermeta',
+                      __('Duplicated User Meta', 'wpopt') => 'duplicated_usermeta'
                   )
             ),
 
             array('title'  => __('Terms', 'wpopt'),
                   'type'   => 'terms',
-                  'sweeps' => array(__('Orphaned Term Relationship', 'wpopt') => 'orphan_term_relationships',
-                                    __('Unused Terms', 'wpopt')               => 'unused_terms',
+                  'sweeps' => array(
+                      __('Orphaned Term Relationship', 'wpopt') => 'orphan_term_relationships',
+                      __('Unused Terms', 'wpopt')               => 'unused_terms',
                   )
             ),
 
             array('title'  => __('Terms metas', 'wpopt'),
                   'type'   => 'termmeta',
-                  'sweeps' => array(__('Orphaned Term Meta', 'wpopt')   => 'orphan_termmeta',
-                                    __('Duplicated Term Meta', 'wpopt') => 'duplicated_termmeta',
+                  'sweeps' => array(
+                      __('Orphaned Term Meta', 'wpopt')   => 'orphan_termmeta',
+                      __('Duplicated Term Meta', 'wpopt') => 'duplicated_termmeta',
 
                   )
             ),
 
             array('title'  => __('Option', 'wpopt'),
                   'type'   => 'options',
-                  'sweeps' => array(__('Transient Options', 'wpopt') => 'transient_options'
+                  'sweeps' => array(
+                      __('Transient Options', 'wpopt') => 'transient_options'
                   )
             ),
         );
 
         ?>
-        <p><?php _e(sprintf(__('If you click Details will be shown only %s items.', 'wpopt'), number_format_i18n($this->ajax_limit))); ?></p>
+        <p><?= sprintf(__('If you click Details will be shown only %s items.', 'wpopt'), number_format_i18n($this->ajax_limit)); ?></p>
         <p>
             <strong><?php _e('Before doing any sweep it\'s recommended to make a backup of whole database.', 'wpopt'); ?></strong>
         </p>
@@ -646,7 +641,7 @@ class WOMod_Database extends WO_Module
         foreach ($sweepers as $sweeper) {
 
             $total = WO_DBSupport::total_count($sweeper['type']);
-            if ($total == 0)
+            if (!$total)
                 continue;
             ?>
             <section class="list-tables">
@@ -725,18 +720,27 @@ class WOMod_Database extends WO_Module
         return $valid;
     }
 
+    public function restricted_access($context = 'settings')
+    {
+        switch ($context) {
+
+            case 'settings':
+            case 'render-admin':
+            case 'ajax':
+                return !current_user_can('manage_options');
+
+            default:
+                return false;
+        }
+    }
+
     protected function setting_fields()
     {
         return array(
             array('type' => 'separator', 'name' => __('Sweeps:', 'wpopt')),
-            array('type' => 'textarea', 'name' => __('Excluded Taxonomies (comma separated)', 'wpopt'), 'id' => 'excluded_taxonomies', 'value' => implode(', ', $this->settings['sweep']['excluded_taxonomies'])),
+            array('type' => 'textarea', 'name' => __('Excluded Taxonomies (comma separated)', 'wpopt'), 'id' => 'excluded_taxonomies', 'value' => implode(', ', $this->option('sweep.excluded_taxonomies', array()))),
             array('type' => 'separator', 'name' => __('Backups:', 'wpopt')),
-            array('type' => 'textarea', 'name' => __('Excluded Tables (comma separated)', 'wpopt'), 'id' => 'excluded_tables', 'value' => implode(', ', $this->settings['backup']['excluded_tables'])),
+            array('type' => 'textarea', 'name' => __('Excluded Tables (comma separated)', 'wpopt'), 'id' => 'excluded_tables', 'value' => implode(', ', $this->option('backup.excluded_tables', array()))),
         );
-    }
-
-    protected function restricted_access($context = 'settings')
-    {
-        return !current_user_can('administrator');
     }
 }

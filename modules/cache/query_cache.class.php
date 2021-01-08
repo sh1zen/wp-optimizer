@@ -1,22 +1,9 @@
 <?php
 
-class WPQuery_Cache extends Cache_Dispatcher
+class WPOPT_Query_Cache extends Cache_Dispatcher
 {
     protected static $_Instance;
 
-    public static function check_status()
-    {
-        add_action('clean_post_cache', 'WPQuery_Cache::clear_cache', 10, 0);
-        add_action('clean_page_cache', 'WPQuery_Cache::clear_cache', 10, 0);
-        add_action('clean_attachment_cache', 'WPQuery_Cache::clear_cache', 10, 0);
-        add_action('clean_comment_cache', 'WPQuery_Cache::clear_cache', 10, 0);
-
-        add_action('clean_term_cache', 'WPQuery_Cache::clear_cache', 10, 0);
-        add_action('clean_object_term_cache', 'WPQuery_Cache::clear_cache', 10, 0);
-        add_action('clean_taxonomy_cache', 'WPQuery_Cache::clear_cache', 10, 0);
-
-        add_action('clean_user_cache', 'WPQuery_Cache::clear_cache', 10, 0);
-    }
 
     public static function clear_cache()
     {

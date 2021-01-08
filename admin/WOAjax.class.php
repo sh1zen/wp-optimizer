@@ -4,9 +4,8 @@
  * Generic Ajax Handler for all WOModules
  *
  * Required parameters:
- * action: must be wpopt
+ * wpopt-action: action to execute
  * womod: module slug
- *
  */
 class WOAjax
 {
@@ -36,22 +35,51 @@ class WOAjax
      */
     public function ajax_handler()
     {
-        if (isset($_GET['womod'])) {
+        if (!isset($_REQUEST['womod']))
+            return;
 
-            $module = sanitize_text_field($_GET['womod']);
+        $request = array_merge(array(
+            'womod'        => 'none',
+            'wpopt_nonce'  => '',
+            'wpopt_action' => 'none',
+            'wpopt_args'   => '',
+            'wpopt_form'   => ''
+        ), $_REQUEST);
 
-            $object = WOModuleHandler::get_module_instance($module);
-
-            if (!is_null($object)) {
-                $object->ajax_handler();
-            }
-            else {
-                wp_send_json_error(
-                    array(
-                        'error' => __('WP Optimizer wrong ajax request.', 'wpopt'),
-                    )
-                );
-            }
+        if (!empty($request['wpopt_nonce']) and !wpopt_verify_nonce('wpopt-ajax-nonce', $request['wpopt_nonce'])) {
+            wp_send_json_error(array(
+                'response' => __('WPOPT Error: It seems that you are not allowed to do this request.', 'wpopt'),
+            ));
         }
+
+        $action = sanitize_text_field($request['wpopt_action']);
+
+        $object = WOModuleHandler::get_module_instance(sanitize_text_field($request['womod']));
+
+        $args = array(
+            'action'    => $action,
+            'nonce'     => $request['wpopt_nonce'],
+            'options'   => $request['wpopt_args'],
+            'form_data' => $request['wpopt_form'],
+        );
+
+        if (!is_null($object)) {
+
+            if ($object->restricted_access('ajax')) {
+                wp_send_json_error(array(
+                    'response' => __('WPOPT Error: It seems that you are not allowed to do this request.', 'wpopt'),
+                ));
+            }
+
+            $object->ajax_handler($args);
+        }
+        else {
+            wp_send_json_error(
+                array(
+                    'error' => __('WPOPT Error: wrong ajax request.', 'wpopt'),
+                )
+            );
+        }
+
     }
 }

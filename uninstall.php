@@ -8,7 +8,7 @@ if (!defined('WP_UNINSTALL_PLUGIN'))
     exit();
 
 // Leave no trail
-$option_names = array('wpopt', 'wpopt-imgs--todo');
+$option_names = array('wpopt', 'wpopt.media.todo');
 
 if (!is_multisite()) {
     foreach ($option_names as $option_name)

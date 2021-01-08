@@ -1,7 +1,20 @@
 (function ($) {
 
     'use strict';
+
     $(document).ready(function () {
+
+        let database_ajax_request = function ($element, $table, callback_fn) {
+
+            wpopt_ajaxHandler({
+                womod: 'database',
+                wpopt_action: $element.data('action'),
+                wpopt_nonce: $element.data('nonce'),
+                wpopt_args: $element.data('args'),
+                use_loading: $table,
+                callback: callback_fn
+            });
+        };
 
         $("button.wpopt-sweep-details").each(function () {
 
@@ -20,29 +33,20 @@
                     return;
                 }
 
-                let action = $this.data('action');
+                let callback_fn = function (details, success) {
 
-                let callback = function (res) {
+                    if (!success) return;
 
-                    if (!res.success) {
-                        return;
-                    }
-
-                    if (res.data.length > 0) {
+                    if (details.length > 0) {
                         let html = '';
-                        $.each(res.data, function (i, n) {
+                        $.each(details, function (i, n) {
                             html += '<li>' + n + '</li>';
                         });
                         $('.sweep-details', $row).append('<ol class="wpopt-gridRow">' + html + '</ol>').toggle("slow");
                     }
                 }
 
-                flex_ajaxHandler($table, {
-                    womod: 'database',
-                    wpopt_action: action,
-                    wpopt_nonce: $this.data('nonce'),
-                    wpopt_args: $this.data('args'),
-                }, callback);
+                database_ajax_request($this, $table, callback_fn);
             });
         });
 
@@ -58,31 +62,24 @@
 
                 let $table = $this.parents("table");
                 let $row = $this.parents('tr');
-                let action = $this.data('action');
 
-                let callback = function (res) {
+                let callback_fn = function (sweep, success) {
 
-                    if (!res.success) {
+                    if (!success) {
                         return;
                     }
 
                     $('.sweep-count', $row).text('0');
                     $('.sweep-percentage', $row).text('0');
 
-                    if (res.count === 0) {
+                    if (sweep.count === 0) {
                         $this.parent('td').html(WPOPT.strings.text_na);
                     }
 
                     $('.sweep-details', $row).html('').toggle("slow");
                 }
 
-                flex_ajaxHandler($table, {
-                    womod: 'database',
-                    wpopt_action: action,
-                    wpopt_nonce: $this.data('nonce'),
-                    wpopt_args: $this.data('args'),
-                }, callback);
-
+                database_ajax_request($this, $table, callback_fn);
             });
         });
 
@@ -102,10 +99,11 @@
 
                 wp.heartbeat.suspend = true;
 
-                let callback = function (res) {
-                    let $mex_viewer = $("#wpopt-ajax-message");
+                let callback_fn = function (res, success) {
 
+                    let $mex_viewer = $("#wpopt-ajax-message");
                     $mex_viewer.empty();
+
                     wp.heartbeat.suspend = false;
 
                     switch (action) {
@@ -131,19 +129,19 @@
                             break;
                     }
 
-                    flex_defaultMessage(res.data.response, res.success);
+                    $mex_viewer.wpoptNotice(res.response, success);
                 }
 
-                flex_ajaxHandler($this, {
+                wpopt_ajaxHandler({
+                    use_loader: $this,
                     womod: 'database',
                     wpopt_action: action,
                     wpopt_nonce: $this.data('nonce'),
                     wpopt_args: $submitter.data('args'),
-                    wpopt_form: $this.serialize()
-                }, callback)
-
+                    wpopt_form: $this.serialize(),
+                    callback: callback_fn
+                })
             });
         });
     });
-
 })(jQuery);

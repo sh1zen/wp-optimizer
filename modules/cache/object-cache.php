@@ -457,7 +457,7 @@ class WPOPT_Object_Cache
         }
 
         $id = $key;
-        if ($this->multisite && !isset($this->global_groups[$group])) {
+        if ($this->multisite and !isset($this->global_groups[$group])) {
             $id = $this->blog_prefix . $key;
         }
 
@@ -479,7 +479,7 @@ class WPOPT_Object_Cache
      */
     protected function _exists($key, $group)
     {
-        return isset($this->cache[$group]) && (isset($this->cache[$group][$key]) || array_key_exists($key, $this->cache[$group]));
+        return isset($this->cache[$group]) and (isset($this->cache[$group][$key]) || array_key_exists($key, $this->cache[$group]));
     }
 
     /**
@@ -508,7 +508,7 @@ class WPOPT_Object_Cache
             $group = 'default';
         }
 
-        if ($this->multisite && !isset($this->global_groups[$group])) {
+        if ($this->multisite and !isset($this->global_groups[$group])) {
             $key = $this->blog_prefix . $key;
         }
 
@@ -551,7 +551,7 @@ class WPOPT_Object_Cache
             $group = 'default';
         }
 
-        if ($this->multisite && !isset($this->global_groups[$group])) {
+        if ($this->multisite and !isset($this->global_groups[$group])) {
             $key = $this->blog_prefix . $key;
         }
 
@@ -592,7 +592,7 @@ class WPOPT_Object_Cache
             $group = 'default';
         }
 
-        if ($this->multisite && !isset($this->global_groups[$group])) {
+        if ($this->multisite and !isset($this->global_groups[$group])) {
             $key = $this->blog_prefix . $key;
         }
 
@@ -665,7 +665,7 @@ class WPOPT_Object_Cache
             $group = 'default';
         }
 
-        if ($this->multisite && !isset($this->global_groups[$group])) {
+        if ($this->multisite and !isset($this->global_groups[$group])) {
             $key = $this->blog_prefix . $key;
         }
 
@@ -701,7 +701,7 @@ class WPOPT_Object_Cache
             $group = 'default';
         }
 
-        if ($this->multisite && !isset($this->global_groups[$group])) {
+        if ($this->multisite and !isset($this->global_groups[$group])) {
             $key = $this->blog_prefix . $key;
         }
 
@@ -744,7 +744,7 @@ class WPOPT_Object_Cache
         }
 
         $id = $key;
-        if ($this->multisite && !isset($this->global_groups[$group])) {
+        if ($this->multisite and !isset($this->global_groups[$group])) {
             $id = $this->blog_prefix . $key;
         }
 

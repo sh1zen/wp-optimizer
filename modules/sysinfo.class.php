@@ -1,6 +1,6 @@
 <?php
 
-class WOMod_Sysinfo extends WO_Module
+class WOMod_Sysinfo extends WOModule
 {
     public static $name = "System Info";
 
@@ -57,7 +57,6 @@ class WOMod_Sysinfo extends WO_Module
             <?php endforeach; ?>
         </section>
         <?php
-
     }
 
     public function get_info()
@@ -65,6 +64,8 @@ class WOMod_Sysinfo extends WO_Module
         global $wpdb, $is_IIS;
 
         $plugins = $this->get_plugins();
+
+        require_once WPOPT_INCPATH . '/WO_UtilRule.php';
 
         $settings = array(
             "Server" => array(
@@ -74,13 +75,13 @@ class WOMod_Sysinfo extends WO_Module
                 __("OS", 'wpopt')                   => PHP_OS,
                 __("Server", 'wpopt')               => $_SERVER["SERVER_SOFTWARE"],
                 __('Server Document Root', 'wpopt') => $_SERVER['DOCUMENT_ROOT'],
-                __('Server Date/Time', 'wpopt')     => mysql2date(sprintf(__('%s @ %s', 'wp-postratings'), get_option('date_format'), get_option('time_format')), current_time('mysql')),
+                __('Server Date/Time', 'wpopt')     => mysql2date(sprintf(__('%s @ %s', 'wpopt'), get_option('date_format'), get_option('time_format')), current_time('mysql')),
                 __('Server Load', 'wpopt')          => $this->server_load(),
                 __('Web Server Info', 'wpopt')      => $_SERVER['SERVER_SOFTWARE'],
                 __('User Agent', 'wpopt')           => $_SERVER['HTTP_USER_AGENT'],
                 __('Filesystem Method', 'wpopt')    => get_filesystem_method(),
-                __('SSL SUPPORT', 'wpopt')          => extension_loaded('openssl') ? 'SSL extension loaded' : 'SSL extension NOT loaded',
-                __('MB String', 'wpopt')            => extension_loaded('mbstring') ? 'MB String extensions loaded' : 'MB String extensions NOT loaded',
+                __('SSL SUPPORT', 'wpopt')          => extension_loaded('openssl') ? __('SSL extension loaded', 'wpopt') : __('SSL extension NOT loaded', 'wpopt'),
+                __('MB String', 'wpopt')            => extension_loaded('mbstring') ? __('MB String extensions loaded', 'wpopt') : __('MB String extensions NOT loaded', 'wpopt'),
                 __("GD Version", 'wpopt')           => $this->get_gd_version(),
             ),
 
@@ -90,14 +91,14 @@ class WOMod_Sysinfo extends WO_Module
                 __('Post Max Size', 'wpopt')          => ini_get('post_max_size'),
                 __('Upload Max File size', 'wpopt')   => ini_get('upload_max_filesize'),
                 __('Script execution limit', 'wpopt') => ini_get('max_execution_time') . ' s',
-                __('Short Tag', 'wpopt')              => ini_get('short_open_tag') ? 'On' : 'Off'
+                __('Short Tag', 'wpopt')              => ini_get('short_open_tag') ? __('On', 'wpopt') : __('Off', 'wpopt'),
             ),
 
             "MySQL" => array(
                 __("Database User", "wpopt")             => DB_USER,
                 __("Database Name", "wpopt")             => DB_NAME,
                 __("Database Host", "wpopt")             => DB_HOST,
-                __("Database Password", "wpopt")         => (current_user_can('administrator') ? DB_PASSWORD : '**********'),
+                __("Database Password", "wpopt")         => (current_user_can('manage_options') ? DB_PASSWORD : '**********'),
                 __("Version", 'wpopt')                   => $wpdb->db_version(),
                 __('Database Data Disk Usage', 'wpopt')  => size_format($this->get_mysql_usages('data')),
                 __('Database Index Disk Usage', 'wpopt') => size_format($this->get_mysql_usages('index')),
@@ -107,24 +108,25 @@ class WOMod_Sysinfo extends WO_Module
             ),
 
             "WordPress" => array(
-                __('Multi-site', 'wpopt')             => is_multisite() ? 'Yes' : 'No',
+                __('Multi-site', 'wpopt')             => is_multisite() ? __('Yes', 'wpopt') : __('No', 'wpopt'),
+                __('Blog id', 'wpopt')                => get_current_blog_id(),
                 __('WordPress Version', 'wpopt')      => get_bloginfo('version'),
                 __('Permalink Structure', 'wpopt')    => get_option('permalink_structure'),
                 __('WP_DEBUG', 'wpopt')               => defined('WP_DEBUG') ? (WP_DEBUG ? __('Enabled', 'wpopt') : __('Disabled', 'wpopt')) : __('Not set', 'wpopt'),
-                __('DISPLAY ERRORS', 'wpopt')         => (ini_get('display_errors')) ? 'On (' . ini_get('display_errors') . ')' : 'N/A',
-                __('WP Table Prefix', 'wpopt')        => 'Length: ' . strlen($wpdb->prefix) . ' Status:' . (strlen($wpdb->prefix) > 16 ? ' ERROR: Too Long' : ' Acceptable'),
+                __('DISPLAY ERRORS', 'wpopt')         => ini_get('display_errors') ? sprintf(__('On ( %s )', 'wpopt'), ini_get('display_errors')) : __('N/A', 'wpopt'),
+                __('WP Table Prefix', 'wpopt')        => sprintf(__('Length: %s Status: %s', 'wpopt'), strlen($wpdb->prefix), (strlen($wpdb->prefix) > 16 ? __('ERROR: Too Long', 'wpopt') : __('Acceptable', 'wpopt'))),
                 __('WP DB Charset/Collate', 'wpopt')  => $wpdb->get_charset_collate(),
-                __('WordPress Memory Limit', 'wpopt') => (size_format((int)WP_MEMORY_LIMIT * 1048576)),
-                __('WordPress Upload Size', 'wpopt')  => (size_format(wp_max_upload_size())),
+                __('WordPress Memory Limit', 'wpopt') => size_format((int)WP_MEMORY_LIMIT * 1048576),
+                __('WordPress Upload Size', 'wpopt')  => size_format(wp_max_upload_size()),
             ),
 
             "Session & Cookies" => array(
-                __('Session', 'wpopt')          => isset($_SESSION) ? 'Enabled' : 'Disabled',
+                __('Session', 'wpopt')          => isset($_SESSION) ? __('Enabled', 'wpopt') : __('Disabled', 'wpopt'),
                 __('Session Name', 'wpopt')     => esc_html(ini_get('session.name')),
                 __('Cookie Path', 'wpopt')      => esc_html(ini_get('session.cookie_path')),
                 __('Save Path', 'wpopt')        => esc_html(ini_get('session.save_path')),
-                __('Use Cookies', 'wpopt')      => ini_get('session.use_cookies') ? 'On' : 'Off',
-                __('Use Only Cookies', 'wpopt') => ini_get('session.use_only_cookies') ? 'On' : 'Off',
+                __('Use Cookies', 'wpopt')      => ini_get('session.use_cookies') ? __('On', 'wpopt') : __('Off', 'wpopt'),
+                __('Use Only Cookies', 'wpopt') => ini_get('session.use_only_cookies') ? __('On', 'wpopt') : __('Off', 'wpopt'),
             ),
 
             __('Active plugins', 'wpopt')   => $plugins['active'],
@@ -158,7 +160,7 @@ class WOMod_Sysinfo extends WO_Module
     private function server_load()
     {
         $server_load = '';
-        if (PHP_OS != 'WINNT' && PHP_OS != 'WIN32') {
+        if (PHP_OS != 'WINNT' and PHP_OS != 'WIN32') {
             if (@file_exists('/proc/loadavg')) {
                 if ($fh = @fopen('/proc/loadavg', 'r')) {
                     $data = @fread($fh, 6);
@@ -175,7 +177,7 @@ class WOMod_Sysinfo extends WO_Module
             }
         }
         if (empty($server_load)) {
-            $server_load = __('N/A', 'wp-serverinfo');
+            $server_load = __('N/A', 'wpopt');
         }
 
         return $server_load;
@@ -198,7 +200,7 @@ class WOMod_Sysinfo extends WO_Module
             $gd = substr($phpinfo, 0, strpos($phpinfo, "\n"));
         }
         if (empty($gd)) {
-            $gd = __('N/A', 'wp-serverinfo');
+            $gd = __('N/A', 'wpopt');
         }
         return $gd;
     }

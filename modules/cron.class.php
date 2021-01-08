@@ -1,6 +1,6 @@
 <?php
 
-class WOMod_Cron extends WO_Module
+class WOMod_Cron extends WOModule
 {
     public $scopes = array('core-settings');
 
@@ -34,12 +34,12 @@ class WOMod_Cron extends WO_Module
         return apply_filters('wpopt_cron_settings_fields', $cron_settings);
     }
 
-    protected function restricted_access($context = '')
+    public function restricted_access($context = '')
     {
         switch ($context) {
 
             case 'settings':
-                return !current_user_can('administrator');
+                return !current_user_can('manage_options');
 
             default:
                 return false;

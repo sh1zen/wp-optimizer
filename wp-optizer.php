@@ -2,13 +2,13 @@
 /**
  * Plugin Name: WP Optimizer
  * Plugin URI: https://github.com/sh1zen/wp-optimizer
- * Description: Speed up your website to better connect with your visitors. Includes image compression, database optimization, updates manager, lazy load, HTML & CSS compression and so on.
+ * Description: Search Engine (SEO) & Performance Optimization plugin, support automatic image compression, integrated caching, database cleanup and Server enhancements.
  * Author: sh1zen
  * Author URI: https://sh1zen.github.io/
- * Text Domain: gforms_file_uploader_plugin
+ * Text Domain: wpopt
  * Domain Path: /languages
  * Text Domain: wpopt
- * Version: 1.4.1
+ * Version: 1.5.0
  */
 
 define('WPOPT_FILE', __FILE__);
@@ -16,28 +16,34 @@ define('WPOPT_ABSPATH', dirname(__FILE__) . '/');
 define('WPOPT_INCPATH', WPOPT_ABSPATH . 'inc/');
 define('WPOPT_MODULES', WPOPT_ABSPATH . 'modules/');
 define('WPOPT_ADMIN', WPOPT_ABSPATH . 'admin/');
-define('WPOPT_STORAGE', WP_CONTENT_DIR . '/wpopt-storage/');
+define('WPOPT_EXTENSIONS', WPOPT_ABSPATH . 'extensions/');
 
-define('WPOPT_DEBUG', $_SERVER["SERVER_ADDR"] === '127.0.0.1');
+// setup constants
+require_once WPOPT_INCPATH . 'constants.php';
 
-/**
- * Require essential
- */
+// essential
+require_once WPOPT_INCPATH . 'WODisk.class.php';
 require_once WPOPT_INCPATH . 'back-compat.php';
 require_once WPOPT_INCPATH . 'functions.php';
+require_once WPOPT_INCPATH . 'WOReport.class.php';
 require_once WPOPT_INCPATH . 'WOMeter.class.php';
 require_once WPOPT_INCPATH . 'WOCache.class.php';
 require_once WPOPT_INCPATH . 'WOStorage.class.php';
+require_once WPOPT_ADMIN . 'WOOptions.class.php';
 require_once WPOPT_ADMIN . 'WOSettings.class.php';
-
 require_once WPOPT_ADMIN . 'WOCron.class.php';
 
-require_once WPOPT_INCPATH . 'WO_Module.php';
+// extensions
+require_once WPOPT_INCPATH . 'WO_UtilEnv.php';
+
+// modules handlers
+require_once WPOPT_INCPATH . 'WOModule.class.php';
 require_once WPOPT_INCPATH . 'WOModuleHandler.class.php';
-require_once WPOPT_INCPATH . 'WOPerformer.class.php';
 
+// main class
+require_once WPOPT_ADMIN . 'WO.class.php';
 
-$wo_meter = new WOMeter();
+$wo_meter = new WOMeter('loading-wpopt');
 
 /**
  * Initialize framework classes
@@ -51,11 +57,6 @@ WOSettings::getInstance();
 WOModuleHandler::getInstance();
 
 WOCron::getInstance();
-
-/**
- * Load main class
- */
-require_once WPOPT_ADMIN . 'WO.class.php';
 
 /**
  * Starts the plugin.

@@ -1,6 +1,6 @@
 <?php
 
-class WO_DB_Tables_List extends WP_List_Table
+class WO_DB_List_Table extends WP_List_Table
 {
     private static $_instance;
     /**
@@ -11,25 +11,17 @@ class WO_DB_Tables_List extends WP_List_Table
      * @var mixed|string
      */
     private $response_type;
-    /**
-     * @var int
-     */
-    private $total_lost = 0;
-    /**
-     * @var mixed
-     */
-    private $per_page = 25;
 
     /** Class constructor */
     public function __construct()
     {
         $this->response_type = 'updated';
 
-        parent::__construct([
-            'singular' => __('Table', 'sp'),
-            'plural'   => __('Tables', 'sp'),
+        parent::__construct(array(
+            'singular' => __('Table', 'wpopt'),
+            'plural'   => __('Tables', 'wpopt'),
             'ajax'     => false
-        ]);
+        ));
     }
 
     /** Text displayed when no customer data is available */
@@ -51,11 +43,9 @@ class WO_DB_Tables_List extends WP_List_Table
         switch ($column_name) {
             case 'table_name':
                 return "<span style='font-weight:bold;'>" . $item[$column_name] . "</span>";
-                break;
             case 'data_length':
             case 'data_free':
                 return wpopt_bytes2size($item[$column_name]);
-                break;
             case 'status':
             case 'engine':
             case 'table_rows':
@@ -109,7 +99,7 @@ class WO_DB_Tables_List extends WP_List_Table
         /** Process bulk action */
         $this->process_bulk_action();
 
-        $per_page = $this->get_items_per_page('tables_per_page', $this->per_page);
+        $per_page = $this->get_items_per_page('tables_per_page', 25);
         $current_page = $this->get_pagenum();
         $total_items = self::record_count();
 
@@ -131,14 +121,14 @@ class WO_DB_Tables_List extends WP_List_Table
     public function get_columns()
     {
         return array(
-            'cb'               => '<input type="checkbox" />',
-            'site_id'          => __('Site', 'wpopt'),
-            'table_name'       => __('Table name', 'wpopt'),
-            'table_rows'       => __('Rows', 'wpopt'),
-            'data_length'      => __('Size', 'wpopt'),
-            'data_free'        => __('Space lost', 'wpopt'),
-            'status'           => __('Status', 'wpopt'),
-            'engine'           => __('Table engine', 'wpopt'),
+            'cb'          => '<input type="checkbox" />',
+            'site_id'     => __('Site', 'wpopt'),
+            'table_name'  => __('Table name', 'wpopt'),
+            'table_rows'  => __('Rows', 'wpopt'),
+            'data_length' => __('Size', 'wpopt'),
+            'data_free'   => __('Space lost', 'wpopt'),
+            'status'      => __('Status', 'wpopt'),
+            'engine'      => __('Table engine', 'wpopt'),
         );
     }
 
@@ -146,7 +136,7 @@ class WO_DB_Tables_List extends WP_List_Table
     function get_hidden_columns()
     {
         // If MU, nothing to hide, else hide Side ID column
-        if (function_exists('is_multisite') && is_multisite()) {
+        if (function_exists('is_multisite') and is_multisite()) {
             return array();
         }
         else {
@@ -262,7 +252,6 @@ class WO_DB_Tables_List extends WP_List_Table
             $status = __('Ok', 'wpopt');
 
             if ($table['DATA_FREE'] > 0) {
-                self::getInstance()->total_lost += $table['DATA_FREE'];
                 $status = __('Optimize', 'wpopt');
             }
 
@@ -289,13 +278,13 @@ class WO_DB_Tables_List extends WP_List_Table
             }
 
             $items_to_display[] = array(
-                'table_name'       => $table['TABLE_NAME'],
-                'table_rows'       => $table['TABLE_ROWS'],
-                'data_length'      => $table['DATA_LENGTH'],
-                'data_free'        => $table['DATA_FREE'],
-                'status'           => $status,
-                'engine'           => $table['ENGINE'],
-                'site_id'          => $site_name,
+                'table_name'  => $table['TABLE_NAME'],
+                'table_rows'  => $table['TABLE_ROWS'],
+                'data_length' => $table['DATA_LENGTH'],
+                'data_free'   => $table['DATA_FREE'],
+                'status'      => $status,
+                'engine'      => $table['ENGINE'],
+                'site_id'     => $site_name,
             );
         }
 
@@ -328,15 +317,6 @@ class WO_DB_Tables_List extends WP_List_Table
         }*/
 
         return $items_to_display;
-    }
-
-    public static function getInstance()
-    {
-        if (!isset(self::$_instance)) {
-            self::$_instance = new self();
-        }
-
-        return self::$_instance;
     }
 
     protected function extra_tablenav($which)

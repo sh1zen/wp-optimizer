@@ -75,7 +75,7 @@ class WO_DBSupport
      * Count the number of items for each sweep
      *
      * @param string $name
-     * @param array $excluded_taxonomies
+     * @param array $args
      * @return int
      */
     public static function count($name, $args = array())
@@ -485,24 +485,12 @@ class WO_DBSupport
         /*
          * Delete posts and pages revisions and auto-draft
          */
-        $results += $wpdb->query("DELETE FROM {$wpdb->prefix}posts WHERE post_type = 'revision';");
         $results += $wpdb->query("DELETE FROM {$wpdb->prefix}posts WHERE post_status = 'auto-draft';");
-
-        /*
-         * Delete posts in trash
-         */
-        $results += $wpdb->query("DELETE p FROM {$wpdb->prefix}posts p LEFT OUTER JOIN {$wpdb->prefix}postmeta pm ON (p.ID = pm.post_id) WHERE post_status = 'trash';");
 
         /*
         * Delete orphaned post attachments
         */
         $results += $wpdb->query("DELETE p1 FROM wp_posts p1 LEFT JOIN wp_posts p2 ON p1.post_parent = p2.ID WHERE p1.post_parent > 0 AND p1.post_type = 'attachment' AND p2.ID IS NULL");
-
-        /*
-        * Delete comments spam or not approved
-        */
-        $results += $wpdb->query("DELETE FROM {$wpdb->prefix}comments WHERE {$wpdb->prefix}comments.comment_approved = 'spam';");
-        $results += $wpdb->query("DELETE from {$wpdb->prefix}comments WHERE comment_approved = '0';");
 
         /*
          * Delete orphaned comments
@@ -512,10 +500,7 @@ class WO_DBSupport
         /*
          * Delete duplicated post meta
          */
-        if (rand(0, 40) == 13) //do this only sometime
-        {
-            $results += $wpdb->query("DELETE t1 FROM {$wpdb->prefix}postmeta t1 INNER JOIN {$wpdb->prefix}postmeta t2 WHERE t1.meta_id < t2.meta_id AND t1.meta_key = t2.meta_key AND t1.meta_value = t2.meta_value AND t1.post_id = t2.post_id");
-        }
+        $results += $wpdb->query("DELETE t1 FROM {$wpdb->prefix}postmeta t1 INNER JOIN {$wpdb->prefix}postmeta t2 WHERE t1.meta_id < t2.meta_id AND t1.meta_key = t2.meta_key AND t1.meta_value = t2.meta_value AND t1.post_id = t2.post_id");
 
         /*
          * Delete useless post meta
@@ -542,7 +527,11 @@ class WO_DBSupport
         $results += $wpdb->query("DELETE tr FROM {$wpdb->prefix}term_taxonomy tr LEFT JOIN {$wpdb->prefix}terms ON tr.term_id = {$wpdb->prefix}terms.term_id WHERE {$wpdb->prefix}terms.term_id is NULL;");
         $results += $wpdb->query("DELETE tr FROM {$wpdb->prefix}term_relationships tr LEFT JOIN {$wpdb->prefix}posts ON tr.object_id = {$wpdb->prefix}posts.ID LEFT JOIN {$wpdb->prefix}term_taxonomy ON tr.term_taxonomy_id = {$wpdb->prefix}term_taxonomy.term_taxonomy_id WHERE {$wpdb->prefix}posts.ID is NULL AND ({$wpdb->prefix}term_taxonomy.taxonomy = 'category' OR {$wpdb->prefix}term_taxonomy.taxonomy is NULL);");
 
-        return 'Row affected: ' . $results;
+        WOReport::getInstance()->add(
+            'database',
+            sprintf(__('Rows affected %s.', 'wpopt'), $results),
+            'success'
+        );
     }
 
     /**
@@ -747,7 +736,7 @@ class WO_DBSupport
         $cmd .= ' -h ' . escapeshellarg($host);
 
         // Set the port if it was set
-        if (!empty($port) && is_numeric($port))
+        if (!empty($port) and is_numeric($port))
             $cmd .= ' -P ' . $port;
 
         // The file we're saving too

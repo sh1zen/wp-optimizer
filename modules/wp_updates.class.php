@@ -3,32 +3,20 @@
 /**
  * Module for updates handling
  */
-class WOMod_Updates extends WO_Module
+class WOMod_WP_Updates extends WOModule
 {
     public $scopes = array('settings', 'autoload');
 
     public function __construct()
     {
-        $default = array(
-            'core-updates'      => true,
-            'plugin-updates'    => true,
-            'theme-updates'     => true,
-            'message-updates'   => true,
-            'page-updates'      => true,
-            'automatic-updates' => true,
-            'mail-updates'      => true
-        );
-
-        parent::__construct(array(
-            'settings' => $default,
-        ));
+        parent::__construct();
 
         $this->disable_updates();
     }
 
     private function disable_updates()
     {
-        if (!WOSettings::check($this->settings, 'core-updates')) {
+        if ($this->option( 'core-updates')) {
             remove_action('init', 'wp_version_check');
 
             add_filter('pre_option_update_core', '__return_null');
@@ -44,7 +32,7 @@ class WOMod_Updates extends WO_Module
             wp_clear_scheduled_hook('wp_version_check');
         }
 
-        if (!WOSettings::check($this->settings, 'page-updates')) {
+        if ($this->option( 'page-updates')) {
             // Remove updates page.
 
             add_action('admin_menu', function () {
@@ -52,7 +40,7 @@ class WOMod_Updates extends WO_Module
             });
         }
 
-        if (!WOSettings::check($this->settings, 'plugin-updates')) {
+        if ($this->option( 'plugin-updates')) {
             // Disable plugin API checks.
             remove_all_filters('plugins_api');
 
@@ -67,7 +55,7 @@ class WOMod_Updates extends WO_Module
             add_filter('auto_update_plugin', '__return_false');
         }
 
-        if (!WOSettings::check($this->settings, 'theme-updates')) {
+        if ($this->option( 'theme-updates')) {
             // Disable theme checks.
             remove_action('load-update-core.php', 'wp_update_themes');
             remove_action('load-themes.php', 'wp_update_themes');
@@ -79,7 +67,7 @@ class WOMod_Updates extends WO_Module
             add_filter('auto_update_theme', '__return_false');
         }
 
-        if (!WOSettings::check($this->settings, 'message-updates')) {
+        if ($this->option( 'message-updates')) {
             // Hide nag messages.
             remove_action('admin_notices', 'update_nag', 3);
             remove_action('network_admin_notices', 'update_nag', 3);
@@ -87,7 +75,7 @@ class WOMod_Updates extends WO_Module
             remove_action('network_admin_notices', 'maintenance_nag');
         }
 
-        if (!WOSettings::check($this->settings, 'automatic-updates')) {
+        if ($this->option( 'automatic-updates')) {
 
             add_filter('automatic_updater_disabled', '__return_true');
 
@@ -117,44 +105,32 @@ class WOMod_Updates extends WO_Module
             add_filter('automatic_updates_is_vcs_checkout', '__return_true');
         }
 
-        if (!WOSettings::check($this->settings, 'mail-updates')) {
-
+        if ($this->option( 'mail-updates')) {
             add_filter('auto_core_update_send_email', '__return_false');
             add_filter('auto_core_update_send_email', '__return_false');
             add_filter('automatic_updates_send_debug_email ', '__return_false');
             add_filter('send_core_update_notification_email', '__return_false');
-
         }
-    }
-
-    protected function get_setting_form_content($context)
-    {
-        $response = false;
-
-        switch ($context) {
-            case 'header':
-                $response = 'Active updates:';
-        }
-
-        return $response;
     }
 
     protected function setting_fields()
     {
         return array(
-            array('type' => 'checkbox', 'name' => __('Wordpress Core Updates', 'wpopt'), 'id' => 'core-updates', 'value' => WOSettings::check($this->settings, 'core-updates')),
-            array('type' => 'checkbox', 'name' => __('Plugins Updates', 'wpopt'), 'id' => 'plugin-updates', 'value' => WOSettings::check($this->settings, 'plugin-updates')),
-            array('type' => 'checkbox', 'name' => __('Themes Updates', 'wpopt'), 'id' => 'theme-updates', 'value' => WOSettings::check($this->settings, 'theme-updates')),
-            array('type' => 'checkbox', 'name' => __('Updates Messages', 'wpopt'), 'id' => 'message-updates', 'value' => WOSettings::check($this->settings, 'message-updates')),
-            array('type' => 'checkbox', 'name' => __('Updates Page', 'wpopt'), 'id' => 'page-updates', 'value' => WOSettings::check($this->settings, 'page-updates')),
-            array('type' => 'checkbox', 'name' => __('Automatic Updates', 'wpopt'), 'id' => 'automatic-updates', 'value' => WOSettings::check($this->settings, 'automatic-updates')),
-            array('type' => 'checkbox', 'name' => __('Allow WordPress send updates notices mail', 'wpopt'), 'id' => 'mail-updates', 'value' => WOSettings::check($this->settings, 'mail-updates')),
+            array('type' => 'checkbox', 'name' => __('Disable Wordpress Core Updates', 'wpopt'), 'id' => 'core-updates', 'value' => $this->option( 'core-updates')),
+            array('type' => 'checkbox', 'name' => __('Disable Plugins Updates', 'wpopt'), 'id' => 'plugin-updates', 'value' => $this->option( 'plugin-updates')),
+            array('type' => 'checkbox', 'name' => __('Disable Themes Updates', 'wpopt'), 'id' => 'theme-updates', 'value' => $this->option( 'theme-updates')),
+            array('type' => 'checkbox', 'name' => __('Disable Updates Messages', 'wpopt'), 'id' => 'message-updates', 'value' => $this->option( 'message-updates')),
+            array('type' => 'checkbox', 'name' => __('Remove Updates Page', 'wpopt'), 'id' => 'page-updates', 'value' => $this->option( 'page-updates')),
+            array('type' => 'checkbox', 'name' => __('Disable Automatic Updates', 'wpopt'), 'id' => 'automatic-updates', 'value' => $this->option( 'automatic-updates')),
+            array('type' => 'checkbox', 'name' => __('Disable WordPress update notices mail', 'wpopt'), 'id' => 'mail-updates', 'value' => $this->option( 'mail-updates')),
         );
     }
 
-    protected function restricted_access($context = '')
+    public function restricted_access($context = '')
     {
-        return !current_user_can('administrator');
-    }
+        if($context === 'settings')
+            return !current_user_can('manage_options');
 
+        return false;
+    }
 }

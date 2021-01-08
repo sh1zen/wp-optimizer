@@ -1,6 +1,7 @@
 <?php
 
 require_once ABSPATH . WPINC . '/wp-db.php';
+require_once WP_CONTENT_DIR . '/plugins/wp-optimizer/inc/constants.php';
 require_once WP_CONTENT_DIR . "/plugins/wp-optimizer/inc/WOStorage.class.php";
 
 // no caching during activation
@@ -15,15 +16,11 @@ else {
     WOStorage::getInstance();
 }
 
-if (!defined("WPOPT_DB_TIME_to_STORE"))
-    define('WPOPT_DB_TIME_to_STORE', 0.001);
-
-if (!defined("WPOPT_DB_STORAGE_LIFESPAN"))
-    define('WPOPT_DB_STORAGE_LIFESPAN', MINUTE_IN_SECONDS * 10);
-
 
 class WPOPT_DB extends wpdb
 {
+    private $db_lifespan;
+
     /**
      * Class constructor
      * @param $dbuser
@@ -35,16 +32,7 @@ class WPOPT_DB extends wpdb
     {
         parent::__construct($dbuser, $dbpassword, $dbname, $dbhost);
 
-        add_action('clean_post_cache', 'WPOPT_DB::clear_cache', 10, 0);
-        add_action('clean_page_cache', 'WPOPT_DB::clear_cache', 10, 0);
-        add_action('clean_attachment_cache', 'WPOPT_DB::clear_cache', 10, 0);
-        add_action('clean_comment_cache', 'WPOPT_DB::clear_cache', 10, 0);
-
-        add_action('clean_term_cache', 'WPOPT_DB::clear_cache', 10, 0);
-        add_action('clean_object_term_cache', 'WPOPT_DB::clear_cache', 10, 0);
-        add_action('clean_taxonomy_cache', 'WPOPT_DB::clear_cache', 10, 0);
-
-        add_action('clean_user_cache', 'WPOPT_DB::clear_cache', 10, 0);
+        $this->db_lifespan = WPOPT_CACHE_DB_LIFETIME;
     }
 
     public static function clear_cache()
@@ -71,8 +59,8 @@ class WPOPT_DB extends wpdb
 
             $result = parent::get_var($query, $x, $y);
 
-            if ($this->timer_stop() > WPOPT_DB_TIME_to_STORE) {
-                WOStorage::getInstance()->set($result, self::get_cache_group(), $key, WPOPT_DB_STORAGE_LIFESPAN);
+            if ($this->timer_stop() > WPOPT_CACHE_DB_THRESHOLD_STORE) {
+                WOStorage::getInstance()->set($result, self::get_cache_group(), $key, $this->db_lifespan);
             }
         }
 
@@ -107,8 +95,8 @@ class WPOPT_DB extends wpdb
 
             $result = parent::get_results($query, $output);
 
-            if ($this->timer_stop() > WPOPT_DB_TIME_to_STORE) {
-                WOStorage::getInstance()->set($result, self::get_cache_group(), $key, WPOPT_DB_STORAGE_LIFESPAN);
+            if ($this->timer_stop() > WPOPT_CACHE_DB_THRESHOLD_STORE) {
+                WOStorage::getInstance()->set($result, self::get_cache_group(), $key, $this->db_lifespan);
             }
         }
 
@@ -129,8 +117,8 @@ class WPOPT_DB extends wpdb
 
             $result = parent::get_col($query, $x);
 
-            if ($this->timer_stop() > WPOPT_DB_TIME_to_STORE) {
-                WOStorage::getInstance()->set($result, self::get_cache_group(), $key, WPOPT_DB_STORAGE_LIFESPAN);
+            if ($this->timer_stop() > WPOPT_CACHE_DB_THRESHOLD_STORE) {
+                WOStorage::getInstance()->set($result, self::get_cache_group(), $key, $this->db_lifespan);
             }
         }
 
@@ -151,8 +139,8 @@ class WPOPT_DB extends wpdb
 
             $result = parent::get_row($query, $output, $y);
 
-            if ($this->timer_stop() > WPOPT_DB_TIME_to_STORE) {
-                WOStorage::getInstance()->set($result, self::get_cache_group(), $key, WPOPT_DB_STORAGE_LIFESPAN);
+            if ($this->timer_stop() > WPOPT_CACHE_DB_THRESHOLD_STORE) {
+                WOStorage::getInstance()->set($result, self::get_cache_group(), $key, $this->db_lifespan);
             }
         }
 

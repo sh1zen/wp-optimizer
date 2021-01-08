@@ -55,10 +55,6 @@ class Cache_Dispatcher
         $this->cache_active = false;
     }
 
-    public static function check_status()
-    {
-    }
-
     protected function generate_key($query, $context = '')
     {
         if (!$this->cache_key) {

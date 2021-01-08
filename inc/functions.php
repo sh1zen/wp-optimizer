@@ -13,47 +13,6 @@ function wpopt_verify_nonce($name = 'wpopt', $nonce = false)
     return wp_verify_nonce($nonce, $name);
 }
 
-function wpopt_delete_files($target, $identifier = '')
-{
-    $identifier .= '*';
-
-    if (is_dir($target)) {
-        $files = glob($target . $identifier, GLOB_MARK); //GLOB_MARK adds a slash to directories returned
-
-        foreach ($files as $file) {
-            wpopt_delete_files($file);
-        }
-
-        rmdir($target);
-    }
-    elseif (is_file($target)) {
-        unlink($target);
-    }
-}
-
-/**
- * @param $directory
- * @return false|int|mixed
- */
-function wpopt_calc_folder_size($directory)
-{
-    $totalSize = 0;
-    $directoryArray = scandir($directory);
-
-    foreach ($directoryArray as $key => $fileName) {
-        if ($fileName != ".." and $fileName != ".") {
-            if (is_dir($directory . "/" . $fileName)) {
-                $totalSize = $totalSize + wpopt_calc_folder_size($directory . "/" . $fileName);
-            }
-            else if (is_file($directory . "/" . $fileName)) {
-                $totalSize = $totalSize + filesize($directory . "/" . $fileName);
-            }
-        }
-    }
-    return $totalSize;
-}
-
-
 function wpopt_timestr2seconds($time = '')
 {
     if (!$time)
@@ -63,7 +22,6 @@ function wpopt_timestr2seconds($time = '')
 
     return $hour * HOUR_IN_SECONDS + $minute * MINUTE_IN_SECONDS;
 }
-
 
 function wpopt_add_timezone($timestamp = false)
 {
@@ -163,14 +121,14 @@ function wpopt_generateHTML_tabs_panels($fields, $limit_ids = array())
             /**
              * Support for limiting the rendering to only specific tab
              */
-            if (!empty($limit_ids)) {
+            if ($limit_ids) {
                 if (!in_array($field['id'], $limit_ids))
                     continue;
             }
             ?>
-            <div id="<?php echo $field['id']; ?>" class="ar-tabcontent" aria-hidden="true"
+            <panel id="<?php echo $field['id']; ?>" class="ar-tabcontent" aria-hidden="true"
                 <?php echo isset($field['ajax-callback']) ? "aria-ajax='" . json_encode($field['ajax-callback']) . "'" : '' ?>>
-                <p><br></p><?php
+                <?php
                 if (isset($field['panel-title'])) echo "<h2>{$field['panel-title']}</h2>";
                 if (isset($field['callback'])) {
                     $args = isset($field['args']) ? $field['args'] : array();
@@ -179,7 +137,7 @@ function wpopt_generateHTML_tabs_panels($fields, $limit_ids = array())
                         echo call_user_func_array($field['callback'], $args);
                 }
                 ?>
-            </div>
+            </panel>
             <?php
         }
         ?></div>
@@ -221,49 +179,37 @@ function wpopt_write_log($log)
     }
 }
 
-/**
- * @param $data
- * @return string
- */
-function wpopt_generate_report($data)
+function wpopt_generate_fields($fields_args, $args, $display = true)
 {
-    global $wo_meter;
+    $output = '';
+    $levels = array();
 
-    $report = PHP_EOL . PHP_EOL;
-    $report .= ' ' . __('Report', 'wpopt') . ': ' . PHP_EOL . PHP_EOL;
+    foreach ($fields_args as $field_args) {
 
-    if (!is_null($wo_meter)) {
-        $report .= ' ' . __('Time elapsed', 'wpopt') . ': ' . $wo_meter->get_time() . PHP_EOL;
-        $report .= ' ' . __('Memory used', 'wpopt') . ': ' . $wo_meter->get_memory() . PHP_EOL;
+        if (isset($args['name_prefix']))
+            $field_args['name_prefix'] = $args['name_prefix'];
+
+        if (isset($field_args['id'])) {
+
+            $levels[$field_args['id']] = 0;
+
+            if (isset($field_args['parent'])) {
+                $levels[$field_args['id']] = $levels[$field_args['parent']] + 1;
+
+                $field_args['nexted_level'] = $levels[$field_args['id']];
+            }
+        }
+
+        $output .= wpopt_generate_field($field_args, false);
     }
 
-    if (isset($data['images']))
-        $report .= ' ' . __('Images cleaned inserted', 'wpopt') . ': ' . count($data['images']) . PHP_EOL;
+    if ($display)
+        echo $output;
 
-    if (isset($data['db']))
-        $report .= ' ' . $data['db'] . PHP_EOL;
-
-    $report .= ' ' . __('Errors', 'wpopt') . ': ' . PHP_EOL;
-    $report .= ' --------------------------------- ' . PHP_EOL;
-
-    if (isset($data['errors'])) {
-        $report .= ' ' . __('Number', 'wpopt') . ': ' . count($data['errors']) . PHP_EOL;
-
-        foreach ($data['errors'] as $error)
-            $report .= ' - ' . $error . PHP_EOL;
-    }
-
-    return $report;
+    return $output;
 }
 
-
-function wpopt_is_function_disabled($function_name)
-{
-    return in_array($function_name, array_map('trim', explode(',', ini_get('disable_functions'))), true);
-}
-
-
-function wpopt_generate_fields($args, $display = true)
+function wpopt_generate_field($args, $display = true)
 {
     if (is_callable($args)) {
         return call_user_func($args);
@@ -274,23 +220,28 @@ function wpopt_generate_fields($args, $display = true)
     }
 
     $args = array_merge(array(
-        'before'      => false,
-        'after'       => false,
-        'id'          => '',
-        'name'        => '',
-        'value'       => '',
-        'type'        => '',
-        'classes'     => '',
-        'context'     => 'table',
-        'name_prefix' => false
+        'parent'       => false,
+        'nexted_level' => 0,
+        'before'       => false,
+        'after'        => false,
+        'id'           => '',
+        'name'         => '',
+        'value'        => '',
+        'note'         => '',
+        'type'         => '',
+        'classes'      => '',
+        'context'      => 'table',
+        'name_prefix'  => false
     ), $args);
+
+    $data_values = array();
 
     $context = $args['context'];
 
     $output = $_oBefore = $_oAfter = $_field_html_args = '';;
 
     if ($args['before']) {
-        $output .= wpopt_generate_fields($args['before'], false);
+        $output .= wpopt_generate_field($args['before'], false);
     }
 
     $input_name = $args['id'];
@@ -306,8 +257,11 @@ function wpopt_generate_fields($args, $display = true)
             $args['type'] = 'submit';
     }
     elseif ($context === 'table') {
-        $_oBefore = "<tr><td class='option'><b>{$args['name']}:</b></td><td class='value'><label for='{$args['id']}'></label>";
-        $_oAfter = "</td></tr>";
+
+        $padding_left = 30 * $args['nexted_level'];
+
+        $_oBefore = "<tr><td class='option' style='padding-left: {$padding_left}px'><div><b>{$args['name']}:</b></div></td><td class='value'><div><label for='{$args['id']}'></label>";
+        $_oAfter = "</div></td></tr>";
     }
     else {
         $args['classes'] .= " wpopt-{$context}";
@@ -315,6 +269,15 @@ function wpopt_generate_fields($args, $display = true)
 
     if (!empty($args['classes'])) {
         $_field_html_args = " class='" . trim($args['classes']) . "' ";
+    }
+
+    if ($args['parent']) {
+        $data_values['parent'] = $args['parent'];
+    }
+
+    $jquery_data = '';
+    foreach ($data_values as $key => $value) {
+        $jquery_data .= " data-{$key}='{$value}'";
     }
 
     switch ($args['type']) {
@@ -330,10 +293,10 @@ function wpopt_generate_fields($args, $display = true)
         case 'separator':
             $_oAfter = $_oBefore = '';
             if ($context === 'table') {
-                $output .= "</tbody></table>";
+                $output .= "</tbody></table><br>";
 
-                if (isset($field['name']))
-                    $output .= "<h3 class='wpopt-setting-header'>{$field['name']}</h3>";
+                if (isset($args['name']))
+                    $output .= "<h3 class='wpopt-setting-header'>{$args['name']}</h3>";
 
                 $output .= "<table class='wpopt wpopt-settings'><tbody>";
             }
@@ -343,64 +306,34 @@ function wpopt_generate_fields($args, $display = true)
         case 'hidden':
         case "text":
         case "checkbox":
+        case "numeric":
+        case "number":
         case "button":
         case "submit":
 
             if ($args['type'] === 'checkbox') {
-                $_field_html_args = "class='apple-switch' ";
+                $_field_html_args = "class='wpopt-apple-switch' ";
                 $_field_html_args .= checked(1, $args['value'], false);
             }
 
-            $output .= "<input {$_field_html_args} type='{$args['type']}' name='{$input_name}' id='{$args['id']}' value='{$args['value']}'/>";
+            $output .= "<input {$_field_html_args} type='{$args['type']}' name='{$input_name}' id='{$args['id']}' value='{$args['value']}' {$jquery_data}/>";
             break;
 
         case "textarea":
-            $output .= "<textarea {$_field_html_args} rows='4' cols='50' type='{$args['type']}' name='{$input_name}' id='{$args['id']}'/>{$args['value']}</textarea>";
+            $output .= "<textarea {$_field_html_args} rows='4' cols='50' type='{$args['type']}' name='{$input_name}' id='{$args['id']}' {$jquery_data}/>{$args['value']}</textarea>";
             break;
     }
 
     $output = "{$_oBefore}{$output}{$_oAfter}";
 
     if ($args['after']) {
-        $output .= wpopt_generate_fields($args['after'], false);
+        $output .= wpopt_generate_field($args['after'], false);
     }
 
     if ($display)
         echo $output;
 
     return $output;
-}
-
-
-function wpopt_create_folder($path = WP_CONTENT_DIR . '/backup-db', $private = true)
-{
-    global $is_IIS;
-
-    $plugin_path = __DIR__;
-
-    // Create Backup Folder
-    $res = wp_mkdir_p($path);
-
-    if ($private and is_dir($path) and wp_is_writable($path)) {
-
-        if ($is_IIS) {
-            if (!is_file($path . '/Web.config')) {
-                copy($plugin_path . '/Web.config.txt', $path . '/Web.config');
-            }
-        }
-        else {
-            if (!is_file($path . '/.htaccess')) {
-                copy($plugin_path . '/htaccess.txt', $path . '/.htaccess');
-            }
-        }
-        if (!is_file($path . '/index.php')) {
-            file_put_contents($path . '/index.php', '<?php');
-        }
-
-        chmod($path, 0750);
-    }
-
-    return $res;
 }
 
 
@@ -421,6 +354,8 @@ function wpopt_download_file($file_path)
     if (!file_exists($file_path) or headers_sent())
         return false;
 
+    ob_start();
+
     header('Expires: 0');
     header("Cache-Control: public");
     header('Cache-Control: must-revalidate, post-check=0, pre-check=0');
@@ -434,7 +369,6 @@ function wpopt_download_file($file_path)
 
     ob_clean();
     flush();
-    //readfile($file_path);
 
     $chunkSize = 1024 * 1024;
     $handle = fopen($file_path, 'rb');
@@ -450,62 +384,15 @@ function wpopt_download_file($file_path)
     exit();
 }
 
-function wpopt_conform_dir($dir, $recursive = false)
-{
-    // Assume empty dir is root
-    if (!$dir)
-        $dir = '/';
-
-    // Replace single forward slash (looks like double slash because we have to escape it)
-    $dir = str_replace('\\', '/', $dir);
-    $dir = str_replace('//', '/', $dir);
-
-    // Remove the trailing slash
-    if ($dir !== '/')
-        $dir = untrailingslashit($dir);
-
-    // Carry on until completely normalized
-    if (!$recursive and wpopt_conform_dir($dir, true) != $dir)
-        return wpopt_conform_dir($dir);
-
-    return (string)$dir;
-}
-
-function wpopt_is_safe_mode_active($ini_get_callback = 'ini_get')
-{
-    if (($safe_mode = @call_user_func($ini_get_callback, 'safe_mode')) && strtolower($safe_mode) != 'off')
-        return true;
-
-    return false;
-}
-
-
-function wpopt_is_shell_exec_available()
-{
-    if (wpopt_is_safe_mode_active())
-        return false;
-
-    // Is shell_exec or escapeshellcmd or escapeshellarg disabled?
-    if (array_intersect(array('shell_exec', 'escapeshellarg', 'escapeshellcmd'), array_map('trim', explode(',', @ini_get('disable_functions')))))
-        return false;
-
-    // Can we issue a simple echo command?
-    if (!@shell_exec('echo WP Backup'))
-        return false;
-
-    return true;
-}
-
-
 function wpopt_get_mysqlDump_command_path($mysqldump_locations = '')
 {
     // Check shell_exec is available
-    if (!wpopt_is_shell_exec_available())
+    if (!WO_UtilEnv::is_shell_exec_available())
         return false;
 
     if (!empty($mysqldump_locations)) {
 
-        return @is_executable(wpopt_conform_dir($mysqldump_locations));
+        return @is_executable(WO_UtilEnv::normalize_path($mysqldump_locations));
     }
 
     // check mysqldump command
@@ -537,7 +424,7 @@ function wpopt_get_mysqlDump_command_path($mysqldump_locations = '')
 
     // Find the one which works
     foreach ((array)$mysqldump_locations as $location) {
-        if (@is_executable(wpopt_conform_dir($location)))
+        if (@is_executable(WO_UtilEnv::normalize_path($location)))
             $mysqldump_command_path = $location;
     }
 

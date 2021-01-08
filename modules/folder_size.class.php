@@ -1,6 +1,6 @@
 <?php
 
-class WOMod_Folder_Size extends WO_Module
+class WOMod_Folder_Size extends WOModule
 {
     public static $name = "Directory Size";
 
@@ -38,10 +38,10 @@ class WOMod_Folder_Size extends WO_Module
             'settings' => $default
         ));
 
-        if (!WOSettings::check($this->settings, 'active'))
+        if ($this->option('active', true))
             return;
 
-        $this->paths = array_filter($this->settings['paths']);
+        $this->paths = array_filter($this->option('paths', array()));
 
         if (empty($this->paths))
             return;
@@ -261,8 +261,8 @@ class WOMod_Folder_Size extends WO_Module
     protected function setting_fields()
     {
         return array(
-            array('type' => 'checkbox', 'name' => __('Active', 'wpopt'), 'id' => 'active', 'value' => WOSettings::check($this->settings, 'active')),
-            array('type' => 'textarea', 'name' => __('Paths', 'wpopt'), 'id' => 'paths', 'value' => implode(PHP_EOL, $this->settings['paths'])),
+            array('type' => 'checkbox', 'name' => __('Active', 'wpopt'), 'id' => 'active', 'value' => $this->option('active', true)),
+            array('type' => 'textarea', 'name' => __('Paths', 'wpopt'), 'id' => 'paths', 'value' => implode(PHP_EOL, $this->option('paths', array()))),
         );
     }
 }

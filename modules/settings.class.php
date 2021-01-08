@@ -1,6 +1,6 @@
 <?php
 
-class WOMod_Settings extends WO_Module
+class WOMod_Settings extends WOModule
 {
     public $scopes = array('core-settings', 'admin');
 
@@ -9,12 +9,13 @@ class WOMod_Settings extends WO_Module
         parent::__construct();
     }
 
-    protected function restricted_access($context = '')
+    public function restricted_access($context = '')
     {
         switch ($context) {
 
+            case 'ajax':
             case 'settings':
-                return !current_user_can('administrator');
+                return !current_user_can('manage_options');
 
             default:
                 return false;
@@ -53,7 +54,7 @@ class WOMod_Settings extends WO_Module
     {
         switch ($action) {
             case 'reset_options':
-                return WOSettings::getInstance()->reset_options();
+                return WOSettings::getInstance()->reset();
 
             case 'export_options':
                 if (file_put_contents(WPOPT_STORAGE . 'export.conf', WOSettings::getInstance()->export())) {

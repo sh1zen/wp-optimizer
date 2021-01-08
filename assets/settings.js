@@ -1,17 +1,50 @@
-function flex_ajaxHandler($container, options, callback) {
+function WPOPTSemaphore() {
 
-    $container.addClass("wpopt-loader");
+    let list = [];
+
+    this.release = function (context = 'def') {
+        list[context] = false;
+    }
+
+    this.lock = function (context = 'def') {
+        list[context] = true;
+    }
+
+    this.is_locked = function (context = 'def') {
+        return list[context] === true;
+
+    }
+}
+
+let wpopt_semaphore = new WPOPTSemaphore();
+
+function wpopt_is_json(str) {
+    try {
+        return JSON.parse(str);
+    } catch (e) {
+        return false;
+    }
+}
+
+function wpopt_ajaxHandler(options) {
 
     let defaults = {
         action: 'wpopt',
-        womod: 'generic',
+        womod: 'none',
         wpopt_action: 'none',
         wpopt_nonce: '',
         wpopt_args: '',
-        wpopt_form: ''
+        wpopt_form: '',
+        use_loading: false,
+        callback: null
     };
 
     options = Object.assign(defaults, options);
+
+    wpopt_semaphore.lock(options.wpopt_action);
+
+    if (options.use_loading)
+        options.use_loading.addClass("wpopt-loader");
 
     jQuery.ajax({
         url: ajaxurl,
@@ -19,34 +52,35 @@ function flex_ajaxHandler($container, options, callback) {
         dataType: "json",
         global: false,
         cache: false,
-        data: options,
-        success: function (res) {
-            $container.removeClass("wpopt-loader");
-            callback(res);
+        data: {
+            action: options.action,
+            womod: options.womod,
+            wpopt_action: options.wpopt_action,
+            wpopt_nonce: options.wpopt_nonce,
+            wpopt_args: options.wpopt_args,
+            wpopt_form: options.wpopt_form,
+        },
+        complete: function (jqXHR, status) {
+
+            if (typeof options.callback === "function") {
+
+                let res = wpopt_is_json(jqXHR.responseText);
+
+                if(!res)
+                    res = jqXHR.responseText;
+
+                if(typeof res.data !== 'undefined')
+                    setTimeout(options.callback(res.data, res.success), 100);
+                else
+                    setTimeout(options.callback(res, res.success), 100);
+            }
+
+            if (options.use_loading)
+                options.use_loading.removeClass("wpopt-loader");
+
+            wpopt_semaphore.release(options.wpopt_action);
         }
     });
-}
-
-function flex_defaultMessage(response, status, $mex_viewer = null) {
-
-    if ($mex_viewer === null)
-        $mex_viewer = jQuery("#wpopt-ajax-message");
-
-    if (status) {
-
-        if (response.length > 0) {
-            $mex_viewer.append(response)
-        } else
-            $mex_viewer.append("<p class='success'>" + WPOPT.strings.success + "</p>");
-
-    } else {
-
-        if (response.length > 0)
-            $mex_viewer.append("<p class='error'>" + response + "</p>")
-        else
-            $mex_viewer.append("<p class='error'>" + WPOPT.strings.error + "</p>");
-
-    }
 }
 
 (function ($) {
@@ -56,6 +90,26 @@ function flex_defaultMessage(response, status, $mex_viewer = null) {
     let $window = $(window),
         $document = $('document'),
         $body = $("body");
+
+    $.fn.wpoptNotice = function (response, status) {
+
+        let $this = $(this);
+
+        if (status) {
+
+            if (response.length > 0) {
+                $this.append(response)
+            } else
+                $this.append("<p class='success'>" + WPOPT.strings.success + "</p>");
+
+        } else {
+
+            if (response.length > 0)
+                $this.append("<p class='error'>" + response + "</p>")
+            else
+                $this.append("<p class='error'>" + WPOPT.strings.error + "</p>");
+        }
+    }
 
     let flex_tabHandler = function ($tabs) {
 
@@ -290,9 +344,7 @@ function flex_defaultMessage(response, status, $mex_viewer = null) {
 
                 e.preventDefault();
 
-                let action = $submitter.data('action');
-
-                let callback = function (res) {
+                let callback_fn = function (res) {
 
                     let $mex_viewer = $("#wpopt-ajax-message");
 
@@ -312,19 +364,70 @@ function flex_defaultMessage(response, status, $mex_viewer = null) {
                     }
                 };
 
-                flex_ajaxHandler($this, {
+                wpopt_ajaxHandler({
                     womod: 'database',
-                    wpopt_action: action,
+                    wpopt_action: $submitter.data('action'),
                     wpopt_nonce: $this.data('nonce'),
                     wpopt_args: $submitter.data('args'),
-                    wpopt_form: $this.serialize()
-                }, callback)
+                    wpopt_form: $this.serialize(),
+                    callback: callback_fn,
+                    use_loader: $this,
+                })
             });
         });
     }
 
     $document.ready(function () {
+
+        $(".wpopt-collapse-handler").on("click", function () {
+            let $this = $(this);
+            $this.children('.wpopt-collapse-icon').toggleClass('wpopt-collapse-icon-close');
+            $this.next().toggle(300);
+        });
+
         flex_tabHandler($('.ar-tabs'));
+
+        $(".wpopt-apple-switch").each(function () {
+
+            if (!$(this).prop('checked')) {
+                $('input[data-parent="' + this.id + '"]').each(function () {
+                    let $this = $(this);
+
+                    $this.closest('tr').addClass('wpopt-disabled-blur');
+                    $this.prop("readonly", true);
+                });
+            }
+
+            $(this).on('click', function () {
+
+                let $this = $(this);
+
+                if ($this.prop("checked")) {
+
+                    $('input[data-parent="' + this.id + '"]').each(function () {
+                        $(this).closest('tr').removeClass('wpopt-disabled-blur');
+                        $(this).prop("readonly", false);
+                    });
+
+                    let parent = $this.data('parent');
+
+                    if (typeof parent !== 'undefined' && parent !== '') {
+
+                        let $parent = $('#' + parent);
+
+                        if (!$parent.prop("checked"))
+                            $parent.prop("checked", true);
+                    }
+                } else {
+                    $('input[data-parent="' + this.id + '"]').each(function () {
+                        let $this = $(this);
+
+                        $this.closest('tr').addClass('wpopt-disabled-blur');
+                        $this.prop("readonly", true);
+                    });
+                }
+            });
+        });
     });
 
     $window.on('beforeunload', function (e) {

@@ -125,7 +125,7 @@ class WOStorage
         if (!file_exists($path))
             return false;
 
-        wpopt_delete_files($path, $identifier);
+        WODisk::delete_files($path, $identifier);
 
         return true;
     }
@@ -179,7 +179,7 @@ class WOStorage
             if (!file_exists($path))
                 continue;
 
-            $size += wpopt_calc_folder_size($path);
+            $size += WODisk::calc_size($path);
         }
 
         return wpopt_bytes2size($size);
