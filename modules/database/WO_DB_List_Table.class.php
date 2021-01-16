@@ -45,7 +45,7 @@ class WO_DB_List_Table extends WP_List_Table
                 return "<span style='font-weight:bold;'>" . $item[$column_name] . "</span>";
             case 'data_length':
             case 'data_free':
-                return wpopt_bytes2size($item[$column_name]);
+                return size_format($item[$column_name]);
             case 'status':
             case 'engine':
             case 'table_rows':

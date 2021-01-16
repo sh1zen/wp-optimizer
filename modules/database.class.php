@@ -203,7 +203,7 @@ class WOMod_Database extends WOModule
                             echo '<td>' . md5($database_file) . '</td>';
                             echo '<td>' . $display_name . '</td>';
                             echo '<td>' . get_date_from_gmt(date('Y-m-d H:i:s', filemtime($database_file))) . '</td>';
-                            echo '<td>' . wpopt_bytes2size($file_size) . '</td>';
+                            echo '<td>' . size_format($file_size) . '</td>';
                             echo '<td><input type="radio" name="file" value="' . esc_attr(basename($database_file)) . '"/></td></tr>';
 
                             $totalsize += $file_size;
@@ -215,7 +215,7 @@ class WOMod_Database extends WOModule
                     ?>
                     <tr class="wpopt-footer">
                         <th colspan="4"><?php printf(_n('%s Backup found', '%s Backups found', $no, 'wpopt'), number_format_i18n($no)); ?></th>
-                        <th colspan="2"><?php echo wpopt_bytes2size($totalsize); ?></th>
+                        <th colspan="2"><?php echo size_format($totalsize); ?></th>
                     </tr>
                     <tr>
                         <td colspan="6" class="wpopt-centered wpopt-actions">

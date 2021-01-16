@@ -182,7 +182,7 @@ class WOStorage
             $size += WODisk::calc_size($path);
         }
 
-        return wpopt_bytes2size($size);
+        return size_format($size);
     }
 
     public function autosave()

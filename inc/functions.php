@@ -33,22 +33,6 @@ function wpopt_add_timezone($timestamp = false)
     return $timestamp - $timezone;
 }
 
-/**
- * @param $size
- * @return string
- */
-function wpopt_bytes2size($size)
-{
-    if ($size == 0)
-        return '0 B';
-
-    $unit = array('B', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB');
-
-    $i = floor(log($size, 1024));
-
-    return @round($size / pow(1024, $i), 2) . ' ' . $unit[$i];
-}
-
 function wpopt_size2bytes($val)
 {
     $val = trim($val);
