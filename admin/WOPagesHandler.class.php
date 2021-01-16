@@ -135,7 +135,7 @@ class WOPagesHandler
         ?>
         <section class="wpopt wpopt-wrap">
             <block class="wpopt">
-                <h1>FAQ</h1>
+                <section class='wpopt-header'><h1>FAQ</h1></section>
                 <br>
                 <div class="wpopt-faq-list">
                     <div class="wpopt-faq-item">
@@ -201,9 +201,9 @@ class WOPagesHandler
                     $this->output_results($data);
 
                 ?>
-                <block class="wpopt">
+                <block class="wpopt-header">
                     <h1>WP Optimizer Dashboard</h1>
-                    <p><strong><?php _e('Optimize your WordPress site in few and easy steps.', 'wpopt'); ?></strong></p>
+                    <h3><strong><?php _e('Optimize your WordPress site in few and easy steps.', 'wpopt'); ?></strong></h3>
                 </block>
                 <block class="wpopt">
                     <form method="POST">
@@ -231,7 +231,7 @@ class WOPagesHandler
                         <?php
                         $wo_meter->lap();
                         echo '<div>' . sprintf(__('WordPress used memory: %s', 'wpopt'), wpopt_bytes2size(memory_get_peak_usage())) . '</div><br>';
-                        echo '<div>' . sprintf(__('Wordpress boot time: %s s', 'wpopt'), number_format_i18n($wo_meter->get_time(), 4)) . '</div><br>';
+                        echo '<div>' . sprintf(__('Wordpress boot time: %s s', 'wpopt'), number_format_i18n(microtime(true) - WP_START_TIMESTAMP, 4)) . '</div><br>';
                         ?>
                     </p>
                 </block>

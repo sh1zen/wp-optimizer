@@ -200,7 +200,7 @@ class WO_ImagesPerformer
             if (!file_exists($file))
                 continue;
 
-            if (!WO_UtilEnv::safe_time_limit(0.5, 60)) {
+            if (!WO_UtilEnv::safe_time_limit(0.3, 60)) {
 
                 // reinsert popped image
                 array_push($images, $image_data);

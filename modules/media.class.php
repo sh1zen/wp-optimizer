@@ -5,7 +5,7 @@
  */
 class WOMod_Media extends WOModule
 {
-    public $scopes = array('autoload', 'cron', 'admin-page');
+    public $scopes = array('autoload', 'cron');
 
     private $images_mime_types;
 
@@ -216,9 +216,7 @@ class WOMod_Media extends WOModule
     {
         ?>
         <section class="wpopt-wrap">
-            <section class='wpopt'><h1>Media Optimizer</h1></section>
-        </section>
-        <section class="wpopt-wrap">
+            <section class="wpopt-header"><h1>Media Optimizer</h1></section>
             <block class="wpopt">
                 <?php
                 echo wpopt_generateHTML_tabs_panels(array(
@@ -256,11 +254,13 @@ class WOMod_Media extends WOModule
 
             WOOptions::update('media.todo', $images);
 
-            wpopt_write_log(wp_date("H:i:s"));
+            if(WPOPT_DEBUG) {
+                wpopt_write_log(wp_date("H:i:s"));
+            }
 
             // schedule again cron
             if (!empty($images)) {
-                WOCron::schedule_function(array($this, 'cron_handler'), $args, time() + 10);//MINUTE_IN_SECONDS);
+                WOCron::schedule_function(array($this, 'cron_handler'), $args, time() + MINUTE_IN_SECONDS);
             }
             else {
                 WOCron::unschedule_function(array($this, 'cron_handler'), $args);

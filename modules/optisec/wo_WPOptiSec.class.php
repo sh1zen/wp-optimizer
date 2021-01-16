@@ -1,6 +1,10 @@
 <?php
 
-class WO_Optimizer
+/**
+ * Class to handle Security and Optimization requests
+ * @since 1.5.0
+ */
+class WO_WPOptiSec
 {
     private static $_instance;
 
@@ -9,7 +13,7 @@ class WO_Optimizer
     }
 
     /**
-     * @return WO_Optimizer
+     * @return WO_WPOptiSec
      */
     public static function getInstance()
     {

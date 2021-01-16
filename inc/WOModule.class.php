@@ -204,7 +204,7 @@ class WOModule
                     ?>
                     </tbody>
                 </table>
-                <p class="submit wpopt-submit">
+                <p class="wpopt-submit">
                     <input type="submit" class="button-primary" value="<?php _e('Save Changes', 'wpopt') ?>"/>
                 </p>
             </form>

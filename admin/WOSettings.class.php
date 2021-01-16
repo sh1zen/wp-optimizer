@@ -151,7 +151,7 @@ class WOSettings
         settings_errors();
         ?>
         <section class="wpopt-wrap wpopt">
-            <h1><?php _e('Core Settings', 'wpopt'); ?></h1>
+            <section class='wpopt-header'><h1><?php _e('Core Settings', 'wpopt'); ?></h1></section>
             <block class="wpopt">
                 <?php
 
@@ -208,7 +208,7 @@ class WOSettings
         settings_errors();
         ?>
         <section class="wpopt-wrap wpopt">
-            <h1><?php _e('Modules Settings', 'wpopt'); ?></h1>
+            <section class='wpopt-header'><h1><?php _e('Modules Settings', 'wpopt'); ?></h1></section>
             <block class="wpopt">
                 <?php
 

@@ -73,8 +73,7 @@ class WOMeter
             $size = memory_get_peak_usage();
 
         if ($convert) {
-            $unit = array('B', 'KB', 'MB', 'GB', 'TB', 'PB');
-            return @round($size / pow(1024, ($i = floor(log($size, 1024)))), 2) . ' ' . $unit[$i];
+            return size_format($size, 2);
         }
 
         return $size;

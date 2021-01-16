@@ -5,7 +5,7 @@ Donate link: https://www.paypal.me/sh1zen
 Requires at least: 4.2.0 
 Tested up to: 5.6 
 Requires PHP: 5.3 
-Stable tag: 1.4.3 
+Stable tag: 1.5.0
 License: GNU v3.0 License
 URI: https://github.com/sh1zen/wp-optimizer/blob/master/LICENSE
 
@@ -98,8 +98,11 @@ WordPress plugin.
 
 == Upgrade Notice ==
 
-= 1.5.0 = Added wp_optimizer module carrying some new features: security fixes, browser caching system and server
-enhancements
+= 1.5.0 =
+Added wp_optimizer module carrying some new features, like security fixes, browser caching system and server
+enhancements. Improved settings handling and cron schedules.
+This is a huge upgrade, so plugin settings will be reset to defaults to ensure no conflicts.
+
 
 **Roadmap**
 
@@ -162,9 +165,11 @@ work! Otherwise, go to the new added module "Setting" and try a reset.
 = 1.5.0 =
 
 * added image optimization and orphaned media remover module
-* added wp_optimizer module (security fixes, browser caching system, server enhancements)
+* added wp_security module
+* added wp_optimizer module (browser caching system, server enhancements)
 * added cron jobs time limit extender (allow executing long time schedules in environments with not changeable PHP time limit)
 * improvements in settings core
+* fixed some bugs in module folder_size
 
 = 1.4.3 =
 

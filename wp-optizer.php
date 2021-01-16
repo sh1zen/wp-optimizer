@@ -7,7 +7,6 @@
  * Author URI: https://sh1zen.github.io/
  * Text Domain: wpopt
  * Domain Path: /languages
- * Text Domain: wpopt
  * Version: 1.5.0
  */
 

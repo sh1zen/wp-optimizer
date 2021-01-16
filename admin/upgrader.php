@@ -20,9 +20,10 @@ if (!isset($_wpopt_settings['ver'])) {
 
     delete_option("wpopt-imgs--todo");
 
-
     // update to 1.5
     $_wpopt_settings['ver'] = "1.5";
+
+    // todo create the new database.table
 }
 
 

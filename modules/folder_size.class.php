@@ -7,16 +7,11 @@ class WOMod_Folder_Size extends WOModule
     public $scopes = array('settings', 'admin');
 
     /**
-     * Transient time 8 hours
-     */
-    private $time = 28800;
-
-    /**
      * Transient prefix
      */
     private $transient_prefix = 'wpopt_folder_sizes_';
 
-    private $paths = array();
+    private $paths;
 
     private $cache = false;
 
@@ -30,16 +25,12 @@ class WOMod_Folder_Size extends WOModule
     public function __construct()
     {
         $default = array(
-            'active' => true,
-            'paths'  => array(ABSPATH, WP_CONTENT_DIR)
+            'paths' => array(ABSPATH, WP_CONTENT_DIR)
         );
 
         parent::__construct(array(
             'settings' => $default
         ));
-
-        if ($this->option('active', true))
-            return;
 
         $this->paths = array_filter($this->option('paths', array()));
 
@@ -51,7 +42,6 @@ class WOMod_Folder_Size extends WOModule
 
     public function validate_settings($input, $valid)
     {
-        $valid['active'] = isset($input['active']);
         $valid['paths'] = array_map('sanitize_text_field', explode(PHP_EOL, $input['paths']));
 
         return $valid;
@@ -109,12 +99,12 @@ class WOMod_Folder_Size extends WOModule
         $path = wp_normalize_path($path);
         $dir_list = glob($path . '/*', GLOB_ONLYDIR);
 
-        $this->cache = get_transient($this->transient_prefix . basename($path));
+        $this->cache = WOOptions::get($this->transient_prefix . basename($path));
 
         $this->printFullTable('Files', $path, $dir_list);
 
         if ($this->update_cache)
-            set_transient($this->transient_prefix . basename($path), $this->cache, $this->time);
+            WOOptions::update($this->transient_prefix . basename($path), $this->cache);
     }
 
     /**
@@ -130,8 +120,7 @@ class WOMod_Folder_Size extends WOModule
     private function printFullTable($title, $root, $dir_list)
     {
         if (!isset($this->cache['root_folder'])) {
-            $root_size = $this->dirSize($root);
-            $cache['root_folder'] = $root_size;
+            $root_size = size_format(WODisk::calc_size($root));
             $this->update_cache = true;
         }
         else
@@ -140,37 +129,6 @@ class WOMod_Folder_Size extends WOModule
         $this->printTable($title, $dir_list, $root_size);
     }
 
-    /**
-     * Iterates through a folder and get its size
-     *
-     * @param string $directory
-     * @return string Formatted size
-     */
-    private function dirSize($directory)
-    {
-        $size = 0;
-        foreach (new RecursiveIteratorIterator(new RecursiveDirectoryIterator($directory)) as $file)
-            $size += $file->getSize();
-
-        return $this->format_size($size);
-    }
-
-    /**
-     * Formats the size into human readable
-     *
-     * @param integer $size
-     * @return string
-     */
-    private function format_size($size)
-    {
-        $units = array('B', 'KB', 'MB', 'GB', 'TB', 'PB');
-        $mod = 1024;
-        for ($i = 0; $size > $mod; $i++)
-            $size /= $mod;
-
-        $endIndex = strpos($size, ".") + 3;
-        return substr($size, 0, $endIndex) . ' ' . $units[$i];
-    }
 
     /**
      * Prints the start of the table
@@ -203,6 +161,7 @@ class WOMod_Folder_Size extends WOModule
             </tfoot>
         </table>
         <?php
+        $this->cache['root_folder'] = $root_size;
     }
 
     /**
@@ -213,13 +172,13 @@ class WOMod_Folder_Size extends WOModule
     private function printDirectoryList($directories)
     {
         $count = 0;
-        $transi = array();
         if (!$this->cache):
+            $this->cache = array();
             foreach ($directories as $dir) {
                 $alt = (++$count % 2) ? 'alternate' : '';
                 $name = basename($dir);
-                $size = $this->dirSize($dir);
-                $transi[$name] = $size;
+                $size = size_format(WODisk::calc_size($dir));
+                $this->cache['dir_list'][$name] = $size;
                 printf(
                     '<tr class="%s">
 						<td class="row">%s</td>
@@ -228,7 +187,6 @@ class WOMod_Folder_Size extends WOModule
                 );
             }
             $this->update_cache = true;
-            $this->cache['dir_list'] = $transi;
         else:
             foreach ($this->cache['dir_list'] as $name => $size) {
                 $alt = (++$count % 2) ? 'alternate' : '';
@@ -250,7 +208,7 @@ class WOMod_Folder_Size extends WOModule
         if (isset($_POST[$this->transient_prefix])) {
 
             foreach ($this->paths as $path) {
-                delete_transient($this->transient_prefix . basename($path));
+                WOOptions::remove($this->transient_prefix . basename($path));
             }
         }
         $name = $this->transient_prefix;
@@ -261,7 +219,6 @@ class WOMod_Folder_Size extends WOModule
     protected function setting_fields()
     {
         return array(
-            array('type' => 'checkbox', 'name' => __('Active', 'wpopt'), 'id' => 'active', 'value' => $this->option('active', true)),
             array('type' => 'textarea', 'name' => __('Paths', 'wpopt'), 'id' => 'paths', 'value' => implode(PHP_EOL, $this->option('paths', array()))),
         );
     }

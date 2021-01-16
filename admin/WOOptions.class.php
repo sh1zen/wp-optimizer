@@ -107,4 +107,25 @@ class WOOptions
 
         return true;
     }
+
+    public static function remove($option)
+    {
+        global $wpdb;
+
+        $option = trim($option);
+
+        if (empty($option)) {
+            return false;
+        }
+
+        $result = $wpdb->query($wpdb->prepare("DELETE FROM " . self::table_name() . " WHERE item = %s", $option));
+
+        if (!$result) {
+            return false;
+        }
+
+        WOCache::getInstance()->delete_cache($option, 'options');
+
+        return true;
+    }
 }

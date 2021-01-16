@@ -15,7 +15,7 @@ class WOMod_Sysinfo extends WOModule
     {
         ?>
         <section class="wpopt-wrap">
-            <section class='wpopt'><h1>System Info </h1></section>
+            <section class='wpopt-header'><h1>System Info</h1></section>
             <?php foreach ($this->get_info() as $name => $table) : ?>
                 <block class="wpopt" id="<?php echo strtolower($name); ?>">
                     <h2 class="sysinfo-title"><?php echo $name; ?></h2>

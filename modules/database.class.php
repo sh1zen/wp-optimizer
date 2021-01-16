@@ -281,7 +281,7 @@ class WOMod_Database extends WOModule
                                    value="<?php _e('Backup now', 'wpopt'); ?>"
                                    class="button"/>
                             <a class="button"
-                               href="<?php echo wpopt_setting_panel_url('database') ?>">Settings</a>
+                               href="<?php echo wpopt_module_setting_url('database') ?>">Settings</a>
                         </td>
                     </tr>
                 </table>
@@ -505,7 +505,7 @@ class WOMod_Database extends WOModule
             set_time_limit(60);
         ?>
         <section class="wpopt-wrap">
-            <section class='wpopt'><h1>Database Manager</h1></section>
+            <section class='wpopt-header'><h1>Database Manager</h1></section>
             <div id="wpopt-ajax-message" class="wpopt-notice"></div>
             <?php
             if (!empty($this->performer_response)) {
@@ -737,6 +737,7 @@ class WOMod_Database extends WOModule
     protected function setting_fields()
     {
         return array(
+            array('type' => 'text', 'name' => __('Backup path', 'wpopt'), 'id' => 'backup_path', 'value' => $this->option('backup.path', '')),
             array('type' => 'separator', 'name' => __('Sweeps:', 'wpopt')),
             array('type' => 'textarea', 'name' => __('Excluded Taxonomies (comma separated)', 'wpopt'), 'id' => 'excluded_taxonomies', 'value' => implode(', ', $this->option('sweep.excluded_taxonomies', array()))),
             array('type' => 'separator', 'name' => __('Backups:', 'wpopt')),

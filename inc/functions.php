@@ -260,8 +260,10 @@ function wpopt_generate_field($args, $display = true)
 
         $padding_left = 30 * $args['nexted_level'];
 
-        $_oBefore = "<tr><td class='option' style='padding-left: {$padding_left}px'><div><b>{$args['name']}:</b></div></td><td class='value'><div><label for='{$args['id']}'></label>";
-        $_oAfter = "</div></td></tr>";
+        $row_class = $padding_left !== 0 ? 'wpopt-child' : '';
+
+        $_oBefore = "<tr class='{$row_class}'><td class='option' style='padding-left: {$padding_left}px'><b>{$args['name']}:</b></td><td class='value'><label for='{$args['id']}'></label>";
+        $_oAfter = "</td></tr>";
     }
     else {
         $args['classes'] .= " wpopt-{$context}";
@@ -320,7 +322,7 @@ function wpopt_generate_field($args, $display = true)
             break;
 
         case "textarea":
-            $output .= "<textarea {$_field_html_args} rows='4' cols='50' type='{$args['type']}' name='{$input_name}' id='{$args['id']}' {$jquery_data}/>{$args['value']}</textarea>";
+            $output .= "<textarea {$_field_html_args} rows='4' cols='80' type='{$args['type']}' name='{$input_name}' id='{$args['id']}' {$jquery_data}/>{$args['value']}</textarea>";
             break;
     }
 
@@ -340,6 +342,11 @@ function wpopt_generate_field($args, $display = true)
 function wpopt_module_panel_url($module = '', $panel = '')
 {
     return admin_url("admin.php?page={$module}#{$panel}");
+}
+
+function wpopt_module_setting_url($panel = '')
+{
+    return admin_url("admin.php?page=wpopt-modules-settings#settings-{$panel}");
 }
 
 function wpopt_setting_panel_url($panel = '')

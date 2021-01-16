@@ -12,9 +12,6 @@ class WOMod_WP_Optimizer extends WOModule
     public function __construct()
     {
         $this->server_conf_hooks = array(
-            'srv_security'      => array(
-                'active' => false,
-            ),
             'srv_enhancements'  => array(
                 'active' => false,
             ),
@@ -50,18 +47,18 @@ class WOMod_WP_Optimizer extends WOModule
 
     public function validate_settings($input, $valid)
     {
-        require_once __DIR__ . '/optimizer/wo_optimizer.class.php';
+        require_once __DIR__ . '/optisec/wo_WPOptiSec.class.php';
 
         $new_valid = parent::validate_settings($input, $valid);
 
         foreach ($this->server_conf_hooks as $server_hooks => $value) {
 
             if ($this->deactivating("{$server_hooks}.active", $input)) {
-                WO_Optimizer::server_conf($server_hooks, 'remove');
+                WO_WPOptiSec::server_conf($server_hooks, 'remove');
             }
             elseif (WOSettings::get_option($new_valid, "{$server_hooks}.active")) {
                 // do also if not activating to ensure children settings changes are performed
-                WO_Optimizer::server_conf($server_hooks, 'add', $new_valid);
+                WO_WPOptiSec::server_conf($server_hooks, 'add', $new_valid);
             }
         }
 
@@ -82,9 +79,9 @@ class WOMod_WP_Optimizer extends WOModule
 
             if (true or !is_writable(ABSPATH . '.htaccess')) {
 
-                require_once __DIR__ . '/optimizer/wo_optimizer.class.php';
+                require_once __DIR__ . '/optisec/wo_WPOptiSec.class.php';
 
-                $virtual_page = WO_Optimizer::server_conf('', 'get');
+                $virtual_page = WO_WPOptiSec::server_conf('', 'get');
 
                 $htaccess_init_len = strlen($virtual_page);
 
@@ -92,7 +89,7 @@ class WOMod_WP_Optimizer extends WOModule
 
                     if ($this->option($server_hooks)) {
 
-                        WO_Optimizer::server_conf($server_hooks, 'add', $this->option(), $virtual_page);
+                        WO_WPOptiSec::server_conf($server_hooks, 'add', $this->option(), $virtual_page);
                     }
                 }
 
@@ -112,17 +109,6 @@ class WOMod_WP_Optimizer extends WOModule
     {
         return array(
             array('type' => 'separator', 'name' => __('Server configuration (Up to now, apache only)', 'wpopt')),
-            array('type' => 'checkbox', 'name' => __('Security Fixes', 'wpopt'), 'id' => 'srv_security.active', 'value' => $this->option('srv_security.active')),
-            array('type' => 'checkbox', 'parent' => 'srv_security.active', 'name' => __('Disable directory listing', 'wpopt'), 'id' => 'srv_security.listings', 'value' => $this->option('srv_security.listings', true)),
-            array('type' => 'checkbox', 'parent' => 'srv_security.active', 'name' => __('Disable access to configuration file', 'wpopt'), 'id' => 'srv_security.protect_htaccess', 'value' => $this->option('srv_security.protect_htaccess', true)),
-            array('type' => 'checkbox', 'parent' => 'srv_security.active', 'name' => __('Enable HTTP Strict Transport Security', 'wpopt'), 'id' => 'srv_security.hsts', 'value' => $this->option('srv_security.hsts', true)),
-            array('type' => 'checkbox', 'parent' => 'srv_security.active', 'name' => __('Disable Cross-Origin Resource Sharing', 'wpopt'), 'id' => 'srv_security.cors', 'value' => $this->option('srv_security.cors', true)),
-            array('type' => 'checkbox', 'parent' => 'srv_security.active', 'name' => __('Disable HTTP Track & Trace', 'wpopt'), 'id' => 'srv_security.http_track&trace', 'value' => $this->option('srv_security.http_track&trace', true)),
-            array('type' => 'checkbox', 'parent' => 'srv_security.active', 'name' => __('Block Cross Site Scripting', 'wpopt'), 'id' => 'srv_security.xss', 'value' => $this->option('srv_security.xss', true)),
-            array('type' => 'checkbox', 'parent' => 'srv_security.active', 'name' => __('Send No Sniff Header', 'wpopt'), 'id' => 'srv_security.nosniff', 'value' => $this->option('srv_security.nosniff', true)),
-            array('type' => 'checkbox', 'parent' => 'srv_security.active', 'name' => __('Send No Referrer Header', 'wpopt'), 'id' => 'srv_security.noreferrer', 'value' => $this->option('srv_security.noreferrer')),
-            array('type' => 'checkbox', 'parent' => 'srv_security.active', 'name' => __('Send No Frame Header', 'wpopt'), 'id' => 'srv_security.noframe', 'value' => $this->option('srv_security.noframe')),
-
             array('type' => 'divide'),
             array('type' => 'checkbox', 'name' => __('Server Enhancements', 'wpopt'), 'id' => 'srv_enhancements.active', 'value' => $this->option('srv_enhancements.active')),
             array('type' => 'checkbox', 'parent' => 'srv_enhancements.active', 'name' => __('Remove www', 'wpopt'), 'id' => 'srv_enhancements.remove_www', 'value' => $this->option('srv_enhancements.remove_www')),

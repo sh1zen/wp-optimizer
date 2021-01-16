@@ -208,7 +208,7 @@ class WOCron
 
         foreach ($events as $id => $event) {
 
-            if (is_callable($event['function'])) {
+            if (isset($event['id']) and is_callable($event['function'])) {
                 add_action($event['id'], $event['function'], 10, $event['accepted_args']);
             }
             else {
