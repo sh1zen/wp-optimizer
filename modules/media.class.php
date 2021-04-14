@@ -1,9 +1,18 @@
 <?php
 
+namespace WPOptimizer\modules;
+
+use WPOptimizer\core\Cron;
+use WPOptimizer\core\Disk;
+use WPOptimizer\core\EnvUtil;
+use WPOptimizer\core\Options;
+use WPOptimizer\core\Settings;
+use WPOptimizer\modules\supporters\Optimize_Media_Table;
+
 /**
  *  Module for images optimization handling
  */
-class WOMod_Media extends WOModule
+class Mod_Media extends Module
 {
     public $scopes = array('autoload', 'cron');
 
@@ -32,7 +41,7 @@ class WOMod_Media extends WOModule
             )
         ));
 
-        if (WOSettings::check($this->cron_settings, 'active')) {
+        if (Settings::check($this->cron_settings, 'active')) {
 
             add_filter('wp_handle_upload', array($this, 'add_images_2_process'), 10, 2);
             add_filter('wp_generate_attachment_metadata', array($this, 'add_thumbs_2_process'), 10, 3);
@@ -42,7 +51,7 @@ class WOMod_Media extends WOModule
 
         if (is_admin() or wp_doing_cron()) {
 
-            require_once __DIR__ . '/media/WO_ImagesPerformer.class.php';
+            require_once WPOPT_SUPPORTERS . '/media/WO_ImagesPerformer.class.php';
 
             $this->optimization_info = get_option('wpopt.media.status', array());
         }
@@ -59,7 +68,7 @@ class WOMod_Media extends WOModule
 
     public function cron_setting_fields($cron_settings)
     {
-        $cron_settings[] = array('type' => 'checkbox', 'name' => __('Auto optimize images (daily uploads)', 'wpopt'), 'id' => 'images_active', 'value' => WOSettings::check($this->cron_settings, 'active'));
+        $cron_settings[] = array('type' => 'checkbox', 'name' => __('Auto optimize images (daily uploads)', 'wpopt'), 'id' => 'images_active', 'value' => Settings::check($this->cron_settings, 'active'));
 
         return $cron_settings;
     }
@@ -67,7 +76,7 @@ class WOMod_Media extends WOModule
     public function shutdown()
     {
         if (!empty($this->to_optimize_data)) {
-            WOOptions::update('media.todo', $this->to_optimize_data);
+            Options::update('media.todo', $this->to_optimize_data);
         }
     }
 
@@ -79,7 +88,7 @@ class WOMod_Media extends WOModule
 
             case 'autoCompleteDirs':
                 $response = array();
-                $response['predictions'] = WODisk::autocomplete($args['options']);
+                $response['predictions'] = Disk::autocomplete($args['options']);
                 break;
         }
 
@@ -119,9 +128,9 @@ class WOMod_Media extends WOModule
         <?php
         else:
 
-            require_once __DIR__ . '/media/WO_OM_List_Table.class.php';
+            require_once WPOPT_SUPPORTERS . '/media/OptimizeMedia__Table.class.php';
 
-            $table_list_obj = new WO_OM_List_Table();
+            $table_list_obj = new Optimize_Media_Table();
 
             $table_list_obj->prepare_items();
 
@@ -174,7 +183,7 @@ class WOMod_Media extends WOModule
                     ?>
                     <div class="wpopt-dir-explorer">
                         <label>
-                            <text><?= WO_UtilEnv::normalize_path(ABSPATH, true) ?></text>
+                            <text><?= EnvUtil::normalize_path(ABSPATH, true) ?></text>
                             <input name="wpopt-dir" type="text" value="wp-content/" <?= $disabled ?>>
                         </label>
                     </div>
@@ -209,7 +218,7 @@ class WOMod_Media extends WOModule
 
     private function status($option, $default = false)
     {
-        return WOSettings::get($option, $default);
+        return Settings::get($option, $default);
     }
 
     public function render_admin_page()
@@ -246,24 +255,24 @@ class WOMod_Media extends WOModule
     {
         $ImagesPerformer = WO_ImagesPerformer::getInstance($this->option());
 
-        $images = WOOptions::get('media.todo', array());
+        $images = Options::get('media.todo', array());
 
         if (!empty($images)) {
 
             $images = $ImagesPerformer->optimize_images($images);
 
-            WOOptions::update('media.todo', $images);
+            Options::update('media.todo', $images);
 
-            if(WPOPT_DEBUG) {
+            if (WPOPT_DEBUG) {
                 wpopt_write_log(wp_date("H:i:s"));
             }
 
             // schedule again cron
             if (!empty($images)) {
-                WOCron::schedule_function(array($this, 'cron_handler'), $args, time() + MINUTE_IN_SECONDS);
+                Cron::schedule_function(array($this, 'cron_handler'), $args, time() + MINUTE_IN_SECONDS);
             }
             else {
-                WOCron::unschedule_function(array($this, 'cron_handler'), $args);
+                Cron::unschedule_function(array($this, 'cron_handler'), $args);
             }
         }
     }
@@ -274,7 +283,7 @@ class WOMod_Media extends WOModule
             return $upload;
 
         if (empty($this->to_optimize_data)) {
-            $this->to_optimize_data = WOOptions::get('media.todo', array());
+            $this->to_optimize_data = Options::get('media.todo', array());
 
             if (!$this->to_optimize_data)
                 $this->to_optimize_data = array();
@@ -294,7 +303,7 @@ class WOMod_Media extends WOModule
 
         if (empty($this->to_optimize_data)) {
 
-            $this->to_optimize_data = WOOptions::get('media.todo', array());
+            $this->to_optimize_data = Options::get('media.todo', array());
 
             if (!$this->to_optimize_data)
                 $this->to_optimize_data = array();

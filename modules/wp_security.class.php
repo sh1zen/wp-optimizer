@@ -1,9 +1,14 @@
 <?php
 
+namespace WPOptimizer\modules;
+
+use WPOptimizer\core\Settings;
+use WPOptimizer\modules\supporters\WP_OptiSec;
+
 /**
  * Module for updates handling
  */
-class WOMod_WP_Security extends WOModule
+class Mod_WP_Security extends Module
 {
     public $scopes = array('settings', 'autoload');
 
@@ -69,7 +74,7 @@ class WOMod_WP_Security extends WOModule
                         return $result;
                     }
                     if (!is_user_logged_in()) {
-                        return new WP_Error('rest_not_logged_in', 'You are not currently logged in.', array('status' => 401));
+                        return new \WP_Error('rest_not_logged_in', 'You are not currently logged in.', array('status' => 401));
                     }
                     return $result;
                 });
@@ -89,7 +94,8 @@ class WOMod_WP_Security extends WOModule
                 // remove version from rss
                 add_filter('the_generator', '__return_empty_string');
 
-                add_action('template_redirect', 'remove_yoast_seo_comments_fn', 9999);
+                if(function_exists('remove_yoast_seo_comments_fn'))
+                    add_action('template_redirect', 'remove_yoast_seo_comments_fn', 9999);
             }
 
             if ($this->option('dcl_security.nocssversion')) {
@@ -105,24 +111,23 @@ class WOMod_WP_Security extends WOModule
     public function remove_version_script_style($target_url)
     {
         $target_url = remove_query_arg('ver', $target_url);
-        $target_url = remove_query_arg('version', $target_url);
-        return $target_url;
+        return remove_query_arg('version', $target_url);
     }
 
     public function validate_settings($input, $valid)
     {
-        require_once __DIR__ . '/optisec/wo_WPOptiSec.class.php';
+        require_once WPOPT_SUPPORTERS . 'optisec/WP_OptiSec.class.php';
 
         $new_valid = parent::validate_settings($input, $valid);
 
         foreach ($this->server_conf_hooks as $server_hooks => $value) {
 
             if ($this->deactivating("{$server_hooks}.active", $input)) {
-                WO_WPOptiSec::server_conf($server_hooks, 'remove');
+               WP_OptiSec::server_conf($server_hooks, 'remove');
             }
-            elseif (WOSettings::get_option($new_valid, "{$server_hooks}.active")) {
+            elseif (Settings::get_option($new_valid, "{$server_hooks}.active")) {
                 // do also if not activating to ensure children settings changes are performed
-                WO_WPOptiSec::server_conf($server_hooks, 'add', $new_valid);
+                WP_OptiSec::server_conf($server_hooks, 'add', $new_valid);
             }
         }
 
@@ -143,9 +148,9 @@ class WOMod_WP_Security extends WOModule
 
             if (true or !is_writable(ABSPATH . '.htaccess')) {
 
-                require_once __DIR__ . '/optisec/wo_WPOptiSec.class.php';
+                require_once WPOPT_SUPPORTERS . 'optisec/WP_OptiSec.class.php';
 
-                $virtual_page = WO_WPOptiSec::server_conf('', 'get');
+                $virtual_page = WP_OptiSec::server_conf('', 'get');
 
                 $htaccess_init_len = strlen($virtual_page);
 
@@ -153,7 +158,7 @@ class WOMod_WP_Security extends WOModule
 
                     if ($this->option($server_hooks)) {
 
-                        WO_WPOptiSec::server_conf($server_hooks, 'add', $this->option(), $virtual_page);
+                        WP_OptiSec::server_conf($server_hooks, 'add', $this->option(), $virtual_page);
                     }
                 }
 
@@ -176,7 +181,7 @@ class WOMod_WP_Security extends WOModule
             array('type' => 'checkbox', 'name' => __('Requests and Server', 'wpopt'), 'id' => 'srv_security.active', 'value' => $this->option('srv_security.active')),
             array('type' => 'checkbox', 'parent' => 'srv_security.active', 'name' => __('Disable directory listing', 'wpopt'), 'id' => 'srv_security.listings', 'value' => $this->option('srv_security.listings', true)),
             array('type' => 'checkbox', 'parent' => 'srv_security.active', 'name' => __('Disable access to configuration file', 'wpopt'), 'id' => 'srv_security.protect_htaccess', 'value' => $this->option('srv_security.protect_htaccess', true)),
-            array('type' => 'checkbox', 'parent' => 'srv_security.active', 'name' => __('Enable HTTP Strict Transport Security', 'wpopt'), 'id' => 'srv_security.hsts', 'value' => $this->option('srv_security.hsts', true)),
+            array('type' => 'checkbox', 'parent' => 'srv_security.active', 'name' => __('Enable HTTPS Strict Transport Security', 'wpopt'), 'id' => 'srv_security.hsts', 'value' => $this->option('srv_security.hsts', true)),
             array('type' => 'checkbox', 'parent' => 'srv_security.active', 'name' => __('Disable Cross-Origin Resource Sharing', 'wpopt'), 'id' => 'srv_security.cors', 'value' => $this->option('srv_security.cors', true)),
             array('type' => 'checkbox', 'parent' => 'srv_security.active', 'name' => __('Disable HTTP Track & Trace', 'wpopt'), 'id' => 'srv_security.http_track&trace', 'value' => $this->option('srv_security.http_track&trace', true)),
             array('type' => 'checkbox', 'parent' => 'srv_security.active', 'name' => __('Block Cross Site Scripting', 'wpopt'), 'id' => 'srv_security.xss', 'value' => $this->option('srv_security.xss', true)),

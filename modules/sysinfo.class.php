@@ -1,6 +1,8 @@
 <?php
 
-class WOMod_Sysinfo extends WOModule
+namespace WPOptimizer\modules;
+
+class Mod_Sysinfo extends Module
 {
     public static $name = "System Info";
 
@@ -65,7 +67,7 @@ class WOMod_Sysinfo extends WOModule
 
         $plugins = $this->get_plugins();
 
-        require_once WPOPT_INCPATH . '/WO_UtilRule.php';
+        require_once WPOPT_INCPATH . '/RuleUtil.php';
 
         $settings = array(
             "Server" => array(
@@ -257,7 +259,7 @@ class WOMod_Sysinfo extends WOModule
         $phpinfo = ob_get_clean();
 
         // Use DOMDocument to parse phpinfo()
-        $html = new DOMDocument('1.0', 'UTF-8');
+        $html = new \DOMDocument('1.0', 'UTF-8');
         $html->loadHTML($phpinfo);
 
         // Style process
@@ -267,7 +269,7 @@ class WOMod_Sysinfo extends WOModule
         }
 
         // We only need the <body>
-        $xpath = new DOMXPath($html);
+        $xpath = new \DOMXPath($html);
         $body = $xpath->query('/html/body');
 
         // Save HTML fragment

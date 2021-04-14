@@ -1,6 +1,13 @@
 <?php
 
-class WOMod_Cache extends WOModule
+namespace WPOptimizer\modules;
+
+use WPOPT_Object_Cache;
+use WPOptimizer\core\Disk;
+use WPOptimizer\core\Storage;
+use WPOptimizer\modules\supporters\Query_Cache;
+
+class Mod_Cache extends Module
 {
     public static $storage_internal = 'cache';
 
@@ -8,8 +15,8 @@ class WOMod_Cache extends WOModule
 
     public function __construct()
     {
-        require_once __DIR__ . '/cache/cache_dispatcher.class.php';
-        require_once __DIR__ . '/cache/query_cache.class.php';
+        require_once WPOPT_SUPPORTERS . '/cache/cache_dispatcher.class.php';
+        require_once WPOPT_SUPPORTERS . '/cache/query_cache.class.php';
 
         $default = array(
             'wp_query'  => array(
@@ -59,14 +66,14 @@ class WOMod_Cache extends WOModule
         );
 
         if ($this->option('wp_query.active')) {
-            WPOPT_Query_Cache::Initialize($args);
+            Query_Cache::Initialize($args);
         }
     }
 
     public function validate_settings($input, $valid)
     {
         if ($this->deactivating('wp_query.active', $input)) {
-            WPOPT_Query_Cache::clear_cache();
+            Query_Cache::clear_cache();
         }
 
         // object-cache
@@ -79,20 +86,20 @@ class WOMod_Cache extends WOModule
 
         if ($this->deactivating('wp_object.active', $input)) {
             WPOPT_Object_Cache::clear_cache();
-            WODisk::delete_files(WP_CONTENT_DIR . DIRECTORY_SEPARATOR . "object-cache.php");
+            Disk::delete_files(WP_CONTENT_DIR . DIRECTORY_SEPARATOR . "object-cache.php");
         }
 
         // database-cache
         if ($this->activating('wp_db', $input)) {
             file_put_contents(
                 WP_CONTENT_DIR . DIRECTORY_SEPARATOR . "db.php",
-                "<?php" . PHP_EOL . PHP_EOL . "include_once('" . WP_PLUGIN_DIR . DIRECTORY_SEPARATOR . "wp-optimizer/modules/cache/db.php');"
+                "<?php" . PHP_EOL . PHP_EOL . "include_once('" . WPOPT_SUPPORTERS  . "cache/db.php');"
             );
         }
 
-        if ($this->deactivating('wp_db', $input) and class_exists('WPOPT_DB')) {
-            WPOPT_DB::clear_cache();
-            WODisk::delete_files(WP_CONTENT_DIR . DIRECTORY_SEPARATOR . "db.php");
+        if ($this->deactivating('wp_db', $input) and class_exists('\WPOPT_DB')) {
+            \WPOPT_DB::clear_cache();
+            Disk::delete_files(WP_CONTENT_DIR . DIRECTORY_SEPARATOR . "db.php");
         }
 
         return parent::validate_settings($input, $valid);
@@ -117,7 +124,7 @@ class WOMod_Cache extends WOModule
     {
         return array(
             array(
-                'before'       => "<b>" . __('Cache size', 'wpopt') . " : " . WOStorage::getInstance()->get_size(self::$storage_internal) . "</b>",
+                'before'       => "<b>" . __('Cache size', 'wpopt') . " : " . Storage::getInstance()->get_size(self::$storage_internal) . "</b>",
                 'id'           => 'reset_cache',
                 'value'        => 'Reset Cache',
                 'button_types' => 'button-danger',
@@ -139,6 +146,6 @@ class WOMod_Cache extends WOModule
 
     public function flush_cache($blog_id = 0)
     {
-        return WOStorage::getInstance()->delete(self::$storage_internal, '', $blog_id);
+        return Storage::getInstance()->delete(self::$storage_internal, '', $blog_id);
     }
 }

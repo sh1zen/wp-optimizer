@@ -1,6 +1,8 @@
 <?php
 
-class WOMod_Folder_Size extends WOModule
+namespace WPOptimizer\modules;
+
+class Mod_Folder_Size extends Module
 {
     public static $name = "Directory Size";
 

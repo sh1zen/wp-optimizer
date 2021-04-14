@@ -3,7 +3,7 @@ Contributors: sh1zen
 Tags: optimize, database, images, cache, minify, backup, repair, speed, seo, server, clean-up, updates 
 Donate link: https://www.paypal.me/sh1zen
 Requires at least: 4.2.0 
-Tested up to: 5.6 
+Tested up to: 5.7
 Requires PHP: 5.3 
 Stable tag: 1.5.0
 License: GNU v3.0 License
@@ -164,12 +164,15 @@ work! Otherwise, go to the new added module "Setting" and try a reset.
 
 = 1.5.0 =
 
+* extended support to WordPress 5.7
 * added image optimization and orphaned media remover module
 * added wp_security module
 * added wp_optimizer module (browser caching system, server enhancements)
 * added cron jobs time limit extender (allow executing long time schedules in environments with not changeable PHP time limit)
 * improvements in settings core
 * fixed some bugs in module folder_size
+* code revision
+
 
 = 1.4.3 =
 

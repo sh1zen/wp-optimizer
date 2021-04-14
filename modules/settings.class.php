@@ -1,6 +1,10 @@
 <?php
 
-class WOMod_Settings extends WOModule
+namespace WPOptimizer\modules;
+
+use WPOptimizer\core\Settings;
+
+class Mod_Settings extends Module
 {
     public $scopes = array('core-settings', 'admin');
 
@@ -54,17 +58,17 @@ class WOMod_Settings extends WOModule
     {
         switch ($action) {
             case 'reset_options':
-                return WOSettings::getInstance()->reset();
+                return Settings::getInstance()->reset();
 
             case 'export_options':
-                if (file_put_contents(WPOPT_STORAGE . 'export.conf', WOSettings::getInstance()->export())) {
+                if (file_put_contents(WPOPT_STORAGE . 'export.conf', Settings::getInstance()->export())) {
                     wpopt_download_file(WPOPT_STORAGE . 'export.conf');
                     return true;
                 }
                 break;
 
             case 'import_options':
-                return WOSettings::getInstance()->import($options['conf_data']);
+                return Settings::getInstance()->import($options['conf_data']);
         }
 
         return false;

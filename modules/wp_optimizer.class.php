@@ -1,9 +1,14 @@
 <?php
 
+namespace WPOptimizer\modules;
+
+use WPOptimizer\core\Settings;
+use WPOptimizer\modules\supporters\WP_OptiSec;
+
 /**
  * Module for updates handling
  */
-class WOMod_WP_Optimizer extends WOModule
+class Mod_WP_Optimizer extends Module
 {
     public $scopes = array('settings', 'autoload');
 
@@ -47,18 +52,18 @@ class WOMod_WP_Optimizer extends WOModule
 
     public function validate_settings($input, $valid)
     {
-        require_once __DIR__ . '/optisec/wo_WPOptiSec.class.php';
+        require_once WPOPT_SUPPORTERS . 'optisec/WP_OptiSec.class.php';
 
         $new_valid = parent::validate_settings($input, $valid);
 
         foreach ($this->server_conf_hooks as $server_hooks => $value) {
 
             if ($this->deactivating("{$server_hooks}.active", $input)) {
-                WO_WPOptiSec::server_conf($server_hooks, 'remove');
+                WP_OptiSec::server_conf($server_hooks, 'remove');
             }
-            elseif (WOSettings::get_option($new_valid, "{$server_hooks}.active")) {
+            elseif (Settings::get_option($new_valid, "{$server_hooks}.active")) {
                 // do also if not activating to ensure children settings changes are performed
-                WO_WPOptiSec::server_conf($server_hooks, 'add', $new_valid);
+                WP_OptiSec::server_conf($server_hooks, 'add', $new_valid);
             }
         }
 
@@ -79,9 +84,9 @@ class WOMod_WP_Optimizer extends WOModule
 
             if (true or !is_writable(ABSPATH . '.htaccess')) {
 
-                require_once __DIR__ . '/optisec/wo_WPOptiSec.class.php';
+                require_once WPOPT_SUPPORTERS . 'optisec/WP_OptiSec.class.php';
 
-                $virtual_page = WO_WPOptiSec::server_conf('', 'get');
+                $virtual_page = WP_OptiSec::server_conf('', 'get');
 
                 $htaccess_init_len = strlen($virtual_page);
 
@@ -89,7 +94,7 @@ class WOMod_WP_Optimizer extends WOModule
 
                     if ($this->option($server_hooks)) {
 
-                        WO_WPOptiSec::server_conf($server_hooks, 'add', $this->option(), $virtual_page);
+                        WP_OptiSec::server_conf($server_hooks, 'add', $this->option(), $virtual_page);
                     }
                 }
 

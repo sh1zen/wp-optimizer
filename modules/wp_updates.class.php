@@ -1,9 +1,11 @@
 <?php
 
+namespace WPOptimizer\modules;
+
 /**
  * Module for updates handling
  */
-class WOMod_WP_Updates extends WOModule
+class Mod_WP_Updates extends Module
 {
     public $scopes = array('settings', 'autoload');
 

@@ -1,6 +1,10 @@
 <?php
 
-class WOMod_Modules_Handler extends WOModule
+namespace WPOptimizer\modules;
+
+use WPOptimizer\core\ModuleHandler;
+
+class Mod_Modules_Handler extends Module
 {
     public $scopes = array('core-settings');
 
@@ -8,7 +12,7 @@ class WOMod_Modules_Handler extends WOModule
 
     public function __construct()
     {
-        $modules = WOModuleHandler::getInstance()->get_modules(array('excepts' => array('modules_handler', 'settings', 'cron')), false);
+        $modules = ModuleHandler::getInstance()->get_modules(array('excepts' => array('modules_handler', 'settings', 'cron')), false);
 
         $slugs = array_column($modules, 'slug');
 

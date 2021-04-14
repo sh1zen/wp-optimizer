@@ -1,6 +1,14 @@
 <?php
 
-class WOMod_Database extends WOModule
+namespace WPOptimizer\modules;
+
+use WPOptimizer\core\Disk;
+use WPOptimizer\core\EnvUtil;
+use WPOptimizer\core\Settings;
+use WPOptimizer\modules\supporters\List_Table;
+use WPOptimizer\modules\supporters\DBSupport;
+
+class Mod_Database extends Module
 {
     public $scopes = array('admin-page', 'cron', 'settings');
 
@@ -10,11 +18,11 @@ class WOMod_Database extends WOModule
 
     public function __construct()
     {
-        require_once __DIR__ . '/database/WO_DBSupport.class.php';
+        require_once WPOPT_SUPPORTERS . '/database/DBSupport.class.php';
 
         $default = array(
             'backup' => array(
-                'path'            => WO_UtilEnv::normalize_path(WP_CONTENT_DIR . '/backup-db'),
+                'path'            => EnvUtil::normalize_path(WP_CONTENT_DIR . '/backup-db'),
                 'excluded_tables' => array(),
                 'mysqldump_path'  => ''
             ),
@@ -39,13 +47,13 @@ class WOMod_Database extends WOModule
 
     public function cron_handler($args = array())
     {
-        WO_DBSupport::cron_job();
+        DBSupport::cron_job();
     }
 
 
     public function cron_setting_fields($cron_settings)
     {
-        $cron_settings[] = array('type' => 'checkbox', 'name' => __('Auto optimize Database', 'wpopt'), 'id' => 'database_active', 'value' => WOSettings::check($this->cron_settings, 'active'));
+        $cron_settings[] = array('type' => 'checkbox', 'name' => __('Auto optimize Database', 'wpopt'), 'id' => 'database_active', 'value' => Settings::check($this->cron_settings, 'active'));
 
         return $cron_settings;
     }
@@ -66,9 +74,9 @@ class WOMod_Database extends WOModule
      */
     public function render_tablesList_panel($settings = array())
     {
-        require_once __DIR__ . '/database/WO_DB_List_Table.class.php';
+        require_once WPOPT_SUPPORTERS . '/database/List_Table.class.php';
 
-        $table_list_obj = new WO_DB_List_Table();
+        $table_list_obj = new List_Table();
 
         list($message, $status) = $table_list_obj->prepare_items();
 
@@ -143,7 +151,7 @@ class WOMod_Database extends WOModule
             <span>(<strong><?php echo $settings['path']; ?></strong>)</span> ...
             <?php
 
-            if (WODisk::make_path($settings['path'])) {
+            if (Disk::make_path($settings['path'])) {
                 echo '<span style="color: green;">' . __("OK", 'wpopt') . '</span>';
             }
             else {
@@ -317,15 +325,15 @@ class WOMod_Database extends WOModule
                 break;
 
             case 'sweep_details':
-                wp_send_json_success(WO_DBSupport::details($action_args['sweep-name']));
+                wp_send_json_success(DBSupport::details($action_args['sweep-name']));
                 break;
 
             case 'sweep':
-                $sweep = WO_DBSupport::sweep($action_args['sweep-name'], $this->option('sweep', array()));
+                $sweep = DBSupport::sweep($action_args['sweep-name'], $this->option('sweep', array()));
 
-                $count = WO_DBSupport::count($action_args['sweep-name'], $this->option('sweep', array()));
+                $count = DBSupport::count($action_args['sweep-name'], $this->option('sweep', array()));
 
-                $total_count = WO_DBSupport::total_count($action_args['sweep-type']);
+                $total_count = DBSupport::total_count($action_args['sweep-type']);
 
                 wp_send_json_success(array(
                     'sweep'      => $sweep,
@@ -388,7 +396,7 @@ class WOMod_Database extends WOModule
 
                 foreach ($sql_queries as $sql_query) {
 
-                    if (WO_DBSupport::execute_sql($sql_query)) {
+                    if (DBSupport::execute_sql($sql_query)) {
                         $success_query++;
                         $this->performer_response[] = array($sql_query, 'success');
                     }
@@ -452,11 +460,11 @@ class WOMod_Database extends WOModule
 
                 if (wpopt_get_mysqlDump_command_path($options['mysqldump_path'])) {
 
-                    $res = WO_DBSupport::mysqlDump_db($backup_path, $options['excluded_tables'], $options['mysqldump_path']);
+                    $res = DBSupport::mysqlDump_db($backup_path, $options['excluded_tables'], $options['mysqldump_path']);
                 }
 
                 if (!$res) {
-                    $res = WO_DBSupport::queryDump_db($backup_path, $options['excluded_tables']);
+                    $res = DBSupport::queryDump_db($backup_path, $options['excluded_tables']);
                 }
 
                 if ($res)
@@ -477,7 +485,7 @@ class WOMod_Database extends WOModule
 
                 $file_path = trailingslashit($this->option('backup.path', '')) . $database_file;
 
-                if (WO_DBSupport::restore_db($file_path)) {
+                if (DBSupport::restore_db($file_path)) {
                     $this->performer_response[] = array(__('Database restored.', 'wpopt'), 'success');
                 }
                 else {
@@ -640,7 +648,7 @@ class WOMod_Database extends WOModule
 
         foreach ($sweepers as $sweeper) {
 
-            $total = WO_DBSupport::total_count($sweeper['type']);
+            $total = DBSupport::total_count($sweeper['type']);
             if (!$total)
                 continue;
             ?>
@@ -665,7 +673,7 @@ class WOMod_Database extends WOModule
                     $alternate = false;
                     foreach ($sweeper['sweeps'] as $name => $sweep_id) {
 
-                        $count = WO_DBSupport::count($sweep_id);
+                        $count = DBSupport::count($sweep_id);
                         ?>
                         <tr <?php echo $alternate ? "class='alternate'" : ''; ?>>
                             <td>

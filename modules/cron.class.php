@@ -1,6 +1,10 @@
 <?php
 
-class WOMod_Cron extends WOModule
+namespace WPOptimizer\modules;
+
+use WPOptimizer\core\ModuleHandler;
+
+class Mod_Cron extends Module
 {
     public $scopes = array('core-settings');
 
@@ -9,7 +13,7 @@ class WOMod_Cron extends WOModule
         /**
          * we need to load all modules with cron scope
          */
-        WOModuleHandler::getInstance()->setup_modules('cron');
+        ModuleHandler::getInstance()->setup_modules('cron');
 
         parent::__construct();
     }

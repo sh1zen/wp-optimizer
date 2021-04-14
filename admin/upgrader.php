@@ -11,12 +11,12 @@ function wpopt_invert_settings(&$settings, $module_group)
     }
 }
 
-$_wpopt_settings = WOSettings::get();
+$_wpopt_settings = WPOptimizer\core\Settings::get();
 
 // prev -> 1.5
 if (!isset($_wpopt_settings['ver'])) {
 
-    WOSettings::getInstance()->reset();
+    WPOptimizer\core\Settings::getInstance()->reset();
 
     delete_option("wpopt-imgs--todo");
 
@@ -32,9 +32,8 @@ if (version_compare($_wpopt_settings['ver'], "1.6.0", '<')) {
 }
 
 
-
 $_wpopt_settings['ver'] = WPOPT_VERSION;
 
-WOSettings::getInstance()->reset($_wpopt_settings);
+WPOptimizer\core\Settings::getInstance()->reset($_wpopt_settings);
 
 unset($_wpopt_settings);

@@ -2,7 +2,7 @@
 
 function wpopt_is_on_screen($slug)
 {
-    return isset($_GET['page']) ? $_GET['page'] == $slug : false;
+    return isset($_GET['page']) and $_GET['page'] == $slug;
 }
 
 function wpopt_verify_nonce($name = 'wpopt', $nonce = false)
@@ -378,12 +378,12 @@ function wpopt_download_file($file_path)
 function wpopt_get_mysqlDump_command_path($mysqldump_locations = '')
 {
     // Check shell_exec is available
-    if (!WO_UtilEnv::is_shell_exec_available())
+    if (!WPOptimizer\core\EnvUtil::is_shell_exec_available())
         return false;
 
     if (!empty($mysqldump_locations)) {
 
-        return @is_executable(WO_UtilEnv::normalize_path($mysqldump_locations));
+        return @is_executable(WPOptimizer\core\EnvUtil::normalize_path($mysqldump_locations));
     }
 
     // check mysqldump command
@@ -415,7 +415,7 @@ function wpopt_get_mysqlDump_command_path($mysqldump_locations = '')
 
     // Find the one which works
     foreach ((array)$mysqldump_locations as $location) {
-        if (@is_executable(WO_UtilEnv::normalize_path($location)))
+        if (@is_executable(WPOptimizer\core\EnvUtil::normalize_path($location)))
             $mysqldump_command_path = $location;
     }
 
