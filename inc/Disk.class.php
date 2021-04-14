@@ -94,12 +94,18 @@ class Disk
 
         $plugin_path = __DIR__;
 
+        $path = realpath($path);
+
+        if(!$path)
+            return false;
+
         // Create Backup Folder
         $res = wp_mkdir_p($path);
 
         if ($private and is_dir($path) and wp_is_writable($path)) {
 
             if ($is_IIS) {
+                // todo aggiungere i rispettivi file
                 if (!is_file($path . '/Web.config')) {
                     copy($plugin_path . '/Web.config.txt', $path . '/Web.config');
                 }

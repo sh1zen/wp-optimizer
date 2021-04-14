@@ -1029,12 +1029,10 @@ class EnvUtil
      */
     public static function safe_time_limit($percent = 0.1, $autorise = 30)
     {
-        global $wo_meter;
-
         if (($max_et = absint(ini_get('max_execution_time'))) === 0)
             return true;
 
-        if (1 - $wo_meter->get_time(true) / $max_et <= $percent) {
+         if (1 - ((microtime(true) - WP_START_TIMESTAMP) / $max_et <= $percent)){
 
             if ($autorise)
                 return self::rise_time_limit($autorise);

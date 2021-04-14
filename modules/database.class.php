@@ -502,7 +502,7 @@ class Mod_Database extends Module
 
     public function enqueue_scripts()
     {
-        wp_enqueue_script('wpopt-db-sweep', plugin_dir_url(WPOPT_FILE) . 'modules/database/database.js', array('jquery'), false, true);
+        wp_enqueue_script('wpopt-db-sweep', plugin_dir_url(WPOPT_FILE) . 'modules/supporters/database/database.js', array('jquery'), false, true);
     }
 
     public function render_admin_page()

@@ -238,6 +238,7 @@ class Storage
         if (!$cached)
             return false;
 
+        // todo use Disk::make_path()
         if (!file_exists($path))
             mkdir($path, 0777, true);
 
