@@ -571,7 +571,7 @@ class WP_OptiSec
             $rules .= "    Header set X-Frame-Options \"DENY\"\n";
 
         if (Settings::get_option($settings, 'srv_security.hsts'))
-            $rules .= "    Header set Strict-Transport-Security 'max-age=31536000' env=HTTPS; includeSubDomains; preload \n";
+            $rules .= "    Header set Strict-Transport-Security \"'max-age=31536000' env=HTTPS; includeSubDomains; preload\"\n";
 
         $rules .= "</IfModule>\n";
 

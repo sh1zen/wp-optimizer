@@ -2,6 +2,8 @@
 
 namespace WPOptimizer\modules\supporters;
 
+use WPOptimizer\core\Report;
+
 class DBSupport
 {
     private static $_instance;
@@ -529,7 +531,7 @@ class DBSupport
         $results += $wpdb->query("DELETE tr FROM {$wpdb->prefix}term_taxonomy tr LEFT JOIN {$wpdb->prefix}terms ON tr.term_id = {$wpdb->prefix}terms.term_id WHERE {$wpdb->prefix}terms.term_id is NULL;");
         $results += $wpdb->query("DELETE tr FROM {$wpdb->prefix}term_relationships tr LEFT JOIN {$wpdb->prefix}posts ON tr.object_id = {$wpdb->prefix}posts.ID LEFT JOIN {$wpdb->prefix}term_taxonomy ON tr.term_taxonomy_id = {$wpdb->prefix}term_taxonomy.term_taxonomy_id WHERE {$wpdb->prefix}posts.ID is NULL AND ({$wpdb->prefix}term_taxonomy.taxonomy = 'category' OR {$wpdb->prefix}term_taxonomy.taxonomy is NULL);");
 
-        WOReport::getInstance()->add(
+        Report::getInstance()->add(
             'database',
             sprintf(__('Rows affected %s.', 'wpopt'), $results),
             'success'

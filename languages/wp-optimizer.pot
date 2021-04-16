@@ -4,7 +4,7 @@ msgstr ""
 "Project-Id-Version: wpopt-translation\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/wp-"
 "optimizer/\n"
-"POT-Creation-Date: 2021-04-14 13:29+0200\n"
+"POT-Creation-Date: 2021-04-17 01:19+0200\n"
 "PO-Revision-Date: 2020-05-13 02:34+0200\n"
 "Last-Translator: sh1zen\n"
 "Language-Team: sh1zen\n"
@@ -674,23 +674,23 @@ msgstr ""
 msgid "Excluded Tables (comma separated)"
 msgstr ""
 
-#: modules/folder_size.class.php:160
+#: modules/folder_size.class.php:163
 msgid "Total"
 msgstr ""
 
-#: modules/folder_size.class.php:217
+#: modules/folder_size.class.php:220
 msgid "Clears all widgets caches"
 msgstr ""
 
-#: modules/folder_size.class.php:217
+#: modules/folder_size.class.php:220
 msgid "Clear widget cache"
 msgstr ""
 
-#: modules/folder_size.class.php:218
+#: modules/folder_size.class.php:221
 msgid "Check to empty the cache"
 msgstr ""
 
-#: modules/folder_size.class.php:224
+#: modules/folder_size.class.php:227
 msgid "Paths"
 msgstr ""
 
@@ -789,7 +789,7 @@ msgstr ""
 msgid "Import Plugin options"
 msgstr ""
 
-#: modules/supporters/database/DBSupport.class.php:534
+#: modules/supporters/database/DBSupport.class.php:536
 #, php-format
 msgid "Rows affected %s."
 msgstr ""
@@ -1314,47 +1314,43 @@ msgstr ""
 msgid "AuthorURI"
 msgstr ""
 
-#: modules/wp_customizer.class.php:111
+#: modules/wp_customizer.class.php:114
 msgid "Disable Dashboard Welcome Panel"
 msgstr ""
 
-#: modules/wp_customizer.class.php:112
+#: modules/wp_customizer.class.php:115
 msgid "Disable Dashboard WordPress Blog"
 msgstr ""
 
-#: modules/wp_customizer.class.php:113
+#: modules/wp_customizer.class.php:116
 msgid "Hide Admin Bar"
 msgstr ""
 
-#: modules/wp_customizer.class.php:114
+#: modules/wp_customizer.class.php:117
 msgid "Hide Admin Bar for non admins"
 msgstr ""
 
-#: modules/wp_customizer.class.php:116
+#: modules/wp_customizer.class.php:119
 msgid "Disable Block Editor (Gutenberg)"
 msgstr ""
 
-#: modules/wp_customizer.class.php:117
+#: modules/wp_customizer.class.php:120
 msgid "Disable Core Blocks"
 msgstr ""
 
-#: modules/wp_customizer.class.php:118
+#: modules/wp_customizer.class.php:121
 msgid "Disable Core Sitemap"
 msgstr ""
 
-#: modules/wp_customizer.class.php:119
+#: modules/wp_customizer.class.php:122
 msgid "Disable Auto Paragraph"
 msgstr ""
 
-#: modules/wp_customizer.class.php:120
-msgid "Hide WordPress Version"
-msgstr ""
-
-#: modules/wp_customizer.class.php:122
+#: modules/wp_customizer.class.php:124
 msgid "Disable Emoji"
 msgstr ""
 
-#: modules/wp_customizer.class.php:123
+#: modules/wp_customizer.class.php:125
 msgid "Disable Feed links"
 msgstr ""
 

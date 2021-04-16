@@ -2,6 +2,9 @@
 
 namespace WPOptimizer\modules;
 
+use WPOptimizer\core\Disk;
+use WPOptimizer\core\Options;
+
 class Mod_Folder_Size extends Module
 {
     public static $name = "Directory Size";
@@ -101,12 +104,12 @@ class Mod_Folder_Size extends Module
         $path = wp_normalize_path($path);
         $dir_list = glob($path . '/*', GLOB_ONLYDIR);
 
-        $this->cache = WOOptions::get($this->transient_prefix . basename($path));
+        $this->cache = Options::get($this->transient_prefix . basename($path));
 
         $this->printFullTable('Files', $path, $dir_list);
 
         if ($this->update_cache)
-            WOOptions::update($this->transient_prefix . basename($path), $this->cache);
+            Options::update($this->transient_prefix . basename($path), $this->cache);
     }
 
     /**
@@ -122,7 +125,7 @@ class Mod_Folder_Size extends Module
     private function printFullTable($title, $root, $dir_list)
     {
         if (!isset($this->cache['root_folder'])) {
-            $root_size = size_format(WODisk::calc_size($root));
+            $root_size = size_format(Disk::calc_size($root));
             $this->update_cache = true;
         }
         else
@@ -179,7 +182,7 @@ class Mod_Folder_Size extends Module
             foreach ($directories as $dir) {
                 $alt = (++$count % 2) ? 'alternate' : '';
                 $name = basename($dir);
-                $size = size_format(WODisk::calc_size($dir));
+                $size = size_format(Disk::calc_size($dir));
                 $this->cache['dir_list'][$name] = $size;
                 printf(
                     '<tr class="%s">
@@ -210,7 +213,7 @@ class Mod_Folder_Size extends Module
         if (isset($_POST[$this->transient_prefix])) {
 
             foreach ($this->paths as $path) {
-                WOOptions::remove($this->transient_prefix . basename($path));
+                Options::remove($this->transient_prefix . basename($path));
             }
         }
         $name = $this->transient_prefix;

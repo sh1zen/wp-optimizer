@@ -41,7 +41,7 @@ class Mod_WP_Security extends Module
     {
         if ($this->option('a_api.active')) {
             // user enumeration patch
-            if ($this->option('a_api.nousernum') and !is_admin()) {
+            if ($this->option('security.nousernum') and !is_admin()) {
                 // default URL format
                 if (preg_match('/author=([0-9]*)/i', $_SERVER['QUERY_STRING']) or preg_match('/\?author=([0-9]*)(\/*)/i', $_SERVER['QUERY_STRING'])) {
                     wp_redirect(get_option('home'), 302);
@@ -50,9 +50,9 @@ class Mod_WP_Security extends Module
             }
 
             // disable xml rpc
-            if ($this->option('a_api.disable_xml_rpc')) {
+            if ($this->option('security.disable_xml_rpc')) {
 
-                if (substr_count(strtolower($_SERVER['REQUEST_URI']), strtolower('xmlrpc'))) {
+                if (stripos(strtolower($_SERVER['REQUEST_URI']), 'xmlrpc') !== false) {
                     die();
                 }
 
@@ -68,7 +68,7 @@ class Mod_WP_Security extends Module
             }
 
             // disable json api
-            if ($this->option('a_api.disable_jsonapi')) {
+            if ($this->option('security.disable_jsonapi')) {
                 add_filter('rest_authentication_errors', function ($result) {
                     if (!empty($result)) {
                         return $result;
@@ -81,7 +81,7 @@ class Mod_WP_Security extends Module
             }
 
             // disable file edit
-            if ($this->option('a_api.disable_file_editor') and !defined('DISALLOW_FILE_EDIT')) {
+            if ($this->option('security.disable_file_editor') and !defined('DISALLOW_FILE_EDIT')) {
                 define('DISALLOW_FILE_EDIT', true);
             }
         }

@@ -1,5 +1,7 @@
 <?php
 
+use WPOptimizer\core\EnvUtil;
+
 function wpopt_invert_settings(&$settings, $module_group)
 {
     if (!isset($settings[$module_group]))
@@ -13,17 +15,25 @@ function wpopt_invert_settings(&$settings, $module_group)
 
 $_wpopt_settings = WPOptimizer\core\Settings::get();
 
-// prev -> 1.5
-if (!isset($_wpopt_settings['ver'])) {
+// prev -> 1.5.0
+if (!isset($_wpopt_settings['ver']) or version_compare($_wpopt_settings['ver'], "1.5.0", '<')) {
 
     WPOptimizer\core\Settings::getInstance()->reset();
 
     delete_option("wpopt-imgs--todo");
 
-    // update to 1.5
-    $_wpopt_settings['ver'] = "1.5";
+    // update to 1.5.0
+    $_wpopt_settings['ver'] = "1.5.0";
 
-    // todo create the new database.table
+    EnvUtil::create_db("wpopt_core", [
+            "fields"      => [
+                "id"    => "bigint NOT NULL AUTO_INCREMENT",
+                "item"  => "varchar(255)",
+                "value" => "longtext NOT NULL",
+            ],
+            "primary_key" => "id"
+        ]
+    );
 }
 
 

@@ -258,7 +258,7 @@ class Module
      * header, footer, sidebar
      *
      * @param $context
-     * @return bool
+     * @return string
      */
     protected function setting_form_templates($context)
     {

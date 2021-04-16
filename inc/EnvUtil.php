@@ -4,6 +4,28 @@ namespace WPOptimizer\core;
 
 class EnvUtil
 {
+
+    public static function create_db($table_name, $args){
+
+        global $wpdb;
+
+        $charset_collate = $wpdb->get_charset_collate();
+
+        $sql = "CREATE TABLE {$wpdb->prefix}{$table_name} ( ";
+
+        foreach ($args['fields'] as $key => $value){
+            $sql .= " {$key} {$value}, ";
+        }
+
+        $sql .= " PRIMARY KEY  ({$args['primary_key']})";
+
+        $sql .= " ) $charset_collate;";
+
+        require_once( ABSPATH . 'wp-admin/includes/upgrade.php' );
+
+        return dbDelta( $sql );
+    }
+
     public static function filename_to_url($filename, $use_site_url = false)
     {
         // using wp-content instead of document_root as known dir since dirbased
