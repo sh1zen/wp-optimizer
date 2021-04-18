@@ -1,5 +1,35 @@
 <?php
 
+function wpopt_handle_upgrade($ver_start, $ver_to)
+{
+    $upgrades = array_filter(
+        array_map(function ($fname) {
+            return basename($fname, ".php");
+        }, array_diff(
+                scandir(WPOPT_ADMIN . "upgrades/"), array('.', '..'))
+        ),
+        function ($ver) use ($ver_start, $ver_to) {
+            return version_compare($ver, $ver_start, '>') and version_compare($ver, $ver_to, '<=');
+        });
+
+    usort($upgrades, 'version_compare');
+
+    $current_ver = $ver_start;
+
+    while (!empty($upgrades)) {
+
+        WPOptimizer\core\EnvUtil::rise_time_limit(30);
+
+        $next_ver = array_shift($upgrades);
+
+        require_once WPOPT_ADMIN . "/upgrades/{$next_ver}.php";
+
+        $current_ver = $next_ver;
+    }
+
+    return $current_ver;
+}
+
 function wpopt_is_on_screen($slug)
 {
     return isset($_GET['page']) and $_GET['page'] == $slug;
@@ -153,7 +183,7 @@ function wpopt_get_calling_function()
  */
 function wpopt_write_log($log)
 {
-    if (true === WP_DEBUG) {
+    if (WP_DEBUG === true) {
         if (is_array($log) || is_object($log)) {
             error_log(print_r($log, true));
         }

@@ -167,9 +167,7 @@ class Cron
             'accepted_args' => count($args)
         );
 
-        Options::update('cron.events', $events);
-
-        return true;
+        return Options::update('cron.events', $events);
     }
 
 
@@ -210,14 +208,15 @@ class Cron
 
         foreach ($events as $id => $event) {
 
-            if (isset($event['id']) and is_callable($event['function'])) {
-                add_action($event['id'], $event['function'], 10, $event['accepted_args']);
+            if (is_string($id) and is_callable($event['function'])) {
+                add_action($id, $event['function'], 10, $event['accepted_args']);
             }
             else {
                 unset($events[$id]);
-                Options::update('cron.events', array_filter($events));
             }
         }
+
+        Options::update('cron.events', array_filter($events));
     }
 
     public function base_setting_validator($valid, $input)

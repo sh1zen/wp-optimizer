@@ -8,6 +8,7 @@ use WPOptimizer\core\EnvUtil;
 use WPOptimizer\core\Options;
 use WPOptimizer\core\Settings;
 use WPOptimizer\modules\supporters\Optimize_Media_Table;
+use WPOptimizer\modules\supporters\WO_ImagesPerformer;
 
 /**
  *  Module for images optimization handling
@@ -24,6 +25,9 @@ class Mod_Media extends Module
 
     public function __construct()
     {
+
+        Cron::getInstance()->cron_function_hook();
+
         $this->images_mime_types = array(
             'jpg|jpeg|jpe' => 'image/jpeg',
             'gif'          => 'image/gif',
@@ -53,7 +57,7 @@ class Mod_Media extends Module
 
             require_once WPOPT_SUPPORTERS . '/media/WO_ImagesPerformer.class.php';
 
-            $this->optimization_info = get_option('wpopt.media.status', array());
+            $this->optimization_info = Options::get('wpopt.media.status', array());
         }
     }
 
@@ -112,11 +116,15 @@ class Mod_Media extends Module
     public function render_mediaCleaner_Panel()
     {
         ob_start();
-        $media2Clean = get_option('wpopt.media.to.clean', array(array(
-                                                                    'name' => 'nome',
-                                                                    'path' => WP_CONTENT_DIR . '/oop',
-                                                                    'type' => 'imsge'
-                                                                )));
+        $media2Clean = Options::get('wpopt.media.to.clean',
+            array(
+                array(
+                    'name' => 'nome',
+                    'path' => WP_CONTENT_DIR . '/oop',
+                    'type' => 'imsge'
+                )
+            )
+        );
 
         if (empty($media2Clean)):
             ?>
@@ -178,7 +186,7 @@ class Mod_Media extends Module
 
                     $nonce = wp_create_nonce('wpopt-media');
 
-                    $disabled = $this->status("optimization.status", 'paused') === 'running' ? 'disabled' : '';
+                    $disabled = $this->status('paused') === 'running' ? 'disabled' : '';
 
                     ?>
                     <div class="wpopt-dir-explorer">
@@ -188,7 +196,7 @@ class Mod_Media extends Module
                         </label>
                     </div>
                     <br>
-                    <?php if (get_option('images.to.optimize')): ?>
+                    <?php if (Options::get('images.to.optimize', false)): ?>
                         <button class="button button-primary button-large"><?= __('Restart', 'wpopt') ?></button>
                         <button class="button button-primary button-large"><?= __('Resume', 'wpopt') ?></button>
                     <?php else: ?>
@@ -216,9 +224,9 @@ class Mod_Media extends Module
         return ob_get_clean();
     }
 
-    private function status($option, $default = false)
+    private function status($default = false)
     {
-        return Settings::get($option, $default);
+        return Settings::get("optimization.status", $default);
     }
 
     public function render_admin_page()
@@ -263,9 +271,8 @@ class Mod_Media extends Module
 
             Options::update('media.todo', $images);
 
-            if (WPOPT_DEBUG) {
-                wpopt_write_log(wp_date("H:i:s"));
-            }
+            // if enabled
+            wpopt_write_log(wp_date("H:i:s"));
 
             // schedule again cron
             if (!empty($images)) {
@@ -309,12 +316,7 @@ class Mod_Media extends Module
                 $this->to_optimize_data = array();
         }
 
-        $wp_upload_dir = $this->cache_get('wp_upload_dir');
-
-        if (!$wp_upload_dir) {
-            $wp_upload_dir = wp_upload_dir();
-            $this->cache_set('wp_upload_dir', $wp_upload_dir);
-        }
+        $wp_upload_dir = EnvUtil::wp_upload_dir();
 
         $tmp = explode(DIRECTORY_SEPARATOR, $metadata['file']);
 

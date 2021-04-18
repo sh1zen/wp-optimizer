@@ -92,7 +92,7 @@ class WO_ImagesPerformer
     {
         global $wpdb;
 
-        $uploads_dir = wp_upload_dir();
+        $uploads_dir = EnvUtil::wp_upload_dir();
 
         //You may want to take it by bites if your uploads is rather large (over 5 gb for example)
         $root = realpath($uploads_dir['basedir'] . '/' . $year . '/');
@@ -112,7 +112,6 @@ class WO_ImagesPerformer
 
         foreach ($iter as $fileinfo) {
 
-            set_time_limit(15);
             //get files only
             if ($fileinfo->isFile()) {
                 $image = $fileinfo->getBasename();
@@ -135,7 +134,7 @@ class WO_ImagesPerformer
 
     private function opti_images_dir($path)
     {
-        $uploads_dir = wp_upload_dir();
+        $uploads_dir = EnvUtil::wp_upload_dir();
 
         $root = realpath($uploads_dir['basedir'] . '/' . $path . '/');
 
