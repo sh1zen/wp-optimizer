@@ -1,46 +1,9 @@
 <?php
 
-function wpopt_handle_upgrade($ver_start, $ver_to)
-{
-    $upgrades = array_filter(
-        array_map(function ($fname) {
-            return basename($fname, ".php");
-        }, array_diff(
-                scandir(WPOPT_ADMIN . "upgrades/"), array('.', '..'))
-        ),
-        function ($ver) use ($ver_start, $ver_to) {
-            return version_compare($ver, $ver_start, '>') and version_compare($ver, $ver_to, '<=');
-        });
-
-    usort($upgrades, 'version_compare');
-
-    $current_ver = $ver_start;
-
-    while (!empty($upgrades)) {
-
-        WPOptimizer\core\EnvUtil::rise_time_limit(30);
-
-        $next_ver = array_shift($upgrades);
-
-        require_once WPOPT_ADMIN . "/upgrades/{$next_ver}.php";
-
-        $current_ver = $next_ver;
-    }
-
-    return $current_ver;
-}
 
 function wpopt_is_on_screen($slug)
 {
     return isset($_GET['page']) and $_GET['page'] == $slug;
-}
-
-function wpopt_verify_nonce($name = 'wpopt', $nonce = false)
-{
-    if (!$nonce)
-        $nonce = trim($_REQUEST['_wpnonce']);
-
-    return wp_verify_nonce($nonce, $name);
 }
 
 function wpopt_timestr2seconds($time = '')
@@ -61,45 +24,6 @@ function wpopt_add_timezone($timestamp = false)
     $timezone = get_option('gmt_offset') * HOUR_IN_SECONDS;
 
     return $timestamp - $timezone;
-}
-
-function wpopt_size2bytes($val)
-{
-    $val = trim($val);
-
-    if (empty($val))
-        return 0;
-
-    $last = strtolower($val[strlen($val) - 1]);
-
-    $val = substr($val, 0, -1);
-
-    switch ($last) {
-        case 'g':
-            $val *= 1024;
-        case 'm':
-            $val *= 1024;
-        case 'k':
-            $val *= 1024;
-    }
-
-    return $val;
-}
-
-/**
- *
- * @param int $current Current number.
- * @param int $total Total number.
- * @return string Number in percentage
- *
- * @access public
- */
-function wpopt_format_percentage($current, $total)
-{
-    if ($total == 0)
-        return 0;
-
-    return ($total > 0 ? round(($current / $total) * 100, 2) : 0) . '%';
 }
 
 
@@ -175,22 +99,6 @@ function wpopt_get_calling_function()
         $r .= ' (' . get_class($caller['object']) . ')';
     }
     return $r;
-}
-
-
-/**
- * @param $log
- */
-function wpopt_write_log($log)
-{
-    if (WP_DEBUG === true) {
-        if (is_array($log) || is_object($log)) {
-            error_log(print_r($log, true));
-        }
-        else {
-            error_log($log);
-        }
-    }
 }
 
 function wpopt_generate_fields($fields_args, $args, $display = true)
@@ -368,52 +276,15 @@ function wpopt_setting_panel_url($panel = '')
     return admin_url("admin.php?page=wpopt-settings#settings-{$panel}");
 }
 
-function wpopt_download_file($file_path)
-{
-    $file_path = trim($file_path);
-
-    if (!file_exists($file_path) or headers_sent())
-        return false;
-
-    ob_start();
-
-    header('Expires: 0');
-    header("Cache-Control: public");
-    header('Cache-Control: must-revalidate, post-check=0, pre-check=0');
-    header('Content-Description: File Transfer');
-    header('Content-Type: application/force-download');
-    header('Content-Type: application/octet-stream');
-    header('Content-Type: application/download');
-    header('Content-Disposition: attachment; filename=' . basename($file_path) . ';');
-    header('Content-Transfer-Encoding: binary');
-    header('Content-Length: ' . filesize($file_path));
-
-    ob_clean();
-    flush();
-
-    $chunkSize = 1024 * 1024;
-    $handle = fopen($file_path, 'rb');
-
-    while (!feof($handle)) {
-        $buffer = fread($handle, $chunkSize);
-        echo $buffer;
-        ob_flush();
-        flush();
-    }
-    fclose($handle);
-
-    exit();
-}
-
 function wpopt_get_mysqlDump_command_path($mysqldump_locations = '')
 {
     // Check shell_exec is available
-    if (!WPOptimizer\core\EnvUtil::is_shell_exec_available())
+    if (!WPOptimizer\core\UtilEnv::is_shell_exec_available())
         return false;
 
     if (!empty($mysqldump_locations)) {
 
-        return @is_executable(WPOptimizer\core\EnvUtil::normalize_path($mysqldump_locations));
+        return @is_executable(WPOptimizer\core\UtilEnv::normalize_path($mysqldump_locations));
     }
 
     // check mysqldump command
@@ -445,32 +316,10 @@ function wpopt_get_mysqlDump_command_path($mysqldump_locations = '')
 
     // Find the one which works
     foreach ((array)$mysqldump_locations as $location) {
-        if (@is_executable(WPOptimizer\core\EnvUtil::normalize_path($location)))
+        if (@is_executable(WPOptimizer\core\UtilEnv::normalize_path($location)))
             $mysqldump_command_path = $location;
     }
 
     return empty($mysqldump_command_path) ? false : $mysqldump_command_path;
 }
 
-function wpopt_flatMultiDA(&$mData)
-{
-    if (is_array($mData)) {
-
-        if (isset($mData[0]) and count($mData) == 1) {
-
-            $mData = $mData[0];
-            if (is_array($mData)) {
-
-                foreach ($mData as &$aSub) {
-                    wpopt_flatMultiDA($aSub);
-                }
-            }
-        }
-        else {
-
-            foreach ($mData as &$aSub) {
-                wpopt_flatMultiDA($aSub);
-            }
-        }
-    }
-}

@@ -4,7 +4,7 @@ msgstr ""
 "Project-Id-Version: wpopt-translation\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/wp-"
 "optimizer/\n"
-"POT-Creation-Date: 2021-04-17 01:19+0200\n"
+"POT-Creation-Date: 2021-04-18 14:45+0200\n"
 "PO-Revision-Date: 2020-05-13 02:34+0200\n"
 "Last-Translator: sh1zen\n"
 "Language-Team: sh1zen\n"
@@ -419,7 +419,7 @@ msgstr ""
 msgid "Backup now"
 msgstr ""
 
-#: modules/database.class.php:348 modules/media.class.php:102
+#: modules/database.class.php:348 modules/media.class.php:106
 msgid "Action not supported"
 msgstr ""
 
@@ -694,86 +694,86 @@ msgstr ""
 msgid "Paths"
 msgstr ""
 
-#: modules/media.class.php:71
+#: modules/media.class.php:75
 msgid "Auto optimize images (daily uploads)"
 msgstr ""
 
-#: modules/media.class.php:124
+#: modules/media.class.php:132
 msgid "No orphaned media found."
 msgstr ""
 
-#: modules/media.class.php:126
+#: modules/media.class.php:134
 msgid "Scan now"
 msgstr ""
 
-#: modules/media.class.php:154
+#: modules/media.class.php:162
 msgid "Before start optimizing makes sure you did:"
 msgstr ""
 
-#: modules/media.class.php:157
+#: modules/media.class.php:165
 #, php-format
 msgid "Read related <a href=\"%s\">FAQ</a>."
 msgstr ""
 
-#: modules/media.class.php:160
+#: modules/media.class.php:168
 #, php-format
 msgid "Setup your optimization parameters <a href=\"%s\">here</a>."
 msgstr ""
 
-#: modules/media.class.php:163
+#: modules/media.class.php:171
 msgid ""
 "Note that optimization will run in background and time required "
 "depends on number of media you have."
 msgstr ""
 
-#: modules/media.class.php:168
+#: modules/media.class.php:176
 #, php-format
 msgid ""
 "To guarantee a complete image optimization support, install \"<a href="
 "\"%s\">imagick</a>\" on your server."
 msgstr ""
 
-#: modules/media.class.php:174
+#: modules/media.class.php:182
 msgid "Specify a path where the media optimization will run."
 msgstr ""
 
-#: modules/media.class.php:175
+#: modules/media.class.php:183
 msgid "Optimization will run silently in background."
 msgstr ""
 
-#: modules/media.class.php:192
+#: modules/media.class.php:200
 msgid "Restart"
 msgstr ""
 
-#: modules/media.class.php:193
+#: modules/media.class.php:201
 msgid "Resume"
 msgstr ""
 
-#: modules/media.class.php:195
+#: modules/media.class.php:203
 msgid "Start"
 msgstr ""
 
-#: modules/media.class.php:197
+#: modules/media.class.php:205
 msgid "Pause"
 msgstr ""
 
-#: modules/media.class.php:203
+#: modules/media.class.php:211
 msgid "Optimization stats:"
 msgstr ""
 
-#: modules/media.class.php:235
+#: modules/media.class.php:243
 msgid "Images optimizer"
 msgstr ""
 
-#: modules/media.class.php:236
+#: modules/media.class.php:244
 msgid "Images Optimizer"
 msgstr ""
 
-#: modules/media.class.php:242
+#: modules/media.class.php:250
 msgid "Media cleaner"
 msgstr ""
 
-#: modules/media.class.php:243
+#: modules/media.class.php:251
 msgid "Media Cleaner"
 msgstr ""
 
@@ -1037,11 +1037,11 @@ msgstr ""
 msgid "View"
 msgstr ""
 
-#: modules/supporters/media/WO_ImagesPerformer.class.php:162
+#: modules/supporters/media/WO_ImagesPerformer.class.php:161
 msgid "Is not writable."
 msgstr ""
 
-#: modules/supporters/media/WO_ImagesPerformer.class.php:181
+#: modules/supporters/media/WO_ImagesPerformer.class.php:180
 msgid "Invalid extension."
 msgstr ""
 

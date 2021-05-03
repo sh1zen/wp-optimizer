@@ -2,8 +2,37 @@
 
 namespace WPOptimizer\core;
 
-class EnvUtil
+class UtilEnv
 {
+    public static function handle_upgrade($ver_start, $ver_to, $upgrade_path)
+    {
+        $upgrades = array_filter(
+            array_map(function ($fname) {
+                return basename($fname, ".php");
+            }, array_diff(
+                    scandir($upgrade_path), array('.', '..'))
+            ),
+            function ($ver) use ($ver_start, $ver_to) {
+                return version_compare($ver, $ver_start, '>') and version_compare($ver, $ver_to, '<=');
+            });
+
+        usort($upgrades, 'version_compare');
+
+        $current_ver = $ver_start;
+
+        while (!empty($upgrades)) {
+
+            self::rise_time_limit(30);
+
+            $next_ver = array_shift($upgrades);
+
+            require_once $upgrade_path . "{$next_ver}.php";
+
+            $current_ver = $next_ver;
+        }
+
+        return $current_ver;
+    }
 
     public static function create_db($table_name, $args){
 
@@ -24,6 +53,49 @@ class EnvUtil
         require_once( ABSPATH . 'wp-admin/includes/upgrade.php' );
 
         return dbDelta( $sql );
+    }
+
+    /**
+     * @param $items
+     * @param bool|string $keep_key_format string, numeric, bool, object
+     * @return array
+     */
+    public static function array_flatter($items, $keep_key_format = false)
+    {
+        if (!is_array($items)) {
+            return array($items);
+        }
+
+        if ($keep_key_format and !in_array($keep_key_format, array('string', 'numeric', 'bool', 'object'), true))
+            $keep_key_format = false;
+
+        if ($keep_key_format) {
+            $res = array();
+            foreach ($items as $key => $value) {
+                if (!call_user_func("is_{$keep_key_format}", $key))
+                    $key = array();
+                $res = array_merge($res, (array)$key, self::array_flatter($value, $keep_key_format));
+            }
+            return $res;
+        }
+
+        return array_reduce($items, function ($carry, $item) {
+            return array_merge($carry, self::array_flatter($item));
+        }, array());
+    }
+
+    /**
+     * Standardize whitespace in a string.
+     *
+     * Replace line breaks, carriage returns, tabs with a space, then remove double spaces.
+     *
+     * @param string $string String input to standardize.
+     *
+     * @return string
+     */
+    public static function standardize_whitespace($string)
+    {
+        return \trim(\str_replace('  ', ' ', \str_replace(["\t", "\n", "\r", "\f"], ' ', $string)));
     }
 
     public static function filename_to_url($filename, $use_site_url = false)
@@ -130,7 +202,7 @@ class EnvUtil
             $wpmu = (file_exists(ABSPATH . 'wpmu-settings.php') ||
                 (defined('MULTISITE') and MULTISITE) ||
                 defined('SUNRISE') ||
-                EnvUtil::is_wpmu_subdomain());
+                self::is_wpmu_subdomain());
         }
 
         return $wpmu;
@@ -155,7 +227,7 @@ class EnvUtil
     public static function home_url_maybe_https()
     {
         $home_url = get_home_url();
-        return EnvUtil::url_to_maybe_https($home_url);
+        return self::url_to_maybe_https($home_url);
     }
 
     /**
@@ -166,7 +238,7 @@ class EnvUtil
      */
     public static function url_to_maybe_https($url)
     {
-        if (EnvUtil::is_https()) {
+        if (self::is_https()) {
             $url = str_replace('http://', 'https://', $url);
         }
 
@@ -182,7 +254,7 @@ class EnvUtil
     {
         switch (true) {
             case (isset($_SERVER['HTTPS']) and
-                EnvUtil::to_boolean($_SERVER['HTTPS'])):
+                self::to_boolean($_SERVER['HTTPS'])):
             case (isset($_SERVER['SERVER_PORT']) and
                 (int)$_SERVER['SERVER_PORT'] == 443):
             case (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) and
@@ -240,7 +312,7 @@ class EnvUtil
      */
     public static function site_url_uri()
     {
-        return EnvUtil::url_to_uri(site_url()) . '/';
+        return self::url_to_uri(site_url()) . '/';
     }
 
     /**
@@ -271,12 +343,12 @@ class EnvUtil
             return $parse_url['host'];
         }
 
-        return EnvUtil::host();
+        return self::host();
     }
 
     public static function host()
     {
-        $host_port = EnvUtil::host_port();
+        $host_port = self::host_port();
 
         $pos = strpos($host_port, ':');
         if ($pos === false)
@@ -322,7 +394,7 @@ class EnvUtil
      */
     public static function home_url_uri()
     {
-        return EnvUtil::url_to_uri(get_home_url()) . '/';
+        return self::url_to_uri(get_home_url()) . '/';
     }
 
     public static function network_home_url_uri()
@@ -332,7 +404,7 @@ class EnvUtil
         /* There is a bug in WP where network_home_url can return
          * a non-relative URI even though scheme is set to relative.
          */
-        if (EnvUtil::is_url($uri))
+        if (self::is_url($uri))
             $uri = parse_url($uri, PHP_URL_PATH);
 
         if (empty($uri))
@@ -370,7 +442,7 @@ class EnvUtil
             (isset($GLOBALS['post_id']) and is_numeric($GLOBALS['post_id']) ?
                     (int)$GLOBALS['post_id'] : 0),
             get_current_blog_id(),
-            EnvUtil::host()
+            self::host()
         ), $path);
     }
 
@@ -384,16 +456,16 @@ class EnvUtil
      */
     public static function normalize_file($file)
     {
-        if (EnvUtil::is_url($file)) {
+        if (self::is_url($file)) {
             if (strstr($file, '?') === false) {
-                $home_url_regexp = '~' . EnvUtil::home_url_regexp() . '~i';
+                $home_url_regexp = '~' . self::home_url_regexp() . '~i';
                 $file = preg_replace($home_url_regexp, '', $file);
             }
         }
 
-        if (!EnvUtil::is_url($file)) {
-            $file = EnvUtil::normalize_path($file);
-            $file = str_replace(EnvUtil::site_root(), '', $file);
+        if (!self::is_url($file)) {
+            $file = self::normalize_path($file);
+            $file = str_replace(self::site_root(), '', $file);
             $file = ltrim($file, '/');
         }
 
@@ -408,7 +480,7 @@ class EnvUtil
     public static function home_url_regexp()
     {
         $home_url = get_home_url();
-        return EnvUtil::get_url_regexp($home_url);
+        return self::get_url_regexp($home_url);
     }
 
     /**
@@ -422,7 +494,7 @@ class EnvUtil
         $url = preg_replace('~(https?:)?//~i', '', $url);
         $url = preg_replace('~^www\.~i', '', $url);
 
-        return '(https?:)?//(www\.)?' . EnvUtil::preg_quote($url);
+        return '(https?:)?//(www\.)?' . self::preg_quote($url);
     }
 
     /**
@@ -481,7 +553,7 @@ class EnvUtil
     {
         $site_root = ABSPATH;
         $site_root = realpath($site_root);
-        return EnvUtil::normalize_path($site_root);
+        return self::normalize_path($site_root);
     }
 
     /**
@@ -491,8 +563,8 @@ class EnvUtil
      */
     public static function home_domain_root_url_regexp()
     {
-        $domain_url = EnvUtil::home_domain_root_url();
-        return EnvUtil::get_url_regexp($domain_url);
+        $domain_url = self::home_domain_root_url();
+        return self::get_url_regexp($domain_url);
     }
 
     /**
@@ -532,7 +604,7 @@ class EnvUtil
 
         $home_url = $data['home_url'];
         $normalized_url = $data['url'];
-        $normalized_url = EnvUtil::remove_query_all($normalized_url);
+        $normalized_url = self::remove_query_all($normalized_url);
 
         // cut protocol
         $normalized_url = preg_replace('~^http(s)?://~', '//', $normalized_url);
@@ -549,7 +621,7 @@ class EnvUtil
         $home = set_url_scheme(get_option('home'), 'http');
         $siteurl = set_url_scheme(get_option('siteurl'), 'http');
 
-        $home_path = rtrim(EnvUtil::site_path(), '/');
+        $home_path = rtrim(self::site_path(), '/');
         // adjust home_path if site is not is home
         if (!empty($home) and 0 !== strcasecmp($home, $siteurl)) {
             // $siteurl - $home
@@ -566,7 +638,7 @@ class EnvUtil
         $full_filename = $home_path . DIRECTORY_SEPARATOR .
             trim($path_relative_to_home, DIRECTORY_SEPARATOR);
 
-        $docroot = EnvUtil::document_root();
+        $docroot = self::document_root();
         if (substr($full_filename, 0, strlen($docroot)) == $docroot) {
             $docroot_filename = substr($full_filename, strlen($docroot));
         }
@@ -650,9 +722,9 @@ class EnvUtil
 
         if (!empty($_SERVER['SCRIPT_FILENAME']) and
             !empty($_SERVER['PHP_SELF'])) {
-            $script_filename = EnvUtil::normalize_path(
+            $script_filename = self::normalize_path(
                 $_SERVER['SCRIPT_FILENAME']);
-            $php_self = EnvUtil::normalize_path(
+            $php_self = self::normalize_path(
                 $_SERVER['PHP_SELF']);
             if (substr($script_filename, -strlen($php_self)) == $php_self) {
                 $document_root = substr($script_filename, 0, -strlen($php_self));
@@ -663,12 +735,12 @@ class EnvUtil
 
         if (!empty($_SERVER['PATH_TRANSLATED'])) {
             $document_root = substr(
-                EnvUtil::normalize_path($_SERVER['PATH_TRANSLATED']),
+                self::normalize_path($_SERVER['PATH_TRANSLATED']),
                 0,
-                -strlen(EnvUtil::normalize_path($_SERVER['PHP_SELF'])));
+                -strlen(self::normalize_path($_SERVER['PHP_SELF'])));
         }
         elseif (!empty($_SERVER['DOCUMENT_ROOT'])) {
-            $document_root = EnvUtil::normalize_path($_SERVER['DOCUMENT_ROOT']);
+            $document_root = self::normalize_path($_SERVER['DOCUMENT_ROOT']);
         }
         else {
             $document_root = ABSPATH;
@@ -679,7 +751,7 @@ class EnvUtil
 
     public static function docroot_to_full_filename($docroot_filename)
     {
-        return rtrim(EnvUtil::document_root(), DIRECTORY_SEPARATOR) .
+        return rtrim(self::document_root(), DIRECTORY_SEPARATOR) .
             DIRECTORY_SEPARATOR . $docroot_filename;
     }
 
@@ -712,7 +784,7 @@ class EnvUtil
      */
     public static function realpath($path)
     {
-        $path = EnvUtil::normalize_path($path);
+        $path = self::normalize_path($path);
 
         $parts = explode('/', $path);
         $absolutes = array();
@@ -739,12 +811,12 @@ class EnvUtil
      */
     public static function url_relative_to_full($relative_url)
     {
-        $relative_url = EnvUtil::path_remove_dots($relative_url);
+        $relative_url = self::path_remove_dots($relative_url);
 
         if (version_compare(PHP_VERSION, '5.4.7') < 0) {
             if (substr($relative_url, 0, 2) == '//') {
                 $relative_url =
-                    (EnvUtil::is_https() ? 'https' : 'http') .
+                    (self::is_https() ? 'https' : 'http') .
                     ':' . $relative_url;
             }
         }
@@ -804,7 +876,7 @@ class EnvUtil
      */
     public static function redirect($url = '', $params = array())
     {
-        $url = EnvUtil::url_format($url, $params);
+        $url = self::url_format($url, $params);
 
         @header('Location: ' . $url);
         exit();
@@ -857,7 +929,7 @@ class EnvUtil
                 $params = array_merge($old_params, $params);
             }
 
-            $query = EnvUtil::url_query($params);
+            $query = self::url_query($params);
 
             if ($query != '') {
                 $url .= '?' . $query;
@@ -868,7 +940,7 @@ class EnvUtil
             }
         }
         else {
-            $query = EnvUtil::url_query($params, $skip_empty, $separator);
+            $query = self::url_query($params, $skip_empty, $separator);
 
             if ($query != '') {
                 $url = '?' . $query;
@@ -902,7 +974,7 @@ class EnvUtil
             if (is_array($value)) {
                 if (count($value)) {
                     $str .= ($str != '' ? '&' : '') .
-                        EnvUtil::url_query($value, $skip_empty, $key);
+                        self::url_query($value, $skip_empty, $key);
                 }
             }
             else {
@@ -929,7 +1001,7 @@ class EnvUtil
      */
     public static function safe_redirect_temp($url = '', $params = array())
     {
-        $url = EnvUtil::url_format($url, $params);
+        $url = self::url_format($url, $params);
 
         $status_code = 302;
 
@@ -984,7 +1056,7 @@ class EnvUtil
      */
     public static function is_zlib_enabled()
     {
-        return EnvUtil::to_boolean(ini_get('zlib.output_compression'));
+        return self::to_boolean(ini_get('zlib.output_compression'));
     }
 
     /**
@@ -1043,6 +1115,141 @@ class EnvUtil
         return false;
     }
 
+    public static function size2bytes($val)
+    {
+        $val = trim($val);
+
+        if(empty($val))
+            return 0;
+
+        $val = preg_replace('/[^0-9kmgtb]/', '', strtolower($val));
+
+        if (!preg_match("/\b(\d+(?:\.\d+)?)\s*([kmgt]?b)\b/", trim($val), $matches))
+            return absint($val);
+
+        $val = absint($matches[1]);
+
+        switch ($matches[2]) {
+            case 'gb':
+                $val *= 1024;
+            case 'mb':
+                $val *= 1024;
+            case 'kb':
+                $val *= 1024;
+        }
+
+        return $val;
+    }
+
+    public static function download_file($file_path, $delete = false)
+    {
+        $file_path = trim($file_path);
+
+        if (!file_exists($file_path) or headers_sent())
+            return false;
+
+        ob_start();
+
+        header('Expires: 0');
+        header("Cache-Control: public");
+        header('Cache-Control: must-revalidate, post-check=0, pre-check=0');
+        header('Content-Description: File Transfer');
+        header('Content-Type: application/force-download');
+        header('Content-Type: application/octet-stream');
+        header('Content-Type: application/download');
+        header('Content-Disposition: attachment; filename=' . basename($file_path) . ';');
+        header('Content-Transfer-Encoding: binary');
+        header('Content-Length: ' . filesize($file_path));
+
+        ob_clean();
+        flush();
+
+        $chunkSize = 1024 * 1024;
+        $handle = fopen($file_path, 'rb');
+
+        while (!feof($handle)) {
+            $buffer = fread($handle, $chunkSize);
+            echo $buffer;
+            ob_flush();
+            flush();
+        }
+        fclose($handle);
+
+        if ($delete) {
+            unlink($file_path);
+        }
+
+        exit();
+    }
+
+    /**
+     * @param string $log
+     */
+    public static function write_log($log)
+    {
+        if (true === WP_DEBUG) {
+            if (is_array($log) || is_object($log)) {
+                error_log(print_r($log, true));
+            }
+            else {
+                error_log($log);
+            }
+        }
+    }
+
+
+    /**
+     *
+     * @param int $current Current number.
+     * @param int $total Total number.
+     * @return string Number in percentage
+     *
+     * @access public
+     */
+    public static function format_percentage($current, $total)
+    {
+        if ($total == 0)
+            return 0;
+
+        return ($total > 0 ? round(($current / $total) * 100, 2) : 0) . '%';
+    }
+
+    /**
+     * Internal helper function to sanitize a string from user input or from the db
+     *
+     * @param string $str String to sanitize.
+     * @param bool $keep_newlines Optional. Whether to keep newlines. Default: false.
+     * @return string Sanitized string.
+     * @since 1.0.0
+     *
+     */
+    public static function sanitize_text_field($str, $keep_newlines = false)
+    {
+        if (is_object($str) || is_array($str)) {
+            return '';
+        }
+
+        $str = (string)$str;
+
+        $filtered = wp_check_invalid_utf8($str);
+
+        if (strpos($filtered, '<') !== false) {
+            $filtered = wp_pre_kses_less_than($filtered);
+            // This will strip extra whitespace for us.
+            $filtered = wp_strip_all_tags($filtered, false);
+
+            // Use HTML entities in a special case to make sure no later
+            // newline stripping stage could lead to a functional tag.
+            $filtered = str_replace("<\n", "&lt;\n", $filtered);
+        }
+
+        if (!$keep_newlines) {
+            $filtered = preg_replace('/[\r\n\t ]+/', ' ', $filtered);
+        }
+
+        return trim($filtered);
+    }
+
     /**
      * check if time left is under a specific percentage
      * @param int $percent
@@ -1071,5 +1278,13 @@ class EnvUtil
             return true;
 
         return function_exists('set_time_limit') and set_time_limit($time);
+    }
+
+    public static function verify_nonce($name = 'wpfs', $nonce = false)
+    {
+        if (!$nonce)
+            $nonce = trim($_REQUEST['_wpnonce']);
+
+        return wp_verify_nonce($nonce, $name);
     }
 }

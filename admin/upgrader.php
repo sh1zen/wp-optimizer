@@ -10,7 +10,7 @@ if (!isset($_wpopt_settings['ver'])) {
     $_wpopt_settings['ver'] = "1.5.0";
 }
 
-wpopt_handle_upgrade($_wpopt_settings['ver'], WPOPT_VERSION);
+\WPOptimizer\core\UtilEnv::handle_upgrade($_wpopt_settings['ver'], WPOPT_VERSION,  WPOPT_ADMIN . "upgrades/");
 
 $_wpopt_settings['ver'] = WPOPT_VERSION;
 

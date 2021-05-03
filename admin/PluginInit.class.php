@@ -59,7 +59,7 @@ class PluginInit
 
         $mo_file = $domain . '-' . $locale . '.mo';
 
-        if (load_textdomain($domain, WP_LANG_DIR . '/plugins/wp-optimzer/' . $mo_file))
+        if (load_textdomain($domain, WP_LANG_DIR . '/plugins/wp-optimizer/' . $mo_file))
             return true;
 
         return load_textdomain($domain, WPOPT_ABSPATH . 'languages/' . $mo_file);

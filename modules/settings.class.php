@@ -3,6 +3,7 @@
 namespace WPOptimizer\modules;
 
 use WPOptimizer\core\Settings;
+use WPOptimizer\core\UtilEnv;
 
 class Mod_Settings extends Module
 {
@@ -62,7 +63,7 @@ class Mod_Settings extends Module
 
             case 'export_options':
                 if (file_put_contents(WPOPT_STORAGE . 'export.conf', Settings::getInstance()->export())) {
-                    wpopt_download_file(WPOPT_STORAGE . 'export.conf');
+                    UtilEnv::download_file(WPOPT_STORAGE . 'export.conf');
                     return true;
                 }
                 break;

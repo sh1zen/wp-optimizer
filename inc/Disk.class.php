@@ -130,9 +130,9 @@ class Disk
     {
         $response = array();
 
-        $abspath = EnvUtil::normalize_path(ABSPATH, true);
+        $abspath = UtilEnv::normalize_path(ABSPATH, true);
 
-        $_search_path = EnvUtil::normalize_path($abspath . $path, true);
+        $_search_path = UtilEnv::normalize_path($abspath . $path, true);
         $search_sub_path = false;
 
         while (!($search_path = realpath($_search_path))) {
@@ -146,7 +146,7 @@ class Disk
         if (!$search_path)
             return $response;
 
-        $search_path = EnvUtil::normalize_path($search_path, true);
+        $search_path = UtilEnv::normalize_path($search_path, true);
 
         // to prevent go upper than ABSPATH
         if (strpos($search_path, $abspath) === false)

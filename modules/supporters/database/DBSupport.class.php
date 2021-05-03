@@ -3,6 +3,7 @@
 namespace WPOptimizer\modules\supporters;
 
 use WPOptimizer\core\Report;
+use WPOptimizer\core\UtilEnv;
 
 class DBSupport
 {
@@ -662,7 +663,7 @@ class DBSupport
 
         $file_descriptor = fopen($SQLfilename, 'w');
 
-        $available_memory = wpopt_size2bytes(@ini_get('memory_limit'));
+        $available_memory = UtilEnv::size2bytes(@ini_get('memory_limit'));
 
         foreach ($tables as $table) {
 

@@ -7,7 +7,7 @@
  * Author URI: https://sh1zen.github.io/
  * Text Domain: wpopt
  * Domain Path: /languages
- * Version: 1.5.0
+ * Version: 1.5.1
  */
 
 const WPOPT_FILE = __FILE__;
@@ -33,7 +33,7 @@ require_once WPOPT_ADMIN . 'Settings.class.php';
 require_once WPOPT_ADMIN . 'Cron.class.php';
 
 // extensions
-require_once WPOPT_INCPATH . 'EnvUtil.php';
+require_once WPOPT_INCPATH . 'UtilEnv.php';
 
 // modules handlers
 require_once WPOPT_INCPATH . 'Module.class.php';

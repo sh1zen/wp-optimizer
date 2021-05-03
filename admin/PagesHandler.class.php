@@ -150,17 +150,6 @@ class PagesHandler
                             </div>
                         </div>
                     </div>
-                    <div class="wpopt-faq-item">
-                        <div class="wpopt-faq-question-wrapper ">
-                            <div class="wpopt-faq-question wpopt-collapse-handler"><?= __('How optimization works?', 'wpopt') ?>
-                                <icon class="wpopt-collapse-icon">+</icon>
-                            </div>
-                            <div class="wpopt-faq-answer wpopt-collapse">
-                                <p><?= __('Optimization when launched from here will run in background for any found on the specified path on this server.', 'wpopt'); ?></p>
-                                <p><?= __('Optimization when launched from here will run in background for any found on the specified path on this server.', 'wpopt'); ?></p>
-                            </div>
-                        </div>
-                    </div>
                 </div>
             </block>
         </section>
@@ -182,7 +171,7 @@ class PagesHandler
 
         if (isset($_POST['wpopt-action'])) {
 
-            if (!wpopt_verify_nonce('wpopt-nonce'))
+            if (!UtilEnv::verify_nonce('wpopt-nonce'))
                 return;
 
             switch ($_POST['wpopt-action']) {
@@ -238,6 +227,20 @@ class PagesHandler
                                class="button button-primary button-large">
                     </form>
                 </block>
+                <?php
+                if(!is_plugin_active( 'wp-optimizer/wp-optimizer.php' ) ) {
+                    ?>
+                    <block class="wpopt">
+                        <h2><?php _e('Tips:', 'wpfs'); ?></h2>
+                        <h3>
+                            <?php
+                            echo '<b>' . __('For a better SEO optimization, it\'s recommended to install also <a href="https://wordpress.org/plugins/flexy-seo/">this</a> plugin.', 'wpfs') . '</b>';
+                            ?>
+                        </h3>
+                    </block>
+                    <?php
+                }
+                ?>
             </section>
             <aside class="wpopt">
                 <section class="wpopt-box">

@@ -4,7 +4,7 @@ namespace WPOptimizer\modules;
 
 use WPOptimizer\core\Cron;
 use WPOptimizer\core\Disk;
-use WPOptimizer\core\EnvUtil;
+use WPOptimizer\core\UtilEnv;
 use WPOptimizer\core\Options;
 use WPOptimizer\core\Settings;
 use WPOptimizer\modules\supporters\Optimize_Media_Table;
@@ -191,7 +191,7 @@ class Mod_Media extends Module
                     ?>
                     <div class="wpopt-dir-explorer">
                         <label>
-                            <text><?= EnvUtil::normalize_path(ABSPATH, true) ?></text>
+                            <text><?= UtilEnv::normalize_path(ABSPATH, true) ?></text>
                             <input name="wpopt-dir" type="text" value="wp-content/" <?= $disabled ?>>
                         </label>
                     </div>
@@ -272,7 +272,7 @@ class Mod_Media extends Module
             Options::update('media.todo', $images);
 
             // if enabled
-            wpopt_write_log(wp_date("H:i:s"));
+            UtilEnv::write_log(wp_date("H:i:s"));
 
             // schedule again cron
             if (!empty($images)) {
@@ -316,7 +316,7 @@ class Mod_Media extends Module
                 $this->to_optimize_data = array();
         }
 
-        $wp_upload_dir = EnvUtil::wp_upload_dir();
+        $wp_upload_dir = UtilEnv::wp_upload_dir();
 
         $tmp = explode(DIRECTORY_SEPARATOR, $metadata['file']);
 

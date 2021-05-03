@@ -12,7 +12,7 @@ class RuleUtil
      */
     public static function can_modify_rules($path)
     {
-        return EnvUtil::is_wpmu() and (EnvUtil::is_apache() or EnvUtil::is_litespeed() or EnvUtil::is_nginx());
+        return UtilEnv::is_wpmu() and (UtilEnv::is_apache() or UtilEnv::is_litespeed() or UtilEnv::is_nginx());
     }
 
     /**
@@ -108,12 +108,12 @@ class RuleUtil
     public static function get_rules_path()
     {
         switch (true) {
-            case EnvUtil::is_apache():
-            case EnvUtil::is_litespeed():
-                return EnvUtil::site_path() . '.htaccess';
+            case UtilEnv::is_apache():
+            case UtilEnv::is_litespeed():
+                return UtilEnv::site_path() . '.htaccess';
 
-            case EnvUtil::is_nginx():
-                return EnvUtil::site_path() . 'nginx.conf';
+            case UtilEnv::is_nginx():
+                return UtilEnv::site_path() . 'nginx.conf';
         }
 
         return false;
@@ -174,7 +174,7 @@ class RuleUtil
      */
     public static function has_rules($rules, $start, $end)
     {
-        return preg_match('~' . EnvUtil::preg_quote($start) . "\n.*?" . EnvUtil::preg_quote($end) . "\n*~s", $rules);
+        return preg_match('~' . UtilEnv::preg_quote($start) . "\n.*?" . UtilEnv::preg_quote($end) . "\n*~s", $rules);
     }
 
     /**
@@ -214,7 +214,7 @@ class RuleUtil
      */
     private static function erase_rules($rules, $start, $end)
     {
-        $r = '~' . EnvUtil::preg_quote($start) . "\n.*?" . EnvUtil::preg_quote($end) . "\n*~s";
+        $r = '~' . UtilEnv::preg_quote($start) . "\n.*?" . UtilEnv::preg_quote($end) . "\n*~s";
 
         $rules = preg_replace($r, '', $rules);
         $rules = RuleUtil::trim_rules($rules);
@@ -229,6 +229,6 @@ class RuleUtil
      */
     public static function can_check_rules()
     {
-        return EnvUtil::is_apache() or EnvUtil::is_litespeed() or EnvUtil::is_nginx() or EnvUtil::is_iis();
+        return UtilEnv::is_apache() or UtilEnv::is_litespeed() or UtilEnv::is_nginx() or UtilEnv::is_iis();
     }
 }

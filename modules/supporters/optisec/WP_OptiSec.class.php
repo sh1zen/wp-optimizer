@@ -2,7 +2,7 @@
 
 namespace WPOptimizer\modules\supporters;
 
-use WPOptimizer\core\EnvUtil;
+use WPOptimizer\core\UtilEnv;
 use WPOptimizer\core\RuleUtil;
 use WPOptimizer\core\Settings;
 
@@ -163,9 +163,12 @@ class WP_OptiSec
             return array_intersect_key($types, (array)$filter);
         }
 
-        return call_user_func_array('array_merge', array_intersect_key(
-                $types,
-                array_flip((array)$filter)
+        return UtilEnv::array_flatter(
+            array_values(
+                array_intersect_key(
+                    $types,
+                    array_flip((array)$filter)
+                )
             )
         );
     }
@@ -493,13 +496,13 @@ class WP_OptiSec
             $rules .= "        Header append Vary Accept-Encoding\n";
             $rules .= "    </IfModule>\n";
 
-            if (version_compare(EnvUtil::get_server_version(), '2.3.7', '>=')) {
+            if (version_compare(UtilEnv::get_server_version(), '2.3.7', '>=')) {
                 $rules .= "    <IfModule mod_filter.c>\n";
             }
 
             $rules .= "        AddOutputFilterByType DEFLATE " . implode(' ', $mime_types) . "\n";
 
-            if (version_compare(EnvUtil::get_server_version(), '2.3.7', '>=')) {
+            if (version_compare(UtilEnv::get_server_version(), '2.3.7', '>=')) {
                 $rules .= "    </IfModule>\n";
             }
 
@@ -518,12 +521,12 @@ class WP_OptiSec
             $rules .= "        Header append Vary Accept-Encoding\n";
             $rules .= "    </IfModule>\n";
 
-            if (version_compare(EnvUtil::get_server_version(), '2.3.7', '>=')) {
+            if (version_compare(UtilEnv::get_server_version(), '2.3.7', '>=')) {
                 $rules .= "    <IfModule mod_filter.c>\n";
             }
             $rules .= "        AddOutputFilterByType BROTLI_COMPRESS " . implode(' ', $mime_types) . "\n";
 
-            if (version_compare(EnvUtil::get_server_version(), '2.3.7', '>=')) {
+            if (version_compare(UtilEnv::get_server_version(), '2.3.7', '>=')) {
                 $rules .= "    </IfModule>\n";
             }
 

@@ -48,7 +48,7 @@ class Ajax
             'wpopt_form'   => ''
         ), $_REQUEST);
 
-        if (!empty($request['wpopt_nonce']) and !wpopt_verify_nonce('wpopt-ajax-nonce', $request['wpopt_nonce'])) {
+        if (!empty($request['wpopt_nonce']) and !UtilEnv::verify_nonce('wpopt-ajax-nonce', $request['wpopt_nonce'])) {
             wp_send_json_error(array(
                 'response' => __('WPOPT Error: It seems that you are not allowed to do this request.', 'wpopt'),
             ));

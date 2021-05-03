@@ -2,7 +2,7 @@
 
 namespace WPOptimizer\modules\supporters;
 
-use WPOptimizer\core\EnvUtil;
+use WPOptimizer\core\UtilEnv;
 use WPOptimizer\core\Report;
 use WPOptimizer\core\Settings;
 
@@ -92,7 +92,7 @@ class WO_ImagesPerformer
     {
         global $wpdb;
 
-        $uploads_dir = EnvUtil::wp_upload_dir();
+        $uploads_dir = UtilEnv::wp_upload_dir();
 
         //You may want to take it by bites if your uploads is rather large (over 5 gb for example)
         $root = realpath($uploads_dir['basedir'] . '/' . $year . '/');
@@ -134,7 +134,7 @@ class WO_ImagesPerformer
 
     private function opti_images_dir($path)
     {
-        $uploads_dir = EnvUtil::wp_upload_dir();
+        $uploads_dir = UtilEnv::wp_upload_dir();
 
         $root = realpath($uploads_dir['basedir'] . '/' . $path . '/');
 
@@ -205,7 +205,7 @@ class WO_ImagesPerformer
             if (!file_exists($file))
                 continue;
 
-            if (!EnvUtil::safe_time_limit(0.3, 60)) {
+            if (!UtilEnv::safe_time_limit(0.3, 60)) {
 
                 // reinsert popped image
                 array_push($images, $image_data);

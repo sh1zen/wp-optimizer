@@ -3,7 +3,7 @@
 namespace WPOptimizer\modules;
 
 use WPOptimizer\core\Disk;
-use WPOptimizer\core\EnvUtil;
+use WPOptimizer\core\UtilEnv;
 use WPOptimizer\core\Settings;
 use WPOptimizer\modules\supporters\List_Table;
 use WPOptimizer\modules\supporters\DBSupport;
@@ -22,7 +22,7 @@ class Mod_Database extends Module
 
         $default = array(
             'backup' => array(
-                'path'            => EnvUtil::normalize_path(WP_CONTENT_DIR . '/backup-db'),
+                'path'            => UtilEnv::normalize_path(WP_CONTENT_DIR . '/backup-db'),
                 'excluded_tables' => array(),
                 'mysqldump_path'  => ''
             ),
@@ -339,7 +339,7 @@ class Mod_Database extends Module
                     'sweep'      => $sweep,
                     'count'      => $count,
                     'total'      => $total_count,
-                    'percentage' => wpopt_format_percentage($sweep, $total_count)
+                    'percentage' => UtilEnv::format_percentage($sweep, $total_count)
                 ));
                 break;
 
@@ -421,7 +421,7 @@ class Mod_Database extends Module
 
                 $file_path = trailingslashit($this->option('backup.path', '')) . $database_file;
 
-                if (wpopt_download_file($file_path))
+                if (UtilEnv::download_file($file_path))
                     $this->performer_response[] = array(__('Download started.', 'wpopt'), 'success');
                 else
                     $this->performer_response[] = array(__('Something went wrong during the download.', 'wpopt'), 'error');
@@ -684,7 +684,7 @@ class Mod_Database extends Module
                                 <span class="sweep-count"><?php echo number_format_i18n($count); ?></span>
                             </td>
                             <td>
-                                <span class="sweep-percentage"><?php echo wpopt_format_percentage($count, $total); ?></span>
+                                <span class="sweep-percentage"><?php echo UtilEnv::format_percentage($count, $total); ?></span>
                             </td>
                             <td>
                                 <?php if ($count > 0) :

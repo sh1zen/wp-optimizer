@@ -208,7 +208,7 @@ class Cron
 
         foreach ($events as $id => $event) {
 
-            if (is_string($id) and is_callable($event['function'])) {
+            if ($id and is_callable($event['function'])) {
                 add_action($id, $event['function'], 10, $event['accepted_args']);
             }
             else {
