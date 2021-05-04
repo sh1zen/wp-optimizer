@@ -1,6 +1,6 @@
 <?php
 
-const WPOPT_VERSION = '1.5.0';
+const WPOPT_VERSION = '1.5.1';
 
 define('WPOPT_DEBUG', $_SERVER["SERVER_ADDR"] === '127.0.0.1');
 

@@ -4,7 +4,7 @@ msgstr ""
 "Project-Id-Version: wpopt-translation\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/wp-"
 "optimizer/\n"
-"POT-Creation-Date: 2021-04-18 14:45+0200\n"
+"POT-Creation-Date: 2021-05-04 12:57+0200\n"
 "PO-Revision-Date: 2020-05-13 02:34+0200\n"
 "Last-Translator: sh1zen\n"
 "Language-Team: sh1zen\n"
@@ -12,7 +12,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Poedit 2.4.2\n"
+"X-Generator: Poedit 2.4.3\n"
 "X-Poedit-Basepath: ..\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Poedit-SourceCharset: UTF-8\n"
@@ -92,87 +92,87 @@ msgid ""
 "panel</a>."
 msgstr ""
 
-#: admin/PagesHandler.class.php:155
-msgid "How optimization works?"
-msgstr ""
-
-#: admin/PagesHandler.class.php:159 admin/PagesHandler.class.php:160
-msgid ""
-"Optimization when launched from here will run in background for any "
-"found on the specified path on this server."
-msgstr ""
-
-#: admin/PagesHandler.class.php:208
+#: admin/PagesHandler.class.php:197
 msgid "Optimize your WordPress site in few and easy steps."
 msgstr ""
 
-#: admin/PagesHandler.class.php:211
+#: admin/PagesHandler.class.php:200
 msgid "Modules:"
 msgstr ""
 
-#: admin/PagesHandler.class.php:214
+#: admin/PagesHandler.class.php:203
 msgid ""
 "This plugin uses modules, so you can disable non necessary one to not "
 "weigh down WordPress."
 msgstr ""
 
-#: admin/PagesHandler.class.php:218
+#: admin/PagesHandler.class.php:207
 msgid "Currently active:"
 msgstr ""
 
-#: admin/PagesHandler.class.php:219
+#: admin/PagesHandler.class.php:208
 #, php-format
 msgid "Manage modules: <a href=\"%s\">here</a>."
 msgstr ""
 
-#: admin/PagesHandler.class.php:220
+#: admin/PagesHandler.class.php:209
 #, php-format
 msgid "Configure them: <a href=\"%s\">here</a>."
 msgstr ""
 
-#: admin/PagesHandler.class.php:223
+#: admin/PagesHandler.class.php:212
 msgid "Stats:"
 msgstr ""
 
-#: admin/PagesHandler.class.php:227
+#: admin/PagesHandler.class.php:216
 #, php-format
 msgid "WordPress used memory: %s"
 msgstr ""
 
-#: admin/PagesHandler.class.php:228
+#: admin/PagesHandler.class.php:217
 #, php-format
 msgid "Wordpress boot time: %s s"
 msgstr ""
 
-#: admin/PagesHandler.class.php:233
+#: admin/PagesHandler.class.php:222
 msgid "Fast actions:"
 msgstr ""
 
-#: admin/PagesHandler.class.php:237
+#: admin/PagesHandler.class.php:226
 msgid "Auto optimize now"
 msgstr ""
 
-#: admin/PagesHandler.class.php:245
+#: admin/PagesHandler.class.php:234
+msgid "Tips:"
+msgstr ""
+
+#: admin/PagesHandler.class.php:237
+msgid ""
+"For a better SEO optimization, it's recommended to install also <a "
+"href=\"https://wordpress.org/plugins/flexy-seo/\">this</a> plugin."
+msgstr ""
+
+#: admin/PagesHandler.class.php:248
 msgid "Support this project, buy me a coffee."
 msgstr ""
 
-#: admin/PagesHandler.class.php:259
+#: admin/PagesHandler.class.php:262
 msgid "Want to support in other ways?"
 msgstr ""
 
-#: admin/PagesHandler.class.php:262
+#: admin/PagesHandler.class.php:265
 msgid "Help me translating"
 msgstr ""
 
-#: admin/PagesHandler.class.php:265
+#: admin/PagesHandler.class.php:268
 msgid "Leave a review"
 msgstr ""
 
-#: admin/PagesHandler.class.php:271
+#: admin/PagesHandler.class.php:274
 msgid "Source code"
 msgstr ""
 
-#: admin/PagesHandler.class.php:274
+#: admin/PagesHandler.class.php:277
 msgid "About me"
 msgstr ""
 
@@ -777,19 +777,19 @@ msgstr ""
 msgid "Media Cleaner"
 msgstr ""
 
-#: modules/settings.class.php:34
+#: modules/settings.class.php:35
 msgid "Reset Plugin options"
 msgstr ""
 
-#: modules/settings.class.php:40
+#: modules/settings.class.php:41
 msgid "Export Plugin options"
 msgstr ""
 
-#: modules/settings.class.php:52
+#: modules/settings.class.php:53
 msgid "Import Plugin options"
 msgstr ""
 
-#: modules/supporters/database/DBSupport.class.php:536
+#: modules/supporters/database/DBSupport.class.php:537
 #, php-format
 msgid "Rows affected %s."
 msgstr ""

@@ -162,6 +162,8 @@ This is a huge upgrade, so plugin settings will be reset to default to ensure no
 
 == Changelog ==
 
+* added image optimization and orphaned media remover module
+
 = 1.5.1 =
 
 * minor bug fixes

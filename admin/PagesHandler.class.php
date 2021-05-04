@@ -228,13 +228,13 @@ class PagesHandler
                     </form>
                 </block>
                 <?php
-                if(!is_plugin_active( 'wp-optimizer/wp-optimizer.php' ) ) {
+                if(!is_plugin_active( 'flexy-seo/flexy-seo.php' ) ) {
                     ?>
                     <block class="wpopt">
-                        <h2><?php _e('Tips:', 'wpfs'); ?></h2>
+                        <h2><?php _e('Tips:', 'wpopt'); ?></h2>
                         <h3>
                             <?php
-                            echo '<b>' . __('For a better SEO optimization, it\'s recommended to install also <a href="https://wordpress.org/plugins/flexy-seo/">this</a> plugin.', 'wpfs') . '</b>';
+                            echo '<b>' . __('For a better SEO optimization, it\'s recommended to install also <a href="https://wordpress.org/plugins/flexy-seo/">this</a> plugin.', 'wpopt') . '</b>';
                             ?>
                         </h3>
                     </block>
