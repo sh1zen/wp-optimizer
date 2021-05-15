@@ -4,6 +4,7 @@ namespace WPOptimizer\modules;
 
 use WPOptimizer\core\Cron;
 use WPOptimizer\core\Disk;
+use WPOptimizer\core\Graphic;
 use WPOptimizer\core\UtilEnv;
 use WPOptimizer\core\Options;
 use WPOptimizer\core\Settings;
@@ -130,8 +131,8 @@ class Mod_Media extends Module
             ?>
             <div class="wpopt-notice">
                 <h3><?php _e('No orphaned media found.', 'wpopt'); ?></h3>
-                <button class="button button-primary button-large" data-nonce="<?= wp_create_nonce('wpopt-images'); ?>"
-                        data-action="scan-orphaned-media"><?= __('Scan now', 'wpopt') ?></button>
+                <button class="button button-primary button-large" data-nonce="<?php echo wp_create_nonce('wpopt-images'); ?>"
+                        data-action="scan-orphaned-media"><?php echo __('Scan now', 'wpopt') ?></button>
             </div>
         <?php
         else:
@@ -159,21 +160,21 @@ class Mod_Media extends Module
         <section class="wpopt-wrap-flex">
             <section class='wpopt'>
                 <block class="wpopt">
-                    <h3><?= __('Before start optimizing makes sure you did:', 'wpopt') ?></h3>
+                    <h3><?php echo __('Before start optimizing makes sure you did:', 'wpopt') ?></h3>
                     <ul class="wpopt-list">
                         <li>
-                            <strong><?= sprintf(__('Read related <a href="%s">FAQ</a>.', 'wpopt'), admin_url('admin.php?page=wpopt-faqs')) ?></strong>
+                            <strong><?php echo sprintf(__('Read related <a href="%s">FAQ</a>.', 'wpopt'), admin_url('admin.php?page=wpopt-faqs')) ?></strong>
                         </li>
                         <li>
-                            <strong><?= sprintf(__('Setup your optimization parameters <a href="%s">here</a>.', 'wpopt'), admin_url('admin.php?page=wpopt-settings#media')) ?></strong>
+                            <strong><?php echo sprintf(__('Setup your optimization parameters <a href="%s">here</a>.', 'wpopt'), admin_url('admin.php?page=wpopt-settings#media')) ?></strong>
                         </li>
                     </ul>
-                    <strong><?= __('Note that optimization will run in background and time required depends on number of media you have.', 'wpopt') ?></strong>
+                    <strong><?php echo __('Note that optimization will run in background and time required depends on number of media you have.', 'wpopt') ?></strong>
                     <?php
                     if (!extension_loaded('imagick')) {
                         ?>
                         <br><br>
-                        <strong style="color:#bc0000"><?= sprintf(__('To guarantee a complete image optimization support, install "<a href="%s">imagick</a>" on your server.', 'wpopt'), "https://www.php.net/manual/en/book.imagick.php") ?></strong><?php
+                        <strong style="color:#bc0000"><?php echo sprintf(__('To guarantee a complete image optimization support, install "<a href="%s">imagick</a>" on your server.', 'wpopt'), "https://www.php.net/manual/en/book.imagick.php") ?></strong><?php
                     }
                     ?>
                 </block>
@@ -191,24 +192,24 @@ class Mod_Media extends Module
                     ?>
                     <div class="wpopt-dir-explorer">
                         <label>
-                            <text><?= UtilEnv::normalize_path(ABSPATH, true) ?></text>
-                            <input name="wpopt-dir" type="text" value="wp-content/" <?= $disabled ?>>
+                            <text><?php echo UtilEnv::normalize_path(ABSPATH, true) ?></text>
+                            <input name="wpopt-dir" type="text" value="wp-content/" <?php echo $disabled ?>>
                         </label>
                     </div>
                     <br>
                     <?php if (Options::get('images.to.optimize', false)): ?>
-                        <button class="button button-primary button-large"><?= __('Restart', 'wpopt') ?></button>
-                        <button class="button button-primary button-large"><?= __('Resume', 'wpopt') ?></button>
+                        <button class="button button-primary button-large"><?php echo __('Restart', 'wpopt') ?></button>
+                        <button class="button button-primary button-large"><?php echo __('Resume', 'wpopt') ?></button>
                     <?php else: ?>
-                        <button class="button button-primary button-large"><?= __('Start', 'wpopt') ?></button>
+                        <button class="button button-primary button-large"><?php echo __('Start', 'wpopt') ?></button>
                     <?php endif; ?>
-                    <button class="button button-primary button-large"><?= __('Pause', 'wpopt') ?></button>
+                    <button class="button button-primary button-large"><?php echo __('Pause', 'wpopt') ?></button>
                 </block>
 
             </section>
             <aside class="wpopt">
                 <section class="wpopt-box">
-                    <h3><?= __('Optimization stats:', 'wpopt') ?></h3>
+                    <h3><?php echo __('Optimization stats:', 'wpopt') ?></h3>
                     <ul class="wpopt">
                         <li>
                             <a href="https://translate.wordpress.org/projects/wp-plugins/wp-optimizer/">Help me translating</a>
@@ -236,7 +237,7 @@ class Mod_Media extends Module
             <section class="wpopt-header"><h1>Media Optimizer</h1></section>
             <block class="wpopt">
                 <?php
-                echo wpopt_generateHTML_tabs_panels(array(
+                echo Graphic::generateHTML_tabs_panels(array(
 
                         array(
                             'id'          => 'images-optimizer',

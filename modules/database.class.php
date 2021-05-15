@@ -3,6 +3,7 @@
 namespace WPOptimizer\modules;
 
 use WPOptimizer\core\Disk;
+use WPOptimizer\core\Graphic;
 use WPOptimizer\core\UtilEnv;
 use WPOptimizer\core\Settings;
 use WPOptimizer\modules\supporters\List_Table;
@@ -531,7 +532,7 @@ class Mod_Database extends Module
             ?>
             <block class="wpopt">
                 <?php
-                echo wpopt_generateHTML_tabs_panels(array(
+                echo Graphic::generateHTML_tabs_panels(array(
 
                     array(
                         'id'          => 'db-tables',
@@ -637,7 +638,7 @@ class Mod_Database extends Module
         );
 
         ?>
-        <p><?= sprintf(__('If you click Details will be shown only %s items.', 'wpopt'), number_format_i18n($this->ajax_limit)); ?></p>
+        <p><?php echo sprintf(__('If you click Details will be shown only %s items.', 'wpopt'), number_format_i18n($this->ajax_limit)); ?></p>
         <p>
             <strong><?php _e('Before doing any sweep it\'s recommended to make a backup of whole database.', 'wpopt'); ?></strong>
         </p>
@@ -718,11 +719,12 @@ class Mod_Database extends Module
     public function validate_settings($input, $valid)
     {
         $valid['sweep'] = array(
-            'excluded_taxonomies' => array_map('trim', explode(',', $input['excluded_taxonomies']))
+            'excluded_taxonomies' => array_map('trim', explode(',', $input['sweep.excluded_taxonomies']))
         );
 
         $valid['backup'] = array(
-            'excluded_tables' => array_map('trim', explode(',', $input['excluded_tables']))
+            'path'            => trim($input['backup.path']),
+            'excluded_tables' => array_map('trim', explode(',', $input['backup.excluded_tables']))
         );
 
         return $valid;
@@ -744,12 +746,14 @@ class Mod_Database extends Module
 
     protected function setting_fields()
     {
-        return array(
-            array('type' => 'text', 'name' => __('Backup path', 'wpopt'), 'id' => 'backup_path', 'value' => $this->option('backup.path', '')),
-            array('type' => 'separator', 'name' => __('Sweeps:', 'wpopt')),
-            array('type' => 'textarea', 'name' => __('Excluded Taxonomies (comma separated)', 'wpopt'), 'id' => 'excluded_taxonomies', 'value' => implode(', ', $this->option('sweep.excluded_taxonomies', array()))),
-            array('type' => 'separator', 'name' => __('Backups:', 'wpopt')),
-            array('type' => 'textarea', 'name' => __('Excluded Tables (comma separated)', 'wpopt'), 'id' => 'excluded_tables', 'value' => implode(', ', $this->option('backup.excluded_tables', array()))),
+        return $this->group_setting_fields(
+            $this->setting_field(__('Backup path', 'wpopt'), "backup.path", 'text', ['default_value' => UtilEnv::normalize_path(WP_CONTENT_DIR . '/backup-db'), 'allow_empty' => false]),
+
+            $this->setting_field(__('Sweeps:', 'wpopt'), false, "separator"),
+            $this->setting_field(__('Excluded Taxonomies (comma separated)', 'wpopt'), "sweep.excluded_taxonomies", "textarea", ['value' => implode(', ', $this->option('sweep.excluded_taxonomies', array()))]),
+
+            $this->setting_field(__('Backups:', 'wpopt'), false, "separator"),
+            $this->setting_field(__('Excluded Tables (comma separated)', 'wpopt'), "backup.excluded_tables", "textarea", ['value' => implode(', ', $this->option('backup.excluded_tables', array()))])
         );
     }
 }

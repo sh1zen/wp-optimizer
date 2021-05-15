@@ -187,7 +187,7 @@ class Settings
             $fields[] = $field;
         }
 
-        return wpopt_generateHTML_tabs_panels($fields);
+        return Graphic::generateHTML_tabs_panels($fields);
     }
 
     public function register_hooks()

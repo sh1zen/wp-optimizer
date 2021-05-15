@@ -4,6 +4,7 @@ namespace WPOptimizer\modules;
 
 use WPOptimizer\core\Cache;
 use WPOptimizer\core\Cron;
+use WPOptimizer\core\Graphic;
 use WPOptimizer\core\ModuleHandler;
 use WPOptimizer\core\Settings;
 
@@ -88,7 +89,7 @@ class Module
 
             if (is_admin()) {
 
-                if (wpopt_is_on_screen($this->slug)) {
+                if (Graphic::is_on_screen($this->slug)) {
                     $this->enqueue_scripts();
                 }
 
@@ -204,11 +205,7 @@ class Module
                 <input type="hidden" name="<?php echo "{$option_name}[change]" ?>" value="<?php echo $this->slug; ?>">
                 <table class="wpopt wpopt-settings">
                     <tbody>
-                    <?php
-
-                    wpopt_generate_fields($_setting_fields, array('name_prefix' => $option_name));
-
-                    ?>
+                    <?php Graphic::generate_fields($_setting_fields, array('name_prefix' => $option_name)); ?>
                     </tbody>
                 </table>
                 <p class="wpopt-submit">
@@ -284,7 +281,7 @@ class Module
             <form class="wpopt-custom-action" method="POST">
                 <?php
 
-                wpopt_generate_field(array(
+                Graphic::generate_field(array(
                     'type'    => 'hidden',
                     'id'      => "wpopt-{$this->slug}-custom-action",
                     'value'   => wp_create_nonce("wpopt-{$this->slug}-custom-action"),
@@ -294,7 +291,7 @@ class Module
                 $option['classes'] = "button {$option['button_types']} button-large";
                 $option['context'] = "action";
 
-                echo "<p>" . wpopt_generate_field($option, false) . "</p>";
+                echo "<p>" . Graphic::generate_field($option, false) . "</p>";
                 ?>
             </form>
             <?php
@@ -346,9 +343,8 @@ class Module
             }
 
             $_valid = &$valid;
-            foreach (explode('.', $field['id']) as $field_id)
-            {
-                if(!isset($_valid[$field_id]))
+            foreach (explode('.', $field['id']) as $field_id) {
+                if (!isset($_valid[$field_id]))
                     $_valid[$field_id] = array();
 
                 $_valid = &$_valid[$field_id];
@@ -360,6 +356,45 @@ class Module
         return (array)$valid;
     }
 
+    protected function group_setting_fields(...$args)
+    {
+        return array_merge($args);
+    }
+
+    protected function setting_field($name, $id = false, $type = 'text', $args = [])
+    {
+        $args = array_merge([
+            'value'         => false,
+            'tooltips'      => false,
+            'default_value' => '',
+            'allow_empty'   => true,
+            'parent'        => null
+        ], $args);
+
+        if ($id) {
+            $value = ($args['value'] === false) ? $this->option($id, $args['default_value']) : $args['value'];
+        }
+        else {
+            $value = '';
+        }
+
+        if(empty($value) and !$args['allow_empty'])
+            $value = $args['default_value'];
+
+        return [
+            'type'   => $type,
+            'name'   => $name,
+            'id'     => $id,
+            'value'  => $value,
+            'parent' => $args['parent']
+        ];
+    }
+
+    public function option($path_name = '', $default = false)
+    {
+        return Settings::get_option($this->settings, "{$path_name}", $default);
+    }
+
     protected function activating($setting_field, $new_settings)
     {
         return !$this->option($setting_field) and isset($new_settings[$setting_field]);
@@ -368,11 +403,6 @@ class Module
     protected function deactivating($setting_field, $new_settings)
     {
         return $this->option($setting_field) and !isset($new_settings[$setting_field]);
-    }
-
-    public function option($path_name = '', $default = false)
-    {
-        return Settings::get_option($this->settings, "{$path_name}", $default);
     }
 
     protected function cache_get($key, $group = 'wo_module', $default = false)

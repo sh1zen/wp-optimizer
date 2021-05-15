@@ -112,31 +112,31 @@ class Mod_WP_Optimizer extends Module
 
     protected function setting_fields()
     {
-        return array(
-            array('type' => 'separator', 'name' => __('Server configuration (Up to now, apache only)', 'wpopt')),
-            array('type' => 'divide'),
-            array('type' => 'checkbox', 'name' => __('Server Enhancements', 'wpopt'), 'id' => 'srv_enhancements.active', 'value' => $this->option('srv_enhancements.active')),
-            array('type' => 'checkbox', 'parent' => 'srv_enhancements.active', 'name' => __('Remove www', 'wpopt'), 'id' => 'srv_enhancements.remove_www', 'value' => $this->option('srv_enhancements.remove_www')),
-            array('type' => 'checkbox', 'parent' => 'srv_enhancements.active', 'name' => __('Redirect HTTP to HTTPS', 'wpopt'), 'id' => 'srv_enhancements.redirect_https', 'value' => $this->option('srv_enhancements.redirect_https')),
-            array('type' => 'checkbox', 'parent' => 'srv_enhancements.active', 'name' => __('Connection keep alive', 'wpopt'), 'id' => 'srv_enhancements.keep_alive', 'value' => $this->option('srv_enhancements.keep_alive')),
-            array('type' => 'checkbox', 'parent' => 'srv_enhancements.active', 'name' => __('Follow symlinks', 'wpopt'), 'id' => 'srv_enhancements.follow_symlinks', 'value' => $this->option('srv_enhancements.follow_symlinks')),
-            array('type' => 'checkbox', 'parent' => 'srv_enhancements.active', 'name' => __('Timezone', 'wpopt'), 'id' => 'srv_enhancements.timezone', 'value' => $this->option('srv_enhancements.timezone')),
-            array('type' => 'checkbox', 'parent' => 'srv_enhancements.active', 'name' => __('Default Charset UTF-8', 'wpopt'), 'id' => 'srv_enhancements.default_utf8', 'value' => $this->option('srv_enhancements.default_utf8')),
-            array('type' => 'checkbox', 'parent' => 'srv_enhancements.active', 'name' => __('Enable PageSpeed if installed', 'wpopt'), 'id' => 'srv_enhancements.pagespeed', 'value' => $this->option('srv_enhancements.pagespeed')),
+        return $this->group_setting_fields(
+            $this->setting_field(__('Server configuration (Up to now, apache only)', 'wpopt'), false, "separator"),
+            $this->setting_field('', false, "divide"),
+            $this->setting_field(__('Server Enhancements', 'wpopt'), "srv_enhancements.active", "checkbox"),
+            $this->setting_field(__('Remove www', 'wpopt'), "srv_enhancements.remove_www", "checkbox", ['parent' => 'srv_enhancements.active']),
+            $this->setting_field(__('Redirect HTTP to HTTPS', 'wpopt'), "srv_enhancements.redirect_https", "checkbox", ['parent' => 'srv_enhancements.active']),
+            $this->setting_field(__('Connection keep alive', 'wpopt'), "srv_enhancements.keep_alive", "checkbox", ['parent' => 'srv_enhancements.active', 'default_value' => true]),
+            $this->setting_field(__('Follow symlinks', 'wpopt'), "srv_enhancements.follow_symlinks", "checkbox", ['parent' => 'srv_enhancements.active']),
+            $this->setting_field(__('Timezone', 'wpopt'), "srv_enhancements.timezone", "checkbox", ['parent' => 'srv_enhancements.active']),
+            $this->setting_field(__('Default Charset UTF-8', 'wpopt'), "srv_enhancements.default_utf8", "checkbox", ['parent' => 'srv_enhancements.active']),
+            $this->setting_field(__('Enable PageSpeed if installed', 'wpopt'), "srv_enhancements.pagespeed", "checkbox", ['parent' => 'srv_enhancements.active']),
 
-            array('type' => 'divide'),
-            array('type' => 'checkbox', 'name' => __('Enable server Compression', 'wpopt'), 'id' => 'srv_compression.active', 'value' => $this->option('srv_compression.active')),
-            array('type' => 'checkbox', 'parent' => 'srv_compression.active', 'name' => __('GZIP', 'wpopt'), 'id' => 'srv_compression.gzip', 'value' => $this->option('srv_compression.gzip')),
-            array('type' => 'checkbox', 'parent' => 'srv_compression.active', 'name' => __('BROTLI', 'wpopt'), 'id' => 'srv_compression.brotli', 'value' => $this->option('srv_compression.brotli', true)),
+            $this->setting_field('', false, "divide"),
+            $this->setting_field(__('Enable server Compression', 'wpopt'), "srv_compression.active", "checkbox"),
+            $this->setting_field(__('GZIP', 'wpopt'), "srv_compression.gzip", "checkbox", ['parent' => 'srv_compression.active']),
+            $this->setting_field(__('BROTLI', 'wpopt'), "srv_compression.brotli", "checkbox", ['parent' => 'srv_compression.active', 'default_value' => true]),
 
-            array('type' => 'divide'),
-            array('type' => 'checkbox', 'name' => __('Enable browser cache', 'wpopt'), 'id' => 'srv_browser_cache.active', 'value' => $this->option('srv_browser_cache.active')),
-            array('type' => 'checkbox', 'parent' => 'srv_browser_cache.active', 'name' => __('Use Cache Control Headers', 'wpopt'), 'id' => 'srv_browser_cache.cache_control', 'value' => $this->option('srv_browser_cache.cache_control', true)),
-            array('type' => 'numeric', 'parent' => 'srv_browser_cache.active', 'name' => __('Default lifetime', 'wpopt'), 'id' => 'srv_browser_cache.lifetime_default', 'value' => $this->option('srv_browser_cache.lifetime_default', MONTH_IN_SECONDS)),
-            array('type' => 'numeric', 'parent' => 'srv_browser_cache.active', 'name' => __('CSS & JavaScripts lifetime', 'wpopt'), 'id' => 'srv_browser_cache.lifetime_text', 'value' => $this->option('srv_browser_cache.lifetime_text', MONTH_IN_SECONDS)),
-            array('type' => 'numeric', 'parent' => 'srv_browser_cache.active', 'name' => __('Images lifetime', 'wpopt'), 'id' => 'srv_browser_cache.lifetime_image', 'value' => $this->option('srv_browser_cache.lifetime_image', MONTH_IN_SECONDS)),
-            array('type' => 'numeric', 'parent' => 'srv_browser_cache.active', 'name' => __('Fonts lifetime', 'wpopt'), 'id' => 'srv_browser_cache.lifetime_font', 'value' => $this->option('srv_browser_cache.lifetime_font', YEAR_IN_SECONDS)),
-            array('type' => 'numeric', 'parent' => 'srv_browser_cache.active', 'name' => __('Archives lifetime', 'wpopt'), 'id' => 'srv_browser_cache.lifetime_archive', 'value' => $this->option('srv_browser_cache.lifetime_archive', DAY_IN_SECONDS)),
+            $this->setting_field('', false, "divide"),
+            $this->setting_field(__('Enable browser cache', 'wpopt'), "srv_browser_cache.active", "checkbox"),
+            $this->setting_field(__('Use Cache Control Headers', 'wpopt'), "srv_browser_cache.cache_control", "checkbox", ['parent' => 'srv_browser_cache.active', 'default_value' => true]),
+            $this->setting_field(__('Default lifetime', 'wpopt'), "srv_browser_cache.lifetime_default", "numeric", ['parent' => 'srv_browser_cache.active', 'default_value' => MONTH_IN_SECONDS]),
+            $this->setting_field(__('CSS & JavaScripts lifetime', 'wpopt'), "srv_browser_cache.lifetime_text", "numeric", ['parent' => 'srv_browser_cache.active', 'default_value' => MONTH_IN_SECONDS]),
+            $this->setting_field(__('Images lifetime', 'wpopt'), "srv_browser_cache.lifetime_image", "numeric", ['parent' => 'srv_browser_cache.active', 'default_value' => MONTH_IN_SECONDS]),
+            $this->setting_field(__('Fonts lifetime', 'wpopt'), "srv_browser_cache.lifetime_font", "numeric", ['parent' => 'srv_browser_cache.active', 'default_value' => YEAR_IN_SECONDS]),
+            $this->setting_field(__('Archives lifetime', 'wpopt'), "srv_browser_cache.lifetime_archive", "numeric", ['parent' => 'srv_browser_cache.active', 'default_value' => DAY_IN_SECONDS])
         );
     }
 }

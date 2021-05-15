@@ -5,7 +5,7 @@ Donate link: https://www.paypal.me/sh1zen
 Requires at least: 4.2.0 
 Tested up to: 5.7
 Requires PHP: 5.3 
-Stable tag: 1.5.1
+Stable tag: 1.5.2
 License: GNU v3.0 License
 URI: https://github.com/sh1zen/wp-optimizer/blob/master/LICENSE
 
@@ -101,7 +101,7 @@ WordPress plugin.
 * HTML, JavaScript and CSS optimization
 * CDN support
 * Reverse proxy support
-* NGINX support
+* NGINX full support
 
 == Frequently Asked Questions ==
 
@@ -154,15 +154,17 @@ work! Otherwise, go to the new added module "Setting" and try a reset.
 
 == Upgrade Notice ==
 
-= 1.5.1 =
-Added wp_optimizer module carrying some new features, like security fixes, browser caching system and server
-enhancements. Improved settings handling and cron schedules. Extended support to PHP 8.0
-This is a huge upgrade, so plugin settings will be reset to default to ensure no conflicts.
-
+= 1.5.2 =
+* Added option to remove jQuery-Migrate in wp-customizer module, and some bug fixes
 
 == Changelog ==
 
-* added image optimization and orphaned media remover module
+= 1.5.2 =
+
+* added option to remove jQuery-Migrate in wp-customizer module
+* improved wp-customizer Block-Editor disabler
+* improved wp updates disabler tool
+* rewritten some core functionality
 
 = 1.5.1 =
 
@@ -178,7 +180,6 @@ This is a huge upgrade, so plugin settings will be reset to default to ensure no
 * improvements in settings core
 * fixed some bugs in module folder_size
 * improved updates handling
-
 
 = 1.4.3 =
 

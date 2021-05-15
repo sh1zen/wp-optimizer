@@ -223,8 +223,8 @@ class Mod_Folder_Size extends Module
 
     protected function setting_fields()
     {
-        return array(
-            array('type' => 'textarea', 'name' => __('Paths', 'wpopt'), 'id' => 'paths', 'value' => implode(PHP_EOL, $this->option('paths', array()))),
+        return $this->group_setting_fields(
+            $this->setting_field(__('Paths', 'wpopt'), "paths", "textarea", ['value' => implode(PHP_EOL, $this->option('paths', array()))])
         );
     }
 }

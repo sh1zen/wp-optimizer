@@ -94,7 +94,7 @@ class Mod_WP_Security extends Module
                 // remove version from rss
                 add_filter('the_generator', '__return_empty_string');
 
-                if(function_exists('remove_yoast_seo_comments_fn'))
+                if (function_exists('remove_yoast_seo_comments_fn'))
                     add_action('template_redirect', 'remove_yoast_seo_comments_fn', 9999);
             }
 
@@ -123,7 +123,7 @@ class Mod_WP_Security extends Module
         foreach ($this->server_conf_hooks as $server_hooks => $value) {
 
             if ($this->deactivating("{$server_hooks}.active", $input)) {
-               WP_OptiSec::server_conf($server_hooks, 'remove');
+                WP_OptiSec::server_conf($server_hooks, 'remove');
             }
             elseif (Settings::get_option($new_valid, "{$server_hooks}.active")) {
                 // do also if not activating to ensure children settings changes are performed
@@ -176,32 +176,33 @@ class Mod_WP_Security extends Module
 
     protected function setting_fields()
     {
-        return array(
-            array('type' => 'separator', 'name' => __('Some configuration are available only in apache.', 'wpopt')),
-            array('type' => 'checkbox', 'name' => __('Requests and Server', 'wpopt'), 'id' => 'srv_security.active', 'value' => $this->option('srv_security.active')),
-            array('type' => 'checkbox', 'parent' => 'srv_security.active', 'name' => __('Disable directory listing', 'wpopt'), 'id' => 'srv_security.listings', 'value' => $this->option('srv_security.listings', true)),
-            array('type' => 'checkbox', 'parent' => 'srv_security.active', 'name' => __('Disable access to configuration file', 'wpopt'), 'id' => 'srv_security.protect_htaccess', 'value' => $this->option('srv_security.protect_htaccess', true)),
-            array('type' => 'checkbox', 'parent' => 'srv_security.active', 'name' => __('Enable HTTPS Strict Transport Security', 'wpopt'), 'id' => 'srv_security.hsts', 'value' => $this->option('srv_security.hsts', true)),
-            array('type' => 'checkbox', 'parent' => 'srv_security.active', 'name' => __('Disable Cross-Origin Resource Sharing', 'wpopt'), 'id' => 'srv_security.cors', 'value' => $this->option('srv_security.cors', true)),
-            array('type' => 'checkbox', 'parent' => 'srv_security.active', 'name' => __('Disable HTTP Track & Trace', 'wpopt'), 'id' => 'srv_security.http_track&trace', 'value' => $this->option('srv_security.http_track&trace', true)),
-            array('type' => 'checkbox', 'parent' => 'srv_security.active', 'name' => __('Block Cross Site Scripting', 'wpopt'), 'id' => 'srv_security.xss', 'value' => $this->option('srv_security.xss', true)),
-            array('type' => 'checkbox', 'parent' => 'srv_security.active', 'name' => __('Send No Sniff Header', 'wpopt'), 'id' => 'srv_security.nosniff', 'value' => $this->option('srv_security.nosniff', true)),
-            array('type' => 'checkbox', 'parent' => 'srv_security.active', 'name' => __('Send No Referrer Header', 'wpopt'), 'id' => 'srv_security.noreferrer', 'value' => $this->option('srv_security.noreferrer')),
-            array('type' => 'checkbox', 'parent' => 'srv_security.active', 'name' => __('Send No Frame Header', 'wpopt'), 'id' => 'srv_security.noframe', 'value' => $this->option('srv_security.noframe')),
+        return $this->group_setting_fields(
+            $this->setting_field(__('Some configuration are available only in apache.', 'wpopt'), false, "separator"),
+            $this->setting_field(__('Requests and Server', 'wpopt'), "srv_security.active", "checkbox"),
+            $this->setting_field(__('Disable directory listing', 'wpopt'), "srv_security.listings", "checkbox", ['parent' => 'srv_security.active', 'default_value' => true]),
+            $this->setting_field(__('Disable access to configuration file', 'wpopt'), "srv_security.protect_htaccess", "checkbox", ['parent' => 'srv_security.active', 'default_value' => true]),
+            $this->setting_field(__('Enable HTTPS Strict Transport Security', 'wpopt'), "srv_security.hsts", "checkbox", ['parent' => 'srv_security.active', 'default_value' => true]),
+            $this->setting_field(__('Disable Cross-Origin Resource Sharing', 'wpopt'), "srv_security.cors", "checkbox", ['parent' => 'srv_security.active', 'default_value' => true]),
+            $this->setting_field(__('Disable HTTP Track & Trace', 'wpopt'), "srv_security.http_track&trace", "checkbox", ['parent' => 'srv_security.active', 'default_value' => true]),
+            $this->setting_field(__('Block Cross Site Scripting', 'wpopt'), "srv_security.xss", "checkbox", ['parent' => 'srv_security.active', 'default_value' => true]),
+            $this->setting_field(__('Send No Sniff Header', 'wpopt'), "srv_security.nosniff", "checkbox", ['parent' => 'srv_security.active', 'default_value' => true]),
+            $this->setting_field(__('Send No Referrer Header', 'wpopt'), "srv_security.noreferrer", "checkbox", ['parent' => 'srv_security.active']),
+            $this->setting_field(__('Send No Frame Header', 'wpopt'), "srv_security.noframe", "checkbox", ['parent' => 'srv_security.active']),
 
-            array('type' => 'divide'),
-            array('type' => 'checkbox', 'name' => __('Disable Information Disclosure & Remove Meta information', 'wpopt'), 'id' => 'dcl_security.active', 'value' => $this->option('dcl_security.active')),
-            array('type' => 'checkbox', 'parent' => 'dcl_security.active', 'name' => __('Hide WordPress Version Number', 'wpopt'), 'id' => 'dcl_security.nowpversion', 'value' => $this->option('dcl_security.nowpversion')),
-            array('type' => 'checkbox', 'parent' => 'dcl_security.active', 'name' => __('Remove WordPress Meta Generator Tag', 'wpopt'), 'id' => 'dcl_security.nowpgenerator', 'value' => $this->option('dcl_security.nowpgenerator')),
-            array('type' => 'checkbox', 'parent' => 'dcl_security.active', 'name' => __('Remove Version from Stylesheet', 'wpopt'), 'id' => 'dcl_security.nocssversion', 'value' => $this->option('dcl_security.nocssversion')),
-            array('type' => 'checkbox', 'parent' => 'dcl_security.active', 'name' => __('Remove Version from Script', 'wpopt'), 'id' => 'dcl_security.nojsversion', 'value' => $this->option('dcl_security.nojsversion')),
+            $this->setting_field('', false, "divide"),
+            $this->setting_field(__('Disable Information Disclosure & Remove Meta information.', 'wpopt'), "dcl_security.active", "checkbox"),
+            $this->setting_field(__('Hide WordPress Version Number', 'wpopt'), "dcl_security.nowpversion", "checkbox", ['parent' => 'dcl_security.active']),
+            $this->setting_field(__('Remove WordPress Meta Generator Tag', 'wpopt'), "dcl_security.nowpgenerator", "checkbox", ['parent' => 'dcl_security.active']),
+            $this->setting_field(__('Remove Version from Stylesheet', 'wpopt'), "dcl_security.nocssversion", "checkbox", ['parent' => 'dcl_security.active']),
+            $this->setting_field(__('Remove Version from Script', 'wpopt'), "dcl_security.nojsversion", "checkbox", ['parent' => 'dcl_security.active']),
 
-            array('type' => 'divide'),
-            array('type' => 'checkbox', 'name' => __('Admin & API Security', 'wpopt'), 'id' => 'a_api.active', 'value' => $this->option('a_api.active')),
-            array('type' => 'checkbox', 'parent' => 'a_api.active', 'name' => __('Disable WP User Enumeration', 'wpopt'), 'id' => 'security.nousernum', 'value' => $this->option('security.nousernum')),
-            array('type' => 'checkbox', 'parent' => 'a_api.active', 'name' => __('Disable WP File Editor', 'wpopt'), 'id' => 'security.disable_file_editor', 'value' => $this->option('security.disable_file_editor')),
-            array('type' => 'checkbox', 'parent' => 'a_api.active', 'name' => __('Disable XMLRPC', 'wpopt'), 'id' => 'security.disable_xml_rpc', 'value' => $this->option('security.disable_xml_rpc')),
-            array('type' => 'checkbox', 'parent' => 'a_api.active', 'name' => __('Disable WP API JSON', 'wpopt'), 'id' => 'security.disable_jsonapi', 'value' => $this->option('security.disable_jsonapi')),
+            $this->setting_field('', false, "divide"),
+            $this->setting_field(__('Admin & API Security', 'wpopt'), "a_api.active", "checkbox"),
+            $this->setting_field(__('Disable WP User Enumeration', 'wpopt'), "a_api.nousernum", "checkbox", ['parent' => 'a_api.active']),
+            $this->setting_field(__('Disable WP File Editor', 'wpopt'), "a_api.disable_file_editor", "checkbox", ['parent' => 'a_api.active']),
+            $this->setting_field(__('Disable XMLRPC', 'wpopt'), "a_api.disable_xml_rpc", "checkbox", ['parent' => 'a_api.active']),
+            $this->setting_field(__('Disable WP API JSON', 'wpopt'), "a_api.disable_jsonapi", "checkbox", ['parent' => 'a_api.active'])
         );
+
     }
 }

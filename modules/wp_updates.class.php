@@ -18,7 +18,7 @@ class Mod_WP_Updates extends Module
 
     private function disable_updates()
     {
-        if ($this->option( 'core-updates')) {
+        if ($this->option('core-updates')) {
             remove_action('init', 'wp_version_check');
 
             add_filter('pre_option_update_core', '__return_null');
@@ -34,7 +34,7 @@ class Mod_WP_Updates extends Module
             wp_clear_scheduled_hook('wp_version_check');
         }
 
-        if ($this->option( 'page-updates')) {
+        if ($this->option('page-updates')) {
             // Remove updates page.
 
             add_action('admin_menu', function () {
@@ -42,7 +42,7 @@ class Mod_WP_Updates extends Module
             });
         }
 
-        if ($this->option( 'plugin-updates')) {
+        if ($this->option('plugin-updates')) {
             // Disable plugin API checks.
             remove_all_filters('plugins_api');
 
@@ -57,7 +57,7 @@ class Mod_WP_Updates extends Module
             add_filter('auto_update_plugin', '__return_false');
         }
 
-        if ($this->option( 'theme-updates')) {
+        if ($this->option('theme-updates')) {
             // Disable theme checks.
             remove_action('load-update-core.php', 'wp_update_themes');
             remove_action('load-themes.php', 'wp_update_themes');
@@ -69,7 +69,7 @@ class Mod_WP_Updates extends Module
             add_filter('auto_update_theme', '__return_false');
         }
 
-        if ($this->option( 'message-updates')) {
+        if ($this->option('message-updates')) {
             // Hide nag messages.
             remove_action('admin_notices', 'update_nag', 3);
             remove_action('network_admin_notices', 'update_nag', 3);
@@ -77,7 +77,7 @@ class Mod_WP_Updates extends Module
             remove_action('network_admin_notices', 'maintenance_nag');
         }
 
-        if ($this->option( 'automatic-updates')) {
+        if ($this->option('automatic-updates')) {
 
             add_filter('automatic_updater_disabled', '__return_true');
 
@@ -95,19 +95,11 @@ class Mod_WP_Updates extends Module
 
             add_filter('auto_update_core', '__return_false');
             add_filter('wp_auto_update_core', '__return_false');
-
             add_filter('auto_update_plugin', '__return_false');
-
             add_filter('auto_update_theme', '__return_false');
-
-            wp_clear_scheduled_hook('wp_maybe_auto_update');
-            wp_clear_scheduled_hook('wp_version_check');
-
-
-            add_filter('automatic_updates_is_vcs_checkout', '__return_true');
         }
 
-        if ($this->option( 'mail-updates')) {
+        if ($this->option('mail-updates')) {
             add_filter('auto_core_update_send_email', '__return_false');
             add_filter('auto_core_update_send_email', '__return_false');
             add_filter('automatic_updates_send_debug_email ', '__return_false');
@@ -115,24 +107,24 @@ class Mod_WP_Updates extends Module
         }
     }
 
-    protected function setting_fields()
-    {
-        return array(
-            array('type' => 'checkbox', 'name' => __('Disable Wordpress Core Updates', 'wpopt'), 'id' => 'core-updates', 'value' => $this->option( 'core-updates')),
-            array('type' => 'checkbox', 'name' => __('Disable Plugins Updates', 'wpopt'), 'id' => 'plugin-updates', 'value' => $this->option( 'plugin-updates')),
-            array('type' => 'checkbox', 'name' => __('Disable Themes Updates', 'wpopt'), 'id' => 'theme-updates', 'value' => $this->option( 'theme-updates')),
-            array('type' => 'checkbox', 'name' => __('Disable Updates Messages', 'wpopt'), 'id' => 'message-updates', 'value' => $this->option( 'message-updates')),
-            array('type' => 'checkbox', 'name' => __('Remove Updates Page', 'wpopt'), 'id' => 'page-updates', 'value' => $this->option( 'page-updates')),
-            array('type' => 'checkbox', 'name' => __('Disable Automatic Updates', 'wpopt'), 'id' => 'automatic-updates', 'value' => $this->option( 'automatic-updates')),
-            array('type' => 'checkbox', 'name' => __('Disable WordPress update notices mail', 'wpopt'), 'id' => 'mail-updates', 'value' => $this->option( 'mail-updates')),
-        );
-    }
-
     public function restricted_access($context = '')
     {
-        if($context === 'settings')
+        if ($context === 'settings')
             return !current_user_can('manage_options');
 
         return false;
+    }
+
+    protected function setting_fields()
+    {
+        return $this->group_setting_fields(
+            $this->setting_field(__('Disable Wordpress Core Updates', 'wpopt'), "core-updates", "checkbox"),
+            $this->setting_field(__('Disable Plugins Updates', 'wpopt'), "plugin-updates", "checkbox"),
+            $this->setting_field(__('Disable Themes Updates', 'wpopt'), "theme-update", "checkbox"),
+            $this->setting_field(__('Disable Updates Messages', 'wpopt'), "message-updates", "checkbox"),
+            $this->setting_field(__('Remove Updates Page', 'wpopt'), "page-updates", "checkbox"),
+            $this->setting_field(__('Disable Automatic Updates', 'wpopt'), "automatic-updates", "checkbox"),
+            $this->setting_field(__('Disable WordPress update notices mail', 'wpopt'), "mail-updates", "checkbox")
+        );
     }
 }

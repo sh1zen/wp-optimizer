@@ -1,6 +1,6 @@
 jQuery(document).ready(function ($) {
 
-    let wpopt_abspath = "<?= WO_UtilEnv::normalize_path(ABSPATH, true) ?>";
+    let wpopt_abspath = "<?php echo WO_UtilEnv::normalize_path(ABSPATH, true) ?>";
 
     let $dirExplorer = $(".wpopt-dir-explorer");
     let $input = $dirExplorer.find('input');

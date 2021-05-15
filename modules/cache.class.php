@@ -93,7 +93,7 @@ class Mod_Cache extends Module
         if ($this->activating('wp_db', $input)) {
             file_put_contents(
                 WP_CONTENT_DIR . DIRECTORY_SEPARATOR . "db.php",
-                "<?php" . PHP_EOL . PHP_EOL . "include_once('" . WPOPT_SUPPORTERS  . "cache/db.php');"
+                "<?php" . PHP_EOL . PHP_EOL . "include_once('" . WPOPT_SUPPORTERS . "cache/db.php');"
             );
         }
 
@@ -107,16 +107,15 @@ class Mod_Cache extends Module
 
     protected function setting_fields()
     {
-        return array(
-            array('type' => 'checkbox', 'name' => __('Cache WP_Query', 'wpopt'), 'id' => 'wp_query.active', 'value' => $this->option('wp_query.active', false)),
-            array('type' => 'time', 'parent' => 'wp_query.active', 'name' => __('Lifespan', 'wpopt'), 'id' => 'wp_query.lifespan', 'value' => $this->option('wp_query.lifespan', '')),
-            array('type' => 'divide'),
-            /*
-            array('type' => 'checkbox', 'name' => __('Object Cache', 'wpopt'), 'id' => 'wp_object', 'value' => $this->option('wp_object.active', false)),
-            array('type' => 'time', 'parent' => 'wp_object', 'name' => __('Lifespan', 'wpopt'), 'id' => 'wp_object_lifespan', 'value' => $this->option('wp_object.lifespan', '')),
-            array('type' => 'divide'),
-            */
-            array('type' => 'checkbox', 'name' => __('Database Query Cache', 'wpopt'), 'id' => 'wp_db', 'value' => $this->option('wp_db', false)),
+        return $this->group_setting_fields(
+            $this->setting_field(__('Cache WP_Query', 'wpopt'), "wp_query.active", "checkbox"),
+            $this->setting_field(__('Lifespan', 'wpopt'), "wp_query.lifespan", "time", ['parent' => 'wp_query.active']),
+            $this->setting_field('', false, 'divide'),
+
+            //$this->setting_field(__('Object Cache', 'wpopt'), "wp_object.active", "checkbox"),
+            //$this->setting_field(__('Lifespan', 'wpopt'), "wp_object.lifespan", "time", ['parent' => 'wp_object.active']),
+            $this->setting_field('', false, 'divide'),
+            $this->setting_field(__('Database Query Cache', 'wpopt'), "wp_db", "checkbox")
         );
     }
 

@@ -142,11 +142,11 @@ class PagesHandler
                 <div class="wpopt-faq-list">
                     <div class="wpopt-faq-item">
                         <div class="wpopt-faq-question-wrapper ">
-                            <div class="wpopt-faq-question wpopt-collapse-handler"><?= __('Where can I configure optimization parameters?', 'wpopt') ?>
+                            <div class="wpopt-faq-question wpopt-collapse-handler"><?php echo __('Where can I configure optimization parameters?', 'wpopt') ?>
                                 <icon class="wpopt-collapse-icon">+</icon>
                             </div>
                             <div class="wpopt-faq-answer wpopt-collapse">
-                                <p><?= sprintf(__('Any module option is configurable in <a href="%s">Modules Options panel</a>.', 'wpopt'), admin_url('admin.php?page=wpopt-modules-settings#media')); ?></p>
+                                <p><?php echo sprintf(__('Any module option is configurable in <a href="%s">Modules Options panel</a>.', 'wpopt'), admin_url('admin.php?page=wpopt-modules-settings#media')); ?></p>
                             </div>
                         </div>
                     </div>

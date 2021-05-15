@@ -75,7 +75,7 @@ class RuleUtil
             }
         }
 
-        if ($replace_start !== false) {
+        if ($replace_start != false) {
             $data = RuleUtil::trim_rules(substr_replace($data, $rules, $replace_start, $replace_length));
         }
         else {
