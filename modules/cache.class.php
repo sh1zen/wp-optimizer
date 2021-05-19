@@ -77,7 +77,7 @@ class Mod_Cache extends Module
         }
 
         // object-cache
-        if ($this->activating('wp_object.active', $input)) {
+        /*if ($this->activating('wp_object.active', $input)) {
             file_put_contents(
                 WP_CONTENT_DIR . DIRECTORY_SEPARATOR . "object-cache.php",
                 "<?php" . PHP_EOL . PHP_EOL . "include_once('" . WP_PLUGIN_DIR . DIRECTORY_SEPARATOR . "wp-optimizer/modules/cache/object-cache.php');"
@@ -87,7 +87,7 @@ class Mod_Cache extends Module
         if ($this->deactivating('wp_object.active', $input)) {
             WPOPT_Object_Cache::clear_cache();
             Disk::delete_files(WP_CONTENT_DIR . DIRECTORY_SEPARATOR . "object-cache.php");
-        }
+        }*/
 
         // database-cache
         if ($this->activating('wp_db', $input)) {

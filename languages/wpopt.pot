@@ -4,7 +4,7 @@ msgstr ""
 "Project-Id-Version: wpopt-translation\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/wp-"
 "optimizer/\n"
-"POT-Creation-Date: 2021-05-04 12:57+0200\n"
+"POT-Creation-Date: 2021-05-16 11:44+0200\n"
 "PO-Revision-Date: 2020-05-13 02:34+0200\n"
 "Last-Translator: sh1zen\n"
 "Language-Team: sh1zen\n"
@@ -192,23 +192,23 @@ msgstr ""
 msgid "No modules enabled. To enable them go <a href='"
 msgstr ""
 
-#: inc/Module.class.php:132
+#: inc/Module.class.php:133
 msgid "Action was correctly executed"
 msgstr ""
 
-#: inc/Module.class.php:134
+#: inc/Module.class.php:135
 msgid "Action execution failed"
 msgstr ""
 
-#: inc/Module.class.php:166
+#: inc/Module.class.php:167
 msgid "WP Optimizer::ajax_handler -> empty ajax handler for "
 msgstr ""
 
-#: inc/Module.class.php:215
+#: inc/Module.class.php:212
 msgid "Save Changes"
 msgstr ""
 
-#: inc/Module.class.php:252
+#: inc/Module.class.php:249
 msgid "This Module is disabled for you or for your settings."
 msgstr ""
 
@@ -240,437 +240,437 @@ msgstr ""
 msgid "Lifespan"
 msgstr ""
 
-#: modules/cache.class.php:119
+#: modules/cache.class.php:118
 msgid "Database Query Cache"
 msgstr ""
 
-#: modules/cache.class.php:127
+#: modules/cache.class.php:126
 msgid "Cache size"
 msgstr ""
 
-#: modules/database.class.php:56
+#: modules/database.class.php:57
 msgid "Auto optimize Database"
 msgstr ""
 
-#: modules/database.class.php:108
+#: modules/database.class.php:109
 msgid "Separate multiple queries with \"<u>####</u>\""
 msgstr ""
 
-#: modules/database.class.php:109
+#: modules/database.class.php:110
 msgid ""
 "Use only INSERT, UPDATE, REPLACE, DELETE, CREATE and ALTER statements."
 msgstr ""
 
-#: modules/database.class.php:121
+#: modules/database.class.php:122
 msgid "Run"
 msgstr ""
 
-#: modules/database.class.php:123
+#: modules/database.class.php:124
 msgid "Clear"
 msgstr ""
 
-#: modules/database.class.php:129
+#: modules/database.class.php:130
 msgid ""
 "1. CREATE statement will return an error, which is perfectly normal "
 "due to the database class. To confirm that your table has been created "
 "check the Tables panel."
 msgstr ""
 
-#: modules/database.class.php:131
+#: modules/database.class.php:132
 msgid ""
 "2. UPDATE statement may return an error sometimes due to the newly "
 "updated value being the same as the previous value."
 msgstr ""
 
-#: modules/database.class.php:133
+#: modules/database.class.php:134
 msgid ""
 "3. ALTER statement will return an error because there is no value "
 "returned."
 msgstr ""
 
-#: modules/database.class.php:150
+#: modules/database.class.php:151
 msgid "Checking Backup Folder"
 msgstr ""
 
-#: modules/database.class.php:155
+#: modules/database.class.php:156
 msgid "OK"
 msgstr ""
 
-#: modules/database.class.php:158
+#: modules/database.class.php:159
 msgid "FAIL"
 msgstr ""
 
-#: modules/database.class.php:159
+#: modules/database.class.php:160
 msgid ""
 "Backup folder does NOT exist or is NOT WRITABLE. Please create it and "
 "set permissions to '777' or change the location of the backup folder "
 "in settings."
 msgstr ""
 
-#: modules/database.class.php:170
+#: modules/database.class.php:171
 msgid "Manage Backups"
 msgstr ""
 
-#: modules/database.class.php:174
+#: modules/database.class.php:175
 msgid "No."
 msgstr ""
 
-#: modules/database.class.php:175
+#: modules/database.class.php:176
 msgid "MD5 Checksum"
 msgstr ""
 
-#: modules/database.class.php:176
+#: modules/database.class.php:177
 msgid "Database File"
 msgstr ""
 
-#: modules/database.class.php:177
+#: modules/database.class.php:178
 msgid "Creation date"
 msgstr ""
 
-#: modules/database.class.php:178
+#: modules/database.class.php:179
 #: modules/supporters/database/List_Table.class.php:130
 msgid "Size"
 msgstr ""
 
-#: modules/database.class.php:179
+#: modules/database.class.php:180
 msgid "Select"
 msgstr ""
 
-#: modules/database.class.php:221
+#: modules/database.class.php:222
 msgid "There Are No Database Backup Files Available."
 msgstr ""
 
-#: modules/database.class.php:225
+#: modules/database.class.php:226
 #, php-format
 msgid "%s Backup found"
 msgstr ""
 
-#: modules/database.class.php:230
+#: modules/database.class.php:231
 msgid "Download"
 msgstr ""
 
-#: modules/database.class.php:232
+#: modules/database.class.php:233
 #: modules/supporters/media/OptimizeMedia__Table.class.php:582
 msgid "Restore"
 msgstr ""
 
-#: modules/database.class.php:233
+#: modules/database.class.php:234
 msgid ""
 "Are you sure to restore selected backup?\\nAny data inserted after the "
 "backup date will be lost.\\n\\nThis action is not reversible."
 msgstr ""
 
-#: modules/database.class.php:236
+#: modules/database.class.php:237
 #: modules/supporters/database/List_Table.class.php:84
 msgid "Delete"
 msgstr ""
 
-#: modules/database.class.php:237
+#: modules/database.class.php:238
 msgid "Are you sure to delete selected backup?"
 msgstr ""
 
-#: modules/database.class.php:245
+#: modules/database.class.php:246
 msgid "Backup Database"
 msgstr ""
 
-#: modules/database.class.php:249 modules/database.class.php:631
+#: modules/database.class.php:250 modules/database.class.php:632
 msgid "Option"
 msgstr ""
 
-#: modules/database.class.php:250 modules/sysinfo.class.php:28
+#: modules/database.class.php:251 modules/sysinfo.class.php:28
 #: modules/sysinfo.class.php:30
 msgid "Value"
 msgstr ""
 
-#: modules/database.class.php:254
+#: modules/database.class.php:255
 msgid "Database Name:"
 msgstr ""
 
-#: modules/database.class.php:258
+#: modules/database.class.php:259
 msgid "Database Backup To:"
 msgstr ""
 
-#: modules/database.class.php:262
+#: modules/database.class.php:263
 msgid "Database Backup Date:"
 msgstr ""
 
-#: modules/database.class.php:263 modules/sysinfo.class.php:80
+#: modules/database.class.php:264 modules/sysinfo.class.php:80
 #, php-format
 msgid "%s @ %s"
 msgstr ""
 
-#: modules/database.class.php:266
+#: modules/database.class.php:267
 msgid "Database Backup File Name:"
 msgstr ""
 
-#: modules/database.class.php:272
+#: modules/database.class.php:273
 msgid "Database Backup Type:"
 msgstr ""
 
-#: modules/database.class.php:273
+#: modules/database.class.php:274
 msgid "Full (Structure and Data)"
 msgstr ""
 
-#: modules/database.class.php:276
+#: modules/database.class.php:277
 msgid "MYSQL Dump Location:"
 msgstr ""
 
-#: modules/database.class.php:289
+#: modules/database.class.php:290
 msgid "Backup now"
 msgstr ""
 
-#: modules/database.class.php:348 modules/media.class.php:106
+#: modules/database.class.php:349 modules/media.class.php:107
 msgid "Action not supported"
 msgstr ""
 
-#: modules/database.class.php:371
+#: modules/database.class.php:372
 msgid "Empty Query"
 msgstr ""
 
-#: modules/database.class.php:391
+#: modules/database.class.php:392
 msgid "Empty query"
 msgstr ""
 
-#: modules/database.class.php:410
+#: modules/database.class.php:411
 msgid "Query(s) executed successfully"
 msgstr ""
 
-#: modules/database.class.php:418 modules/database.class.php:436
-#: modules/database.class.php:482
+#: modules/database.class.php:419 modules/database.class.php:437
+#: modules/database.class.php:483
 msgid "No database backup selected"
 msgstr ""
 
-#: modules/database.class.php:425
+#: modules/database.class.php:426
 msgid "Download started."
 msgstr ""
 
-#: modules/database.class.php:427
+#: modules/database.class.php:428
 msgid "Something went wrong during the download."
 msgstr ""
 
-#: modules/database.class.php:445
+#: modules/database.class.php:446
 #, php-format
 msgid "Database backup '%s' deleted successfully."
 msgstr ""
 
-#: modules/database.class.php:447
+#: modules/database.class.php:448
 #, php-format
 msgid "Unable to delete '%s', check file permissions."
 msgstr ""
 
-#: modules/database.class.php:450
+#: modules/database.class.php:451
 #, php-format
 msgid "Invalid database backup '%s'."
 msgstr ""
 
-#: modules/database.class.php:471
+#: modules/database.class.php:472
 msgid "Backup correctly done."
 msgstr ""
 
-#: modules/database.class.php:473
+#: modules/database.class.php:474
 msgid "Something went wrong. Try again."
 msgstr ""
 
-#: modules/database.class.php:489
+#: modules/database.class.php:490
 msgid "Database restored."
 msgstr ""
 
-#: modules/database.class.php:492
+#: modules/database.class.php:493
 msgid "Something went wrong during the backup restore."
 msgstr ""
 
-#: modules/database.class.php:497
+#: modules/database.class.php:498
 msgid "Invalid request."
 msgstr ""
 
-#: modules/database.class.php:538
+#: modules/database.class.php:539
 #: modules/supporters/database/List_Table.class.php:24
 msgid "Tables"
 msgstr ""
 
-#: modules/database.class.php:539
+#: modules/database.class.php:540
 msgid "Database tables"
 msgstr ""
 
-#: modules/database.class.php:544
+#: modules/database.class.php:545
 msgid "Database sweeper"
 msgstr ""
 
-#: modules/database.class.php:545
+#: modules/database.class.php:546
 msgid "Database Sweeper"
 msgstr ""
 
-#: modules/database.class.php:550
+#: modules/database.class.php:551
 msgid "Backup Manager"
 msgstr ""
 
-#: modules/database.class.php:551
+#: modules/database.class.php:552
 msgid "Backup your database"
 msgstr ""
 
-#: modules/database.class.php:557 modules/database.class.php:558
+#: modules/database.class.php:558 modules/database.class.php:559
 msgid "Run SQL Query"
 msgstr ""
 
-#: modules/database.class.php:572
+#: modules/database.class.php:573
 msgid "Posts"
 msgstr ""
 
-#: modules/database.class.php:575
+#: modules/database.class.php:576
 msgid "Revision"
 msgstr ""
 
-#: modules/database.class.php:576
+#: modules/database.class.php:577
 msgid "Auto Draft"
 msgstr ""
 
-#: modules/database.class.php:577
+#: modules/database.class.php:578
 msgid "Deleted Posts"
 msgstr ""
 
-#: modules/database.class.php:580
+#: modules/database.class.php:581
 msgid "Posts Metas"
 msgstr ""
 
-#: modules/database.class.php:583
+#: modules/database.class.php:584
 msgid "Orphan Postmeta"
 msgstr ""
 
-#: modules/database.class.php:584
+#: modules/database.class.php:585
 msgid "Duplicated Postmeta"
 msgstr ""
 
-#: modules/database.class.php:585
+#: modules/database.class.php:586
 msgid "Oembed Postmeta"
 msgstr ""
 
-#: modules/database.class.php:589
+#: modules/database.class.php:590
 msgid "Comments"
 msgstr ""
 
-#: modules/database.class.php:592
+#: modules/database.class.php:593
 msgid "Unapproved Comments"
 msgstr ""
 
-#: modules/database.class.php:593
+#: modules/database.class.php:594
 msgid "Spam Comments"
 msgstr ""
 
-#: modules/database.class.php:594
+#: modules/database.class.php:595
 msgid "Deleted Comments"
 msgstr ""
 
-#: modules/database.class.php:598
+#: modules/database.class.php:599
 msgid "Comments Metas"
 msgstr ""
 
-#: modules/database.class.php:601
+#: modules/database.class.php:602
 msgid "Orphan Comments"
 msgstr ""
 
-#: modules/database.class.php:602
+#: modules/database.class.php:603
 msgid "Duplicated Comments"
 msgstr ""
 
-#: modules/database.class.php:606
+#: modules/database.class.php:607
 msgid "Users Metas"
 msgstr ""
 
-#: modules/database.class.php:609
+#: modules/database.class.php:610
 msgid "Orphaned User Meta"
 msgstr ""
 
-#: modules/database.class.php:610
+#: modules/database.class.php:611
 msgid "Duplicated User Meta"
 msgstr ""
 
-#: modules/database.class.php:614
+#: modules/database.class.php:615
 msgid "Terms"
 msgstr ""
 
-#: modules/database.class.php:617
+#: modules/database.class.php:618
 msgid "Orphaned Term Relationship"
 msgstr ""
 
-#: modules/database.class.php:618
+#: modules/database.class.php:619
 msgid "Unused Terms"
 msgstr ""
 
-#: modules/database.class.php:622
+#: modules/database.class.php:623
 msgid "Terms metas"
 msgstr ""
 
-#: modules/database.class.php:625
+#: modules/database.class.php:626
 msgid "Orphaned Term Meta"
 msgstr ""
 
-#: modules/database.class.php:626
+#: modules/database.class.php:627
 msgid "Duplicated Term Meta"
 msgstr ""
 
-#: modules/database.class.php:634
+#: modules/database.class.php:635
 msgid "Transient Options"
 msgstr ""
 
-#: modules/database.class.php:640
+#: modules/database.class.php:641
 #, php-format
 msgid "If you click Details will be shown only %s items."
 msgstr ""
 
-#: modules/database.class.php:642
+#: modules/database.class.php:643
 msgid ""
 "Before doing any sweep it's recommended to make a backup of whole "
 "database."
 msgstr ""
 
-#: modules/database.class.php:659
+#: modules/database.class.php:660
 #, php-format
 msgid ""
 "There are a total of <strong class=\"attention\"><span>%1$s</span></"
 "strong> "
 msgstr ""
 
-#: modules/database.class.php:665 modules/database.class.php:700
+#: modules/database.class.php:666 modules/database.class.php:701
 msgid "Details"
 msgstr ""
 
-#: modules/database.class.php:666
+#: modules/database.class.php:667
 msgid "Count"
 msgstr ""
 
-#: modules/database.class.php:667
+#: modules/database.class.php:668
 msgid "% Of"
 msgstr ""
 
-#: modules/database.class.php:668
+#: modules/database.class.php:669
 msgid "Action"
 msgstr ""
 
-#: modules/database.class.php:696
+#: modules/database.class.php:697
 msgid "Sweep"
 msgstr ""
 
-#: modules/database.class.php:702
+#: modules/database.class.php:703
 msgid "None"
 msgstr ""
 
-#: modules/database.class.php:748
+#: modules/database.class.php:750
 msgid "Backup path"
 msgstr ""
 
-#: modules/database.class.php:749
+#: modules/database.class.php:752
 msgid "Sweeps:"
 msgstr ""
 
-#: modules/database.class.php:750
+#: modules/database.class.php:753
 msgid "Excluded Taxonomies (comma separated)"
 msgstr ""
 
-#: modules/database.class.php:751
+#: modules/database.class.php:755
 msgid "Backups:"
 msgstr ""
 
-#: modules/database.class.php:752
+#: modules/database.class.php:756
 msgid "Excluded Tables (comma separated)"
 msgstr ""
 
@@ -694,86 +694,86 @@ msgstr ""
 msgid "Paths"
 msgstr ""
 
-#: modules/media.class.php:75
+#: modules/media.class.php:76
 msgid "Auto optimize images (daily uploads)"
 msgstr ""
 
-#: modules/media.class.php:132
+#: modules/media.class.php:133
 msgid "No orphaned media found."
 msgstr ""
 
-#: modules/media.class.php:134
+#: modules/media.class.php:135
 msgid "Scan now"
 msgstr ""
 
-#: modules/media.class.php:162
+#: modules/media.class.php:163
 msgid "Before start optimizing makes sure you did:"
 msgstr ""
 
-#: modules/media.class.php:165
+#: modules/media.class.php:166
 #, php-format
 msgid "Read related <a href=\"%s\">FAQ</a>."
 msgstr ""
 
-#: modules/media.class.php:168
+#: modules/media.class.php:169
 #, php-format
 msgid "Setup your optimization parameters <a href=\"%s\">here</a>."
 msgstr ""
 
-#: modules/media.class.php:171
+#: modules/media.class.php:172
 msgid ""
 "Note that optimization will run in background and time required "
 "depends on number of media you have."
 msgstr ""
 
-#: modules/media.class.php:176
+#: modules/media.class.php:177
 #, php-format
 msgid ""
 "To guarantee a complete image optimization support, install \"<a href="
 "\"%s\">imagick</a>\" on your server."
 msgstr ""
 
-#: modules/media.class.php:182
+#: modules/media.class.php:183
 msgid "Specify a path where the media optimization will run."
 msgstr ""
 
-#: modules/media.class.php:183
+#: modules/media.class.php:184
 msgid "Optimization will run silently in background."
 msgstr ""
 
-#: modules/media.class.php:200
+#: modules/media.class.php:201
 msgid "Restart"
 msgstr ""
 
-#: modules/media.class.php:201
+#: modules/media.class.php:202
 msgid "Resume"
 msgstr ""
 
-#: modules/media.class.php:203
+#: modules/media.class.php:204
 msgid "Start"
 msgstr ""
 
-#: modules/media.class.php:205
+#: modules/media.class.php:206
 msgid "Pause"
 msgstr ""
 
-#: modules/media.class.php:211
+#: modules/media.class.php:212
 msgid "Optimization stats:"
 msgstr ""
 
-#: modules/media.class.php:243
+#: modules/media.class.php:244
 msgid "Images optimizer"
 msgstr ""
 
-#: modules/media.class.php:244
+#: modules/media.class.php:245
 msgid "Images Optimizer"
 msgstr ""
 
-#: modules/media.class.php:250
+#: modules/media.class.php:251
 msgid "Media cleaner"
 msgstr ""
 
-#: modules/media.class.php:251
+#: modules/media.class.php:252
 msgid "Media Cleaner"
 msgstr ""
 
@@ -1314,44 +1314,48 @@ msgstr ""
 msgid "AuthorURI"
 msgstr ""
 
-#: modules/wp_customizer.class.php:114
+#: modules/wp_customizer.class.php:147
 msgid "Disable Dashboard Welcome Panel"
 msgstr ""
 
-#: modules/wp_customizer.class.php:115
+#: modules/wp_customizer.class.php:148
 msgid "Disable Dashboard WordPress Blog"
 msgstr ""
 
-#: modules/wp_customizer.class.php:116
+#: modules/wp_customizer.class.php:149
 msgid "Hide Admin Bar"
 msgstr ""
 
-#: modules/wp_customizer.class.php:117
+#: modules/wp_customizer.class.php:150
 msgid "Hide Admin Bar for non admins"
 msgstr ""
 
-#: modules/wp_customizer.class.php:119
+#: modules/wp_customizer.class.php:152
 msgid "Disable Block Editor (Gutenberg)"
 msgstr ""
 
-#: modules/wp_customizer.class.php:120
+#: modules/wp_customizer.class.php:153
 msgid "Disable Core Blocks"
 msgstr ""
 
-#: modules/wp_customizer.class.php:121
+#: modules/wp_customizer.class.php:154
 msgid "Disable Core Sitemap"
 msgstr ""
 
-#: modules/wp_customizer.class.php:122
+#: modules/wp_customizer.class.php:155
 msgid "Disable Auto Paragraph"
 msgstr ""
 
-#: modules/wp_customizer.class.php:124
+#: modules/wp_customizer.class.php:157
 msgid "Disable Emoji"
 msgstr ""
 
-#: modules/wp_customizer.class.php:125
+#: modules/wp_customizer.class.php:158
 msgid "Disable Feed links"
+msgstr ""
+
+#: modules/wp_customizer.class.php:159
+msgid "Disable jQuery Migrate"
 msgstr ""
 
 #: modules/wp_optimizer.class.php:48
@@ -1497,7 +1501,7 @@ msgid "Send No Frame Header"
 msgstr ""
 
 #: modules/wp_security.class.php:193
-msgid "Disable Information Disclosure & Remove Meta information"
+msgid "Disable Information Disclosure & Remove Meta information."
 msgstr ""
 
 #: modules/wp_security.class.php:194

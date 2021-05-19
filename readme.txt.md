@@ -5,7 +5,7 @@ Donate link: https://www.paypal.me/sh1zen
 Requires at least: 4.2.0 
 Tested up to: 5.7
 Requires PHP: 5.3 
-Stable tag: 1.5.2
+Stable tag: 1.5.3
 License: GNU v3.0 License
 URI: https://github.com/sh1zen/wp-optimizer/blob/master/LICENSE
 
@@ -46,12 +46,13 @@ All customizable in few and easy steps.
 * ***Cache:*** an advanced caching system to ensure best speed performance, and the lowest space used.
 * ***Database:*** a powerful tool to manage and clean up your WordPress database.
 * ***Media:*** another powerful tool to manage all your media, removing duplicates or not used ones and optimizing images.
-* ***WP Optimizer:*** offers many features to improve SEO and server performances.
-* ***WP Updates:*** allow admins to disable some or all WordPress updates check.
-* ***WP Customizer:*** offers the most used features to customize your WordPress, like Block Editor disabler, Admin Bar hider and so on..
 * ***Server Info:*** a detailed useful information about your server, database, php and WordPress.
 * ***Dashboard installation size:*** a useful tool to know the size of your WordPress installation.
-  
+* ***WP Optimizer:*** offers many features to improve SEO and server performances.
+* ***WP Updates:*** allow admins to disable some or all WordPress updates check.
+* ***WP Security:*** offers an easy way to set up some basic security enhancements.
+* ***WP Customizer:*** offers the most used features to customize your WordPress, like Block Editor disabler, Admin Bar hider and so on..
+
 
 **DONATIONS**
 
@@ -154,10 +155,14 @@ work! Otherwise, go to the new added module "Setting" and try a reset.
 
 == Upgrade Notice ==
 
-= 1.5.2 =
-* Added option to remove jQuery-Migrate in wp-customizer module, and some bug fixes
+= 1.5.3 =
+* Settings saving bug fixes
 
 == Changelog ==
+
+= 1.5.3 =
+
+* fixed a bug reported while saving settings
 
 = 1.5.2 =
 

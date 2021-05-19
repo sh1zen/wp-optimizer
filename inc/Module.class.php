@@ -2,6 +2,7 @@
 
 namespace WPOptimizer\modules;
 
+use WPOptimizer\core\UtilEnv;
 use WPOptimizer\core\Cache;
 use WPOptimizer\core\Cron;
 use WPOptimizer\core\Graphic;
@@ -330,7 +331,8 @@ class Module
                 case 'time':
                 case 'text':
                 case 'hidden':
-                    $value = sanitize_text_field($input[$field['id']]);
+                case 'textarea':
+                    $value = UtilEnv::sanitize_text_field($input[$field['id']]);
                     break;
 
                 case 'number':
@@ -344,8 +346,14 @@ class Module
 
             $_valid = &$valid;
             foreach (explode('.', $field['id']) as $field_id) {
-                if (!isset($_valid[$field_id]))
+
+                if (!is_array($_valid)) {
+                    $_valid = array($field_id => $_valid);
+                }
+
+                if (!isset($_valid[$field_id])) {
                     $_valid[$field_id] = array();
+                }
 
                 $_valid = &$_valid[$field_id];
             }

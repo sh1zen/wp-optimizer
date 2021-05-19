@@ -7,7 +7,7 @@
  * Author URI: https://sh1zen.github.io/
  * Text Domain: wpopt
  * Domain Path: /languages
- * Version: 1.5.2
+ * Version: 1.5.3
  */
 
 const WPOPT_FILE = __FILE__;
