@@ -260,16 +260,6 @@ class Mod_Database extends Module
                         <td><span dir="ltr"><?php echo $settings['path']; ?></span></td>
                     </tr>
                     <tr>
-                        <th><?php _e('Database Backup Date:', 'wpopt'); ?></th>
-                        <td><?php echo mysql2date(sprintf(__('%s @ %s', 'wpopt'), get_option('date_format'), get_option('time_format')), gmdate('Y-m-d H:i:s', current_time('timestamp'))); ?></td>
-                    </tr>
-                    <tr class="alternate">
-                        <th><?php _e('Database Backup File Name:', 'wpopt'); ?></th>
-                        <td>
-                            <span dir="ltr"><?php echo '#######.sql'; ?></span>
-                        </td>
-                    </tr>
-                    <tr>
                         <th><?php _e('Database Backup Type:', 'wpopt'); ?></th>
                         <td><?php _e('Full (Structure and Data)', 'wpopt'); ?></td>
                     </tr>

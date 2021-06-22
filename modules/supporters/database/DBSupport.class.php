@@ -604,10 +604,8 @@ class DBSupport
                 foreach ($tables as $table) {
                     $query_result = $wpdb->get_results("REPAIR TABLE " . $table);
                     $succeeded++;
-                    if ($query_result->Msg_type == 'error') {
-                        if (preg_match('/corrupt/i', $query_result->Msg_text)) {
-                            $succeeded--;
-                        }
+                    if (isset($query_result[0]->Msg_type)) {
+                        $succeeded--;
                     }
                 }
                 break;

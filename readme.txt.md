@@ -1,7 +1,7 @@
 === WP Optimizer === 
 Contributors: sh1zen 
 Tags: optimize, database, images, cache, minify, backup, repair, speed, seo, server, clean-up, updates 
-Donate link: https://www.paypal.me/sh1zen
+Donate link: https://www.paypal.com/donate?business=dev.sh1zen%40outlook.it&item_name=Thank+you+in+advanced+for+the+kind+donations.+You+will+sustain+me+building+better+software.&currency_code=EUR
 Requires at least: 4.2.0 
 Tested up to: 5.7
 Requires PHP: 5.3 
@@ -160,6 +160,10 @@ work! Otherwise, go to the new added module "Setting" and try a reset.
 
 == Changelog ==
 
+= 1.5.4 =
+
+* fixed a bug reported during database repair
+
 = 1.5.3 =
 
 * fixed a bug reported while saving settings
@@ -168,7 +172,7 @@ work! Otherwise, go to the new added module "Setting" and try a reset.
 
 * added option to remove jQuery-Migrate in wp-customizer module
 * improved wp-customizer Block-Editor disabler
-* improved wp updates disabler tool
+* improved wp-updates disable tool
 * rewritten some core functionality
 
 = 1.5.1 =
