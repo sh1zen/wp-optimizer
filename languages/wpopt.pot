@@ -4,7 +4,7 @@ msgstr ""
 "Project-Id-Version: wpopt-translation\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/wp-"
 "optimizer/\n"
-"POT-Creation-Date: 2021-06-22 17:30+0200\n"
+"POT-Creation-Date: 2021-07-21 11:38+0200\n"
 "PO-Revision-Date: 2020-05-13 02:34+0200\n"
 "Last-Translator: sh1zen\n"
 "Language-Team: sh1zen\n"
@@ -131,7 +131,7 @@ msgstr ""
 
 #: admin/PagesHandler.class.php:217
 #, php-format
-msgid "Wordpress boot time: %s s"
+msgid "Wordpress setup time: %s s"
 msgstr ""
 
 #: admin/PagesHandler.class.php:222
@@ -303,7 +303,7 @@ msgstr ""
 #: modules/database.class.php:160
 msgid ""
 "Backup folder does NOT exist or is NOT WRITABLE. Please create it and "
-"set permissions to '777' or change the location of the backup folder "
+"set permissions to '774' or change the location of the backup folder "
 "in settings."
 msgstr ""
 
@@ -1306,54 +1306,82 @@ msgstr ""
 msgid "AuthorURI"
 msgstr ""
 
-#: modules/wp_customizer.class.php:147
+#: modules/wp_customizer.class.php:172
+msgid "Dashboard"
+msgstr ""
+
+#: modules/wp_customizer.class.php:173
 msgid "Disable Dashboard Welcome Panel"
 msgstr ""
 
-#: modules/wp_customizer.class.php:148
+#: modules/wp_customizer.class.php:174
 msgid "Disable Dashboard WordPress Blog"
 msgstr ""
 
-#: modules/wp_customizer.class.php:149
+#: modules/wp_customizer.class.php:176
+msgid "Admin Bar"
+msgstr ""
+
+#: modules/wp_customizer.class.php:177
 msgid "Hide Admin Bar"
 msgstr ""
 
-#: modules/wp_customizer.class.php:150
+#: modules/wp_customizer.class.php:178
 msgid "Hide Admin Bar for non admins"
 msgstr ""
 
-#: modules/wp_customizer.class.php:152
+#: modules/wp_customizer.class.php:179
+msgid "Remove WP logo"
+msgstr ""
+
+#: modules/wp_customizer.class.php:180
+msgid "Remove comments shortcut"
+msgstr ""
+
+#: modules/wp_customizer.class.php:181
+msgid "Remove updates shortcut"
+msgstr ""
+
+#: modules/wp_customizer.class.php:183
+msgid "PageEditor - SEO"
+msgstr ""
+
+#: modules/wp_customizer.class.php:184
 msgid "Disable Block Editor (Gutenberg)"
 msgstr ""
 
-#: modules/wp_customizer.class.php:153
+#: modules/wp_customizer.class.php:185
 msgid "Disable Core Blocks"
 msgstr ""
 
-#: modules/wp_customizer.class.php:154
-msgid "Disable Core Sitemap"
-msgstr ""
-
-#: modules/wp_customizer.class.php:155
+#: modules/wp_customizer.class.php:186
 msgid "Disable Auto Paragraph"
 msgstr ""
 
-#: modules/wp_customizer.class.php:157
+#: modules/wp_customizer.class.php:187
+msgid "Disable Core Sitemap"
+msgstr ""
+
+#: modules/wp_customizer.class.php:189
+msgid "Miscellaneous"
+msgstr ""
+
+#: modules/wp_customizer.class.php:190
 msgid "Disable Emoji"
 msgstr ""
 
-#: modules/wp_customizer.class.php:158
+#: modules/wp_customizer.class.php:191
 msgid "Disable Feed links"
 msgstr ""
 
-#: modules/wp_customizer.class.php:159
+#: modules/wp_customizer.class.php:192
 msgid "Disable jQuery Migrate"
 msgstr ""
 
 #: modules/wp_optimizer.class.php:48
 #, php-format
 msgid ""
-"<b><i>'%s'</i> is not writable.</b><br>Modify (<b>run chmod 777</b>) "
+"<b><i>'%s'</i> is not writable.</b><br>Modify (<b>run chmod 774</b>) "
 "it's group permission to allow WP-Optimizer to make changes "
 "automatically."
 msgstr ""
@@ -1443,7 +1471,7 @@ msgstr ""
 #: modules/wp_security.class.php:33
 #, php-format
 msgid ""
-"<b><i>'%s'</i> is not writable.</b><br>Modify (<b>run chmod 777</b>) "
+"<b><i>'%s'</i> is not writable.</b><br>Modify (<b>run chmod 774</b>) "
 "it's group permission to allow WP-Security to make changes "
 "automatically."
 msgstr ""

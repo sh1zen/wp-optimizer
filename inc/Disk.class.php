@@ -49,9 +49,13 @@ class Disk
 
     public static function delete_files($target, $identifier = '')
     {
-        $identifier .= '*';
+        $target = realpath($target);
 
         if (is_dir($target)) {
+
+            if (empty($identifier))
+                $identifier = '*';
+
             $files = glob($target . $identifier, GLOB_MARK); //GLOB_MARK adds a slash to directories returned
 
             foreach ($files as $file) {
@@ -96,7 +100,7 @@ class Disk
 
         $path = realpath($path);
 
-        if(!$path)
+        if (!$path)
             return false;
 
         // Create Backup Folder

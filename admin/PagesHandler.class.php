@@ -214,7 +214,7 @@ class PagesHandler
                         <?php
                         $wo_meter->lap();
                         echo '<div>' . sprintf(__('WordPress used memory: %s', 'wpopt'), size_format(memory_get_peak_usage())) . '</div><br>';
-                        echo '<div>' . sprintf(__('Wordpress boot time: %s s', 'wpopt'), number_format_i18n(microtime(true) - WP_START_TIMESTAMP, 4)) . '</div><br>';
+                        echo '<div>' . sprintf(__('Wordpress setup time: %s s', 'wpopt'), number_format_i18n(microtime(true) - WP_START_TIMESTAMP, 4)) . '</div><br>';
                         ?>
                     </p>
                 </block>

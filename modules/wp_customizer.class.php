@@ -27,8 +27,7 @@ class Mod_WP_Customizer extends Module
             add_filter('use_block_editor_for_post', '__return_false');
             add_filter('use_block_editor_for_post_type', '__return_false');
 
-            add_action('wp_print_styles', function ()
-            {
+            add_action('wp_print_styles', function () {
                 wp_deregister_style('wp-block-library');
                 wp_dequeue_style('wp-block-library');
             });
@@ -54,6 +53,9 @@ class Mod_WP_Customizer extends Module
         }
 
         if ($this->option('core-sitemap')) {
+
+            remove_all_filters('wp_sitemaps_enabled');
+
             add_filter('wp_sitemaps_enabled', '__return_false');
             remove_action('init', 'wp_sitemaps_get_server');
         }
@@ -131,6 +133,28 @@ class Mod_WP_Customizer extends Module
                 }
             });
         }
+
+        if ($this->option('admin-bar-items')) {
+            add_action('wp_before_admin_bar_render', array($this, 'admin_bar_remove_items'), 0);
+        }
+    }
+
+    public function admin_bar_remove_items()
+    {
+        global $wp_admin_bar;
+
+        if ($this->option('admin-bar-items.wp-logo')) {
+            $wp_admin_bar->remove_menu('wp-logo');
+        }
+
+
+        if ($this->option('admin-bar-items.comments')) {
+            $wp_admin_bar->remove_menu('comments');
+        }
+
+        if ($this->option('admin-bar-items.updates')) {
+            $wp_admin_bar->remove_menu('updates');
+        }
     }
 
     public function restricted_access($context = '')
@@ -144,16 +168,25 @@ class Mod_WP_Customizer extends Module
     protected function setting_fields()
     {
         return $this->group_setting_fields(
+
+            $this->setting_field(__('Dashboard', 'wpopt'), false, 'separator'),
             $this->setting_field(__('Disable Dashboard Welcome Panel', 'wpopt'), "welcome-panel", "checkbox"),
             $this->setting_field(__('Disable Dashboard WordPress Blog', 'wpopt'), "wp-blog-panel", "checkbox"),
-            $this->setting_field(__('Hide Admin Bar', 'wpopt'), "admin-bar", "checkbox"),
+
+            $this->setting_field(__('Admin Bar', 'wpopt'), false, 'separator'),
+            $this->setting_field(__('Hide Admin Bar', 'wpopt'), "admin-bar-hide", "checkbox"),
             $this->setting_field(__('Hide Admin Bar for non admins', 'wpopt'), "admin-bar-non-admin", "checkbox"),
-            $this->setting_field('', false, 'divide'),
+            $this->setting_field(__('Remove WP logo', 'wpopt'), "admin-bar-items.wp-logo", "checkbox"),
+            $this->setting_field(__('Remove comments shortcut', 'wpopt'), "admin-bar-items.comments", "checkbox"),
+            $this->setting_field(__('Remove updates shortcut', 'wpopt'), "admin-bar-items.updates", "checkbox"),
+
+            $this->setting_field(__('PageEditor - SEO', 'wpopt'), false, 'separator'),
             $this->setting_field(__('Disable Block Editor (Gutenberg)', 'wpopt'), "blocks-editor", "checkbox"),
             $this->setting_field(__('Disable Core Blocks', 'wpopt'), "core-blocks", "checkbox"),
-            $this->setting_field(__('Disable Core Sitemap', 'wpopt'), "core-sitemap", "checkbox"),
             $this->setting_field(__('Disable Auto Paragraph', 'wpopt'), "wpautop", "checkbox"),
-            $this->setting_field('', false, 'divide'),
+            $this->setting_field(__('Disable Core Sitemap', 'wpopt'), "core-sitemap", "checkbox"),
+
+            $this->setting_field(__('Miscellaneous', 'wpopt'), false, 'separator'),
             $this->setting_field(__('Disable Emoji', 'wpopt'), "emoji", "checkbox"),
             $this->setting_field(__('Disable Feed links', 'wpopt'), "feed-links", "checkbox"),
             $this->setting_field(__('Disable jQuery Migrate', 'wpopt'), "jquery-migrate", "checkbox")

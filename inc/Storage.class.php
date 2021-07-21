@@ -205,7 +205,7 @@ class Storage
                     continue;
 
                 if (!file_exists($path))
-                    mkdir($path, 0777, true);
+                    mkdir($path, 0774, true);
 
                 file_put_contents($path . $element['file_name'], $cached);
             }
@@ -240,7 +240,7 @@ class Storage
 
         // todo use Disk::make_path()
         if (!file_exists($path))
-            mkdir($path, 0777, true);
+            mkdir($path, 0774, true);
 
         return file_put_contents($path . $args['file_name'], $cached);
     }

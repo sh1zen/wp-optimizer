@@ -3,9 +3,9 @@ Contributors: sh1zen
 Tags: optimize, database, images, cache, minify, backup, repair, speed, seo, server, clean-up, updates 
 Donate link: https://www.paypal.com/donate?business=dev.sh1zen%40outlook.it&item_name=Thank+you+in+advanced+for+the+kind+donations.+You+will+sustain+me+building+better+software.&currency_code=EUR
 Requires at least: 4.2.0 
-Tested up to: 5.7
+Tested up to: 5.8
 Requires PHP: 5.3 
-Stable tag: 1.5.3
+Stable tag: 1.5.4
 License: GNU v3.0 License
 URI: https://github.com/sh1zen/wp-optimizer/blob/master/LICENSE
 
@@ -155,13 +155,14 @@ work! Otherwise, go to the new added module "Setting" and try a reset.
 
 == Upgrade Notice ==
 
-= 1.5.3 =
-* Settings saving bug fixes
+= 1.5.4 =
+* Extended support to WordPress 5.8
 
 == Changelog ==
 
 = 1.5.4 =
-
+* extended support to WordPress 5.8
+* added some new features in wp_customizer module
 * fixed a bug reported during database repair
 
 = 1.5.3 =

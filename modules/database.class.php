@@ -157,7 +157,7 @@ class Mod_Database extends Module
             }
             else {
                 echo '<span style="color: red;">' . __("FAIL", 'wpopt') . '</span>';
-                echo '<div class="wpopt-notice wpopt-notice--error">' . sprintf(__('Backup folder does NOT exist or is NOT WRITABLE. Please create it and set permissions to \'777\' or change the location of the backup folder in settings.', 'wpopt'), WP_CONTENT_DIR) . '</div>';
+                echo '<div class="wpopt-notice wpopt-notice--error">' . sprintf(__('Backup folder does NOT exist or is NOT WRITABLE. Please create it and set permissions to \'774\' or change the location of the backup folder in settings.', 'wpopt'), WP_CONTENT_DIR) . '</div>';
             }
             ?>
         </section>

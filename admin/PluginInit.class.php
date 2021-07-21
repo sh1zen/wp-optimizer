@@ -3,7 +3,7 @@
 namespace WPOptimizer\core;
 
 /**
- * Main class, used to boot the plugin
+ * Main class, used to setup the plugin
  */
 class PluginInit
 {
