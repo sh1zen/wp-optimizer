@@ -1,0 +1,1823 @@
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: wpopt-translation\n"
+"Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/wp-"
+"optimizer/\n"
+"POT-Creation-Date: 2022-11-11 12:57+0100\n"
+"PO-Revision-Date: 2020-05-13 02:34+0200\n"
+"Last-Translator: sh1zen\n"
+"Language-Team: sh1zen\n"
+"Language: en\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"X-Generator: Poedit 3.2\n"
+"X-Poedit-Basepath: ..\n"
+"X-Poedit-SourceCharset: UTF-8\n"
+"X-Poedit-KeywordsList: __;_e;_ex;_x;_n;_nx;_n_noop;_nx_noop;esc_html__;"
+"esc_attr__;esc_attr_e;esc_html_e;esc_attr_x;esc_html_x\n"
+"X-Poedit-SearchPath-0: .\n"
+"X-Poedit-SearchPathExcluded-0: languages\n"
+
+#: admin/PagesHandler.class.php:49
+msgid "WPOPT Modules Options"
+msgstr ""
+
+#: admin/PagesHandler.class.php:49
+msgid "Modules Options"
+msgstr ""
+
+#: admin/PagesHandler.class.php:54
+msgid "WPOPT Settings"
+msgstr ""
+
+#: admin/PagesHandler.class.php:54 admin/PluginInit.class.php:250
+msgid "Settings"
+msgstr ""
+
+#: admin/PagesHandler.class.php:59
+msgid "WPOPT FAQ"
+msgstr ""
+
+#: admin/PagesHandler.class.php:59
+msgid "FAQ"
+msgstr ""
+
+#: admin/PagesHandler.class.php:128 modules/sysinfo.class.php:124
+#: modules/sysinfo.class.php:190 vendors/shzn-framework/UtilEnv.php:668
+msgid "N/A"
+msgstr ""
+
+#: admin/PagesHandler.class.php:129
+msgid "Settings Saved"
+msgstr ""
+
+#: admin/PagesHandler.class.php:130
+msgid "Request fail"
+msgstr ""
+
+#: admin/PagesHandler.class.php:131
+msgid "Request succeed"
+msgstr ""
+
+#: admin/PagesHandler.class.php:132
+msgid "Running"
+msgstr ""
+
+#: admin/PagesHandler.class.php:133
+msgid ""
+"WP Optimizer is running an action. If you leave now, it may not be "
+"completed."
+msgstr ""
+
+#: admin/PagesHandler.class.php:147
+msgid "Where can I configure optimization parameters?"
+msgstr ""
+
+#: admin/PagesHandler.class.php:151
+#, php-format
+msgid ""
+"Any module option is configurable in <a href=\"%s\">Modules Options "
+"panel</a>."
+msgstr ""
+
+#: admin/PagesHandler.class.php:157
+msgid "How media optimizer works?"
+msgstr ""
+
+#: admin/PagesHandler.class.php:161
+msgid "Media optimizer works in two different ways:"
+msgstr ""
+
+#: admin/PagesHandler.class.php:163
+#, php-format
+msgid ""
+"By a scheduled event it's able to collect and optimize any media "
+"uploaded daily. <a href='%s'>Here</a> you can configure all schedule "
+"related settings."
+msgstr ""
+
+#: admin/PagesHandler.class.php:164
+msgid ""
+"By a specific path scanner, Media optimizer will run a background "
+"activity to optimize all images present in the input path."
+msgstr ""
+
+#: admin/PagesHandler.class.php:165
+msgid ""
+"By a whole database scanner, Media optimizer will run a background "
+"activity to check all images saved in your WordPress library "
+"optimizing each image and every thumbnail associated."
+msgstr ""
+
+#: admin/PagesHandler.class.php:167
+#, php-format
+msgid ""
+"Any image optimization will be run following your settings set <a href="
+"\"%s\">Here</a>."
+msgstr ""
+
+#: admin/PagesHandler.class.php:216
+msgid "Modules:"
+msgstr ""
+
+#: admin/PagesHandler.class.php:219
+msgid ""
+"This plugin uses modules, so you can disable non necessary one to not "
+"weigh down WordPress."
+msgstr ""
+
+#: admin/PagesHandler.class.php:223
+msgid "Currently active:"
+msgstr ""
+
+#: admin/PagesHandler.class.php:224
+#, php-format
+msgid "Manage modules: <a href=\"%s\">here</a>."
+msgstr ""
+
+#: admin/PagesHandler.class.php:225
+#, php-format
+msgid "Configure them: <a href=\"%s\">here</a>."
+msgstr ""
+
+#: admin/PagesHandler.class.php:228
+msgid "WordPress performances:"
+msgstr ""
+
+#: admin/PagesHandler.class.php:232
+#, php-format
+msgid "Server load: %s %%"
+msgstr ""
+
+#: admin/PagesHandler.class.php:233
+#, php-format
+msgid "WordPress used memory: %s"
+msgstr ""
+
+#: admin/PagesHandler.class.php:234
+#, php-format
+msgid "Wordpress execution time: %s s"
+msgstr ""
+
+#: admin/PagesHandler.class.php:239
+msgid "Fast actions:"
+msgstr ""
+
+#: admin/PagesHandler.class.php:240
+msgid ""
+"Here is possible to run default optimizations as a separate cron job."
+msgstr ""
+
+#: admin/PagesHandler.class.php:242
+msgid "A cron job is running."
+msgstr ""
+
+#: admin/PagesHandler.class.php:247
+msgid "Auto optimize now"
+msgstr ""
+
+#: admin/PagesHandler.class.php:251
+msgid "Reset cron status"
+msgstr ""
+
+#: admin/PagesHandler.class.php:260
+msgid "Tips:"
+msgstr ""
+
+#: admin/PagesHandler.class.php:263
+msgid ""
+"For a better SEO optimization, it's recommended to install also <a "
+"href=\"https://wordpress.org/plugins/flexy-seo/\">this</a> plugin."
+msgstr ""
+
+#: admin/PagesHandler.class.php:274
+msgid "Support this project, buy me a coffee."
+msgstr ""
+
+#: admin/PagesHandler.class.php:288
+msgid "Want to support in other ways?"
+msgstr ""
+
+#: admin/PagesHandler.class.php:291
+msgid "Help me translating"
+msgstr ""
+
+#: admin/PagesHandler.class.php:294
+msgid "Leave a review"
+msgstr ""
+
+#: admin/PagesHandler.class.php:300
+msgid "Source code"
+msgstr ""
+
+#: admin/PagesHandler.class.php:303
+msgid "About me"
+msgstr ""
+
+#: admin/PluginInit.class.php:231
+msgid "Buy me a beer"
+msgstr ""
+
+#: inc/Report.class.php:30
+#, php-format
+msgid ""
+"Report %s : [ %s s : %s ]\n"
+"\n"
+msgstr ""
+
+#: inc/Report.class.php:39
+#, php-format
+msgid " %s [ successes %s / errors %s]"
+msgstr ""
+
+#: inc/Report.class.php:44
+msgid "Success:"
+msgstr ""
+
+#: inc/Report.class.php:57
+msgid "Errors:"
+msgstr ""
+
+#: modules/cache.class.php:113
+msgid "WP_Query Cache"
+msgstr ""
+
+#: modules/cache.class.php:114 modules/cache.class.php:118
+#: modules/cache.class.php:121
+msgid "Active"
+msgstr ""
+
+#: modules/cache.class.php:115 modules/cache.class.php:122
+msgid "Lifespan"
+msgstr ""
+
+#: modules/cache.class.php:117
+msgid "Database Query Cache"
+msgstr ""
+
+#: modules/cache.class.php:120
+msgid "Static Pages Cache"
+msgstr ""
+
+#: modules/cache.class.php:130
+msgid "Cache size"
+msgstr ""
+
+#: modules/database.class.php:61
+msgid "Auto optimize Database"
+msgstr ""
+
+#: modules/database.class.php:106
+msgid "Separate multiple queries with \"<u>; (semicolon)</u>\""
+msgstr ""
+
+#: modules/database.class.php:107
+msgid ""
+"Use only INSERT, UPDATE, REPLACE, DELETE, CREATE and ALTER statements."
+msgstr ""
+
+#: modules/database.class.php:119
+msgid "Run"
+msgstr ""
+
+#: modules/database.class.php:121
+msgid "Clear"
+msgstr ""
+
+#: modules/database.class.php:127
+msgid ""
+"1. CREATE statement will return an error, which is perfectly normal "
+"due to the database class. To confirm that your table has been created "
+"check the Tables panel."
+msgstr ""
+
+#: modules/database.class.php:129
+msgid ""
+"2. UPDATE statement may return an error sometimes due to the newly "
+"updated value being the same as the previous value."
+msgstr ""
+
+#: modules/database.class.php:131
+msgid ""
+"3. ALTER statement will return an error because there is no value "
+"returned."
+msgstr ""
+
+#: modules/database.class.php:150
+msgid "Checking Backup Folder"
+msgstr ""
+
+#: modules/database.class.php:155
+msgid "OK"
+msgstr ""
+
+#: modules/database.class.php:158
+msgid "FAIL"
+msgstr ""
+
+#: modules/database.class.php:159
+msgid ""
+"Backup folder does NOT exist or is NOT WRITABLE. Please create it and "
+"set permissions to '774' or change the location of the backup folder "
+"in settings."
+msgstr ""
+
+#: modules/database.class.php:170
+msgid "Manage Backups"
+msgstr ""
+
+#: modules/database.class.php:174
+msgid "No."
+msgstr ""
+
+#: modules/database.class.php:175
+msgid "MD5 Checksum"
+msgstr ""
+
+#: modules/database.class.php:176
+msgid "Database File"
+msgstr ""
+
+#: modules/database.class.php:177
+msgid "Creation date"
+msgstr ""
+
+#: modules/database.class.php:178
+#: modules/supporters/database/DB_List_Table.class.php:138
+#: modules/supporters/media/Media_Table.class.php:123
+msgid "Size"
+msgstr ""
+
+#: modules/database.class.php:179
+msgid "Select"
+msgstr ""
+
+#: modules/database.class.php:191 modules/database.class.php:229
+msgid "There Are No Database Backup Files Available."
+msgstr ""
+
+#: modules/database.class.php:234
+#, php-format
+msgid "%s Backup found"
+msgstr ""
+
+#: modules/database.class.php:239
+msgid "Download"
+msgstr ""
+
+#: modules/database.class.php:241
+msgid "Restore"
+msgstr ""
+
+#: modules/database.class.php:242
+msgid ""
+"Are you sure to restore selected backup?\\nAny data inserted after the "
+"backup date will be lost.\\n\\nThis action is not reversible."
+msgstr ""
+
+#: modules/database.class.php:245
+#: modules/supporters/database/DB_List_Table.class.php:92
+#: modules/supporters/media/Media_Table.class.php:210
+msgid "Delete"
+msgstr ""
+
+#: modules/database.class.php:246
+msgid "Are you sure to delete selected backup?"
+msgstr ""
+
+#: modules/database.class.php:254
+msgid "Backup Database"
+msgstr ""
+
+#: modules/database.class.php:258 modules/database.class.php:627
+msgid "Option"
+msgstr ""
+
+#: modules/database.class.php:259 modules/sysinfo.class.php:36
+#: modules/sysinfo.class.php:38
+msgid "Value"
+msgstr ""
+
+#: modules/database.class.php:263
+msgid "Database Name:"
+msgstr ""
+
+#: modules/database.class.php:267
+msgid "Database size:"
+msgstr ""
+
+#: modules/database.class.php:271
+msgid "Database index size:"
+msgstr ""
+
+#: modules/database.class.php:275
+msgid "Database Backup Type:"
+msgstr ""
+
+#: modules/database.class.php:276
+msgid "Full (Structure and Data)"
+msgstr ""
+
+#: modules/database.class.php:279
+msgid "MYSQL Dump Location:"
+msgstr ""
+
+#: modules/database.class.php:287
+msgid ""
+"No mysqldump found or not valid path set. Using sql export method will "
+"be slower."
+msgstr ""
+
+#: modules/database.class.php:296
+msgid "Backup now"
+msgstr ""
+
+#: modules/database.class.php:355
+msgid "Invalid request."
+msgstr ""
+
+#: modules/database.class.php:364
+msgid "Empty Query"
+msgstr ""
+
+#: modules/database.class.php:381
+msgid "Empty query"
+msgstr ""
+
+#: modules/database.class.php:400
+msgid "Query(s) executed successfully"
+msgstr ""
+
+#: modules/database.class.php:417 modules/database.class.php:435
+#: modules/database.class.php:492
+msgid "No database backup selected"
+msgstr ""
+
+#: modules/database.class.php:422
+msgid "Download started."
+msgstr ""
+
+#: modules/database.class.php:425
+msgid "Something went wrong during the download."
+msgstr ""
+
+#: modules/database.class.php:444
+#, php-format
+msgid "Database backup '%s' deleted successfully."
+msgstr ""
+
+#: modules/database.class.php:447
+#, php-format
+msgid "Unable to delete '%s', check file permissions."
+msgstr ""
+
+#: modules/database.class.php:451
+#, php-format
+msgid "Invalid database backup '%s'."
+msgstr ""
+
+#: modules/database.class.php:479
+msgid "Backup correctly done."
+msgstr ""
+
+#: modules/database.class.php:482
+msgid "Something went wrong. Try again."
+msgstr ""
+
+#: modules/database.class.php:497
+msgid "Database restored."
+msgstr ""
+
+#: modules/database.class.php:500
+msgid "Something went wrong during the backup restore."
+msgstr ""
+
+#: modules/database.class.php:535
+#: modules/supporters/database/DB_List_Table.class.php:32
+msgid "Tables"
+msgstr ""
+
+#: modules/database.class.php:536
+msgid "Database tables"
+msgstr ""
+
+#: modules/database.class.php:541
+msgid "Database sweeper"
+msgstr ""
+
+#: modules/database.class.php:542
+msgid "Database Sweeper"
+msgstr ""
+
+#: modules/database.class.php:547
+msgid "Backup Manager"
+msgstr ""
+
+#: modules/database.class.php:548
+msgid "Backup your database"
+msgstr ""
+
+#: modules/database.class.php:554 modules/database.class.php:555
+msgid "Run SQL Query"
+msgstr ""
+
+#: modules/database.class.php:568
+msgid "Posts"
+msgstr ""
+
+#: modules/database.class.php:571
+msgid "Revision"
+msgstr ""
+
+#: modules/database.class.php:572
+msgid "Auto Draft"
+msgstr ""
+
+#: modules/database.class.php:573
+msgid "Deleted Posts"
+msgstr ""
+
+#: modules/database.class.php:576
+msgid "Posts Metas"
+msgstr ""
+
+#: modules/database.class.php:579
+msgid "Orphan Postmeta"
+msgstr ""
+
+#: modules/database.class.php:580
+msgid "Duplicated Postmeta"
+msgstr ""
+
+#: modules/database.class.php:581
+msgid "Oembed Postmeta"
+msgstr ""
+
+#: modules/database.class.php:585 modules/wp_customizer.class.php:328
+msgid "Comments"
+msgstr ""
+
+#: modules/database.class.php:588
+msgid "Unapproved Comments"
+msgstr ""
+
+#: modules/database.class.php:589
+msgid "Spam Comments"
+msgstr ""
+
+#: modules/database.class.php:590
+msgid "Deleted Comments"
+msgstr ""
+
+#: modules/database.class.php:594
+msgid "Comments Metas"
+msgstr ""
+
+#: modules/database.class.php:597
+msgid "Orphan Comments"
+msgstr ""
+
+#: modules/database.class.php:598
+msgid "Duplicated Comments"
+msgstr ""
+
+#: modules/database.class.php:602
+msgid "Users Metas"
+msgstr ""
+
+#: modules/database.class.php:605
+msgid "Orphaned User Meta"
+msgstr ""
+
+#: modules/database.class.php:606
+msgid "Duplicated User Meta"
+msgstr ""
+
+#: modules/database.class.php:610
+msgid "Terms"
+msgstr ""
+
+#: modules/database.class.php:613
+msgid "Orphaned Term Relationship"
+msgstr ""
+
+#: modules/database.class.php:614
+msgid "Unused Terms"
+msgstr ""
+
+#: modules/database.class.php:618
+msgid "Terms metas"
+msgstr ""
+
+#: modules/database.class.php:621
+msgid "Orphaned Term Meta"
+msgstr ""
+
+#: modules/database.class.php:622
+msgid "Duplicated Term Meta"
+msgstr ""
+
+#: modules/database.class.php:630
+msgid "Transient Options"
+msgstr ""
+
+#: modules/database.class.php:637
+#, php-format
+msgid "If you click Details will be shown only %s items."
+msgstr ""
+
+#: modules/database.class.php:639
+msgid ""
+"Before doing any sweep it's recommended to make a backup of whole "
+"database."
+msgstr ""
+
+#: modules/database.class.php:656
+#, php-format
+msgid ""
+"There are a total of <strong class=\"attention\"><span>%1$s</span></"
+"strong> "
+msgstr ""
+
+#: modules/database.class.php:662 modules/database.class.php:697
+msgid "Details"
+msgstr ""
+
+#: modules/database.class.php:663
+msgid "Count"
+msgstr ""
+
+#: modules/database.class.php:664
+msgid "% Of"
+msgstr ""
+
+#: modules/database.class.php:665
+msgid "Action"
+msgstr ""
+
+#: modules/database.class.php:693
+msgid "Sweep"
+msgstr ""
+
+#: modules/database.class.php:699
+msgid "None"
+msgstr ""
+
+#: modules/database.class.php:748
+msgid "Sweeps:"
+msgstr ""
+
+#: modules/database.class.php:749
+msgid "Excluded Taxonomies (comma separated)"
+msgstr ""
+
+#: modules/database.class.php:751
+msgid "Backups:"
+msgstr ""
+
+#: modules/database.class.php:752
+msgid "Excluded Tables (comma separated)"
+msgstr ""
+
+#: modules/media.class.php:104
+msgid "Auto optimize images"
+msgstr ""
+
+#: modules/media.class.php:117
+msgid "Media optimization statistics has been successfully reset."
+msgstr ""
+
+#: modules/media.class.php:122
+msgid "Orphaned media scanner is successfully started."
+msgstr ""
+
+#: modules/media.class.php:125
+msgid "An error occurred while starting orphaned media scanner."
+msgstr ""
+
+#: modules/media.class.php:131
+msgid "Orphaned media scanner is shutting down."
+msgstr ""
+
+#: modules/media.class.php:137
+msgid "Orphaned media scanner has been successfully reset."
+msgstr ""
+
+#: modules/media.class.php:142
+msgid "Media optimization scan is shutting down."
+msgstr ""
+
+#: modules/media.class.php:147
+msgid "Media optimization scan is successfully started."
+msgstr ""
+
+#: modules/media.class.php:150
+msgid "An error occurred while starting optimization scan."
+msgstr ""
+
+#: modules/media.class.php:157
+msgid "Media posts optimization has been successfully reset."
+msgstr ""
+
+#: modules/media.class.php:162
+msgid "Action not supported"
+msgstr ""
+
+#: modules/media.class.php:213
+msgid "Orphaned media scan is running."
+msgstr ""
+
+#: modules/media.class.php:220
+msgid "Scan now"
+msgstr ""
+
+#: modules/media.class.php:226 modules/media.class.php:303
+msgid "Pause"
+msgstr ""
+
+#: modules/media.class.php:233 modules/media.class.php:310
+#: modules/media.class.php:445
+msgid "Reset"
+msgstr ""
+
+#: modules/media.class.php:239
+msgid "No orphaned media found."
+msgstr ""
+
+#: modules/media.class.php:265
+msgid "Before start optimizing makes sure you did:"
+msgstr ""
+
+#: modules/media.class.php:268
+#, php-format
+msgid "Read related <a href=\"%s\">FAQ</a>."
+msgstr ""
+
+#: modules/media.class.php:271
+#, php-format
+msgid "Set up your optimization parameters <a href=\"%s\">here</a>."
+msgstr ""
+
+#: modules/media.class.php:274
+#, php-format
+msgid ""
+"Note that optimization will run in background and time required "
+"depends on number of media you have. <a href=\"%s\">Cron</a> must be "
+"active."
+msgstr ""
+
+#: modules/media.class.php:281
+#, php-format
+msgid ""
+"To proceed with image optimization you need to install <a href=\"%s"
+"\">imagick</a> or <a href=\"%s\">GD</a> on your server."
+msgstr ""
+
+#: modules/media.class.php:284
+#, php-format
+msgid ""
+"To guarantee a complete image optimization support, install <a href="
+"\"%s\">imagick</a> on your server."
+msgstr ""
+
+#: modules/media.class.php:290
+msgid "Optimize all media library."
+msgstr ""
+
+#: modules/media.class.php:291
+#, php-format
+msgid ""
+"Optimization will run silently in background (<a href=\"%s\">Cron</a> "
+"must be active)."
+msgstr ""
+
+#: modules/media.class.php:297
+msgid "Start"
+msgstr ""
+
+#: modules/media.class.php:329
+msgid "Images optimizer"
+msgstr ""
+
+#: modules/media.class.php:335
+msgid "Media cleaner"
+msgstr ""
+
+#: modules/media.class.php:340
+msgid "Stats"
+msgstr ""
+
+#: modules/media.class.php:423
+#, php-format
+msgid "Media optimized: %d."
+msgstr ""
+
+#: modules/media.class.php:427
+msgid "Processed media library:"
+msgstr ""
+
+#: modules/media.class.php:433
+#, php-format
+msgid "Space freed up: %s:"
+msgstr ""
+
+#: modules/media.class.php:471
+msgid "Theme"
+msgstr ""
+
+#: modules/media.class.php:472
+msgid "Try to make media loading lazy"
+msgstr ""
+
+#: modules/media.class.php:474
+msgid "Images optimization preferences"
+msgstr ""
+
+#: modules/media.class.php:475
+msgid "Auto optimize uploads"
+msgstr ""
+
+#: modules/media.class.php:475
+msgid "set it here"
+msgstr ""
+
+#: modules/media.class.php:476
+msgid "Use Imagick (if installed)"
+msgstr ""
+
+#: modules/media.class.php:477
+msgid "Optimization quality"
+msgstr ""
+
+#: modules/media.class.php:478
+msgid "Keep all the EXIF data of your images"
+msgstr ""
+
+#: modules/media.class.php:479
+msgid "Resize larger images"
+msgstr ""
+
+#: modules/media.class.php:480
+msgid "max with (px)"
+msgstr ""
+
+#: modules/media.class.php:481
+msgid "max height (px)"
+msgstr ""
+
+#: modules/media.class.php:483
+msgid "Formats"
+msgstr ""
+
+#: modules/media.class.php:484
+msgid "Convert all images to new webp format"
+msgstr ""
+
+#: modules/media.class.php:485
+msgid "Optimize JPG/JPEG"
+msgstr ""
+
+#: modules/media.class.php:486
+msgid "Optimize PNG"
+msgstr ""
+
+#: modules/media.class.php:487
+msgid "Optimize GIF"
+msgstr ""
+
+#: modules/media.class.php:488
+msgid "Optimize WEBP"
+msgstr ""
+
+#: modules/media.class.php:489
+msgid "Optimize other formats (tiff, heic, bmp)"
+msgstr ""
+
+#: modules/minify.class.php:144
+msgid "Minify HTML"
+msgstr ""
+
+#: modules/minify.class.php:145
+msgid "Remove Comments"
+msgstr ""
+
+#: modules/minify.class.php:146
+msgid "Minify inline css"
+msgstr ""
+
+#: modules/minify.class.php:147
+msgid "Minify inline js"
+msgstr ""
+
+#: modules/minify.class.php:166
+msgid "Beta version."
+msgstr ""
+
+#: modules/minify.class.php:168
+msgid "This module is under developing."
+msgstr ""
+
+#: modules/minify.class.php:169
+msgid ""
+"Should work fine, but to be safe activate this feature only if you "
+"know what to do in case of bugs. "
+msgstr ""
+
+#: modules/settings.class.php:41
+msgid "Reset Plugin options"
+msgstr ""
+
+#: modules/settings.class.php:47
+msgid "Export Plugin options"
+msgstr ""
+
+#: modules/settings.class.php:59
+msgid "Import Plugin options"
+msgstr ""
+
+#: modules/supporters/database/DBSupport.class.php:531
+#, php-format
+msgid "Rows affected %s."
+msgstr ""
+
+#: modules/supporters/database/DB_List_Table.class.php:31
+msgid "Table"
+msgstr ""
+
+#: modules/supporters/database/DB_List_Table.class.php:40
+msgid "No tables found."
+msgstr ""
+
+#: modules/supporters/database/DB_List_Table.class.php:89
+#: modules/supporters/database/DB_List_Table.class.php:267
+msgid "Optimize"
+msgstr ""
+
+#: modules/supporters/database/DB_List_Table.class.php:90
+#: modules/supporters/database/DB_List_Table.class.php:274
+msgid "Repair"
+msgstr ""
+
+#: modules/supporters/database/DB_List_Table.class.php:91
+msgid "Empty rows"
+msgstr ""
+
+#: modules/supporters/database/DB_List_Table.class.php:93
+msgid "Convert to InnoDB"
+msgstr ""
+
+#: modules/supporters/database/DB_List_Table.class.php:94
+msgid "Convert to MyISAM"
+msgstr ""
+
+#: modules/supporters/database/DB_List_Table.class.php:135
+msgid "Site"
+msgstr ""
+
+#: modules/supporters/database/DB_List_Table.class.php:136
+msgid "Table name"
+msgstr ""
+
+#: modules/supporters/database/DB_List_Table.class.php:137
+msgid "Rows"
+msgstr ""
+
+#: modules/supporters/database/DB_List_Table.class.php:139
+msgid "Space lost"
+msgstr ""
+
+#: modules/supporters/database/DB_List_Table.class.php:140
+msgid "Status"
+msgstr ""
+
+#: modules/supporters/database/DB_List_Table.class.php:141
+msgid "Table engine"
+msgstr ""
+
+#: modules/supporters/database/DB_List_Table.class.php:201
+msgid "optimized"
+msgstr ""
+
+#: modules/supporters/database/DB_List_Table.class.php:202
+msgid "repaired"
+msgstr ""
+
+#: modules/supporters/database/DB_List_Table.class.php:203
+msgid "emptied"
+msgstr ""
+
+#: modules/supporters/database/DB_List_Table.class.php:204
+msgid "deleted"
+msgstr ""
+
+#: modules/supporters/database/DB_List_Table.class.php:205
+msgid "converted to InnoDB"
+msgstr ""
+
+#: modules/supporters/database/DB_List_Table.class.php:206
+msgid "converted to MyISAM"
+msgstr ""
+
+#: modules/supporters/database/DB_List_Table.class.php:264
+msgid "Ok"
+msgstr ""
+
+#: modules/supporters/database/DB_List_Table.class.php:314
+msgid ""
+"If no tables are selected, the action will run on all database tables. "
+"Be careful!"
+msgstr ""
+
+#: modules/supporters/media/Media_Table.class.php:33
+msgid "List view"
+msgstr ""
+
+#: modules/supporters/media/Media_Table.class.php:121
+msgid "Image"
+msgstr ""
+
+#: modules/supporters/media/Media_Table.class.php:122
+msgid "Path"
+msgstr ""
+
+#: modules/supporters/media/Media_Table.class.php:124
+msgid "Last Modify Date"
+msgstr ""
+
+#: modules/supporters/media/Media_Table.class.php:150
+msgid "No media files found."
+msgstr ""
+
+#: modules/supporters/media/Media_Table.class.php:196
+msgid "File name:"
+msgstr ""
+
+#: modules/supporters/media/Media_Table.class.php:211
+msgid "Ignore"
+msgstr ""
+
+#: modules/supporters/media/Media_Table.class.php:243
+msgid "View"
+msgstr ""
+
+#: modules/sysinfo.class.php:35 modules/sysinfo.class.php:37
+msgid "Name"
+msgstr ""
+
+#: modules/sysinfo.class.php:80
+msgid "SITE_URL"
+msgstr ""
+
+#: modules/sysinfo.class.php:81
+msgid "HOME_URL"
+msgstr ""
+
+#: modules/sysinfo.class.php:82
+msgid "Server IP : port"
+msgstr ""
+
+#: modules/sysinfo.class.php:83 modules/widget.class.php:125
+msgid "OS"
+msgstr ""
+
+#: modules/sysinfo.class.php:84 modules/widget.class.php:126
+msgid "Server"
+msgstr ""
+
+#: modules/sysinfo.class.php:85
+msgid "Server Document Root"
+msgstr ""
+
+#: modules/sysinfo.class.php:86
+msgid "Server Date/Time"
+msgstr ""
+
+#: modules/sysinfo.class.php:86
+#, php-format
+msgid "%s @ %s"
+msgstr ""
+
+#: modules/sysinfo.class.php:87
+msgid "Server Load"
+msgstr ""
+
+#: modules/sysinfo.class.php:88
+msgid "Web Server Info"
+msgstr ""
+
+#: modules/sysinfo.class.php:89
+msgid "User Agent"
+msgstr ""
+
+#: modules/sysinfo.class.php:90
+msgid "Filesystem Method"
+msgstr ""
+
+#: modules/sysinfo.class.php:91
+msgid "SSL SUPPORT"
+msgstr ""
+
+#: modules/sysinfo.class.php:91
+msgid "SSL extension loaded"
+msgstr ""
+
+#: modules/sysinfo.class.php:91
+msgid "SSL extension NOT loaded"
+msgstr ""
+
+#: modules/sysinfo.class.php:92
+msgid "MB String"
+msgstr ""
+
+#: modules/sysinfo.class.php:92
+msgid "MB String extensions loaded"
+msgstr ""
+
+#: modules/sysinfo.class.php:92
+msgid "MB String extensions NOT loaded"
+msgstr ""
+
+#: modules/sysinfo.class.php:93
+msgid "GD Version"
+msgstr ""
+
+#: modules/sysinfo.class.php:97 modules/sysinfo.class.php:110
+#: modules/sysinfo.class.php:233
+msgid "Version"
+msgstr ""
+
+#: modules/sysinfo.class.php:98 modules/widget.class.php:132
+msgid "Memory Limit"
+msgstr ""
+
+#: modules/sysinfo.class.php:99
+msgid "Post Max Size"
+msgstr ""
+
+#: modules/sysinfo.class.php:100
+msgid "Upload Max File size"
+msgstr ""
+
+#: modules/sysinfo.class.php:101
+msgid "Script execution limit"
+msgstr ""
+
+#: modules/sysinfo.class.php:102
+msgid "Short Tag"
+msgstr ""
+
+#: modules/sysinfo.class.php:102 modules/sysinfo.class.php:136
+#: modules/sysinfo.class.php:137
+msgid "On"
+msgstr ""
+
+#: modules/sysinfo.class.php:102 modules/sysinfo.class.php:136
+#: modules/sysinfo.class.php:137
+msgid "Off"
+msgstr ""
+
+#: modules/sysinfo.class.php:106
+msgid "Database User"
+msgstr ""
+
+#: modules/sysinfo.class.php:107
+msgid "Database Name"
+msgstr ""
+
+#: modules/sysinfo.class.php:108
+msgid "Database Host"
+msgstr ""
+
+#: modules/sysinfo.class.php:109
+msgid "Database Password"
+msgstr ""
+
+#: modules/sysinfo.class.php:111
+msgid "Database Data Disk Usage"
+msgstr ""
+
+#: modules/sysinfo.class.php:112
+msgid "Database Index Disk Usage"
+msgstr ""
+
+#: modules/sysinfo.class.php:113
+msgid "Maximum Packet Size"
+msgstr ""
+
+#: modules/sysinfo.class.php:114
+msgid "Maximum No. Connection"
+msgstr ""
+
+#: modules/sysinfo.class.php:115
+msgid "Query Cache Size"
+msgstr ""
+
+#: modules/sysinfo.class.php:119
+msgid "Multi-site"
+msgstr ""
+
+#: modules/sysinfo.class.php:119
+msgid "Yes"
+msgstr ""
+
+#: modules/sysinfo.class.php:119
+msgid "No"
+msgstr ""
+
+#: modules/sysinfo.class.php:120
+msgid "Blog id"
+msgstr ""
+
+#: modules/sysinfo.class.php:121
+msgid "WordPress Version"
+msgstr ""
+
+#: modules/sysinfo.class.php:122
+msgid "Permalink Structure"
+msgstr ""
+
+#: modules/sysinfo.class.php:123
+msgid "WP_DEBUG"
+msgstr ""
+
+#: modules/sysinfo.class.php:123 modules/sysinfo.class.php:132
+msgid "Enabled"
+msgstr ""
+
+#: modules/sysinfo.class.php:123 modules/sysinfo.class.php:132
+msgid "Disabled"
+msgstr ""
+
+#: modules/sysinfo.class.php:123
+msgid "Not set"
+msgstr ""
+
+#: modules/sysinfo.class.php:124
+msgid "DISPLAY ERRORS"
+msgstr ""
+
+#: modules/sysinfo.class.php:124
+#, php-format
+msgid "On ( %s )"
+msgstr ""
+
+#: modules/sysinfo.class.php:125
+msgid "WP Table Prefix"
+msgstr ""
+
+#: modules/sysinfo.class.php:125
+#, php-format
+msgid "Length: %s Status: %s"
+msgstr ""
+
+#: modules/sysinfo.class.php:125
+msgid "ERROR: Too Long"
+msgstr ""
+
+#: modules/sysinfo.class.php:125
+msgid "Acceptable"
+msgstr ""
+
+#: modules/sysinfo.class.php:126
+msgid "WP DB Charset/Collate"
+msgstr ""
+
+#: modules/sysinfo.class.php:127
+msgid "WordPress Memory Limit"
+msgstr ""
+
+#: modules/sysinfo.class.php:128
+msgid "WordPress Upload Size"
+msgstr ""
+
+#: modules/sysinfo.class.php:132
+msgid "Session"
+msgstr ""
+
+#: modules/sysinfo.class.php:133
+msgid "Session Name"
+msgstr ""
+
+#: modules/sysinfo.class.php:134
+msgid "Cookie Path"
+msgstr ""
+
+#: modules/sysinfo.class.php:135
+msgid "Save Path"
+msgstr ""
+
+#: modules/sysinfo.class.php:136
+msgid "Use Cookies"
+msgstr ""
+
+#: modules/sysinfo.class.php:137
+msgid "Use Only Cookies"
+msgstr ""
+
+#: modules/sysinfo.class.php:140
+msgid "Active plugins"
+msgstr ""
+
+#: modules/sysinfo.class.php:141
+msgid "Inactive plugins"
+msgstr ""
+
+#: modules/sysinfo.class.php:142
+msgid "Current theme"
+msgstr ""
+
+#: modules/sysinfo.class.php:232
+msgid "name"
+msgstr ""
+
+#: modules/sysinfo.class.php:234
+msgid "Author"
+msgstr ""
+
+#: modules/sysinfo.class.php:235
+msgid "AuthorURI"
+msgstr ""
+
+#: modules/widget.class.php:127
+msgid "Hostname"
+msgstr ""
+
+#: modules/widget.class.php:128
+msgid "IP:Port"
+msgstr ""
+
+#: modules/widget.class.php:129
+msgid "Document Root"
+msgstr ""
+
+#: modules/widget.class.php:131 modules/widget.class.php:137
+msgid "version"
+msgstr ""
+
+#: modules/widget.class.php:133
+msgid "Max Script Execute Time"
+msgstr ""
+
+#: modules/widget.class.php:134
+msgid "Max Post Size"
+msgstr ""
+
+#: modules/widget.class.php:135
+msgid "Max Upload Size"
+msgstr ""
+
+#: modules/widget.class.php:138
+msgid "Data Disk Usage"
+msgstr ""
+
+#: modules/widget.class.php:139
+msgid "Index Disk Usage"
+msgstr ""
+
+#: modules/widget.class.php:161
+msgid "View all"
+msgstr ""
+
+#: modules/widget.class.php:204
+msgid "Files"
+msgstr ""
+
+#: modules/widget.class.php:205
+msgid "size"
+msgstr ""
+
+#: modules/widget.class.php:215
+msgid "Total"
+msgstr ""
+
+#: modules/widget.class.php:280
+msgid "Clears all widgets caches"
+msgstr ""
+
+#: modules/widget.class.php:280
+msgid "Clear widget cache"
+msgstr ""
+
+#: modules/widget.class.php:281
+msgid "Check to empty the cache"
+msgstr ""
+
+#: modules/widget.class.php:287
+msgid "Installation size"
+msgstr ""
+
+#: modules/widget.class.php:288
+msgid "Paths"
+msgstr ""
+
+#: modules/widget.class.php:290
+msgid "Server info"
+msgstr ""
+
+#: modules/wp_customizer.class.php:92
+#, php-format
+msgid "Filter %s"
+msgstr ""
+
+#: modules/wp_customizer.class.php:308
+msgid "Dashboard"
+msgstr ""
+
+#: modules/wp_customizer.class.php:309
+msgid "Disable Dashboard Welcome Panel"
+msgstr ""
+
+#: modules/wp_customizer.class.php:310
+msgid "Disable Dashboard WordPress Blog"
+msgstr ""
+
+#: modules/wp_customizer.class.php:311
+msgid "Disable Dashboard WordPress Quick Press"
+msgstr ""
+
+#: modules/wp_customizer.class.php:313
+msgid "Admin Bar"
+msgstr ""
+
+#: modules/wp_customizer.class.php:314
+msgid "Hide Admin Bar"
+msgstr ""
+
+#: modules/wp_customizer.class.php:315
+msgid "Hide Admin Bar for non admins"
+msgstr ""
+
+#: modules/wp_customizer.class.php:316
+msgid "Prevent access to admin panel for non admins"
+msgstr ""
+
+#: modules/wp_customizer.class.php:317
+msgid "Redirect to"
+msgstr ""
+
+#: modules/wp_customizer.class.php:318
+msgid "Remove WP logo"
+msgstr ""
+
+#: modules/wp_customizer.class.php:319
+msgid "Remove comments shortcut"
+msgstr ""
+
+#: modules/wp_customizer.class.php:320
+msgid "Remove updates shortcut"
+msgstr ""
+
+#: modules/wp_customizer.class.php:322
+msgid "Page Editor - SEO"
+msgstr ""
+
+#: modules/wp_customizer.class.php:323
+msgid "Add a selection filter in category list"
+msgstr ""
+
+#: modules/wp_customizer.class.php:324
+msgid "Disable Block Editor (Gutenberg)"
+msgstr ""
+
+#: modules/wp_customizer.class.php:325
+msgid "Disable Core Blocks"
+msgstr ""
+
+#: modules/wp_customizer.class.php:326
+msgid "Disable Auto Paragraph"
+msgstr ""
+
+#: modules/wp_customizer.class.php:329
+msgid "Disable comments everywhere"
+msgstr ""
+
+#: modules/wp_customizer.class.php:330
+msgid "Hide comments shortcuts from admin pages"
+msgstr ""
+
+#: modules/wp_customizer.class.php:332
+msgid "Tips useful for speed up"
+msgstr ""
+
+#: modules/wp_customizer.class.php:333
+msgid "Disable WordPress sitemap"
+msgstr ""
+
+#: modules/wp_customizer.class.php:334
+msgid "Prevent load of core widgets"
+msgstr ""
+
+#: modules/wp_customizer.class.php:335
+msgid "Disable DNS prefetch"
+msgstr ""
+
+#: modules/wp_customizer.class.php:336
+msgid "Disable short-link generator"
+msgstr ""
+
+#: modules/wp_customizer.class.php:337
+msgid "Disable custom css"
+msgstr ""
+
+#: modules/wp_customizer.class.php:338
+msgid "Disable pings"
+msgstr ""
+
+#: modules/wp_customizer.class.php:339
+msgid "Disable Self ping"
+msgstr ""
+
+#: modules/wp_customizer.class.php:340
+msgid "Disable WordPress Emoji support"
+msgstr ""
+
+#: modules/wp_customizer.class.php:341
+msgid "Disable Feed links"
+msgstr ""
+
+#: modules/wp_customizer.class.php:342
+msgid "Disable jQuery Migrate"
+msgstr ""
+
+#: modules/wp_optimizer.class.php:55
+#, php-format
+msgid ""
+"<b><i>'%s'</i> is not writable.</b><br>Modify (<b>run chmod 774</b>) "
+"it's group permission to allow WP-Optimizer to make changes "
+"automatically."
+msgstr ""
+
+#: modules/wp_optimizer.class.php:136 modules/wp_security.class.php:177
+msgid ""
+"To manually modifies your server for enhanced mode copy and paste this "
+"to your htaccess."
+msgstr ""
+
+#: modules/wp_optimizer.class.php:148
+msgid "Improve WordPress Cron performances"
+msgstr ""
+
+#: modules/wp_optimizer.class.php:149
+msgid "Check Cron schedules every (seconds)"
+msgstr ""
+
+#: modules/wp_optimizer.class.php:151
+msgid "Server configuration (Up to now, apache only)"
+msgstr ""
+
+#: modules/wp_optimizer.class.php:153
+msgid "Server Enhancements"
+msgstr ""
+
+#: modules/wp_optimizer.class.php:154
+msgid "Remove www"
+msgstr ""
+
+#: modules/wp_optimizer.class.php:155
+msgid "Redirect HTTP to HTTPS"
+msgstr ""
+
+#: modules/wp_optimizer.class.php:156
+msgid "Connection keep alive"
+msgstr ""
+
+#: modules/wp_optimizer.class.php:157
+msgid "Follow symlinks"
+msgstr ""
+
+#: modules/wp_optimizer.class.php:158
+msgid "Timezone"
+msgstr ""
+
+#: modules/wp_optimizer.class.php:159
+msgid "Default Charset UTF-8"
+msgstr ""
+
+#: modules/wp_optimizer.class.php:160
+msgid "Enable PageSpeed if installed"
+msgstr ""
+
+#: modules/wp_optimizer.class.php:163
+msgid "Enable server Compression"
+msgstr ""
+
+#: modules/wp_optimizer.class.php:164
+msgid "GZIP"
+msgstr ""
+
+#: modules/wp_optimizer.class.php:165
+msgid "BROTLI"
+msgstr ""
+
+#: modules/wp_optimizer.class.php:168
+msgid "Enable browser cache"
+msgstr ""
+
+#: modules/wp_optimizer.class.php:169
+msgid "Use Cache Control Headers"
+msgstr ""
+
+#: modules/wp_optimizer.class.php:170
+msgid "Default lifetime"
+msgstr ""
+
+#: modules/wp_optimizer.class.php:171
+msgid "CSS & JavaScripts lifetime"
+msgstr ""
+
+#: modules/wp_optimizer.class.php:172
+msgid "Images lifetime"
+msgstr ""
+
+#: modules/wp_optimizer.class.php:173
+msgid "Fonts lifetime"
+msgstr ""
+
+#: modules/wp_optimizer.class.php:174
+msgid "Archives lifetime"
+msgstr ""
+
+#: modules/wp_security.class.php:40
+#, php-format
+msgid ""
+"<b><i>'%s'</i> is not writable.</b><br>Modify (<b>run chmod 774</b>) "
+"it's group permission to allow WP-Security to make changes "
+"automatically."
+msgstr ""
+
+#: modules/wp_security.class.php:187
+msgid "Some configuration are available only in apache."
+msgstr ""
+
+#: modules/wp_security.class.php:188
+msgid "Requests and Server"
+msgstr ""
+
+#: modules/wp_security.class.php:189
+msgid "Disable directory listing"
+msgstr ""
+
+#: modules/wp_security.class.php:190
+msgid "Disable access to configuration file"
+msgstr ""
+
+#: modules/wp_security.class.php:191
+msgid "Enable HTTPS Strict Transport Security"
+msgstr ""
+
+#: modules/wp_security.class.php:192
+msgid "Disable Cross-Origin Resource Sharing"
+msgstr ""
+
+#: modules/wp_security.class.php:193
+msgid "Disable HTTP Track & Trace"
+msgstr ""
+
+#: modules/wp_security.class.php:194
+msgid "Block Cross Site Scripting"
+msgstr ""
+
+#: modules/wp_security.class.php:195
+msgid "Send No Sniff Header"
+msgstr ""
+
+#: modules/wp_security.class.php:196
+msgid "Send No Referrer Header"
+msgstr ""
+
+#: modules/wp_security.class.php:197
+msgid "Send No Frame Header"
+msgstr ""
+
+#: modules/wp_security.class.php:198
+msgid "Disable server signature "
+msgstr ""
+
+#: modules/wp_security.class.php:201
+msgid "Disable Information Disclosure & Remove Meta information."
+msgstr ""
+
+#: modules/wp_security.class.php:202
+msgid "Hide WordPress Version Number"
+msgstr ""
+
+#: modules/wp_security.class.php:203
+msgid "Remove WordPress Meta Generator Tag"
+msgstr ""
+
+#: modules/wp_security.class.php:204
+msgid "Remove Version from Stylesheet"
+msgstr ""
+
+#: modules/wp_security.class.php:205
+msgid "Remove Version from Script"
+msgstr ""
+
+#: modules/wp_security.class.php:208
+msgid "Admin & API Security"
+msgstr ""
+
+#: modules/wp_security.class.php:209
+msgid "Disable WP User Enumeration"
+msgstr ""
+
+#: modules/wp_security.class.php:210
+msgid "Disable WP File Editor"
+msgstr ""
+
+#: modules/wp_security.class.php:211
+msgid "Disable XMLRPC"
+msgstr ""
+
+#: modules/wp_security.class.php:212
+msgid "Disable WP API JSON"
+msgstr ""
+
+#: modules/wp_updates.class.php:128
+msgid "Disable Wordpress Core Updates"
+msgstr ""
+
+#: modules/wp_updates.class.php:129
+msgid "Disable Plugins Updates"
+msgstr ""
+
+#: modules/wp_updates.class.php:130
+msgid "Disable Themes Updates"
+msgstr ""
+
+#: modules/wp_updates.class.php:131
+msgid "Disable Updates Messages"
+msgstr ""
+
+#: modules/wp_updates.class.php:132
+msgid "Remove Updates Page"
+msgstr ""
+
+#: modules/wp_updates.class.php:133
+msgid "Disable Automatic Updates"
+msgstr ""
+
+#: modules/wp_updates.class.php:134
+msgid "Disable WordPress update notices mail"
+msgstr ""
+
+#: vendors/shzn-framework/Ajax.class.php:47
+#: vendors/shzn-framework/Ajax.class.php:65
+msgid "It seems that you are not allowed to do this request."
+msgstr ""
+
+#: vendors/shzn-framework/Ajax.class.php:48
+#: vendors/shzn-framework/Ajax.class.php:66
+#: vendors/shzn-framework/Ajax.class.php:76
+#: vendors/shzn-framework/Module.class.php:233
+msgid "Request error"
+msgstr ""
+
+#: vendors/shzn-framework/Ajax.class.php:75
+msgid "Wrong ajax request."
+msgstr ""
+
+#: vendors/shzn-framework/Graphic.class.php:337
+msgid "Choose a type or enter one manually."
+msgstr ""
+
+#: vendors/shzn-framework/Module.class.php:147
+msgid "Action was correctly executed"
+msgstr ""
+
+#: vendors/shzn-framework/Module.class.php:149
+msgid "Action execution failed"
+msgstr ""
+
+#: vendors/shzn-framework/Module.class.php:232
+#, php-format
+msgid "Wrong ajax request for %s"
+msgstr ""
+
+#: vendors/shzn-framework/Module.class.php:276
+msgid "Save Changes"
+msgstr ""
+
+#: vendors/shzn-framework/Module.class.php:317
+msgid "This Module is disabled for you or for your settings."
+msgstr ""
+
+#: vendors/shzn-framework/Settings.class.php:162
+msgid "Core Settings"
+msgstr ""
+
+#: vendors/shzn-framework/Settings.class.php:220
+msgid "Modules Settings"
+msgstr ""
+
+#: vendors/shzn-framework/Settings.class.php:227
+#, php-format
+msgid "No modules enabled. To enable them go <a href='%s'>here</a>."
+msgstr ""
+
+#: vendors/shzn-framework/loader.php:58
+msgid "Are you sure you want to leave?"
+msgstr ""
