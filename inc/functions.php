@@ -1,5 +1,9 @@
 <?php
 
+use SHZN\core\Cron;
+use WPOptimizer\core\PluginInit;
+use WPOptimizer\modules\supporters\ImagesProcessor;
+
 /**
  * @author    sh1zen
  * @copyright Copyright (C)  2022
@@ -8,7 +12,26 @@
 
 function wpopt()
 {
-    return \WPOptimizer\core\PluginInit::getInstance();
+    return PluginInit::getInstance();
+}
+
+function wpopt_optimize_image(string $path, bool $replace = true, array $settings = [])
+{
+    if (!shzn('wpopt')) {
+        return false;
+    }
+
+    require_once WPOPT_SUPPORTERS . '/media/ImagesProcessor.class.php';
+
+    $settings = array_merge(shzn('wpopt')->settings->get('media'), $settings);
+
+    $imageProcessor = ImagesProcessor::getInstance($settings);
+
+    if ($imageProcessor->optimize_image($path, $replace, false) === \WPOptimizer\modules\supporters\IPC_SUCCESS) {
+        return $imageProcessor->get_metadata('file');
+    }
+
+    return false;
 }
 
 /**
@@ -20,46 +43,51 @@ function wpopt()
  */
 function wpopt_optimize_media_path(string $path, array $settings = [])
 {
-    require_once WPOPT_SUPPORTERS . '/media/ImagesProcessor.class.php';
-
-    $settings = array_merge(
-        [
-            'use_imagick'          => true,
-            'format'               => array(
-                'jpg'    => true,
-                'png'    => false,
-                'gif'    => true,
-                'webp'   => true,
-                'others' => false
-            ),
-            'quality'              => 80,
-            'keep_exif'            => false,
-            'convert_to_webp'      => false,
-            'resize_larger_images' => false,
-            'resize_width_px'      => 2560,
-            'resize_height_px'     => 1440
-        ],
-        shzn('wpopt') ? shzn('wpopt')->settings->get('media') : [],
-        $settings
-    );
-
-    $imageProcessor = \WPOptimizer\modules\supporters\ImagesProcessor::getInstance($settings);
-
-    if (shzn('wpopt')) {
-
-        shzn('wpopt')->options->update("status", 'optimization', 'running', "media");
-
-        $res = $imageProcessor->scan_dir($path);
-        if ($res === \WPOptimizer\modules\supporters\IPC_TIME_LIMIT) {
-            \SHZN\core\Cron::schedule_function('wpopt_optimize_media_path', [$path, $settings], time() + 30);
-        }
-        else {
-            \SHZN\core\Cron::unschedule_function('wpopt_optimize_media_path', [$path, $settings]);
-            shzn('wpopt')->options->update("status", 'optimization', 'paused', "media");
-        }
-        return true;
+    if (!shzn('wpopt')) {
+        return false;
     }
 
-    return false;
+    require_once WPOPT_SUPPORTERS . '/media/ImagesProcessor.class.php';
+
+    $settings = array_merge(shzn('wpopt')->settings->get('media'), $settings);
+
+    shzn('wpopt')->options->update("status", 'optimization', 'running', "media");
+
+    $scan_res = ImagesProcessor::getInstance($settings)->scan_dir($path);
+
+    if ($scan_res === \WPOptimizer\modules\supporters\IPC_TIME_LIMIT) {
+        Cron::schedule_function('wpopt_optimize_media_path', [$path, $settings], time() + 30);
+    }
+    else {
+        Cron::unschedule_function('wpopt_optimize_media_path', [$path, $settings]);
+        shzn('wpopt')->options->update("status", 'optimization', 'paused', "media");
+    }
+    return true;
+}
+
+function wpopt_minify_html($html, $options = [])
+{
+    require_once WPOPT_SUPPORTERS . '/minifier/Minify.class.php';
+    require_once WPOPT_SUPPORTERS . '/minifier/Minify_HTML.class.php';
+    require_once WPOPT_SUPPORTERS . '/minifier/Minify_CSS.class.php';
+    require_once WPOPT_SUPPORTERS . '/minifier/Minify_JS.class.php';
+
+    return \WPOptimizer\modules\supporters\Minify_HTML::minify($html, $options);
+}
+
+function wpopt_minify_css($css, $options = [])
+{
+    require_once WPOPT_SUPPORTERS . '/minifier/Minify.class.php';
+    require_once WPOPT_SUPPORTERS . '/minifier/Minify_CSS.class.php';
+
+    return \WPOptimizer\modules\supporters\Minify_CSS::minify($css, $options);
+}
+
+function wpopt_minify_javascript($css, $options = [])
+{
+    require_once WPOPT_SUPPORTERS . '/minifier/Minify.class.php';
+    require_once WPOPT_SUPPORTERS . '/minifier/Minify_JS.class.php';
+
+    return \WPOptimizer\modules\supporters\Minify_JS::minify($css, $options);
 }
 

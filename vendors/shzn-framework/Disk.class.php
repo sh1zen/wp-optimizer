@@ -40,21 +40,20 @@ class Disk
         return self::$wp_filesystem;
     }
 
-    public static function write($path, $data)
+    public static function write($path, $data, $flag = FILE_APPEND)
     {
         if (self::$suspended)
             return false;
 
+        if (!file_exists($path)) {
+            self::make_path(dirname($path));
+        }
+
         // writing to system rules file, may be potentially write-protected
-        if (@file_put_contents($path, $data))
+        if (@file_put_contents($path, $data, $flag))
             return true;
 
         return self::wp_filesystem()->put_contents($path, $data);
-    }
-
-    public static function count_files($path, $filters = array())
-    {
-
     }
 
     public static function delete_files($target, $identifier = '')
@@ -124,10 +123,6 @@ class Disk
             return false;
         }
 
-        if ($private) {
-            $dir_perms = 0750;
-        }
-
         if (file_exists($target)) {
             $res = @is_dir($target) and @chmod($target, $dir_perms);
         }
@@ -135,10 +130,14 @@ class Disk
             $res = @mkdir($target, $dir_perms, true);
         }
 
+        if ($private) {
+            $dir_perms = 0750;
+        }
+
         if ($res) {
 
             /*
-            * If a umask is set that modifies $dir_perms, we'll have to re-set
+            * If an umask is set that modifies $dir_perms, we'll have to re-set
             * the $dir_perms correctly with chmod()
             */
             if (($dir_perms & ~umask()) != $dir_perms) {

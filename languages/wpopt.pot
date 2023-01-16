@@ -4,7 +4,7 @@ msgstr ""
 "Project-Id-Version: wpopt-translation\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/wp-"
 "optimizer/\n"
-"POT-Creation-Date: 2022-11-11 12:57+0100\n"
+"POT-Creation-Date: 2023-04-11 01:57+0200\n"
 "PO-Revision-Date: 2020-05-13 02:34+0200\n"
 "Last-Translator: sh1zen\n"
 "Language-Team: sh1zen\n"
@@ -13,7 +13,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
-"X-Generator: Poedit 3.2\n"
+"X-Generator: Poedit 3.2.2\n"
 "X-Poedit-Basepath: ..\n"
 "X-Poedit-SourceCharset: UTF-8\n"
 "X-Poedit-KeywordsList: __;_e;_ex;_x;_n;_nx;_n_noop;_nx_noop;esc_html__;"
@@ -21,77 +21,157 @@ msgstr ""
 "X-Poedit-SearchPath-0: .\n"
 "X-Poedit-SearchPathExcluded-0: languages\n"
 
-#: admin/PagesHandler.class.php:49
+#: admin/PagesHandler.class.php:44
+#, php-format
+msgid ""
+"Buy me a coffe <a href='%s'>here</a> or leave a review <a "
+"href='%s'>here</a>."
+msgstr ""
+
+#: admin/PagesHandler.class.php:45
+msgid "Dismiss"
+msgstr ""
+
+#: admin/PagesHandler.class.php:73
 msgid "WPOPT Modules Options"
 msgstr ""
 
-#: admin/PagesHandler.class.php:49
-msgid "Modules Options"
+#: admin/PagesHandler.class.php:73
+msgid "Modules"
 msgstr ""
 
-#: admin/PagesHandler.class.php:54
+#: admin/PagesHandler.class.php:78
 msgid "WPOPT Settings"
 msgstr ""
 
-#: admin/PagesHandler.class.php:54 admin/PluginInit.class.php:250
+#: admin/PagesHandler.class.php:78 admin/PluginInit.class.php:250
 msgid "Settings"
 msgstr ""
 
-#: admin/PagesHandler.class.php:59
+#: admin/PagesHandler.class.php:83
 msgid "WPOPT FAQ"
 msgstr ""
 
-#: admin/PagesHandler.class.php:59
+#: admin/PagesHandler.class.php:83
 msgid "FAQ"
 msgstr ""
 
-#: admin/PagesHandler.class.php:128 modules/sysinfo.class.php:124
-#: modules/sysinfo.class.php:190 vendors/shzn-framework/UtilEnv.php:668
+#: admin/PagesHandler.class.php:152 modules/sysinfo.class.php:124
+#: modules/sysinfo.class.php:190 vendors/shzn-framework/UtilEnv.php:505
 msgid "N/A"
 msgstr ""
 
-#: admin/PagesHandler.class.php:129
+#: admin/PagesHandler.class.php:153
 msgid "Settings Saved"
 msgstr ""
 
-#: admin/PagesHandler.class.php:130
+#: admin/PagesHandler.class.php:154
 msgid "Request fail"
 msgstr ""
 
-#: admin/PagesHandler.class.php:131
+#: admin/PagesHandler.class.php:155
 msgid "Request succeed"
 msgstr ""
 
-#: admin/PagesHandler.class.php:132
+#: admin/PagesHandler.class.php:156
 msgid "Running"
 msgstr ""
 
-#: admin/PagesHandler.class.php:133
+#: admin/PagesHandler.class.php:157
 msgid ""
 "WP Optimizer is running an action. If you leave now, it may not be "
 "completed."
 msgstr ""
 
-#: admin/PagesHandler.class.php:147
+#: admin/PagesHandler.class.php:171
+msgid "What this plugin can do and how does it work?"
+msgstr ""
+
+#: admin/PagesHandler.class.php:175
+msgid ""
+"This plugin is privacy oriented: every data stay on your server, is "
+"not necessary to send data to other servers."
+msgstr ""
+
+#: admin/PagesHandler.class.php:176
+msgid ""
+"WPOPT has been designed to improve the performance of your site, "
+"covering many aspects (if actived):"
+msgstr ""
+
+#: admin/PagesHandler.class.php:178
+msgid ""
+"Server enhancements: from basic .htaccess rules media compression "
+"(gzip, brotli)."
+msgstr ""
+
+#: admin/PagesHandler.class.php:179
+msgid ""
+"Cron enhancements: can reduce the WordPres cron execution to custom "
+"intervals."
+msgstr ""
+
+#: admin/PagesHandler.class.php:180
+msgid "Database enhancements: from query caching to session storage."
+msgstr ""
+
+#: admin/PagesHandler.class.php:181
+msgid "Security enhancements: from WordPress api to HTTP requests."
+msgstr ""
+
+#: admin/PagesHandler.class.php:182
+msgid "Browser caching system."
+msgstr ""
+
+#: admin/PagesHandler.class.php:183
+msgid ""
+"Server caching: supporting query caching, static pages caching and "
+"database caching."
+msgstr ""
+
+#: admin/PagesHandler.class.php:184
+msgid "Media (CSS, JavaScript, HTML) minification."
+msgstr ""
+
+#: admin/PagesHandler.class.php:185
+msgid "Local image compression and resizing, with custom specs."
+msgstr ""
+
+#: admin/PagesHandler.class.php:186
+msgid "Some most requested WordPress customizations."
+msgstr ""
+
+#: admin/PagesHandler.class.php:187
+msgid "WordPress and plugins updates blocker."
+msgstr ""
+
+#: admin/PagesHandler.class.php:190
+msgid ""
+"This plugin has been developed in modules so that you can activate "
+"only essential ones based on your necessity to reduce the overload of "
+"the plugin itself."
+msgstr ""
+
+#: admin/PagesHandler.class.php:196
 msgid "Where can I configure optimization parameters?"
 msgstr ""
 
-#: admin/PagesHandler.class.php:151
+#: admin/PagesHandler.class.php:200
 #, php-format
 msgid ""
 "Any module option is configurable in <a href=\"%s\">Modules Options "
 "panel</a>."
 msgstr ""
 
-#: admin/PagesHandler.class.php:157
+#: admin/PagesHandler.class.php:206
 msgid "How media optimizer works?"
 msgstr ""
 
-#: admin/PagesHandler.class.php:161
+#: admin/PagesHandler.class.php:210
 msgid "Media optimizer works in two different ways:"
 msgstr ""
 
-#: admin/PagesHandler.class.php:163
+#: admin/PagesHandler.class.php:212
 #, php-format
 msgid ""
 "By a scheduled event it's able to collect and optimize any media "
@@ -99,121 +179,121 @@ msgid ""
 "related settings."
 msgstr ""
 
-#: admin/PagesHandler.class.php:164
+#: admin/PagesHandler.class.php:213
 msgid ""
 "By a specific path scanner, Media optimizer will run a background "
 "activity to optimize all images present in the input path."
 msgstr ""
 
-#: admin/PagesHandler.class.php:165
+#: admin/PagesHandler.class.php:214
 msgid ""
 "By a whole database scanner, Media optimizer will run a background "
 "activity to check all images saved in your WordPress library "
 "optimizing each image and every thumbnail associated."
 msgstr ""
 
-#: admin/PagesHandler.class.php:167
+#: admin/PagesHandler.class.php:216
 #, php-format
 msgid ""
-"Any image optimization will be run following your settings set <a href="
-"\"%s\">Here</a>."
+"Any image optimization will be run following your settings set <a "
+"href=\"%s\">Here</a>."
 msgstr ""
 
-#: admin/PagesHandler.class.php:216
+#: admin/PagesHandler.class.php:265
 msgid "Modules:"
 msgstr ""
 
-#: admin/PagesHandler.class.php:219
+#: admin/PagesHandler.class.php:268
 msgid ""
 "This plugin uses modules, so you can disable non necessary one to not "
 "weigh down WordPress."
 msgstr ""
 
-#: admin/PagesHandler.class.php:223
+#: admin/PagesHandler.class.php:272
 msgid "Currently active:"
 msgstr ""
 
-#: admin/PagesHandler.class.php:224
+#: admin/PagesHandler.class.php:273
 #, php-format
 msgid "Manage modules: <a href=\"%s\">here</a>."
 msgstr ""
 
-#: admin/PagesHandler.class.php:225
+#: admin/PagesHandler.class.php:274
 #, php-format
 msgid "Configure them: <a href=\"%s\">here</a>."
 msgstr ""
 
-#: admin/PagesHandler.class.php:228
+#: admin/PagesHandler.class.php:277
 msgid "WordPress performances:"
 msgstr ""
 
-#: admin/PagesHandler.class.php:232
+#: admin/PagesHandler.class.php:281
 #, php-format
 msgid "Server load: %s %%"
 msgstr ""
 
-#: admin/PagesHandler.class.php:233
+#: admin/PagesHandler.class.php:282
 #, php-format
 msgid "WordPress used memory: %s"
 msgstr ""
 
-#: admin/PagesHandler.class.php:234
+#: admin/PagesHandler.class.php:283
 #, php-format
 msgid "Wordpress execution time: %s s"
 msgstr ""
 
-#: admin/PagesHandler.class.php:239
+#: admin/PagesHandler.class.php:288
 msgid "Fast actions:"
 msgstr ""
 
-#: admin/PagesHandler.class.php:240
+#: admin/PagesHandler.class.php:289
 msgid ""
 "Here is possible to run default optimizations as a separate cron job."
 msgstr ""
 
-#: admin/PagesHandler.class.php:242
+#: admin/PagesHandler.class.php:291
 msgid "A cron job is running."
 msgstr ""
 
-#: admin/PagesHandler.class.php:247
+#: admin/PagesHandler.class.php:296
 msgid "Auto optimize now"
 msgstr ""
 
-#: admin/PagesHandler.class.php:251
+#: admin/PagesHandler.class.php:300
 msgid "Reset cron status"
 msgstr ""
 
-#: admin/PagesHandler.class.php:260
+#: admin/PagesHandler.class.php:309
 msgid "Tips:"
 msgstr ""
 
-#: admin/PagesHandler.class.php:263
+#: admin/PagesHandler.class.php:312
 msgid ""
-"For a better SEO optimization, it's recommended to install also <a "
-"href=\"https://wordpress.org/plugins/flexy-seo/\">this</a> plugin."
+"<b>For a better SEO optimization, it's recommended to install also <a "
+"href=\"https://wordpress.org/plugins/flexy-seo/\">this</a> plugin.</b>"
 msgstr ""
 
-#: admin/PagesHandler.class.php:274
+#: admin/PagesHandler.class.php:323
 msgid "Support this project, buy me a coffee."
 msgstr ""
 
-#: admin/PagesHandler.class.php:288
+#: admin/PagesHandler.class.php:338
 msgid "Want to support in other ways?"
 msgstr ""
 
-#: admin/PagesHandler.class.php:291
+#: admin/PagesHandler.class.php:341
 msgid "Help me translating"
 msgstr ""
 
-#: admin/PagesHandler.class.php:294
+#: admin/PagesHandler.class.php:344
 msgid "Leave a review"
 msgstr ""
 
-#: admin/PagesHandler.class.php:300
+#: admin/PagesHandler.class.php:350
 msgid "Source code"
 msgstr ""
 
-#: admin/PagesHandler.class.php:303
+#: admin/PagesHandler.class.php:353
 msgid "About me"
 msgstr ""
 
@@ -221,23 +301,23 @@ msgstr ""
 msgid "Buy me a beer"
 msgstr ""
 
-#: inc/Report.class.php:30
+#: inc/Report.class.php:32
 #, php-format
 msgid ""
 "Report %s : [ %s s : %s ]\n"
 "\n"
 msgstr ""
 
-#: inc/Report.class.php:39
+#: inc/Report.class.php:41
 #, php-format
 msgid " %s [ successes %s / errors %s]"
 msgstr ""
 
-#: inc/Report.class.php:44
+#: inc/Report.class.php:46
 msgid "Success:"
 msgstr ""
 
-#: inc/Report.class.php:57
+#: inc/Report.class.php:59
 msgid "Errors:"
 msgstr ""
 
@@ -772,15 +852,15 @@ msgstr ""
 #: modules/media.class.php:281
 #, php-format
 msgid ""
-"To proceed with image optimization you need to install <a href=\"%s"
-"\">imagick</a> or <a href=\"%s\">GD</a> on your server."
+"To proceed with image optimization you need to install <a "
+"href=\"%s\">imagick</a> or <a href=\"%s\">GD</a> on your server."
 msgstr ""
 
 #: modules/media.class.php:284
 #, php-format
 msgid ""
-"To guarantee a complete image optimization support, install <a href="
-"\"%s\">imagick</a> on your server."
+"To guarantee a complete image optimization support, install <a "
+"href=\"%s\">imagick</a> on your server."
 msgstr ""
 
 #: modules/media.class.php:290
@@ -896,31 +976,43 @@ msgstr ""
 msgid "Optimize other formats (tiff, heic, bmp)"
 msgstr ""
 
-#: modules/minify.class.php:144
+#: modules/minify.class.php:206
 msgid "Minify HTML"
 msgstr ""
 
-#: modules/minify.class.php:145
+#: modules/minify.class.php:207
 msgid "Remove Comments"
 msgstr ""
 
-#: modules/minify.class.php:146
+#: modules/minify.class.php:208
 msgid "Minify inline css"
 msgstr ""
 
-#: modules/minify.class.php:147
+#: modules/minify.class.php:209
 msgid "Minify inline js"
 msgstr ""
 
-#: modules/minify.class.php:166
+#: modules/minify.class.php:211
+msgid "Minify JavaScript"
+msgstr ""
+
+#: modules/minify.class.php:212 modules/minify.class.php:215
+msgid "Try to combine scripts"
+msgstr ""
+
+#: modules/minify.class.php:214
+msgid "Minify CSS"
+msgstr ""
+
+#: modules/minify.class.php:226
 msgid "Beta version."
 msgstr ""
 
-#: modules/minify.class.php:168
+#: modules/minify.class.php:228
 msgid "This module is under developing."
 msgstr ""
 
-#: modules/minify.class.php:169
+#: modules/minify.class.php:229
 msgid ""
 "Should work fine, but to be safe activate this feature only if you "
 "know what to do in case of bugs. "
@@ -1550,93 +1642,101 @@ msgid ""
 "automatically."
 msgstr ""
 
-#: modules/wp_optimizer.class.php:136 modules/wp_security.class.php:177
+#: modules/wp_optimizer.class.php:147 modules/wp_security.class.php:177
 msgid ""
 "To manually modifies your server for enhanced mode copy and paste this "
 "to your htaccess."
 msgstr ""
 
-#: modules/wp_optimizer.class.php:148
-msgid "Improve WordPress Cron performances"
-msgstr ""
-
-#: modules/wp_optimizer.class.php:149
-msgid "Check Cron schedules every (seconds)"
-msgstr ""
-
-#: modules/wp_optimizer.class.php:151
-msgid "Server configuration (Up to now, apache only)"
-msgstr ""
-
-#: modules/wp_optimizer.class.php:153
-msgid "Server Enhancements"
-msgstr ""
-
-#: modules/wp_optimizer.class.php:154
-msgid "Remove www"
-msgstr ""
-
-#: modules/wp_optimizer.class.php:155
-msgid "Redirect HTTP to HTTPS"
-msgstr ""
-
-#: modules/wp_optimizer.class.php:156
-msgid "Connection keep alive"
-msgstr ""
-
-#: modules/wp_optimizer.class.php:157
-msgid "Follow symlinks"
-msgstr ""
-
 #: modules/wp_optimizer.class.php:158
-msgid "Timezone"
-msgstr ""
-
-#: modules/wp_optimizer.class.php:159
-msgid "Default Charset UTF-8"
+msgid "General speedup"
 msgstr ""
 
 #: modules/wp_optimizer.class.php:160
-msgid "Enable PageSpeed if installed"
+msgid "Improve Database performances"
 msgstr ""
 
-#: modules/wp_optimizer.class.php:163
-msgid "Enable server Compression"
+#: modules/wp_optimizer.class.php:161
+msgid "Improve WordPress Cron performances"
+msgstr ""
+
+#: modules/wp_optimizer.class.php:162
+msgid "Check Cron schedules every (seconds)"
 msgstr ""
 
 #: modules/wp_optimizer.class.php:164
-msgid "GZIP"
+msgid "Server configuration (Up to now, apache only)"
 msgstr ""
 
-#: modules/wp_optimizer.class.php:165
-msgid "BROTLI"
+#: modules/wp_optimizer.class.php:166
+msgid "Server Enhancements"
+msgstr ""
+
+#: modules/wp_optimizer.class.php:167
+msgid "Remove www"
 msgstr ""
 
 #: modules/wp_optimizer.class.php:168
-msgid "Enable browser cache"
+msgid "Redirect HTTP to HTTPS"
 msgstr ""
 
 #: modules/wp_optimizer.class.php:169
-msgid "Use Cache Control Headers"
+msgid "Connection keep alive"
 msgstr ""
 
 #: modules/wp_optimizer.class.php:170
-msgid "Default lifetime"
+msgid "Follow symlinks"
 msgstr ""
 
 #: modules/wp_optimizer.class.php:171
-msgid "CSS & JavaScripts lifetime"
+msgid "Timezone"
 msgstr ""
 
 #: modules/wp_optimizer.class.php:172
-msgid "Images lifetime"
+msgid "Default Charset UTF-8"
 msgstr ""
 
 #: modules/wp_optimizer.class.php:173
+msgid "Enable PageSpeed if installed"
+msgstr ""
+
+#: modules/wp_optimizer.class.php:176
+msgid "Enable server Compression"
+msgstr ""
+
+#: modules/wp_optimizer.class.php:177
+msgid "GZIP"
+msgstr ""
+
+#: modules/wp_optimizer.class.php:178
+msgid "BROTLI"
+msgstr ""
+
+#: modules/wp_optimizer.class.php:181
+msgid "Enable browser cache"
+msgstr ""
+
+#: modules/wp_optimizer.class.php:182
+msgid "Use Cache Control Headers"
+msgstr ""
+
+#: modules/wp_optimizer.class.php:183
+msgid "Default lifetime"
+msgstr ""
+
+#: modules/wp_optimizer.class.php:184
+msgid "CSS & JavaScripts lifetime"
+msgstr ""
+
+#: modules/wp_optimizer.class.php:185
+msgid "Images lifetime"
+msgstr ""
+
+#: modules/wp_optimizer.class.php:186
 msgid "Fonts lifetime"
 msgstr ""
 
-#: modules/wp_optimizer.class.php:174
+#: modules/wp_optimizer.class.php:187
 msgid "Archives lifetime"
 msgstr ""
 
@@ -1818,6 +1918,6 @@ msgstr ""
 msgid "No modules enabled. To enable them go <a href='%s'>here</a>."
 msgstr ""
 
-#: vendors/shzn-framework/loader.php:58
+#: vendors/shzn-framework/loader.php:60
 msgid "Are you sure you want to leave?"
 msgstr ""

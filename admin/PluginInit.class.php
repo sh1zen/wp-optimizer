@@ -79,7 +79,7 @@ class PluginInit
 
         // need upgrade
         if (!$version or version_compare($version, WPOPT_VERSION, '<')) {
-            require_once dirname(__FILE__) . '/upgrader.php';
+            require_once __DIR__ . '/upgrader.php';
         }
     }
 

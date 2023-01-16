@@ -93,7 +93,7 @@ class Mod_Cache extends Module
 
         // database-cache
         if ($this->activating('wp_db', $input)) {
-            file_put_contents(
+            Disk::write(
                 WP_CONTENT_DIR . DIRECTORY_SEPARATOR . "db.php",
                 "<?php" . PHP_EOL . PHP_EOL . "include_once('" . WPOPT_SUPPORTERS . "cache/db.php');"
             );

@@ -8,20 +8,19 @@
 /**
  * Plugin Name: WP Optimizer
  * Plugin URI: https://github.com/sh1zen/wp-optimizer
- * Description: Search Engine (SEO) & Performance Optimization plugin, support automatic image compression, integrated caching, database cleanup and Server enhancements.
+ * Description: Search Engine (SEO) & Performance Optimization plugin, support automatic image compression, integrated caching, database and server enhancements.
  * Author: sh1zen
  * Author URI: https://sh1zen.github.io/
  * Text Domain: wpopt
  * Domain Path: /languages
- * Version: 1.8.3
+ * Version: 1.9.3
  */
 
-const WPOPT_VERSION = '1.8.3';
+const WPOPT_VERSION = '1.9.3';
 
 const WPOPT_FILE = __FILE__;
-if (!defined('WPOPT_ABSPATH')) {
-    define('WPOPT_ABSPATH', dirname(__FILE__) . '/');
-}
+
+const WPOPT_ABSPATH = __DIR__ . '/';
 const WPOPT_INCPATH = WPOPT_ABSPATH . 'inc/';
 const WPOPT_MODULES = WPOPT_ABSPATH . 'modules/';
 const WPOPT_ADMIN = WPOPT_ABSPATH . 'admin/';

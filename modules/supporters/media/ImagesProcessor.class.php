@@ -23,15 +23,31 @@ use SHZN\core\UtilEnv;
 
 class ImagesProcessor
 {
-    private static ImagesProcessor $_instance;
-
     private array $settings;
 
     private array $metadata;
 
     private function __construct($settings = array())
     {
-        $this->settings = $settings;
+        $this->settings = array_merge(
+            [
+                'use_imagick'          => true,
+                'format'               => array(
+                    'jpg'    => true,
+                    'png'    => false,
+                    'gif'    => true,
+                    'webp'   => false,
+                    'others' => false
+                ),
+                'quality'              => 80,
+                'keep_exif'            => false,
+                'convert_to_webp'      => true,
+                'resize_larger_images' => false,
+                'resize_width_px'      => 2560,
+                'resize_height_px'     => 1440
+            ],
+            $settings
+        );
 
         $this->metadata = [];
     }
@@ -42,11 +58,7 @@ class ImagesProcessor
      */
     public static function getInstance($settings = array())
     {
-        if (!isset(self::$_instance)) {
-            self::$_instance = new self($settings);
-        }
-
-        return self::$_instance;
+        return new self($settings);
     }
 
     public static function remove($media_id, bool $unlink)
@@ -185,55 +197,69 @@ class ImagesProcessor
         }
 
         $sub_path = UtilEnv::normalize_path(pathinfo($metadata['file'], PATHINFO_DIRNAME), true);
-        $image_container_path = UtilEnv::normalize_path(UtilEnv::wp_upload_dir('basedir') . '/' . $sub_path, true);
 
-        if (($this->optimize_image($image_container_path . basename($metadata['file']))) === IPC_SUCCESS) {
+        $image_path_container = UtilEnv::normalize_path(UtilEnv::wp_upload_dir('basedir') . '/' . $sub_path, true);
 
-            if (basename($metadata['file']) !== $this->get_metadata('file')) {
+        if ($this->optimize_image($image_path_container . basename($metadata['file']), true) === IPC_SUCCESS) {
 
-                unlink($image_container_path . basename($metadata['file']));
+            $wpdb->update($wpdb->posts,
+                [
+                    'post_mime_type' => $this->get_metadata('mime-type'),
+                    'guid'           => UtilEnv::path_to_url($this->get_metadata('file'), true),
+                ],
+                ['ID' => $post_ID]
+            );
 
-                $wpdb->update($wpdb->posts,
-                    [
-                        'post_mime_type' => $this->get_metadata('mime-type'),
-                        'guid'           => UtilEnv::path_to_url($image_container_path . $this->get_metadata('file'), true),
-                    ],
-                    ['ID' => $post_ID]
-                );
-
-                $metadata['file'] = $sub_path . $this->get_metadata('file');
-                update_post_meta($post_ID, "_wp_attached_file", $metadata['file']);
-            }
-
+            $metadata['file'] = $sub_path . basename($this->get_metadata('file'));
             $metadata['width'] = $this->get_metadata('width');
             $metadata['height'] = $this->get_metadata('height');
+            $metadata['filesize'] = $this->get_metadata('filesize');
+
+            update_post_meta($post_ID, "_wp_attached_file", $metadata['file']);
         }
 
         if (isset($metadata['original_image'])) {
 
-            if (($this->optimize_image($image_container_path . $metadata['original_image'])) === IPC_SUCCESS) {
+            if ($this->optimize_image($image_path_container . $metadata['original_image'], true) === IPC_SUCCESS) {
 
-                if ($metadata['original_image'] !== $this->get_metadata('file')) {
-                    unlink($image_container_path . $metadata['original_image']);
-                    $metadata['original_image'] = $this->get_metadata('file');
-                }
+                $metadata['original_image'] = basename($this->get_metadata('file'));
             }
         }
 
-        foreach ($metadata['sizes'] as $key => $image) {
+        $allow_unlink_oversize_images = Settings::check($this->settings, 'resize_larger_images');
 
-            /**
-             * Run image optimization
-             */
-            if (($this->optimize_image($image_container_path . $image['file'])) === IPC_SUCCESS) {
+        if ($allow_unlink_oversize_images) {
 
-                if ($metadata['file'] !== $this->get_metadata('file')) {
-                    unlink($image_container_path . $image['file']);
+            $allowed_width = Settings::get_option($this->settings, 'resize_width_px', 2560);
+            $allowed_height = Settings::get_option($this->settings, 'resize_height_px', 1440);
+
+            if (!is_numeric($allowed_width) or !is_numeric($allowed_height)) {
+                $allow_unlink_oversize_images = false;
+            }
+        }
+
+        foreach ($metadata['sizes'] as $size => $image) {
+
+            if ($allow_unlink_oversize_images and str_contains($size, 'x')) {
+
+                list($width, $height) = explode('x', $size, 2);
+
+                if (is_numeric($width) and is_numeric($height)) {
+
+                    if ($width > $allowed_width or $height > $allowed_height) {
+                        unlink($image_path_container . $image['file']);
+                        unset($metadata['sizes'][$size]);
+                        continue;
+                    }
                 }
+            }
 
-                $new_metadata = $this->get_metadata();
+            if ($this->optimize_image($image_path_container . $image['file'], true) === IPC_SUCCESS) {
 
-                $metadata['sizes'][$key] = array_merge($image, $new_metadata);
+                $new_metadata = $this->get_metadata('', []);
+                $new_metadata['file'] = basename($new_metadata['file']);
+
+                $metadata['sizes'][$size] = array_merge($image, $new_metadata);
             }
         }
 
@@ -271,7 +297,7 @@ class ImagesProcessor
             return IPC_FAIL;
         }
 
-        if ($remove_converted and (isset($metadata['wpopt']['prev_ext']))) {
+        if ($remove_converted) {
             unlink($image_path);
         }
 
@@ -280,8 +306,6 @@ class ImagesProcessor
         }
 
         unset($metadata['wpopt']);
-
-        $metadata['file'] = basename($metadata['file']);
 
         /**
          * make available optimization metadata
@@ -297,7 +321,7 @@ class ImagesProcessor
             return false;
         }
 
-        switch (pathinfo($image_path, PATHINFO_EXTENSION)) {
+        switch (strtolower(pathinfo($image_path, PATHINFO_EXTENSION))) {
 
             case 'jpg':
             case 'jpeg':
@@ -352,8 +376,11 @@ class ImagesProcessor
                 $width = Settings::get_option($this->settings, 'resize_width_px', 2560);
                 $height = Settings::get_option($this->settings, 'resize_height_px', 1440);
 
-                if ($imagick->getImageWidth() > $width or $imagick->getImageHeight() > $height) {
-                    $imagick->scaleImage($width, $height, true);
+                if (is_numeric($width) and is_numeric($height)) {
+
+                    if ($imagick->getImageWidth() > $width or $imagick->getImageHeight() > $height) {
+                        $imagick->scaleImage($width, $height, true);
+                    }
                 }
             }
 
@@ -366,7 +393,7 @@ class ImagesProcessor
                     $wpopt['prev_ext'] = pathinfo($image_path, PATHINFO_EXTENSION);
                 }
 
-                $image_path = UtilEnv::change_file_extension($image_path, 'webp');
+                $image_path = UtilEnv::change_file_extension($image_path, 'webp', true);
             }
 
             $quality = Settings::check($this->settings, 'quality', 80);
@@ -390,12 +417,12 @@ class ImagesProcessor
             return false;
         }
 
-        clearstatcache();
+        clearstatcache(true, $image_path);
 
         $wpopt['prev_size'] = $original_size;
         $wpopt['size'] = filesize($image_path);
 
-        return ['width' => $width, 'height' => $height, 'mime-type' => $mimetype, 'file' => $image_path, 'wpopt' => $wpopt];
+        return ['width' => $width, 'height' => $height, 'mime-type' => $mimetype, 'file' => $image_path, 'filesize' => $wpopt['size'], 'wpopt' => $wpopt];
     }
 
     private function optimize_gd($image_path)
@@ -425,7 +452,7 @@ class ImagesProcessor
                 $wpopt['prev_ext'] = pathinfo($image_path, PATHINFO_EXTENSION);
             }
 
-            $image_path = UtilEnv::change_file_extension($image_path, 'webp');
+            $image_path = UtilEnv::change_file_extension($image_path, 'webp', true);
         }
 
         $quality = Settings::check($this->settings, 'quality', 80);
@@ -444,12 +471,12 @@ class ImagesProcessor
             return false;
         }
 
-        clearstatcache();
+        clearstatcache(true, $image_path);
 
         $wpopt['prev_size'] = $original_size;
         $wpopt['size'] = filesize($image_path);
 
-        return ['width' => $width, 'height' => $height, 'mime-type' => $mimetype, 'file' => $image_path, 'wpopt' => $wpopt];
+        return ['width' => $width, 'height' => $height, 'mime-type' => $mimetype, 'file' => $image_path, 'filesize' => $wpopt['size'], 'wpopt' => $wpopt];
     }
 
     public function get_metadata($filter = '', $default = '')

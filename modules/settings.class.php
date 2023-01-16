@@ -69,9 +69,7 @@ class Mod_Settings extends Module
 
             case 'export_options':
 
-                Disk::make_path(WPOPT_STORAGE, true);
-
-                if (file_put_contents(WPOPT_STORAGE . 'wpopt-export.conf', shzn('wpopt')->settings->export())) {
+                if (Disk::write(WPOPT_STORAGE . 'wpopt-export.conf', shzn('wpopt')->settings->export())) {
                     UtilEnv::download_file(WPOPT_STORAGE . 'wpopt-export.conf');
                     return true;
                 }

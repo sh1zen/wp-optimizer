@@ -7,12 +7,10 @@
 
 use SHZN\core\Storage;
 
-if (!defined('WPOPT_ABSPATH')) {
-    define('WPOPT_ABSPATH', dirname(__FILE__) . '/../../../');
-}
+define('WPOPT_DB_ABSPATH', dirname(__FILE__, 4) . '/');
 
 require_once ABSPATH . WPINC . '/wp-db.php';
-require_once WPOPT_ABSPATH . 'inc/constants.php';
+require_once WPOPT_DB_ABSPATH . 'inc/constants.php';
 
 // no caching during activation or if is admin
 if (!((defined('WP_INSTALLING') and WP_INSTALLING) or is_admin())) {
@@ -21,7 +19,7 @@ if (!((defined('WP_INSTALLING') and WP_INSTALLING) or is_admin())) {
 
 // shzn-framework commons
 if (!defined('SHZN_FRAMEWORK')) {
-    require_once WPOPT_ABSPATH . 'vendors/shzn-framework/loader.php';
+    require_once WPOPT_DB_ABSPATH . 'vendors/shzn-framework/loader.php';
 }
 
 shzn('wpopt', [], [
@@ -157,5 +155,4 @@ class WPOPT_DB extends wpdb
 
         return $result;
     }
-
 }

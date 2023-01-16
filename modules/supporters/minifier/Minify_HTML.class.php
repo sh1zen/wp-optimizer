@@ -7,20 +7,6 @@
 
 namespace WPOptimizer\modules\supporters;
 
-use SHZN\core\UtilEnv;
-
-/**
- * Compress HTML
- *
- * This is a heavy regex-based removal of whitespace, unnecessary comments and
- * tokens. IE conditional comments are preserved. There are also options to have
- * STYLE and SCRIPT blocks compressed by callback functions.
- *
- * A test suite is available.
- *
- * @package Minify
- * @author Stephen Clay <steve@mrclay.org>
- */
 class Minify_HTML extends Minify
 {
     private $isXhtml;
@@ -78,10 +64,10 @@ class Minify_HTML extends Minify
         }
 
         // replace PREs with placeholders
-        $this->content = preg_replace_callback('/\\s*<pre(\\b[^>]*?>[\\s\\S]*?<\\/pre>)\\s*/iu', array($this, '_removePreCB'), $this->content);
+        $this->content = preg_replace_callback('/\\s*(<pre\\b[^>]*?>[\\s\\S]*?<\\/pre>)\\s*/iu', array($this, '_removeCB'), $this->content);
 
         // replace TEXTAREAs with placeholders
-        $this->content = preg_replace_callback('/\\s*(<textarea\\b[^>]*?>[\\s\\S]*?<\\/textarea>)\\s*/i', array($this, '_removeTextareaCB'), $this->content);
+        $this->content = preg_replace_callback('/\\s*(<textarea\\b[^>]*?>[\\s\\S]*?<\\/textarea>)\\s*/i', array($this, '_removeCB'), $this->content);
 
         // replace data: URIs with placeholders
         $this->content = preg_replace_callback('/(=("|\')data:.*\\2)/Ui', array($this, '_removeDataURICB'), $this->content);
@@ -97,12 +83,11 @@ class Minify_HTML extends Minify
             . '|ol|opt(?:group|ion)|output|p|param|section|t(?:able|body|head|d|h|r|foot|itle)'
             . '|ul|video|block|svg)\\b[^>]*>)/iu', '$1', $this->content);
 
-        // remove ws outside of all elements
+        // remove ws outside all elements
         $this->content = preg_replace_callback('/>([^<]+)</', array($this, '_outsideTagCB'), $this->content);
 
         // use newlines before 1st attribute in open tags (to limit line lengths)
         $this->content = preg_replace('/(<[a-z\\-]+)\\s+([^>]+>)/iu', "$1 $2", $this->content);
-
 
         // reverse order while preserving keys to ensure the last replacement is done first, etc ...
         $this->_placeholders = array_reverse($this->_placeholders, true);
@@ -110,7 +95,7 @@ class Minify_HTML extends Minify
         $this->content = str_replace(array_keys($this->_placeholders), array_values($this->_placeholders), $this->content);
 
         if ($this->multiProcess) {
-            // issue 229: multi-pass to catch scripts that didn't get replaced in textareas
+            // issue 229: multi-pass to catch scripts that didn't get replaced in text-areas
             $this->content = str_replace(array_keys($this->_placeholders), array_values($this->_placeholders), $this->content);
         }
     }
@@ -125,11 +110,6 @@ class Minify_HTML extends Minify
         return '>' . preg_replace('/^\\s+|\\s+$/', ' ', $m[1]) . '<';
     }
 
-    protected function _removePreCB($m)
-    {
-        return $this->_reservePlace("<pre{$m[1]}");
-    }
-
     protected function _reservePlace($content)
     {
         $placeholder = '%' . $this->_replacementHash . count($this->_placeholders) . '%';
@@ -138,9 +118,9 @@ class Minify_HTML extends Minify
         return $placeholder;
     }
 
-    protected function _removeTextareaCB($m)
+    protected function _removeCB($m)
     {
-        return $this->_reservePlace("<textarea{$m[1]}");
+        return $this->_reservePlace($m[1]);
     }
 
     protected function _removeDataURICB($m)

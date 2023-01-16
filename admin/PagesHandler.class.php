@@ -22,6 +22,30 @@ class PagesHandler
     {
         add_action('admin_menu', array($this, 'add_plugin_pages'));
         add_action('admin_enqueue_scripts', array($this, 'register_assets'), 20, 0);
+
+        add_action('admin_notices', [$this, 'notice'], 10, 0);
+    }
+
+    public function notice()
+    {
+        global $pagenow;
+
+        $user_id = shzn('common')->utility->cu_id;
+
+        if (isset($_GET['wpopt-dismiss-notice'])) {
+
+            shzn('wpopt')->options->add($user_id, 'dismissed', true, 'admin-notice', MONTH_IN_SECONDS);
+        }
+        elseif ($pagenow == 'index.php' and !shzn('wpopt')->options->get($user_id, 'dismissed', 'admin-notice', false)) {
+
+            ?>
+            <div class="notice notice-info is-dismissible">
+                <h3>Help me to build <a href="<?php echo admin_url('admin.php?page=wp-optimizer'); ?>">WP-OPTIMIZER</a>.</h3>
+                <p><?php echo sprintf(__("Buy me a coffe <a href='%s'>here</a> or leave a review <a href='%s'>here</a>.", 'wpopt'), "https://www.paypal.com/donate?business=dev.sh1zen%40outlook.it&item_name=Thank+you+in+advanced+for+the+kind+donations.+You+will+sustain+me+developing+WP-Optimizer.&currency_code=EUR", "https://wordpress.org/support/plugin/wp-optimizer/reviews/?filter=5"); ?></p>
+                <a href="?wpopt-dismiss-notice"><?php echo __('Dismiss', 'wpopt') ?></a>
+            </div>
+            <?php
+        }
     }
 
     public function add_plugin_pages()
@@ -46,7 +70,7 @@ class PagesHandler
         /**
          * Modules options page
          */
-        add_submenu_page('wp-optimizer', __('WPOPT Modules Options', 'wpopt'), __('Modules Options', 'wpopt'), 'manage_options', 'wpopt-modules-settings', array($this, 'render_modules_settings'));
+        add_submenu_page('wp-optimizer', __('WPOPT Modules Options', 'wpopt'), __('Modules', 'wpopt'), 'manage_options', 'wpopt-modules-settings', array($this, 'render_modules_settings'));
 
         /**
          * Plugin core settings
@@ -142,6 +166,31 @@ class PagesHandler
             <block class="shzn">
                 <section class='shzn-header'><h1>FAQ</h1></section>
                 <div class="shzn-faq-list">
+                    <div class="shzn-faq-item">
+                        <div class="shzn-faq-question-wrapper ">
+                            <div class="shzn-faq-question shzn-collapse-handler"><?php echo __('What this plugin can do and how does it work?', 'wpopt') ?>
+                                <icon class="shzn-collapse-icon">+</icon>
+                            </div>
+                            <div class="shzn-faq-answer shzn-collapse">
+                                <p><b><?php echo __('This plugin is privacy oriented: every data stay on your server, is not necessary to send data to other servers.'); ?></b></p>
+                                <span><?php echo __('WPOPT has been designed to improve the performance of your site, covering many aspects (if actived):'); ?></span>
+                                <ul class="shzn-list">
+                                    <li><?php _e("Server enhancements: from basic .htaccess rules media compression (gzip, brotli)."); ?></li>
+                                    <li><?php _e("Cron enhancements: can reduce the WordPres cron execution to custom intervals."); ?></li>
+                                    <li><?php _e("Database enhancements: from query caching to session storage."); ?></li>
+                                    <li><?php _e("Security enhancements: from WordPress api to HTTP requests."); ?></li>
+                                    <li><?php _e("Browser caching system."); ?></li>
+                                    <li><?php _e("Server caching: supporting query caching, static pages caching and database caching."); ?></li>
+                                    <li><?php _e("Media (CSS, JavaScript, HTML) minification."); ?></li>
+                                    <li><?php _e("Local image compression and resizing, with custom specs."); ?></li>
+                                    <li><?php _e("Some most requested WordPress customizations."); ?></li>
+                                    <li><?php _e("WordPress and plugins updates blocker."); ?></li>
+                                </ul>
+                                <p><?php
+                                    echo __('This plugin has been developed in modules so that you can activate only essential ones based on your necessity to reduce the overload of the plugin itself.'); ?></p>
+                            </div>
+                        </div>
+                    </div>
                     <div class="shzn-faq-item">
                         <div class="shzn-faq-question-wrapper ">
                             <div class="shzn-faq-question shzn-collapse-handler"><?php echo __('Where can I configure optimization parameters?', 'wpopt') ?>
@@ -260,7 +309,7 @@ class PagesHandler
                         <h2><?php _e('Tips:', 'wpopt'); ?></h2>
                         <h3>
                             <?php
-                            echo '<b>' . __('For a better SEO optimization, it\'s recommended to install also <a href="https://wordpress.org/plugins/flexy-seo/">this</a> plugin.', 'wpopt') . '</b>';
+                            echo __('<b>For a better SEO optimization, it\'s recommended to install also <a href="https://wordpress.org/plugins/flexy-seo/">this</a> plugin.</b>', 'wpopt');
                             ?>
                         </h3>
                     </block>
@@ -273,7 +322,8 @@ class PagesHandler
                     <div class="shzn-donation-wrap">
                         <div class="shzn-donation-title"><?php _e('Support this project, buy me a coffee.', 'wpopt'); ?></div>
                         <br>
-                        <a href="https://www.paypal.com/donate?business=dev.sh1zen%40outlook.it&item_name=Thank+you+in+advanced+for+the+kind+donations.+You+will+sustain+me+developing+WP-Optimizer.&currency_code=EUR" target="_blank">
+                        <a href="https://www.paypal.com/donate?business=dev.sh1zen%40outlook.it&item_name=Thank+you+in+advanced+for+the+kind+donations.+You+will+sustain+me+developing+WP-Optimizer.&currency_code=EUR"
+                           target="_blank">
                             <img src="https://www.paypalobjects.com/en_US/IT/i/btn/btn_donateCC_LG.gif"
                                  title="PayPal - The safer, easier way to pay online!" alt="Donate with PayPal button"/>
                         </a>

@@ -7,9 +7,12 @@
 
 namespace WPOptimizer\modules;
 
+use SHZN\core\Disk;
 use SHZN\core\UtilEnv;
 use SHZN\modules\Module;
+use WPOptimizer\modules\supporters\Minify_CSS;
 use WPOptimizer\modules\supporters\Minify_HTML;
+use WPOptimizer\modules\supporters\Minify_JS;
 
 /**
  * Module for updates handling
@@ -45,17 +48,76 @@ class Mod_Minify extends Module
             ]);
         }
 
-        /*
-        if(apply_filters("wpopt_allow_minify_js", $this->option('js.active')))
-        {
+        if (apply_filters("wpopt_allow_minify_js", $this->option('js.active'))) {
 
+            $buffer = preg_replace_callback('#<script.*src=["\']([^"\']+)["\'].*></script>#iU', function ($matches) {
+
+                list($script, $original_url) = $matches;
+
+                if (!str_contains($original_url, 'min') and str_starts_with($original_url, shzn()->utility->home_url)) {
+
+                    $file_path = WPOPT_STORAGE . "minify/js/" . md5($original_url) . ".js";
+
+                    if (file_exists($file_path)) {
+
+                        $url = UtilEnv::path_to_url($file_path, true);
+                        $script = str_replace($original_url, $url, $script);
+                    }
+                    else {
+
+                        $data = Minify_JS::minify(file_get_contents(UtilEnv::url_to_path($original_url)));
+
+                        if ($data and Disk::write($file_path, $data)) {
+                            $url = UtilEnv::path_to_url($file_path, true);
+
+                            if ($url) {
+                                $script = str_replace($original_url, $url, $script);
+                            }
+                        }
+                    }
+                }
+
+                return $script;
+
+            }, $buffer);
         }
 
-        if(apply_filters("wpopt_allow_minify_css", $this->option('css.active')))
-        {
+        if (apply_filters("wpopt_allow_minify_css", $this->option('css.active'))) {
 
+            $buffer = preg_replace_callback('#<link.*href=["\'\s]+([^"\']+)["\'\s]+.*/?>#iU', function ($matches) {
+
+                list($script, $original_url) = $matches;
+
+                if (!str_contains($original_url, 'min') and str_starts_with($original_url, shzn()->utility->home_url) and str_contains($script, 'stylesheet')) {
+
+                    $file_path = WPOPT_STORAGE . "minify/css/" . md5($original_url) . ".css";
+
+                    if (file_exists($file_path)) {
+
+                        $url = UtilEnv::path_to_url($file_path, true);
+                        $script = str_replace($original_url, $url, $script);
+                    }
+                    else {
+
+                        $original_path = UtilEnv::url_to_path($original_url);
+
+                        $data = Minify_CSS::minify(file_get_contents($original_path), ['file_path' => dirname($original_path) . '/']);
+
+                        if ($data and Disk::write($file_path, $data)) {
+                            $url = UtilEnv::path_to_url($file_path, true);
+
+                            if ($url) {
+                                $script = str_replace($original_url, $url, $script);
+                            }
+                        }
+                    }
+                }
+
+                return $script;
+
+            }, $buffer);
         }
-*/
+
         return $buffer;
     }
 
@@ -146,13 +208,11 @@ class Mod_Minify extends Module
             $this->setting_field(__('Minify inline css', 'wpopt'), "html.minify_css", "checkbox", ['parent' => 'html.active']),
             $this->setting_field(__('Minify inline js', 'wpopt'), "html.minify_js", "checkbox", ['parent' => 'html.active']),
 
-            /*
             $this->setting_field(__('Minify JavaScript', 'wpopt'), "js.active", "checkbox"),
             $this->setting_field(__('Try to combine scripts', 'wpopt'), "js.combine", "checkbox", ['parent' => 'js.active']),
 
             $this->setting_field(__('Minify CSS', 'wpopt'), "css.active", "checkbox"),
             $this->setting_field(__('Try to combine scripts', 'wpopt'), "css.combine", "checkbox", ['parent' => 'css.active']),
-            */
         );
     }
 

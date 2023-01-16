@@ -325,6 +325,34 @@ class GD
         return $portiontoadd . $destfilecontent;
     }
 
+    /**
+     * Set image resource (after using a raw gd command)
+     *
+     * @param $resource
+     * @param int $type
+     * @param null $info array(exif => ..., iptc => ...)
+     * @return bool
+     */
+    public function setResource($resource, int $type, $info = null)
+    {
+        if (!$this->is_gd_image($resource)) {
+            return false;
+        }
+
+        $this->image = $resource;
+        $this->width = imagesx($resource);
+        $this->height = imagesy($resource);
+        $this->quality = 100;
+        $this->info = $info;
+        $this->type = $type;
+        return true;
+    }
+
+    public function is_gd_image($image)
+    {
+        return ((is_resource($image) and 'gd' === get_resource_type($image)) or (is_object($image) and $image instanceof \GdImage));
+    }
+
     public function scaleImage($width, $height, $bestfit = false)
     {
         if ($this->width <= $width and $this->height <= $height) {
@@ -340,8 +368,8 @@ class GD
             $ratio = min($widthRatio, $heightRatio);
 
             // Calculate new image dimensions.
-            $newWidth = $this->width * $ratio;
-            $newHeight = $this->height * $ratio;
+            $newWidth = intval($this->width * $ratio);
+            $newHeight = intval($this->height * $ratio);
 
             if (function_exists('imagecreatetruecolor')) {
                 $scaledImage = imagecreatetruecolor($newWidth, $newHeight);
@@ -371,33 +399,5 @@ class GD
         $this->height = $height;
 
         return true;
-    }
-
-    /**
-     * Set image resource (after using a raw gd command)
-     *
-     * @param $resource
-     * @param int $type
-     * @param null $info array(exif => ..., iptc => ...)
-     * @return bool
-     */
-    public function setResource($resource, int $type, $info = null)
-    {
-        if (!$this->is_gd_image($resource)) {
-            return false;
-        }
-
-        $this->image = $resource;
-        $this->width = imagesx($resource);
-        $this->height = imagesy($resource);
-        $this->quality = 100;
-        $this->info = $info;
-        $this->type = $type;
-        return true;
-    }
-
-    public function is_gd_image($image)
-    {
-        return ((is_resource($image) and 'gd' === get_resource_type($image)) or (is_object($image) and $image instanceof \GdImage));
     }
 }

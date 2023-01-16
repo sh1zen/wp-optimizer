@@ -599,7 +599,6 @@ class WP_Enhancer
         }
 
         if (Settings::get_option($settings, 'srv_security.signature')) {
-            //$rules .= "ServerTokens Prod\n";
             $rules .= "ServerSignature Off\n";
         }
 
@@ -628,8 +627,6 @@ class WP_Enhancer
             $rules .= "<IfModule pagespeed_module>\n";
             $rules .= "     ModPagespeed on\n";
             $rules .= "     ModPagespeedEnableFilters rewrite_css,combine_css\n";
-            $rules .= "     ModPagespeedEnableFilters recompress_images\n";
-            $rules .= "     ModPagespeedEnableFilters convert_png_to_jpeg,convert_jpeg_to_webp\n";
             $rules .= "     ModPagespeedEnableFilters collapse_whitespace,remove_comments\n";
             $rules .= "</IfModule>\n";
         }

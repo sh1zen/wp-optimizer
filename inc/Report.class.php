@@ -7,6 +7,8 @@
 
 namespace WPOptimizer\core;
 
+use SHZN\core\Disk;
+
 class Report
 {
     private static Report $_instance;
@@ -68,7 +70,7 @@ class Report
 
         $report .= PHP_EOL . PHP_EOL;
 
-        return file_put_contents(WPOPT_STORAGE . 'wpopt-report.txt', $report, FILE_APPEND);
+        return Disk::write(WPOPT_STORAGE . 'wpopt-report.txt', $report, FILE_APPEND);
     }
 
     /**

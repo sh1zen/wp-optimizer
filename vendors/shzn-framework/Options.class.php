@@ -110,11 +110,7 @@ class Options
     {
         global $wpdb;
 
-        $tableName = $this->table_name();
-
-        $time = time();
-
-        $wpdb->query("DELETE FROM {$tableName} WHERE expiration > 0 AND expiration < {$time}");
+        $wpdb->query("DELETE FROM " . $this->table_name() . " WHERE expiration > 0 AND expiration < " . time());
     }
 
     /**

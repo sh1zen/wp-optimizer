@@ -7,8 +7,6 @@
 
 namespace WPOptimizer\modules\supporters;
 
-use SHZN\core\UtilEnv;
-
 /**
  * JSMin.php - modified PHP implementation of Douglas Crockford's JSMin.
  *

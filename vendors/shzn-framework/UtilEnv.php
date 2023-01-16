@@ -175,7 +175,7 @@ class UtilEnv
     }
 
     /**
-     * Returns true if server is nginx
+     * Returns true if server is iis
      *
      * @return boolean
      */
@@ -313,9 +313,9 @@ class UtilEnv
      * @param string $path
      * @return string
      */
-    public static function realpath($path, $exist = false)
+    public static function realpath($path, $exist = false, $trailing_slash = false)
     {
-        $path = self::normalize_path($path);
+        $path = self::normalize_path($path, $trailing_slash);
 
         if ($exist) {
             $absolutes = realpath($path);
@@ -419,9 +419,36 @@ class UtilEnv
         return trim($file, '/');
     }
 
-    public static function change_file_extension($file, $extension)
+    public static function change_file_extension($file, $extension, $unique = false)
     {
-        return str_replace(pathinfo($file, PATHINFO_EXTENSION), $extension, $file);
+        $changed = str_replace(pathinfo($file, PATHINFO_EXTENSION), $extension, $file);
+
+        if ($unique) {
+            $changed = self::unique_filename($changed);
+        }
+
+        return $changed;
+    }
+
+    public static function unique_filename(string $filename, bool $obfuscation = false)
+    {
+        $iter = 0;
+
+        $path_parts = pathinfo($filename);
+
+        $filename = $obfuscation ? md5(SHZN_SALT . $path_parts['filename']) : $path_parts['filename'];
+
+        $path = $path_parts['dirname'] === '.' ? '' : "{$path_parts['dirname']}/";
+
+        do {
+
+            $out_name = $iter > 0 ? "{$filename}-{$iter}" : $filename;
+
+            $iter++;
+
+        } while (file_exists("{$path}{$out_name}.{$path_parts['extension']}"));
+
+        return "{$path}{$out_name}.{$path_parts['extension']}";
     }
 
     /**
@@ -595,7 +622,6 @@ class UtilEnv
         return ($total > 0 ? round(($current / $total) * 100, 2) : 0) . '%';
     }
 
-
     /**
      * check if time left is more than a margin otherwise try to rise it
      *
@@ -672,5 +698,35 @@ class UtilEnv
          * and not turned off explicitly and not when being previewed in Customizer)!
          */
         return (!is_admin() and !is_feed() and !is_embed() and !$noOptimize and !$is_customize_preview);
+    }
+
+    public static function relativePath(string $from, string $to)
+    {
+        $fromA = explode('/', rtrim($from, '/'));
+        $toA = explode('/', $to);
+
+        $descend = [];
+        $ascend = [];
+
+        for ($i = 0; $i < max(count($fromA), count($toA)); $i++) {
+
+            if (!isset($fromA[$i], $toA[$i]) or $fromA[$i] !== $toA[$i]) {
+
+                if (isset($fromA[$i])) {
+                    $ascend[] = '..';
+                }
+
+                if (isset($toA[$i])) {
+                    $descend[] = $toA[$i];
+                }
+
+            }
+        }
+
+        if (empty($ascend)) {
+            $ascend = ['.'];
+        }
+
+        return implode('/', array_merge($ascend, $descend));
     }
 }

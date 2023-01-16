@@ -7,10 +7,12 @@
 
 use SHZN\core\UtilEnv;
 
-define('SHZN_FRAMEWORK', dirname(__FILE__) . '/');
+const SHZN_FRAMEWORK = __DIR__ . '/';
 define('SHZN_DEBUG', $_SERVER["SERVER_ADDR"] === '127.0.0.1');
 
 const SHZN_VERSION = "1.2.1";
+
+const SHZN_SALT = "#0b1b#2a4d2ce76ee3ac41021dda6cd#";
 
 require_once SHZN_FRAMEWORK . 'environment/php_polyfill/loader.php';
 require_once SHZN_FRAMEWORK . 'environment/wp_polyfill.php';

@@ -63,20 +63,31 @@ class Mod_WP_Optimizer extends Module
     {
         if ($this->option('cron.enhance')) {
 
-            remove_action('init', 'wp_cron');
-
-            $lastCronEvent = shzn('wpopt')->options->get('last_cron_event', 'cron', 'wp_optimizer', 0);
-
             if (!defined('WP_CRON_LOCK_TIMEOUT')) {
                 define('WP_CRON_LOCK_TIMEOUT', MINUTE_IN_SECONDS);
             }
 
-            if (time() > $this->option('cron.timenext', 300) + $lastCronEvent) {
+            remove_action('init', 'wp_cron');
+
+            if (time() > $this->option('cron.timenext', 300) + shzn('wpopt')->options->get('last_cron_event', 'cron', 'wp_optimizer', 0)) {
 
                 spawn_cron();
 
                 shzn('wpopt')->options->update('last_cron_event', 'cron', time(), 'wp_optimizer');
             }
+        }
+
+        if ($this->option('db.enhance')) {
+
+            add_action('init', function () {
+                global $wpdb;
+
+                // Enable caching of database queries
+                $wpdb->query('SET SESSION query_cache_type = ON');
+
+                // Set cache limit to a higher value 10MB
+                $wpdb->query('SET SESSION query_cache_size = 10485760');
+            });
         }
     }
 
@@ -144,7 +155,9 @@ class Mod_WP_Optimizer extends Module
     {
         return $this->group_setting_fields(
 
+            $this->setting_field(__('General speedup', 'wpopt'), false, "separator"),
             $this->setting_field('', false, "divide"),
+            $this->setting_field(__('Improve Database performances', 'wpopt'), "db.enhance", "checkbox"),
             $this->setting_field(__('Improve WordPress Cron performances', 'wpopt'), "cron.enhance", "checkbox"),
             $this->setting_field(__('Check Cron schedules every (seconds)', 'wpopt'), "cron.timenext", "numeric", ['parent' => 'cron.enhance', 'default_value' => 300]),
 
