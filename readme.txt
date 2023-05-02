@@ -2,10 +2,10 @@
 Contributors: sh1zen
 Tags: optimize, database, images, cache, minify, speed, seo, server, updates, webp, performances, convert
 Donate link: https://www.paypal.com/donate?business=dev.sh1zen%40outlook.it&item_name=Thank+you+in+advanced+for+the+kind+donations.+You+will+sustain+me+developing+WP-Optimizer.&currency_code=EUR
-Requires at least: 4.7.0
+Requires at least: 5.0.0
 Tested up to: 6.2
 Requires PHP: 7.4
-Stable tag: 1.9.3
+Stable tag: 2.0.0
 License: GNU v3.0 License
 URI: https://github.com/sh1zen/wp-optimizer/blob/master/LICENSE
 
@@ -143,10 +143,20 @@ work! Otherwise, go to the new added module "Setting" and try a reset.
 == Changelog ==
 
 
-= 1.9.3 =
+= 2.0.0 =
 
+* added object caching
+* added support to Redis, Memcached
+* added behaviour info for each setting
+* improved browser-caching
+* improved core performances
 * extended support to WordPress 6.2
+* extended support to PHP 8.2
 * updated faqs
+* updated UI/UX
+* updated translations
+* fixed .htaccess bug
+* moved minimum WordPress support to version 4.6.0
 
 = 1.9.2 =
 
@@ -246,42 +256,3 @@ work! Otherwise, go to the new added module "Setting" and try a reset.
 * improved cron schedules handler
 * moved minimum PHP support to version 7.0
 * tested up to WordPress 5.9
-
-= 1.5.9 =
-
-* improved static caching
-* rewritten core code to be a shared framework with Flexy-SEO to ensure best performances
-* fixed a bug in cleanup process of caching system
-* fixed a bug with HSTS header
-* moved minimum WordPress support to version 4.6.0
-
-= 1.5.7 =
-
-* extended support to WordPress 5.8
-* added some new features in wp_customizer module
-* fixed a bug reported during database repair
-* fixed a bug reported during cache wiping
-* fixed admin showing bug
-
-= 1.5.3 =
-
-* added option to remove jQuery-Migrate in wp-customizer module
-* improved wp-customizer Block-Editor disabler
-* improved wp-updates disable tool
-* rewritten some core functionality
-* fixed a bug reported while saving settings
-
-= 1.5.1 =
-
-* extended support to PHP 8.0
-* minor bug fixes
-
-= 1.5.0 =
-
-* extended support to WordPress 5.7
-* added wp_security module
-* added wp_optimizer module (browser caching system, server enhancements)
-* added cron jobs time limit extender (allow executing long time schedules in environments with not changeable PHP time limit)
-* improvements in settings core
-* fixed some bugs in module folder_size
-* improved updates handling

@@ -1,7 +1,8 @@
 <?php
+
 /**
  * @author    sh1zen
- * @copyright Copyright (C)  2022
+ * @copyright Copyright (C) 2023.
  * @license   http://www.gnu.org/licenses/gpl.html GNU/GPL
  */
 
@@ -167,4 +168,44 @@ function shzn_add_timezone($timestamp = false)
     $timezone = get_option('gmt_offset') * HOUR_IN_SECONDS;
 
     return $timestamp - $timezone;
+}
+
+function shzn_log($_data, $file_name = 'shzn-debug.log', $mode = FILE_APPEND)
+{
+    $trace = debug_backtrace(false);
+    $skip_frames = 1;
+    $caller = array();
+
+    $truncate_paths = array(
+        \SHZN\core\UtilEnv::normalize_path(WP_CONTENT_DIR),
+        \SHZN\core\UtilEnv::normalize_path(ABSPATH),
+    );
+
+    foreach ($trace as $call) {
+        if ($skip_frames > 0) {
+            $skip_frames--;
+        }
+        elseif (isset($call['class'])) {
+            $caller[] = "{$call['class']}{$call['type']}{$call['function']}";
+        }
+        else {
+            if (in_array($call['function'], array('do_action', 'apply_filters', 'do_action_ref_array', 'apply_filters_ref_array'), true)) {
+                $caller[] = "{$call['function']}('{$call['args'][0]}')";
+            }
+            elseif (in_array($call['function'], array('include', 'include_once', 'require', 'require_once'), true)) {
+                $filename = $call['args'][0] ?? '';
+                $caller[] = $call['function'] . "('" . str_replace($truncate_paths, '', \SHZN\core\UtilEnv::normalize_path($filename)) . "')";
+            }
+            else {
+                $caller[] = $call['function'];
+            }
+        }
+    }
+
+    $data = '======================================================================================================' . PHP_EOL;
+    $data .= date("Y-m-d H:i:s") . PHP_EOL;
+    $data .= print_r($_data, true) . PHP_EOL;
+    $data .= join(', ', array_reverse($caller)) . PHP_EOL;
+
+    file_put_contents(WP_CONTENT_DIR . DIRECTORY_SEPARATOR . $file_name, $data, $mode);
 }

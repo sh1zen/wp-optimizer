@@ -1,7 +1,7 @@
 <?php
 /**
  * @author    sh1zen
- * @copyright Copyright (C)  2022
+ * @copyright Copyright (C) 2023.
  * @license   http://www.gnu.org/licenses/gpl.html GNU/GPL
  */
 
@@ -76,10 +76,10 @@ class PerformanceMeter
 
     public function get_time($first = 'start', $last = 'last', $format = false)
     {
-        $start_lap = $this->get_lap($first, 'time');
-        $end_lap = $this->get_lap($last, 'time');
+        $start_lap = $first === 'wp_start' ? WP_START_TIMESTAMP : $this->get_lap($first, 'time');
+        $end_lap = $last === 'now' ? microtime(true) : $this->get_lap($last, 'time');
 
-        $time = $end_lap - ($first === 'wp_start' ? WP_START_TIMESTAMP : $start_lap);
+        $time = $end_lap - $start_lap;
 
         if ($format) {
             $time = number_format($time, absint($format));
@@ -105,8 +105,9 @@ class PerformanceMeter
     {
         $size = $this->get_lap('last', 'memory') - $this->get_lap('start', 'memory');
 
-        if ($peak)
+        if ($peak) {
             $size = memory_get_peak_usage();
+        }
 
         if ($convert) {
             return size_format($size, 2);

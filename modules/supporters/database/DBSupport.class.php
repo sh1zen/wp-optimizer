@@ -1,19 +1,18 @@
 <?php
 /**
  * @author    sh1zen
- * @copyright Copyright (C)  2022
+ * @copyright Copyright (C) 2023.
  * @license   http://www.gnu.org/licenses/gpl.html GNU/GPL
  */
 
 namespace WPOptimizer\modules\supporters;
 
 use WPOptimizer\core\Report;
-
 use SHZN\core\UtilEnv;
 
 class DBSupport
 {
-    private static $_instance;
+    private static DBSupport $_Instance;
 
     private function __construct()
     {
@@ -33,37 +32,37 @@ class DBSupport
 
         switch ($name) {
             case 'posts':
-                $count = $wpdb->get_var("SELECT COUNT(*) FROM $wpdb->posts");
+                $count = $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->posts}");
                 break;
             case 'postmeta':
-                $count = $wpdb->get_var("SELECT COUNT(*) FROM $wpdb->postmeta");
+                $count = $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->postmeta}");
                 break;
             case 'comments':
-                $count = $wpdb->get_var("SELECT COUNT(*) FROM $wpdb->comments");
+                $count = $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->comments}");
                 break;
             case 'commentmeta':
-                $count = $wpdb->get_var("SELECT COUNT(*) FROM $wpdb->commentmeta");
+                $count = $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->commentmeta}");
                 break;
             case 'users':
-                $count = $wpdb->get_var("SELECT COUNT(*) FROM $wpdb->users");
+                $count = $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->users}");
                 break;
             case 'usermeta':
-                $count = $wpdb->get_var("SELECT COUNT(*) FROM $wpdb->usermeta");
+                $count = $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->usermeta}");
                 break;
             case 'term_relationships':
-                $count = $wpdb->get_var("SELECT COUNT(*) FROM $wpdb->term_relationships");
+                $count = $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->term_relationships}");
                 break;
             case 'term_taxonomy':
-                $count = $wpdb->get_var("SELECT COUNT(*) FROM $wpdb->term_taxonomy");
+                $count = $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->term_taxonomy}");
                 break;
             case 'terms':
-                $count = $wpdb->get_var("SELECT COUNT(*) FROM $wpdb->terms");
+                $count = $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->terms}");
                 break;
             case 'termmeta':
-                $count = $wpdb->get_var("SELECT COUNT(*) FROM $wpdb->termmeta");
+                $count = $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->termmeta}");
                 break;
             case 'options':
-                $count = $wpdb->get_var("SELECT COUNT(*) FROM $wpdb->options");
+                $count = $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->options}");
                 break;
         }
 
@@ -80,10 +79,6 @@ class DBSupport
     public static function count($name, $args = array())
     {
         global $wpdb;
-
-        $args = array_merge(array(
-            'excluded_taxonomies' => array(),
-        ), $args);
 
         $count = 0;
 
@@ -122,12 +117,9 @@ class DBSupport
                 $count = $wpdb->get_var("SELECT COUNT(*) FROM $wpdb->termmeta WHERE term_id NOT IN (SELECT term_id FROM $wpdb->terms)");
                 break;
             case 'orphan_term_relationships':
-                $excluded_taxonomies_sql = implode("','", array_map('esc_sql', $args['excluded_taxonomies']));
-
-                $count = $wpdb->get_var("SELECT COUNT(*) FROM $wpdb->term_relationships AS tr INNER JOIN $wpdb->term_taxonomy AS tt ON tr.term_taxonomy_id = tt.term_taxonomy_id WHERE tt.taxonomy NOT IN ('$excluded_taxonomies_sql') AND tr.object_id NOT IN (SELECT ID FROM $wpdb->posts)"); // WPCS: unprepared SQL ok.
+                $count = $wpdb->get_var("SELECT COUNT(*) FROM $wpdb->term_relationships AS tr INNER JOIN $wpdb->term_taxonomy AS tt ON tr.term_taxonomy_id = tt.term_taxonomy_id WHERE tr.object_id NOT IN (SELECT ID FROM $wpdb->posts)"); // WPCS: unprepared SQL ok.
                 break;
             case 'unused_terms':
-                //SELECT * FROM wp_term_taxonomy AS tt WHERE tt.count = 0 AND tt.parent <> 0 AND tt.parent NOT IN (SELECT term_id FROM wp_term_taxonomy WHERE count = 0 )
                 $count = $wpdb->get_var("SELECT COUNT(*) FROM $wpdb->term_taxonomy AS tt WHERE tt.count = 0 AND tt.parent <> 0 AND tt.parent NOT IN (SELECT term_id FROM $wpdb->term_taxonomy WHERE count = 0 )");
                 break;
             case 'duplicated_postmeta':
@@ -212,11 +204,10 @@ class DBSupport
                 $details = $wpdb->get_col($wpdb->prepare("SELECT meta_key FROM $wpdb->termmeta WHERE term_id NOT IN (SELECT term_id FROM $wpdb->terms) LIMIT %d", $ajax_limit));
                 break;
             case 'orphan_term_relationships':
-                $orphan_term_relationships_sql = implode("','", array_map('esc_sql', $excluded_taxonomies));
-                $details = $wpdb->get_col($wpdb->prepare("SELECT tt.taxonomy FROM $wpdb->term_relationships AS tr INNER JOIN $wpdb->term_taxonomy AS tt ON tr.term_taxonomy_id = tt.term_taxonomy_id WHERE tt.taxonomy NOT IN ('$orphan_term_relationships_sql') AND tr.object_id NOT IN (SELECT ID FROM $wpdb->posts) LIMIT %d", $ajax_limit)); // WPCS: unprepared SQL ok.
+                $details = $wpdb->get_col($wpdb->prepare("SELECT tt.taxonomy FROM {$wpdb->term_relationships} AS tr, {$wpdb->term_taxonomy} AS tt WHERE tr.term_taxonomy_id = tt.term_taxonomy_id AND tr.object_id NOT IN (SELECT ID FROM $wpdb->posts) LIMIT %d", $ajax_limit));
                 break;
             case 'unused_terms':
-                $ids = $wpdb->get_col($wpdb->prepare("SELECT tt.term_id FROM $wpdb->term_taxonomy AS tt WHERE tt.count = 0 AND tt.parent <> 0 AND tt.parent NOT IN (SELECT term_id FROM $wpdb->term_taxonomy WHERE count = 0 ) LIMIT %d", $ajax_limit)); // WPCS: unprepared SQL ok.
+                $ids = $wpdb->get_col($wpdb->prepare("SELECT tt.term_id FROM $wpdb->term_taxonomy AS tt WHERE tt.count = 0 AND tt.parent <> 0 AND tt.parent NOT IN (SELECT term_id FROM $wpdb->term_taxonomy WHERE count = 0 ) LIMIT %d", $ajax_limit));
                 foreach ($ids as $term_id) {
                     $details[] = "<a target='_blank' href='" . get_edit_term_link($term_id) . "'>{$term_id}</a>";
                 }
@@ -291,30 +282,18 @@ class DBSupport
 
         set_time_limit(60);
 
-        $args = array_merge(array(
-            'excluded_taxonomies' => array(),
-        ), $args);
-
         $query = array();
 
         switch ($name) {
 
             case 'revisions':
-                $query = $wpdb->get_col($wpdb->prepare("SELECT ID FROM $wpdb->posts WHERE post_type = %s", 'revision'));
-                if ($query) {
-                    foreach ($query as $id) {
-                        wp_delete_post_revision((int)$id);
-                    }
-                }
-                break;
-
             case 'auto_drafts':
             case 'deleted_posts':
 
-                if ($name == "auto_drafts")
-                    $query = $wpdb->get_col($wpdb->prepare("SELECT ID FROM $wpdb->posts WHERE post_status = %s", 'auto-draft'));
+                if ($name == "revisions")
+                    $query = $wpdb->get_col($wpdb->prepare("SELECT ID FROM $wpdb->posts WHERE post_type = 'revision'"));
                 else
-                    $query = $wpdb->get_col($wpdb->prepare("SELECT ID FROM $wpdb->posts WHERE post_status = %s", 'trash'));
+                    $query = $wpdb->get_col($wpdb->prepare("SELECT ID FROM $wpdb->posts WHERE post_status = '{$name}'"));
 
                 if ($query) {
                     foreach ($query as $id) {
@@ -328,11 +307,11 @@ class DBSupport
             case 'deleted_comments':
 
                 if ($name == 'unapproved_comments')
-                    $query = $wpdb->get_col($wpdb->prepare("SELECT comment_ID FROM $wpdb->comments WHERE comment_approved = %s", '0'));
+                    $query = $wpdb->get_col($wpdb->prepare("SELECT comment_ID FROM $wpdb->comments WHERE comment_approved = '0'"));
                 elseif ($name == 'deleted_comments')
-                    $query = $wpdb->get_col($wpdb->prepare("SELECT comment_ID FROM $wpdb->comments WHERE (comment_approved = %s OR comment_approved = %s)", 'trash', 'post-trashed'));
+                    $query = $wpdb->get_col($wpdb->prepare("SELECT comment_ID FROM $wpdb->comments WHERE (comment_approved = 'trash' OR comment_approved = 'post-trashed')"));
                 else
-                    $query = $wpdb->get_col($wpdb->prepare("SELECT comment_ID FROM $wpdb->comments WHERE comment_approved = %s", 'spam'));
+                    $query = $wpdb->get_col($wpdb->prepare("SELECT comment_ID FROM $wpdb->comments WHERE comment_approved = 'spam'"));
 
 
                 if ($query) {
@@ -390,7 +369,7 @@ class DBSupport
                 break;
 
             case 'orphan_term_relationships':
-                $query = $wpdb->get_results("SELECT tr.object_id, tr.term_taxonomy_id, tt.term_id, tt.taxonomy FROM $wpdb->term_relationships AS tr INNER JOIN $wpdb->term_taxonomy AS tt ON tr.term_taxonomy_id = tt.term_taxonomy_id WHERE tt.taxonomy NOT IN ('" . implode('\',\'', $args['excluded_taxonomies']) . "') AND tr.object_id NOT IN (SELECT ID FROM $wpdb->posts)"); // WPCS: unprepared SQL ok.
+                $query = $wpdb->get_results("SELECT tr.object_id, tr.term_taxonomy_id, tt.term_id, tt.taxonomy FROM $wpdb->term_relationships AS tr INNER JOIN $wpdb->term_taxonomy AS tt ON tr.term_taxonomy_id = tt.term_taxonomy_id WHERE tr.object_id NOT IN (SELECT ID FROM $wpdb->posts)"); // WPCS: unprepared SQL ok.
                 if ($query) {
                     foreach ($query as $tax) {
                         $wp_remove_object_terms = wp_remove_object_terms((int)$tax->object_id, (int)$tax->term_id, $tax->taxonomy);
@@ -482,9 +461,9 @@ class DBSupport
         $results += $wpdb->query("DELETE FROM {$wpdb->prefix}options WHERE option_name LIKE '%_transient_%';");
 
         /*
-         * Delete posts and pages revisions and auto-draft
+         * Delete posts and pages auto-draft
          */
-        $results += $wpdb->query("DELETE FROM {$wpdb->prefix}posts WHERE post_status = 'auto-draft';");
+        $results += $wpdb->query("DELETE FROM {$wpdb->prefix}posts WHERE post_status = 'revision';");
 
         /*
         * Delete orphaned post attachments
@@ -538,11 +517,11 @@ class DBSupport
      */
     public static function getInstance()
     {
-        if (!isset(self::$_instance)) {
-            self::$_instance = new self();
+        if (!isset(self::$_Instance)) {
+            self::$_Instance = new self();
         }
 
-        return self::$_instance;
+        return self::$_Instance;
     }
 
     /**

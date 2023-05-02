@@ -1,13 +1,11 @@
 <?php
 /**
  * @author    sh1zen
- * @copyright Copyright (C)  2022
+ * @copyright Copyright (C) 2023.
  * @license   http://www.gnu.org/licenses/gpl.html GNU/GPL
  */
 
 namespace SHZN\core;
-
-use SHZN\modules\Module;
 
 class ModuleHandler
 {
@@ -34,7 +32,10 @@ class ModuleHandler
 
         foreach (glob($load_path . '*.php') as $file) {
 
-            $module_name = basename($file, '.class.php');
+            $module_name = $this->load_module($file);
+
+            if (empty($module_name))
+                continue;
 
             $this->modules[] = array(
                 'slug' => $module_name,
@@ -43,7 +44,31 @@ class ModuleHandler
         }
     }
 
-    private function get_module_name($module, $default = '')
+    private function load_module($file): string
+    {
+        if (!file_exists($file)) {
+            return '';
+        }
+
+        $module_name = basename($file, '.class.php');
+
+        $namespace = include_once($file);
+
+        $module_slug = self::module_slug($module_name, true);
+
+        if (class_exists("{$namespace}\\Mod_" . $module_slug)) {
+
+            $class = "{$namespace}\\Mod_" . $module_slug;
+
+            shzn($this->context)->cache->set($module_slug, $class, 'modules-handler', true, 0);
+        }
+
+        shzn($this->context)->cache->set($module_name, $namespace, 'modules-to-namespace', true, 0);
+
+        return $module_name;
+    }
+
+    private function get_module_name($module, $default = ''): string
     {
         $module_name = $default;
 
@@ -64,27 +89,7 @@ class ModuleHandler
      */
     public function module2classname($name)
     {
-        $base_name = self::module_slug($name, true);
-
-        $class = shzn($this->context)->cache->get($base_name, 'modules-handler', null);
-
-        if (is_null($class)) {
-
-            $class = false;
-
-            if (file_exists($this->modules_path . "{$base_name}.class.php")) {
-
-                $namespace = include_once $this->modules_path . "{$base_name}.class.php";
-
-                if (class_exists("{$namespace}\\Mod_" . $base_name)) {
-                    $class = "{$namespace}\\Mod_" . $base_name;
-                }
-            }
-
-            shzn($this->context)->cache->set($base_name, $class, 'modules-handler');
-        }
-
-        return $class;
+        return shzn($this->context)->cache->get(self::module_slug($name, true), 'modules-handler', false);
     }
 
     public static function module_slug($name, $remove_namespace = false)
@@ -98,15 +103,13 @@ class ModuleHandler
             return false;
 
         // remove everything that is not a text char or - \ / _
-        $name = preg_replace('/[^a-z\/\\\_-]/i', '', (string)$name);
-
-        $name = strtolower($name);
+        $name = preg_replace('#[^a-z/\\\_-]#', '', strtolower($name));
 
         if ($remove_namespace) {
             $name = basename(str_replace('\\', DIRECTORY_SEPARATOR, $name));
         }
 
-        return preg_replace("/(mod_|mod-)?/", '', $name);
+        return preg_replace("#(mod_|mod-)#", '', $name);
     }
 
     /**
@@ -116,27 +119,19 @@ class ModuleHandler
      */
     public function get_module_instance($module)
     {
-        return $this->load_module($module);
-    }
+        $class = $this->module2classname($module);
 
-    /**
-     * Accept module name or wp-admin page name
-     * @param string|array $name
-     * @return Module
-     */
-    private function load_module($name)
-    {
-        $class = $this->module2classname($name);
-
-        if (!$class)
+        if (!$class) {
             return null;
+        }
 
-        if ($object = shzn($this->context)->cache->get($class, 'modules_object'))
+        if ($object = shzn($this->context)->cache->get($class, 'modules_object')) {
             return $object;
+        }
 
         $object = new $class();
 
-        shzn($this->context)->cache->set($class, $object, 'modules_object');
+        shzn($this->context)->cache->set($class, $object, 'modules_object', true, 0);
 
         return $object;
     }
@@ -155,7 +150,7 @@ class ModuleHandler
     {
         foreach ($this->get_modules(array('scopes' => $scope), $only_active) as $index => $module) {
 
-            self::load_module($module['slug']);
+            $this->get_module_instance($module['slug']);
         }
     }
 

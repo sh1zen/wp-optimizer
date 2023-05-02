@@ -1,15 +1,16 @@
 <?php
 /**
  * @author    sh1zen
- * @copyright Copyright (C)  2022
+ * @copyright Copyright (C) 2023.
  * @license   http://www.gnu.org/licenses/gpl.html GNU/GPL
  */
 
 namespace WPOptimizer\modules;
 
-use SHZN\core\Disk;
 use SHZN\modules\Module;
 
+use WPOptimizer\modules\supporters\DBCache;
+use WPOptimizer\modules\supporters\ObjectCache;
 use WPOptimizer\modules\supporters\QueryCache;
 use WPOptimizer\modules\supporters\StaticCache;
 
@@ -22,19 +23,29 @@ class Mod_Cache extends Module
     public function __construct()
     {
         require_once WPOPT_SUPPORTERS . 'cache/cache_dispatcher.class.php';
+
+        require_once WPOPT_SUPPORTERS . 'cache/dbcache.class.php';
         require_once WPOPT_SUPPORTERS . 'cache/querycache.class.php';
         require_once WPOPT_SUPPORTERS . 'cache/staticcache.class.php';
+        require_once WPOPT_SUPPORTERS . 'cache/objectcache.class.php';
 
         $default = array(
             'wp_query'     => array(
                 'active'   => false,
-                'lifespan' => "01:00:00"
+                'lifespan' => "04:00:00"
+            ),
+            'object_cache' => array(
+                'active'   => false,
+                'lifespan' => "04:00:00"
             ),
             'static_pages' => array(
                 'active'   => false,
                 'lifespan' => "01:00:00"
             ),
-            'wp_db'        => false,
+            'wp_db.active' => array(
+                'active'   => false,
+                'lifespan' => "01:00:00"
+            )
         );
 
         parent::__construct('wpopt', array(
@@ -48,21 +59,21 @@ class Mod_Cache extends Module
 
     private function cache_flush_hooks()
     {
-        if ($this->option('wp_query.active') or $this->option('wp_db') or $this->option('static_pages.active')) {
+        if ($this->option('wp_query.active') or $this->option('wp_db.active') or $this->option('static_pages.active')) {
 
             add_action('clean_site_cache', array($this, 'flush_cache'), 10, 1); //blog_id
             add_action('clean_network_cache', array($this, 'flush_cache'), 10, 1); //network_id
 
-            add_action('clean_post_cache', array($this, 'flush_cache'), 10, 0);
-            add_action('clean_page_cache', array($this, 'flush_cache'), 10, 0);
-            add_action('clean_attachment_cache', array($this, 'flush_cache'), 10, 0);
-            add_action('clean_comment_cache', array($this, 'flush_cache'), 10, 0);
+            add_action('clean_post_cache', array($this, 'flush_cache'), 10, 1);
+            add_action('clean_page_cache', array($this, 'flush_cache'), 10, 1);
+            add_action('clean_attachment_cache', array($this, 'flush_cache'), 10, 1);
+            add_action('clean_comment_cache', array($this, 'flush_cache'), 10, 1);
 
-            add_action('clean_term_cache', array($this, 'flush_cache'), 10, 0);
-            add_action('clean_object_term_cache', array($this, 'flush_cache'), 10, 0);
-            add_action('clean_taxonomy_cache', array($this, 'flush_cache'), 10, 0);
+            add_action('clean_term_cache', array($this, 'flush_cache'), 10, 1);
+            add_action('clean_object_term_cache', array($this, 'flush_cache'), 10, 1);
+            add_action('clean_taxonomy_cache', array($this, 'flush_cache'), 10, 1);
 
-            add_action('clean_user_cache', array($this, 'flush_cache'), 10, 0);
+            add_action('clean_user_cache', array($this, 'flush_cache'), 10, 1);
         }
     }
 
@@ -84,50 +95,85 @@ class Mod_Cache extends Module
     public function validate_settings($input, $valid)
     {
         if ($this->deactivating('wp_query.active', $input)) {
-            QueryCache::clear_cache();
+            QueryCache::deactivate();
         }
 
         if ($this->deactivating('static_pages.active', $input)) {
-            StaticCache::clear_cache();
+            StaticCache::deactivate();
         }
 
-        // database-cache
-        if ($this->activating('wp_db', $input)) {
-            Disk::write(
-                WP_CONTENT_DIR . DIRECTORY_SEPARATOR . "db.php",
-                "<?php" . PHP_EOL . PHP_EOL . "include_once('" . WPOPT_SUPPORTERS . "cache/db.php');"
-            );
+        if ($this->activating('object_cache.active', $input)) {
+            ObjectCache::activate();
         }
 
-        if ($this->deactivating('wp_db', $input) and class_exists('\WPOPT_DB')) {
-            \WPOPT_DB::clear_cache();
-            Disk::delete_files(WP_CONTENT_DIR . DIRECTORY_SEPARATOR . "db.php");
+        if ($this->deactivating('object_cache.active', $input)) {
+            ObjectCache::deactivate();
+        }
+
+        if ($this->activating('wp_db.active', $input)) {
+            DBCache::activate();
+        }
+
+        if ($this->deactivating('wp_db.active', $input) and class_exists('\WPOPT_DB')) {
+            DBCache::deactivate();
         }
 
         return parent::validate_settings($input, $valid);
     }
 
+    public function flush_cache()
+    {
+        if ($this->option('wp_query.active')) {
+            QueryCache::clear_cache();
+        }
+
+        if ($this->option('static_pages.active')) {
+            StaticCache::clear_cache();
+        }
+
+        if ($this->option('wp_db.active')) {
+            DBCache::clear_cache();
+        }
+
+        return true;
+    }
+
     protected function setting_fields($filter = '')
     {
         return $this->group_setting_fields(
-            $this->setting_field(__('WP_Query Cache'), false, 'separator'),
+            $this->setting_field(__('WP_Query Cache'), 'wp_query_cache', 'separator'),
             $this->setting_field(__('Active', 'wpopt'), "wp_query.active", "checkbox"),
             $this->setting_field(__('Lifespan', 'wpopt'), "wp_query.lifespan", "time", ['parent' => 'wp_query.active']),
 
-            $this->setting_field(__('Database Query Cache'), false, 'separator'),
-            $this->setting_field(__('Active', 'wpopt'), "wp_db", "checkbox"),
+            $this->setting_field(__('Database Query Cache'), 'db_query_cache', 'separator'),
+            $this->setting_field(__('Active', 'wpopt'), "wp_db.active", "checkbox"),
+            $this->setting_field(__('Lifespan', 'wpopt'), "wp_db.lifespan", "time", ['parent' => 'wp_db.active']),
 
-            $this->setting_field(__('Static Pages Cache'), false, 'separator'),
+            $this->setting_field(__('Object Cache'), 'object_cache', 'separator'),
+            $this->setting_field(__('Active', 'wpopt'), "object_cache.active", "checkbox"),
+            $this->setting_field(__('Lifespan', 'wpopt'), "object_cache.lifespan", "time", ['parent' => 'object_cache.active']),
+
+            $this->setting_field(__('Static Pages Cache'), 'static_page_cache', 'separator'),
             $this->setting_field(__('Active', 'wpopt'), "static_pages.active", "checkbox"),
             $this->setting_field(__('Lifespan', 'wpopt'), "static_pages.lifespan", "time", ['parent' => 'static_pages.active'])
         );
+    }
+
+    protected function infos()
+    {
+        return [
+            'wp_query_cache'    => __('Stores the results of WP_Query for faster retrieval on subsequent requests.', 'wpopt'),
+            'db_query_cache'    => __('Stores frequently used database queries in memory to reduce the number of queries made to the database, improving website performance.', 'wpopt'),
+            'object_cache'      => __('Stores PHP objects in memory for fast retrieval, reducing the need to recreate objects, improving website performance. Needs Redis or Memcached to be installed.', 'wpopt'),
+            'static_page_cache' => __('Stores static HTML pages generated from dynamic content to avoid repeated processing.', 'wpopt'),
+        ];
     }
 
     protected function custom_actions()
     {
         return array(
             array(
-                'before'       => "<b>" . __('Cache size', 'wpopt') . " : " . shzn('wpopt')->storage->get_size(self::$storage_internal) . "</b>",
+                'before'       => "<b style='margin-right: 1em'>" . __('Cache size', 'wpopt') . " : " . shzn('wpopt')->storage->get_size(self::$storage_internal) . "</b>",
                 'id'           => 'reset_cache',
                 'value'        => 'Reset Cache',
                 'button_types' => 'button-danger',
@@ -139,15 +185,15 @@ class Mod_Cache extends Module
     protected function process_custom_actions($action, $options)
     {
         if ($action === 'reset_cache') {
-            return $this->flush_cache();
+
+            QueryCache::clear_cache();
+            StaticCache::clear_cache();
+            DBCache::clear_cache();
+
+            ObjectCache::clear_cache();
         }
 
         return false;
-    }
-
-    public function flush_cache($blog_id = 0)
-    {
-        return shzn('wpopt')->storage->delete(self::$storage_internal, '', $blog_id);
     }
 }
 

@@ -4,7 +4,7 @@ msgstr ""
 "Project-Id-Version: wpopt-translation\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/wp-"
 "optimizer/\n"
-"POT-Creation-Date: 2023-04-11 01:57+0200\n"
+"POT-Creation-Date: 2023-05-02 23:56+0200\n"
 "PO-Revision-Date: 2020-05-13 02:34+0200\n"
 "Last-Translator: sh1zen\n"
 "Language-Team: sh1zen\n"
@@ -56,8 +56,8 @@ msgstr ""
 msgid "FAQ"
 msgstr ""
 
-#: admin/PagesHandler.class.php:152 modules/sysinfo.class.php:124
-#: modules/sysinfo.class.php:190 vendors/shzn-framework/UtilEnv.php:505
+#: admin/PagesHandler.class.php:152 modules/wp_info.class.php:126
+#: modules/wp_info.class.php:192
 msgid "N/A"
 msgstr ""
 
@@ -321,28 +321,58 @@ msgstr ""
 msgid "Errors:"
 msgstr ""
 
-#: modules/cache.class.php:113
+#: modules/cache.class.php:144
 msgid "WP_Query Cache"
 msgstr ""
 
-#: modules/cache.class.php:114 modules/cache.class.php:118
-#: modules/cache.class.php:121
+#: modules/cache.class.php:145 modules/cache.class.php:149
+#: modules/cache.class.php:153 modules/cache.class.php:157
 msgid "Active"
 msgstr ""
 
-#: modules/cache.class.php:115 modules/cache.class.php:122
+#: modules/cache.class.php:146 modules/cache.class.php:150
+#: modules/cache.class.php:154 modules/cache.class.php:158
 msgid "Lifespan"
 msgstr ""
 
-#: modules/cache.class.php:117
+#: modules/cache.class.php:148
 msgid "Database Query Cache"
 msgstr ""
 
-#: modules/cache.class.php:120
+#: modules/cache.class.php:152
+msgid "Object Cache"
+msgstr ""
+
+#: modules/cache.class.php:156
 msgid "Static Pages Cache"
 msgstr ""
 
-#: modules/cache.class.php:130
+#: modules/cache.class.php:165
+msgid ""
+"Stores the results of WP_Query for faster retrieval on subsequent "
+"requests."
+msgstr ""
+
+#: modules/cache.class.php:166
+msgid ""
+"Stores frequently used database queries in memory to reduce the number "
+"of queries made to the database, improving website performance."
+msgstr ""
+
+#: modules/cache.class.php:167
+msgid ""
+"Stores PHP objects in memory for fast retrieval, reducing the need to "
+"recreate objects, improving website performance. Needs Redis or "
+"Memcached to be installed."
+msgstr ""
+
+#: modules/cache.class.php:168
+msgid ""
+"Stores static HTML pages generated from dynamic content to avoid "
+"repeated processing."
+msgstr ""
+
+#: modules/cache.class.php:176
 msgid "Cache size"
 msgstr ""
 
@@ -476,8 +506,8 @@ msgstr ""
 msgid "Option"
 msgstr ""
 
-#: modules/database.class.php:259 modules/sysinfo.class.php:36
-#: modules/sysinfo.class.php:38
+#: modules/database.class.php:259 modules/wp_info.class.php:36
+#: modules/wp_info.class.php:38
 msgid "Value"
 msgstr ""
 
@@ -636,7 +666,7 @@ msgstr ""
 msgid "Oembed Postmeta"
 msgstr ""
 
-#: modules/database.class.php:585 modules/wp_customizer.class.php:328
+#: modules/database.class.php:585 modules/wp_customizer.class.php:349
 msgid "Comments"
 msgstr ""
 
@@ -746,19 +776,11 @@ msgstr ""
 msgid "None"
 msgstr ""
 
-#: modules/database.class.php:748
-msgid "Sweeps:"
-msgstr ""
-
-#: modules/database.class.php:749
-msgid "Excluded Taxonomies (comma separated)"
-msgstr ""
-
-#: modules/database.class.php:751
+#: modules/database.class.php:744
 msgid "Backups:"
 msgstr ""
 
-#: modules/database.class.php:752
+#: modules/database.class.php:745
 msgid "Excluded Tables (comma separated)"
 msgstr ""
 
@@ -905,75 +927,89 @@ msgid "Space freed up: %s:"
 msgstr ""
 
 #: modules/media.class.php:471
-msgid "Theme"
-msgstr ""
-
-#: modules/media.class.php:472
 msgid "Try to make media loading lazy"
 msgstr ""
 
-#: modules/media.class.php:474
+#: modules/media.class.php:473
 msgid "Images optimization preferences"
 msgstr ""
 
-#: modules/media.class.php:475
+#: modules/media.class.php:474
 msgid "Auto optimize uploads"
 msgstr ""
 
-#: modules/media.class.php:475
+#: modules/media.class.php:474
 msgid "set it here"
 msgstr ""
 
-#: modules/media.class.php:476
+#: modules/media.class.php:475
 msgid "Use Imagick (if installed)"
 msgstr ""
 
-#: modules/media.class.php:477
+#: modules/media.class.php:476
 msgid "Optimization quality"
 msgstr ""
 
-#: modules/media.class.php:478
+#: modules/media.class.php:477
 msgid "Keep all the EXIF data of your images"
 msgstr ""
 
-#: modules/media.class.php:479
+#: modules/media.class.php:478
 msgid "Resize larger images"
 msgstr ""
 
-#: modules/media.class.php:480
+#: modules/media.class.php:479
 msgid "max with (px)"
 msgstr ""
 
-#: modules/media.class.php:481
+#: modules/media.class.php:480
 msgid "max height (px)"
 msgstr ""
 
-#: modules/media.class.php:483
+#: modules/media.class.php:482
 msgid "Formats"
 msgstr ""
 
-#: modules/media.class.php:484
+#: modules/media.class.php:483
 msgid "Convert all images to new webp format"
 msgstr ""
 
-#: modules/media.class.php:485
+#: modules/media.class.php:484
 msgid "Optimize JPG/JPEG"
 msgstr ""
 
-#: modules/media.class.php:486
+#: modules/media.class.php:485
 msgid "Optimize PNG"
 msgstr ""
 
-#: modules/media.class.php:487
+#: modules/media.class.php:486
 msgid "Optimize GIF"
 msgstr ""
 
-#: modules/media.class.php:488
+#: modules/media.class.php:487
 msgid "Optimize WEBP"
 msgstr ""
 
-#: modules/media.class.php:489
+#: modules/media.class.php:488
 msgid "Optimize other formats (tiff, heic, bmp)"
+msgstr ""
+
+#: modules/media.class.php:495
+msgid ""
+"Automatically compresses and resizes images for faster loading, "
+"improving website performance."
+msgstr ""
+
+#: modules/media.class.php:496
+msgid ""
+"A PHP extension for creating, modifying and manipulating images, it "
+"makes optimization faster."
+msgstr ""
+
+#: modules/media.class.php:497
+msgid ""
+"WebP is a modern image format with superior compression efficiency, "
+"reducing file size and improving website performance."
 msgstr ""
 
 #: modules/minify.class.php:206
@@ -1030,7 +1066,7 @@ msgstr ""
 msgid "Import Plugin options"
 msgstr ""
 
-#: modules/supporters/database/DBSupport.class.php:531
+#: modules/supporters/database/DBSupport.class.php:510
 #, php-format
 msgid "Rows affected %s."
 msgstr ""
@@ -1155,282 +1191,12 @@ msgstr ""
 msgid "View"
 msgstr ""
 
-#: modules/sysinfo.class.php:35 modules/sysinfo.class.php:37
-msgid "Name"
-msgstr ""
-
-#: modules/sysinfo.class.php:80
-msgid "SITE_URL"
-msgstr ""
-
-#: modules/sysinfo.class.php:81
-msgid "HOME_URL"
-msgstr ""
-
-#: modules/sysinfo.class.php:82
-msgid "Server IP : port"
-msgstr ""
-
-#: modules/sysinfo.class.php:83 modules/widget.class.php:125
+#: modules/widget.class.php:125 modules/wp_info.class.php:83
 msgid "OS"
 msgstr ""
 
-#: modules/sysinfo.class.php:84 modules/widget.class.php:126
+#: modules/widget.class.php:126 modules/wp_info.class.php:84
 msgid "Server"
-msgstr ""
-
-#: modules/sysinfo.class.php:85
-msgid "Server Document Root"
-msgstr ""
-
-#: modules/sysinfo.class.php:86
-msgid "Server Date/Time"
-msgstr ""
-
-#: modules/sysinfo.class.php:86
-#, php-format
-msgid "%s @ %s"
-msgstr ""
-
-#: modules/sysinfo.class.php:87
-msgid "Server Load"
-msgstr ""
-
-#: modules/sysinfo.class.php:88
-msgid "Web Server Info"
-msgstr ""
-
-#: modules/sysinfo.class.php:89
-msgid "User Agent"
-msgstr ""
-
-#: modules/sysinfo.class.php:90
-msgid "Filesystem Method"
-msgstr ""
-
-#: modules/sysinfo.class.php:91
-msgid "SSL SUPPORT"
-msgstr ""
-
-#: modules/sysinfo.class.php:91
-msgid "SSL extension loaded"
-msgstr ""
-
-#: modules/sysinfo.class.php:91
-msgid "SSL extension NOT loaded"
-msgstr ""
-
-#: modules/sysinfo.class.php:92
-msgid "MB String"
-msgstr ""
-
-#: modules/sysinfo.class.php:92
-msgid "MB String extensions loaded"
-msgstr ""
-
-#: modules/sysinfo.class.php:92
-msgid "MB String extensions NOT loaded"
-msgstr ""
-
-#: modules/sysinfo.class.php:93
-msgid "GD Version"
-msgstr ""
-
-#: modules/sysinfo.class.php:97 modules/sysinfo.class.php:110
-#: modules/sysinfo.class.php:233
-msgid "Version"
-msgstr ""
-
-#: modules/sysinfo.class.php:98 modules/widget.class.php:132
-msgid "Memory Limit"
-msgstr ""
-
-#: modules/sysinfo.class.php:99
-msgid "Post Max Size"
-msgstr ""
-
-#: modules/sysinfo.class.php:100
-msgid "Upload Max File size"
-msgstr ""
-
-#: modules/sysinfo.class.php:101
-msgid "Script execution limit"
-msgstr ""
-
-#: modules/sysinfo.class.php:102
-msgid "Short Tag"
-msgstr ""
-
-#: modules/sysinfo.class.php:102 modules/sysinfo.class.php:136
-#: modules/sysinfo.class.php:137
-msgid "On"
-msgstr ""
-
-#: modules/sysinfo.class.php:102 modules/sysinfo.class.php:136
-#: modules/sysinfo.class.php:137
-msgid "Off"
-msgstr ""
-
-#: modules/sysinfo.class.php:106
-msgid "Database User"
-msgstr ""
-
-#: modules/sysinfo.class.php:107
-msgid "Database Name"
-msgstr ""
-
-#: modules/sysinfo.class.php:108
-msgid "Database Host"
-msgstr ""
-
-#: modules/sysinfo.class.php:109
-msgid "Database Password"
-msgstr ""
-
-#: modules/sysinfo.class.php:111
-msgid "Database Data Disk Usage"
-msgstr ""
-
-#: modules/sysinfo.class.php:112
-msgid "Database Index Disk Usage"
-msgstr ""
-
-#: modules/sysinfo.class.php:113
-msgid "Maximum Packet Size"
-msgstr ""
-
-#: modules/sysinfo.class.php:114
-msgid "Maximum No. Connection"
-msgstr ""
-
-#: modules/sysinfo.class.php:115
-msgid "Query Cache Size"
-msgstr ""
-
-#: modules/sysinfo.class.php:119
-msgid "Multi-site"
-msgstr ""
-
-#: modules/sysinfo.class.php:119
-msgid "Yes"
-msgstr ""
-
-#: modules/sysinfo.class.php:119
-msgid "No"
-msgstr ""
-
-#: modules/sysinfo.class.php:120
-msgid "Blog id"
-msgstr ""
-
-#: modules/sysinfo.class.php:121
-msgid "WordPress Version"
-msgstr ""
-
-#: modules/sysinfo.class.php:122
-msgid "Permalink Structure"
-msgstr ""
-
-#: modules/sysinfo.class.php:123
-msgid "WP_DEBUG"
-msgstr ""
-
-#: modules/sysinfo.class.php:123 modules/sysinfo.class.php:132
-msgid "Enabled"
-msgstr ""
-
-#: modules/sysinfo.class.php:123 modules/sysinfo.class.php:132
-msgid "Disabled"
-msgstr ""
-
-#: modules/sysinfo.class.php:123
-msgid "Not set"
-msgstr ""
-
-#: modules/sysinfo.class.php:124
-msgid "DISPLAY ERRORS"
-msgstr ""
-
-#: modules/sysinfo.class.php:124
-#, php-format
-msgid "On ( %s )"
-msgstr ""
-
-#: modules/sysinfo.class.php:125
-msgid "WP Table Prefix"
-msgstr ""
-
-#: modules/sysinfo.class.php:125
-#, php-format
-msgid "Length: %s Status: %s"
-msgstr ""
-
-#: modules/sysinfo.class.php:125
-msgid "ERROR: Too Long"
-msgstr ""
-
-#: modules/sysinfo.class.php:125
-msgid "Acceptable"
-msgstr ""
-
-#: modules/sysinfo.class.php:126
-msgid "WP DB Charset/Collate"
-msgstr ""
-
-#: modules/sysinfo.class.php:127
-msgid "WordPress Memory Limit"
-msgstr ""
-
-#: modules/sysinfo.class.php:128
-msgid "WordPress Upload Size"
-msgstr ""
-
-#: modules/sysinfo.class.php:132
-msgid "Session"
-msgstr ""
-
-#: modules/sysinfo.class.php:133
-msgid "Session Name"
-msgstr ""
-
-#: modules/sysinfo.class.php:134
-msgid "Cookie Path"
-msgstr ""
-
-#: modules/sysinfo.class.php:135
-msgid "Save Path"
-msgstr ""
-
-#: modules/sysinfo.class.php:136
-msgid "Use Cookies"
-msgstr ""
-
-#: modules/sysinfo.class.php:137
-msgid "Use Only Cookies"
-msgstr ""
-
-#: modules/sysinfo.class.php:140
-msgid "Active plugins"
-msgstr ""
-
-#: modules/sysinfo.class.php:141
-msgid "Inactive plugins"
-msgstr ""
-
-#: modules/sysinfo.class.php:142
-msgid "Current theme"
-msgstr ""
-
-#: modules/sysinfo.class.php:232
-msgid "name"
-msgstr ""
-
-#: modules/sysinfo.class.php:234
-msgid "Author"
-msgstr ""
-
-#: modules/sysinfo.class.php:235
-msgid "AuthorURI"
 msgstr ""
 
 #: modules/widget.class.php:127
@@ -1447,6 +1213,10 @@ msgstr ""
 
 #: modules/widget.class.php:131 modules/widget.class.php:137
 msgid "version"
+msgstr ""
+
+#: modules/widget.class.php:132 modules/wp_info.class.php:98
+msgid "Memory Limit"
 msgstr ""
 
 #: modules/widget.class.php:133
@@ -1509,132 +1279,447 @@ msgstr ""
 msgid "Server info"
 msgstr ""
 
-#: modules/wp_customizer.class.php:92
+#: modules/wp_customizer.class.php:105
 #, php-format
 msgid "Filter %s"
 msgstr ""
 
-#: modules/wp_customizer.class.php:308
+#: modules/wp_customizer.class.php:324
 msgid "Dashboard"
 msgstr ""
 
-#: modules/wp_customizer.class.php:309
+#: modules/wp_customizer.class.php:325
 msgid "Disable Dashboard Welcome Panel"
 msgstr ""
 
-#: modules/wp_customizer.class.php:310
+#: modules/wp_customizer.class.php:326
 msgid "Disable Dashboard WordPress Blog"
 msgstr ""
 
-#: modules/wp_customizer.class.php:311
+#: modules/wp_customizer.class.php:327
 msgid "Disable Dashboard WordPress Quick Press"
 msgstr ""
 
-#: modules/wp_customizer.class.php:313
+#: modules/wp_customizer.class.php:329
 msgid "Admin Bar"
 msgstr ""
 
-#: modules/wp_customizer.class.php:314
+#: modules/wp_customizer.class.php:330
 msgid "Hide Admin Bar"
 msgstr ""
 
-#: modules/wp_customizer.class.php:315
+#: modules/wp_customizer.class.php:331
 msgid "Hide Admin Bar for non admins"
 msgstr ""
 
-#: modules/wp_customizer.class.php:316
+#: modules/wp_customizer.class.php:332
 msgid "Prevent access to admin panel for non admins"
 msgstr ""
 
-#: modules/wp_customizer.class.php:317
+#: modules/wp_customizer.class.php:333
 msgid "Redirect to"
 msgstr ""
 
-#: modules/wp_customizer.class.php:318
+#: modules/wp_customizer.class.php:334
 msgid "Remove WP logo"
 msgstr ""
 
-#: modules/wp_customizer.class.php:319
+#: modules/wp_customizer.class.php:335
 msgid "Remove comments shortcut"
 msgstr ""
 
-#: modules/wp_customizer.class.php:320
+#: modules/wp_customizer.class.php:336
 msgid "Remove updates shortcut"
 msgstr ""
 
-#: modules/wp_customizer.class.php:322
+#: modules/wp_customizer.class.php:338
 msgid "Page Editor - SEO"
 msgstr ""
 
-#: modules/wp_customizer.class.php:323
+#: modules/wp_customizer.class.php:339
 msgid "Add a selection filter in category list"
 msgstr ""
 
-#: modules/wp_customizer.class.php:324
+#: modules/wp_customizer.class.php:340
 msgid "Disable Block Editor (Gutenberg)"
 msgstr ""
 
-#: modules/wp_customizer.class.php:325
+#: modules/wp_customizer.class.php:341
 msgid "Disable Core Blocks"
 msgstr ""
 
-#: modules/wp_customizer.class.php:326
+#: modules/wp_customizer.class.php:342
 msgid "Disable Auto Paragraph"
 msgstr ""
 
-#: modules/wp_customizer.class.php:329
-msgid "Disable comments everywhere"
+#: modules/wp_customizer.class.php:344
+msgid "Theme"
 msgstr ""
 
-#: modules/wp_customizer.class.php:330
-msgid "Hide comments shortcuts from admin pages"
+#: modules/wp_customizer.class.php:345
+msgid "Disable theme blocks and global style"
 msgstr ""
 
-#: modules/wp_customizer.class.php:332
-msgid "Tips useful for speed up"
+#: modules/wp_customizer.class.php:346
+msgid "Disable theme widgets"
 msgstr ""
 
-#: modules/wp_customizer.class.php:333
-msgid "Disable WordPress sitemap"
-msgstr ""
-
-#: modules/wp_customizer.class.php:334
-msgid "Prevent load of core widgets"
-msgstr ""
-
-#: modules/wp_customizer.class.php:335
-msgid "Disable DNS prefetch"
-msgstr ""
-
-#: modules/wp_customizer.class.php:336
-msgid "Disable short-link generator"
-msgstr ""
-
-#: modules/wp_customizer.class.php:337
+#: modules/wp_customizer.class.php:347
 msgid "Disable custom css"
 msgstr ""
 
-#: modules/wp_customizer.class.php:338
+#: modules/wp_customizer.class.php:350
+msgid "Disable comments"
+msgstr ""
+
+#: modules/wp_customizer.class.php:351
+msgid "Hide comments shortcuts from admin pages"
+msgstr ""
+
+#: modules/wp_customizer.class.php:353
+msgid "Tips useful for speed up"
+msgstr ""
+
+#: modules/wp_customizer.class.php:354
+msgid "Disable WordPress sitemap"
+msgstr ""
+
+#: modules/wp_customizer.class.php:355
+msgid "Disable DNS prefetch"
+msgstr ""
+
+#: modules/wp_customizer.class.php:356
+msgid "Disable short-link generator"
+msgstr ""
+
+#: modules/wp_customizer.class.php:357
 msgid "Disable pings"
 msgstr ""
 
-#: modules/wp_customizer.class.php:339
+#: modules/wp_customizer.class.php:358
 msgid "Disable Self ping"
 msgstr ""
 
-#: modules/wp_customizer.class.php:340
+#: modules/wp_customizer.class.php:359
 msgid "Disable WordPress Emoji support"
 msgstr ""
 
-#: modules/wp_customizer.class.php:341
+#: modules/wp_customizer.class.php:360
 msgid "Disable Feed links"
 msgstr ""
 
-#: modules/wp_customizer.class.php:342
+#: modules/wp_customizer.class.php:361
 msgid "Disable jQuery Migrate"
 msgstr ""
 
-#: modules/wp_optimizer.class.php:55
+#: modules/wp_customizer.class.php:368
+msgid ""
+"If your theme does not support blocks, this feature just slow down "
+"your site, safe to disable."
+msgstr ""
+
+#: modules/wp_customizer.class.php:369
+msgid ""
+"WordPress DNS prefetch, preloads domain name system (DNS) information "
+"for external resources, reducing the time it takes to connect to them. "
+"If no external resources is used it's possible to disable it."
+msgstr ""
+
+#: modules/wp_customizer.class.php:370
+msgid ""
+"WordPress short-link generator creates shortened URLs for posts, pages "
+"or custom post types. In most cases not necessary."
+msgstr ""
+
+#: modules/wp_customizer.class.php:371
+msgid ""
+"WordPress Custom CSS is a feature that allows users to add their own "
+"custom styles to a WordPress website, without modifying the theme "
+"files."
+msgstr ""
+
+#: modules/wp_customizer.class.php:372
+msgid ""
+"WordPress jQuery Migrate is a plugin that restores deprecated jQuery "
+"features removed in newer versions, ensuring compatibility with older "
+"themes and plugins."
+msgstr ""
+
+#: modules/wp_info.class.php:35 modules/wp_info.class.php:37
+msgid "Name"
+msgstr ""
+
+#: modules/wp_info.class.php:80
+msgid "SITE_URL"
+msgstr ""
+
+#: modules/wp_info.class.php:81
+msgid "HOME_URL"
+msgstr ""
+
+#: modules/wp_info.class.php:82
+msgid "Server IP : port"
+msgstr ""
+
+#: modules/wp_info.class.php:85
+msgid "Server Document Root"
+msgstr ""
+
+#: modules/wp_info.class.php:86
+msgid "Server Date/Time"
+msgstr ""
+
+#: modules/wp_info.class.php:86
+#, php-format
+msgid "%s @ %s"
+msgstr ""
+
+#: modules/wp_info.class.php:87
+msgid "Server Load"
+msgstr ""
+
+#: modules/wp_info.class.php:88
+msgid "Web Server Info"
+msgstr ""
+
+#: modules/wp_info.class.php:89
+msgid "User Agent"
+msgstr ""
+
+#: modules/wp_info.class.php:90
+msgid "Filesystem Method"
+msgstr ""
+
+#: modules/wp_info.class.php:91
+msgid "SSL SUPPORT"
+msgstr ""
+
+#: modules/wp_info.class.php:91
+msgid "SSL extension loaded"
+msgstr ""
+
+#: modules/wp_info.class.php:91
+msgid "SSL extension NOT loaded"
+msgstr ""
+
+#: modules/wp_info.class.php:92
+msgid "MB String"
+msgstr ""
+
+#: modules/wp_info.class.php:92
+msgid "MB String extensions loaded"
+msgstr ""
+
+#: modules/wp_info.class.php:92
+msgid "MB String extensions NOT loaded"
+msgstr ""
+
+#: modules/wp_info.class.php:93
+msgid "GD Version"
+msgstr ""
+
+#: modules/wp_info.class.php:97 modules/wp_info.class.php:112
+#: modules/wp_info.class.php:235
+msgid "Version"
+msgstr ""
+
+#: modules/wp_info.class.php:99
+msgid "Post Max Size"
+msgstr ""
+
+#: modules/wp_info.class.php:100
+msgid "Upload Max File size"
+msgstr ""
+
+#: modules/wp_info.class.php:101
+msgid "Upload Max Files"
+msgstr ""
+
+#: modules/wp_info.class.php:102
+msgid "Script execution limit"
+msgstr ""
+
+#: modules/wp_info.class.php:103
+msgid "FPM"
+msgstr ""
+
+#: modules/wp_info.class.php:103 modules/wp_info.class.php:104
+#: modules/wp_info.class.php:138 modules/wp_info.class.php:139
+msgid "On"
+msgstr ""
+
+#: modules/wp_info.class.php:103 modules/wp_info.class.php:104
+#: modules/wp_info.class.php:138 modules/wp_info.class.php:139
+msgid "Off"
+msgstr ""
+
+#: modules/wp_info.class.php:104
+msgid "Short Tag"
+msgstr ""
+
+#: modules/wp_info.class.php:108
+msgid "Database User"
+msgstr ""
+
+#: modules/wp_info.class.php:109
+msgid "Database Name"
+msgstr ""
+
+#: modules/wp_info.class.php:110
+msgid "Database Host"
+msgstr ""
+
+#: modules/wp_info.class.php:111
+msgid "Database Password"
+msgstr ""
+
+#: modules/wp_info.class.php:113
+msgid "Database Data Disk Usage"
+msgstr ""
+
+#: modules/wp_info.class.php:114
+msgid "Database Index Disk Usage"
+msgstr ""
+
+#: modules/wp_info.class.php:115
+msgid "Maximum Packet Size"
+msgstr ""
+
+#: modules/wp_info.class.php:116
+msgid "Maximum No. Connection"
+msgstr ""
+
+#: modules/wp_info.class.php:117
+msgid "Query Cache Size"
+msgstr ""
+
+#: modules/wp_info.class.php:121
+msgid "Multi-site"
+msgstr ""
+
+#: modules/wp_info.class.php:121
+msgid "Yes"
+msgstr ""
+
+#: modules/wp_info.class.php:121
+msgid "No"
+msgstr ""
+
+#: modules/wp_info.class.php:122
+msgid "Blog id"
+msgstr ""
+
+#: modules/wp_info.class.php:123
+msgid "WordPress Version"
+msgstr ""
+
+#: modules/wp_info.class.php:124
+msgid "Permalink Structure"
+msgstr ""
+
+#: modules/wp_info.class.php:125
+msgid "WP_DEBUG"
+msgstr ""
+
+#: modules/wp_info.class.php:125 modules/wp_info.class.php:134
+msgid "Enabled"
+msgstr ""
+
+#: modules/wp_info.class.php:125 modules/wp_info.class.php:134
+msgid "Disabled"
+msgstr ""
+
+#: modules/wp_info.class.php:125
+msgid "Not set"
+msgstr ""
+
+#: modules/wp_info.class.php:126
+msgid "DISPLAY ERRORS"
+msgstr ""
+
+#: modules/wp_info.class.php:126
+#, php-format
+msgid "On ( %s )"
+msgstr ""
+
+#: modules/wp_info.class.php:127
+msgid "WP Table Prefix"
+msgstr ""
+
+#: modules/wp_info.class.php:127
+#, php-format
+msgid "Length: %s Status: %s"
+msgstr ""
+
+#: modules/wp_info.class.php:127
+msgid "ERROR: Too Long"
+msgstr ""
+
+#: modules/wp_info.class.php:127
+msgid "Acceptable"
+msgstr ""
+
+#: modules/wp_info.class.php:128
+msgid "WP DB Charset/Collate"
+msgstr ""
+
+#: modules/wp_info.class.php:129
+msgid "WordPress Memory Limit"
+msgstr ""
+
+#: modules/wp_info.class.php:130
+msgid "WordPress Upload Size"
+msgstr ""
+
+#: modules/wp_info.class.php:134
+msgid "Session"
+msgstr ""
+
+#: modules/wp_info.class.php:135
+msgid "Session Name"
+msgstr ""
+
+#: modules/wp_info.class.php:136
+msgid "Cookie Path"
+msgstr ""
+
+#: modules/wp_info.class.php:137
+msgid "Save Path"
+msgstr ""
+
+#: modules/wp_info.class.php:138
+msgid "Use Cookies"
+msgstr ""
+
+#: modules/wp_info.class.php:139
+msgid "Use Only Cookies"
+msgstr ""
+
+#: modules/wp_info.class.php:142
+msgid "Active plugins"
+msgstr ""
+
+#: modules/wp_info.class.php:143
+msgid "Inactive plugins"
+msgstr ""
+
+#: modules/wp_info.class.php:144
+msgid "Current theme"
+msgstr ""
+
+#: modules/wp_info.class.php:234
+msgid "name"
+msgstr ""
+
+#: modules/wp_info.class.php:236
+msgid "Author"
+msgstr ""
+
+#: modules/wp_info.class.php:237
+msgid "AuthorURI"
+msgstr ""
+
+#: modules/wp_optimizer.class.php:45
 #, php-format
 msgid ""
 "<b><i>'%s'</i> is not writable.</b><br>Modify (<b>run chmod 774</b>) "
@@ -1642,105 +1727,173 @@ msgid ""
 "automatically."
 msgstr ""
 
-#: modules/wp_optimizer.class.php:147 modules/wp_security.class.php:177
+#: modules/wp_optimizer.class.php:131 modules/wp_security.class.php:170
 msgid ""
-"To manually modifies your server for enhanced mode copy and paste this "
-"to your htaccess."
+"Your htaccess file is not modifiable, to make desired enhancements "
+"copy and paste those lines to .htaccess file."
 msgstr ""
 
-#: modules/wp_optimizer.class.php:158
+#: modules/wp_optimizer.class.php:143
 msgid "General speedup"
 msgstr ""
 
-#: modules/wp_optimizer.class.php:160
+#: modules/wp_optimizer.class.php:144
 msgid "Improve Database performances"
 msgstr ""
 
-#: modules/wp_optimizer.class.php:161
+#: modules/wp_optimizer.class.php:145
 msgid "Improve WordPress Cron performances"
 msgstr ""
 
-#: modules/wp_optimizer.class.php:162
+#: modules/wp_optimizer.class.php:146
 msgid "Check Cron schedules every (seconds)"
 msgstr ""
 
-#: modules/wp_optimizer.class.php:164
+#: modules/wp_optimizer.class.php:148
 msgid "Server configuration (Up to now, apache only)"
 msgstr ""
 
-#: modules/wp_optimizer.class.php:166
+#: modules/wp_optimizer.class.php:150
 msgid "Server Enhancements"
 msgstr ""
 
-#: modules/wp_optimizer.class.php:167
+#: modules/wp_optimizer.class.php:151
 msgid "Remove www"
 msgstr ""
 
-#: modules/wp_optimizer.class.php:168
+#: modules/wp_optimizer.class.php:152
 msgid "Redirect HTTP to HTTPS"
 msgstr ""
 
-#: modules/wp_optimizer.class.php:169
+#: modules/wp_optimizer.class.php:153
 msgid "Connection keep alive"
 msgstr ""
 
-#: modules/wp_optimizer.class.php:170
+#: modules/wp_optimizer.class.php:154
 msgid "Follow symlinks"
 msgstr ""
 
-#: modules/wp_optimizer.class.php:171
+#: modules/wp_optimizer.class.php:155
 msgid "Timezone"
 msgstr ""
 
-#: modules/wp_optimizer.class.php:172
+#: modules/wp_optimizer.class.php:156
 msgid "Default Charset UTF-8"
 msgstr ""
 
-#: modules/wp_optimizer.class.php:173
+#: modules/wp_optimizer.class.php:157
 msgid "Enable PageSpeed if installed"
 msgstr ""
 
-#: modules/wp_optimizer.class.php:176
-msgid "Enable server Compression"
+#: modules/wp_optimizer.class.php:159
+msgid "Enable server ongoing scripts compression"
 msgstr ""
 
-#: modules/wp_optimizer.class.php:177
+#: modules/wp_optimizer.class.php:160
 msgid "GZIP"
 msgstr ""
 
-#: modules/wp_optimizer.class.php:178
+#: modules/wp_optimizer.class.php:161
 msgid "BROTLI"
 msgstr ""
 
-#: modules/wp_optimizer.class.php:181
+#: modules/wp_optimizer.class.php:163
 msgid "Enable browser cache"
 msgstr ""
 
-#: modules/wp_optimizer.class.php:182
-msgid "Use Cache Control Headers"
+#: modules/wp_optimizer.class.php:164
+msgid "Immutable"
 msgstr ""
 
-#: modules/wp_optimizer.class.php:183
+#: modules/wp_optimizer.class.php:165
+msgid "Stale if Error"
+msgstr ""
+
+#: modules/wp_optimizer.class.php:166
+msgid "Stale while revalidate "
+msgstr ""
+
+#: modules/wp_optimizer.class.php:167
 msgid "Default lifetime"
 msgstr ""
 
-#: modules/wp_optimizer.class.php:184
+#: modules/wp_optimizer.class.php:168
 msgid "CSS & JavaScripts lifetime"
 msgstr ""
 
-#: modules/wp_optimizer.class.php:185
+#: modules/wp_optimizer.class.php:169
 msgid "Images lifetime"
 msgstr ""
 
-#: modules/wp_optimizer.class.php:186
+#: modules/wp_optimizer.class.php:170
 msgid "Fonts lifetime"
 msgstr ""
 
-#: modules/wp_optimizer.class.php:187
+#: modules/wp_optimizer.class.php:171
 msgid "Archives lifetime"
 msgstr ""
 
-#: modules/wp_security.class.php:40
+#: modules/wp_optimizer.class.php:178
+msgid "Enable database session and caching system."
+msgstr ""
+
+#: modules/wp_optimizer.class.php:179
+msgid ""
+"Prevent WordPress from checking for cron-jobs at each request, instead "
+"does it in background every custom time."
+msgstr ""
+
+#: modules/wp_optimizer.class.php:180
+msgid ""
+"Connection keep-alive is a feature that maintains an open connection "
+"between a client and a server, reducing the need to repeatedly "
+"establish connections, improving website performance."
+msgstr ""
+
+#: modules/wp_optimizer.class.php:181
+msgid ""
+"Follow symbolic link is an option that allows a web server to follow "
+"symbolic links when serving content, expanding the available content "
+"and improving website functionality, but slowing it down."
+msgstr ""
+
+#: modules/wp_optimizer.class.php:182
+msgid ""
+"Google PageSpeed PHP module is a server-side module that optimizes web "
+"pages and improves website performance, by applying best practices and "
+"filters to HTML, CSS, and JavaScript."
+msgstr ""
+
+#: modules/wp_optimizer.class.php:183
+msgid "Add current timezone as default."
+msgstr ""
+
+#: modules/wp_optimizer.class.php:184
+msgid ""
+"Brotli is a newer compression algorithm that provides better "
+"compression rates than Gzip, resulting in smaller file sizes and "
+"faster website performance."
+msgstr ""
+
+#: modules/wp_optimizer.class.php:185
+msgid ""
+"Prevent cached content from being overwritten, reducing the need to "
+"revalidate unchanged content."
+msgstr ""
+
+#: modules/wp_optimizer.class.php:186
+msgid ""
+"Allow cached content to be served when there is a server error, "
+"improving website availability and reducing server load."
+msgstr ""
+
+#: modules/wp_optimizer.class.php:187
+msgid ""
+"Serve stale content while updating it in the background, improving "
+"website performance and reducing the impact of validation delays."
+msgstr ""
+
+#: modules/wp_security.class.php:39
 #, php-format
 msgid ""
 "<b><i>'%s'</i> is not writable.</b><br>Modify (<b>run chmod 774</b>) "
@@ -1748,92 +1901,154 @@ msgid ""
 "automatically."
 msgstr ""
 
-#: modules/wp_security.class.php:187
+#: modules/wp_security.class.php:181
 msgid "Some configuration are available only in apache."
 msgstr ""
 
-#: modules/wp_security.class.php:188
+#: modules/wp_security.class.php:182
 msgid "Requests and Server"
 msgstr ""
 
-#: modules/wp_security.class.php:189
+#: modules/wp_security.class.php:183
 msgid "Disable directory listing"
 msgstr ""
 
-#: modules/wp_security.class.php:190
-msgid "Disable access to configuration file"
+#: modules/wp_security.class.php:184
+msgid "Disable access to configuration file (.htaccess)"
 msgstr ""
 
-#: modules/wp_security.class.php:191
+#: modules/wp_security.class.php:185
 msgid "Enable HTTPS Strict Transport Security"
 msgstr ""
 
-#: modules/wp_security.class.php:192
+#: modules/wp_security.class.php:186
 msgid "Disable Cross-Origin Resource Sharing"
 msgstr ""
 
-#: modules/wp_security.class.php:193
+#: modules/wp_security.class.php:187
 msgid "Disable HTTP Track & Trace"
 msgstr ""
 
-#: modules/wp_security.class.php:194
+#: modules/wp_security.class.php:188
 msgid "Block Cross Site Scripting"
 msgstr ""
 
-#: modules/wp_security.class.php:195
+#: modules/wp_security.class.php:189
 msgid "Send No Sniff Header"
 msgstr ""
 
-#: modules/wp_security.class.php:196
+#: modules/wp_security.class.php:190
 msgid "Send No Referrer Header"
 msgstr ""
 
-#: modules/wp_security.class.php:197
+#: modules/wp_security.class.php:191
 msgid "Send No Frame Header"
 msgstr ""
 
-#: modules/wp_security.class.php:198
+#: modules/wp_security.class.php:192
 msgid "Disable server signature "
 msgstr ""
 
-#: modules/wp_security.class.php:201
+#: modules/wp_security.class.php:194
 msgid "Disable Information Disclosure & Remove Meta information."
 msgstr ""
 
-#: modules/wp_security.class.php:202
+#: modules/wp_security.class.php:195
 msgid "Hide WordPress Version Number"
 msgstr ""
 
-#: modules/wp_security.class.php:203
+#: modules/wp_security.class.php:196
 msgid "Remove WordPress Meta Generator Tag"
 msgstr ""
 
-#: modules/wp_security.class.php:204
+#: modules/wp_security.class.php:197
 msgid "Remove Version from Stylesheet"
 msgstr ""
 
-#: modules/wp_security.class.php:205
+#: modules/wp_security.class.php:198
 msgid "Remove Version from Script"
 msgstr ""
 
-#: modules/wp_security.class.php:208
+#: modules/wp_security.class.php:200
 msgid "Admin & API Security"
 msgstr ""
 
-#: modules/wp_security.class.php:209
+#: modules/wp_security.class.php:201
 msgid "Disable WP User Enumeration"
 msgstr ""
 
-#: modules/wp_security.class.php:210
+#: modules/wp_security.class.php:202
 msgid "Disable WP File Editor"
 msgstr ""
 
-#: modules/wp_security.class.php:211
+#: modules/wp_security.class.php:203
 msgid "Disable XMLRPC"
 msgstr ""
 
-#: modules/wp_security.class.php:212
+#: modules/wp_security.class.php:204
 msgid "Disable WP API JSON"
+msgstr ""
+
+#: modules/wp_security.class.php:211
+msgid ""
+"Directory listing is a web server feature that displays the contents "
+"of a directory when an index file is not present, potentially exposing "
+"sensitive information."
+msgstr ""
+
+#: modules/wp_security.class.php:212
+msgid ""
+"Disabling access to .htaccess files prevents unauthorized modification "
+"of server configuration settings, improving website security.."
+msgstr ""
+
+#: modules/wp_security.class.php:213
+msgid ""
+"Enabling HTTPS Strict Transport Security (HSTS) enforces secure HTTPS "
+"connections, reducing the risk of man-in-the-middle attacks and "
+"improving website security."
+msgstr ""
+
+#: modules/wp_security.class.php:214
+msgid ""
+"Disabling Cross-Origin Resource Sharing (CORS) restricts cross-domain "
+"requests, improving website security by preventing unauthorized access "
+"to resources."
+msgstr ""
+
+#: modules/wp_security.class.php:215
+msgid ""
+"Disabling HTTP track and trace prevents servers from disclosing "
+"information about requests, improving website security by reducing the "
+"risk of sensitive data leaks."
+msgstr ""
+
+#: modules/wp_security.class.php:216
+msgid ""
+"Blocking cross-site scripting (XSS) prevents malicious scripts from "
+"executing on a website, improving website security and protecting user "
+"data."
+msgstr ""
+
+#: modules/wp_security.class.php:217
+msgid ""
+"Sending NoSniff header instructs web browsers to prevent MIME type "
+"sniffing, improving website security by reducing the risk of content "
+"spoofing attacks."
+msgstr ""
+
+#: modules/wp_security.class.php:218
+msgid ""
+"Sending no referrer header prevents the browser from sending "
+"information about the previous page visited, improving user privacy "
+"and security."
+msgstr ""
+
+#: modules/wp_security.class.php:219
+msgid ""
+"Sending no-frame headers prevent website content from being displayed "
+"within an iframe, improving website security and preventing "
+"clickjacking attacks."
 msgstr ""
 
 #: modules/wp_updates.class.php:128
@@ -1862,62 +2077,4 @@ msgstr ""
 
 #: modules/wp_updates.class.php:134
 msgid "Disable WordPress update notices mail"
-msgstr ""
-
-#: vendors/shzn-framework/Ajax.class.php:47
-#: vendors/shzn-framework/Ajax.class.php:65
-msgid "It seems that you are not allowed to do this request."
-msgstr ""
-
-#: vendors/shzn-framework/Ajax.class.php:48
-#: vendors/shzn-framework/Ajax.class.php:66
-#: vendors/shzn-framework/Ajax.class.php:76
-#: vendors/shzn-framework/Module.class.php:233
-msgid "Request error"
-msgstr ""
-
-#: vendors/shzn-framework/Ajax.class.php:75
-msgid "Wrong ajax request."
-msgstr ""
-
-#: vendors/shzn-framework/Graphic.class.php:337
-msgid "Choose a type or enter one manually."
-msgstr ""
-
-#: vendors/shzn-framework/Module.class.php:147
-msgid "Action was correctly executed"
-msgstr ""
-
-#: vendors/shzn-framework/Module.class.php:149
-msgid "Action execution failed"
-msgstr ""
-
-#: vendors/shzn-framework/Module.class.php:232
-#, php-format
-msgid "Wrong ajax request for %s"
-msgstr ""
-
-#: vendors/shzn-framework/Module.class.php:276
-msgid "Save Changes"
-msgstr ""
-
-#: vendors/shzn-framework/Module.class.php:317
-msgid "This Module is disabled for you or for your settings."
-msgstr ""
-
-#: vendors/shzn-framework/Settings.class.php:162
-msgid "Core Settings"
-msgstr ""
-
-#: vendors/shzn-framework/Settings.class.php:220
-msgid "Modules Settings"
-msgstr ""
-
-#: vendors/shzn-framework/Settings.class.php:227
-#, php-format
-msgid "No modules enabled. To enable them go <a href='%s'>here</a>."
-msgstr ""
-
-#: vendors/shzn-framework/loader.php:60
-msgid "Are you sure you want to leave?"
 msgstr ""

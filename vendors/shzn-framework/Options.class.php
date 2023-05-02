@@ -1,7 +1,7 @@
 <?php
 /**
  * @author    sh1zen
- * @copyright Copyright (C)  2022
+ * @copyright Copyright (C) 2023.
  * @license   http://www.gnu.org/licenses/gpl.html GNU/GPL
  */
 
@@ -226,7 +226,7 @@ class Options
             return false;
         }
 
-        $this->cache->delete('db_cache');
+        $this->cache->flush_group('db_cache');
 
         return true;
     }

@@ -1,13 +1,13 @@
 <?php
 /**
  * @author    sh1zen
- * @copyright Copyright (C)  2022
+ * @copyright Copyright (C) 2023.
  * @license   http://www.gnu.org/licenses/gpl.html GNU/GPL
  */
 
 namespace WPOptimizer\modules\supporters;
 
-use SHZN\core\Storage;
+use SHZN\core\Cache;
 
 class Cache_Dispatcher
 {
@@ -29,7 +29,7 @@ class Cache_Dispatcher
     protected function __construct($args)
     {
         $this->args = array_merge(array(
-            'lifespan' => MINUTE_IN_SECONDS * 15,
+            'lifespan' => HOUR_IN_SECONDS,
         ), $args);
 
         $this->reset();
@@ -51,10 +51,15 @@ class Cache_Dispatcher
         shzn('wpopt')->storage->delete(self::get_cache_group());
     }
 
+    protected static function get_cache_group()
+    {
+        return "cache/" . shzn('wpopt')->moduleHandler->module_slug(get_called_class(), true);
+    }
+
     protected function generate_key($query, $context = '')
     {
         if (!$this->cache_key) {
-            $this->cache_key = Storage::generate_key($query, $context);
+            $this->cache_key = Cache::generate_key($query, $context);
         }
 
         return $this->cache_key;
@@ -86,23 +91,16 @@ class Cache_Dispatcher
      */
     protected function cache_get($key)
     {
-        $group = self::get_cache_group();
-
-        if (function_exists('pods_cache_get')) {
-            $value = pods_cache_get($key, $group);
-        }
-        else {
-            $value = shzn('wpopt')->storage->load($key, $group);
-        }
-
-        return $value;
+        return shzn('wpopt')->storage->load($key, self::get_cache_group());
     }
 
-    protected static function get_cache_group()
+    public static function activate()
     {
-        $class = get_called_class();
+    }
 
-        return "cache/" . shzn('wpopt')->moduleHandler->module_slug($class, true);
+    public static function deactivate()
+    {
+        self::clear_cache();
     }
 
     /**
@@ -114,40 +112,10 @@ class Cache_Dispatcher
      */
     protected function cache_set($key, $value, $expires = null)
     {
-        $group = self::get_cache_group();
-
-        if (is_null($expires))
+        if (is_null($expires)) {
             $expires = $this->args['lifespan'];
-
-        if (function_exists('pods_cache_set')) {
-            pods_cache_set($key, $value, $group, $expires);
         }
-        else {
-            // shzn('wpopt')->storage->set($value, $group, $key, $expires, true);
 
-            shzn('wpopt')->storage->save(array(
-                'expire'    => $expires,
-                'file_name' => $key,
-                'context'   => $group,
-                'force'     => true,
-                'data'      => $value
-            ));
-        }
+        shzn('wpopt')->storage->set($value, $key, self::get_cache_group(), $expires, true);
     }
-
-    /**
-     * Clear cache
-     *
-     * @param string $key Cache key
-     */
-    protected function flush($key = '')
-    {
-        if (function_exists('pods_cache_clear')) {
-            pods_cache_clear($key, self::get_cache_group());
-        }
-        else {
-            shzn('wpopt')->storage->delete(self::get_cache_group(), $key);
-        }
-    }
-
 }

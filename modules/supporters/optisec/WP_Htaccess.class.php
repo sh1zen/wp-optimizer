@@ -1,7 +1,7 @@
 <?php
 /**
  * @author    sh1zen
- * @copyright Copyright (C)  2022
+ * @copyright Copyright (C) 2023.
  * @license   http://www.gnu.org/licenses/gpl.html GNU/GPL
  */
 
@@ -15,86 +15,68 @@ use SHZN\core\RuleUtil;
  * Class to handle Security and Optimization requests
  * @since 1.5.0
  */
-class WP_Enhancer
+class WP_Htaccess
 {
-    private static WP_Enhancer $_instance;
+    private string $rules = '';
 
-    private function __construct()
+    private bool $edited = false;
+
+    private array $settings;
+    private array $order;
+
+    public function __construct($settings)
     {
-    }
+        $this->settings = $settings;
+        $this->rules = RuleUtil::get_rules();
 
-    /**
-     * @return WP_Enhancer
-     */
-    public static function getInstance()
-    {
-        if (!isset(self::$_instance)) {
-            self::$_instance = new self();
-        }
-
-        return self::$_instance;
-    }
-
-    public static function server_conf($item, $mode, $settings = array(), $no_write = false)
-    {
-        if ($mode === 'get')
-            return RuleUtil::get_rules();
-
-        $order = array(
-            WPOPT_MARKER_BEGIN_MIME_TYPES,
+        $this->order = array(
+            '# BEGIN O_API',
+            '# BEGIN FLEX_API',
+            '# BEGIN WordPress',
+            '# WPOPT_MARKER_BEGIN_SRV_MIME_TYPES',
             '# WPOPT_MARKER_BEGIN_SRV_COMPRESSION',
             '# WPOPT_MARKER_BEGIN_SRV_ENHANCEMENTS',
             '# WPOPT_MARKER_BEGIN_SRV_SECURITY',
-            WPOPT_MARKER_BEGIN_WORDPRESS,
             '# WPOPT_MARKER_BEGIN_SRV_BROWSER_CACHE',
         );
 
-        if (Settings::get_option($settings, 'srv_compression') or Settings::get_option($settings, 'srv_browser_cache')) {
-
-            $response = RuleUtil::add_rules(
-                self::generate_rules('srv_mime_types', WPOPT_MARKER_BEGIN_MIME_TYPES, WPOPT_MARKER_END_MIME_TYPES, $settings),
-                WPOPT_MARKER_BEGIN_MIME_TYPES,
-                WPOPT_MARKER_END_MIME_TYPES,
-                $order,
-                $no_write
-            );
+        if (!$this->has_rule('srv_mime_types')) {
+            $this->add_rule('srv_mime_types');
         }
-        else {
-            $response = RuleUtil::remove_rules(
-                WPOPT_MARKER_BEGIN_MIME_TYPES,
-                WPOPT_MARKER_END_MIME_TYPES,
-                $no_write
-            );
-        }
+    }
 
-        $start_marker = '# WPOPT_MARKER_BEGIN_' . strtoupper($item);
-        $end_marker = '# WPOPT_MARKER_END_' . strtoupper($item);
+    public function get_rules()
+    {
+        return $this->rules;
+    }
 
-        switch ($mode) {
-            case 'add':
-                $response = RuleUtil::add_rules(
-                    self::generate_rules($item, $start_marker, $end_marker, $settings),
-                    $start_marker,
-                    $end_marker,
-                    $order,
-                    $no_write
-                );
-                break;
-            case'remove':
-                $response = RuleUtil::remove_rules(
-                    $start_marker,
-                    $end_marker,
-                    $no_write
-                );
-                break;
-        }
+    public function has_rule($rule_name)
+    {
+        $start_marker = '# WPOPT_MARKER_BEGIN_' . strtoupper($rule_name);
+        $end_marker = '# WPOPT_MARKER_END_' . strtoupper($rule_name);
 
-        return $response;
+        return RuleUtil::has_rule($this->rules, $start_marker, $end_marker);
+    }
+
+    public function add_rule($name)
+    {
+        $start_marker = '# WPOPT_MARKER_BEGIN_' . strtoupper($name);
+        $end_marker = '# WPOPT_MARKER_END_' . strtoupper($name);
+
+        $res = RuleUtil::add_rules(
+            self::generate_rules($name, $start_marker, $end_marker, $this->settings),
+            $start_marker,
+            $end_marker,
+            $this->order,
+            $this->rules
+        );
+
+        $this->edited = ($this->edited or $res);
     }
 
     private static function generate_rules($item, $start_marker, $end_marker, $settings = array())
     {
-        $rules = "\n" . $start_marker . "\n";
+        $rules = "\n$start_marker\n";
 
         switch ($item) {
             case 'srv_mime_types':
@@ -117,7 +99,7 @@ class WP_Enhancer
                 $rules .= self::generate_rules_enhancements($settings);
         }
 
-        $rules .= $end_marker . "\n";
+        $rules .= "\n$end_marker\n";
 
         return $rules;
     }
@@ -321,6 +303,48 @@ class WP_Enhancer
         return $matched_types;
     }
 
+    private static function get_cache_policy($type)
+    {
+        switch ($type) {
+
+            case 'text':
+                $cache_policy = array(
+                    'cache'      => true,
+                    'immutable'  => true,
+                    'revalidate' => true,
+                );
+                break;
+
+            case 'font':
+            case 'image':
+                $cache_policy = array(
+                    'cache'       => true,
+                    'immutable'   => true,
+                    'stale-error' => false
+                );
+                break;
+
+            case 'audio':
+            case 'video':
+            case 'document':
+            case 'spreadsheet':
+            case 'interactive':
+            case 'archive':
+                $cache_policy = array(
+                    'cache'       => true,
+                    'private'     => true,
+                    'revalidate'  => true,
+                    'stale-error' => false
+                );
+                break;
+
+            default:
+                $cache_policy = [];
+        }
+
+        return $cache_policy;
+    }
+
     private static function generate_rules_browser_cache($settings)
     {
         $default_lifetime = Settings::get_option($settings, "srv_browser_cache.lifetime_default", WEEK_IN_SECONDS);
@@ -358,114 +382,74 @@ class WP_Enhancer
                 }
             }
 
-            if (Settings::get_option($settings, 'srv_browser_cache.cache_control')) {
+            $extensions_lowercase = array_map('strtolower', $extensions);
+            $extensions_uppercase = array_map('strtoupper', $extensions);
 
-                $extensions_lowercase = array_map('strtolower', $extensions);
-                $extensions_uppercase = array_map('strtoupper', $extensions);
+            $headers_rules = '';
+            $file_match_rules = '';
 
-                $headers_rules = '';
-                $file_match_rules = '';
+            $cache_policy = array_merge(
+                [
+                    'cache'            => false,
+                    'private'          => false,
+                    'revalidate'       => false,
+                    'immutable'        => false,
+                    'stale-error'      => Settings::get_option($settings, 'srv_browser_cache.stale_error', false),
+                    'stale-revalidate' => Settings::get_option($settings, 'srv_browser_cache.stale_revalidate', false)
+                ],
+                self::get_cache_policy($type)
+            );
 
-                $cache_policy = array();
+            if (!$cache_policy['cache']) {
+                $headers_rules .= "        Header set Pragma \"no-cache\"\n";
+                $headers_rules .= "        Header set Cache-Control \"max-age=0, private, no-store, no-cache, must-revalidate\"\n";
+                $headers_rules .= "        Header unset Last-Modified\n";
+                $headers_rules .= "        Header unset ETag\n";
 
-                switch ($type) {
-
-                    case 'text':
-                        $cache_policy = array(
-                            'cache'      => true,
-                            'revalidate' => true
-                        );
-                        break;
-
-                    case 'image':
-                    case 'font':
-                        $cache_policy = array(
-                            'cache'   => true,
-                            'max-age' => true,
-                            'stale'   => true
-                        );
-                        break;
-
-                    case 'audio':
-                    case 'video':
-                        $cache_policy = array(
-                            'cache'      => true,
-                            'private'    => true,
-                            'revalidate' => true
-                        );
-                        break;
-
-                    case 'document':
-                    case 'spreadsheet':
-                    case 'interactive':
-                    case 'archive':
-                        $cache_policy = array(
-                            'cache'      => true,
-                            'private'    => true,
-                            'max-age'    => true,
-                            'revalidate' => true
-                        );
-                        break;
-
-                    case 'code':
-                        break;
-                }
-
-                $cache_policy = array_merge(array(
-                    'cache'      => false,
-                    'max-age'    => false,
-                    'private'    => false,
-                    'revalidate' => false,
-                    'stale'      => false,
-                    'extra'      => false
-                ), $cache_policy);
-
-                if (!$cache_policy['cache']) {
-                    $headers_rules .= "        Header set Pragma \"no-cache\"\n";
-                    $headers_rules .= "        Header set Cache-Control \"max-age=0, private, no-store, no-cache, must-revalidate\"\n";
-                    $headers_rules .= "        Header unset Last-Modified\n";
-                    $headers_rules .= "        Header unset ETag\n";
-
-                    $file_match_rules .= "    FileETag None\n";
-                }
-                else {
-                    $headers_rules .= "        Header set Pragma \"public\"\n";
-
-                    $cache_control = array();
-                    $header_join = "append";
-
-                    $cache_control[] = $cache_policy['private'] ? 'private' : 'public';
-
-                    if ($cache_policy['max-age']) {
-                        $header_join = "set";
-                        $cache_control[] = "max-age=" . $lifetime;
-                    }
-
-                    if ($cache_policy['stale']) {
-                        $cache_control[] = "stale-while-revalidate=" . $lifetime;
-                    }
-                    elseif ($cache_policy['revalidate']) {
-                        $cache_control[] = 'must-revalidate';
-
-                        if (!$cache_policy['private'])
-                            $cache_control[] = 'proxy-revalidate';
-                    }
-
-                    if ($cache_policy['extra']) {
-                        $cache_control[] = $cache_policy['extra'];
-                    }
-
-                    $headers_rules .= "        Header {$header_join} Cache-Control \"" . implode(', ', $cache_control) . "\"\n";
-
-                    $file_match_rules .= "    FileETag MTime Size\n";
-                }
-
-                $file_match_rules .= "    <IfModule mod_headers.c>\n";
-                $file_match_rules .= $headers_rules;
-                $file_match_rules .= "    </IfModule>\n";
-
-                $cache_control_rules .= "<FilesMatch \"\\.(" . implode('|', array_merge($extensions_lowercase, $extensions_uppercase)) . ")$\">\n" . $file_match_rules . "</FilesMatch>\n";
+                $file_match_rules .= "    FileETag None\n";
             }
+            else {
+
+                $cache_policy['immutable'] = ($cache_policy['immutable'] and Settings::get_option($settings, 'srv_browser_cache.immutable', false));
+
+                $headers_rules .= "        Header set Pragma \"public\"\n";
+
+                $cache_control = array();
+
+                $cache_control[] = $cache_policy['private'] ? 'private' : 'public';
+
+                $cache_control[] = "max-age=" . $lifetime;
+
+                if ($cache_policy['immutable']) {
+                    $cache_control[] = "immutable";
+                }
+
+                if ($cache_policy['stale-revalidate'] and !$cache_policy['immutable'] and $cache_policy['revalidate']) {
+                    $cache_control[] = "stale-while-revalidate=" . DAY_IN_SECONDS;
+                }
+
+                if ($cache_policy['stale-error'] and !$cache_policy['immutable'] and $cache_policy['revalidate']) {
+                    $cache_control[] = "stale-if-error=" . DAY_IN_SECONDS;
+                }
+
+                if ($cache_policy['revalidate'] and !$cache_policy['immutable']) {
+                    $cache_control[] = 'must-revalidate';
+
+                    if (!$cache_policy['private']) {
+                        $cache_control[] = 'proxy-revalidate';
+                    }
+                }
+
+                $headers_rules .= "        Header set Cache-Control \"" . implode(', ', $cache_control) . "\"\n";
+
+                $file_match_rules .= "    FileETag MTime Size\n";
+            }
+
+            $file_match_rules .= "    <IfModule mod_headers.c>\n";
+            $file_match_rules .= $headers_rules;
+            $file_match_rules .= "    </IfModule>\n";
+
+            $cache_control_rules .= "<FilesMatch \"\\.(" . implode('|', array_merge($extensions_lowercase, $extensions_uppercase)) . ")$\">\n" . $file_match_rules . "</FilesMatch>\n";
         }
 
         $rules .= "</IfModule>\n";
@@ -660,5 +644,34 @@ class WP_Enhancer
         $rules .= "</IfModule>\n";
 
         return $rules;
+    }
+
+    public function write(): bool
+    {
+        return $this->edited and RuleUtil::write_rules($this->rules);
+    }
+
+    public function edited()
+    {
+        return $this->edited;
+    }
+
+    public function toggle_rule(string $server_hooks, $activate)
+    {
+        $activate ? $this->add_rule($server_hooks) : $this->remove_rule($server_hooks);
+    }
+
+    public function remove_rule($name)
+    {
+        $start_marker = '# WPOPT_MARKER_BEGIN_' . strtoupper($name);
+        $end_marker = '# WPOPT_MARKER_END_' . strtoupper($name);
+
+        $res = RuleUtil::remove_rules(
+            $start_marker,
+            $end_marker,
+            $this->rules
+        );
+
+        $this->edited = ($this->edited or $res);
     }
 }

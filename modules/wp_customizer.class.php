@@ -1,7 +1,7 @@
 <?php
 /**
  * @author    sh1zen
- * @copyright Copyright (C)  2022
+ * @copyright Copyright (C) 2023.
  * @license   http://www.gnu.org/licenses/gpl.html GNU/GPL
  */
 
@@ -74,11 +74,24 @@ class Mod_WP_Customizer extends Module
             remove_action('init', 'register_core_block_types_from_metadata');
         }
 
+        if ($this->option('theme-block-disable')) {
+
+            remove_action('wp_enqueue_scripts', 'wp_enqueue_classic_theme_styles');
+            remove_action('plugins_loaded', '_wp_theme_json_webfonts_handler');
+            remove_action('setup_theme', 'wp_enable_block_templates');
+            remove_action('wp_loaded', '_add_template_loader_filters');
+            remove_action('wp_enqueue_scripts', 'wp_common_block_scripts_and_styles');
+            remove_filter('block_editor_settings_all', 'wp_add_editor_classic_theme_styles');
+
+            // disable global styles
+            remove_action('wp_enqueue_scripts', 'wp_enqueue_global_styles');
+            remove_action('wp_footer', 'wp_enqueue_global_styles', 1);
+        }
+
         if ($this->option('core-sitemap')) {
 
             remove_all_filters('wp_sitemaps_enabled');
             add_filter('wp_sitemaps_enabled', '__return_false');
-
             remove_action('init', 'wp_sitemaps_get_server');
         }
 
@@ -87,7 +100,7 @@ class Mod_WP_Customizer extends Module
             $screen_base = Rewriter::getInstance()->get_base('.php');
 
             if ('post' === $screen_base or 'edit' === $screen_base) {
-                wp_enqueue_script('wpopt-admin-script', UtilEnv::path_to_url(__FILE__, true) . '/supporters/filter-categories.js', array('jquery'), WPOPT_VERSION, true);
+                wp_enqueue_script('wpopt-admin-script', UtilEnv::path_to_url(__DIR__, true) . '/supporters/filter-categories.js', array('jquery'), WPOPT_VERSION, true);
                 wp_localize_script('wpopt-admin-script', 'fc_plugin', array(
                     'placeholder' => esc_html__('Filter %s', 'wpopt'),
                     'screenName'  => $screen_base
@@ -153,9 +166,12 @@ class Mod_WP_Customizer extends Module
             add_filter('show_admin_bar', '__return_false');
         }
 
-        if ($this->option('widgets-init')) {
+        if ($this->option('widgets-disable')) {
+            remove_all_actions('widgets_init');
+
             remove_action('init', 'wp_widgets_init', 1);
-            remove_action( 'plugins_loaded', 'wp_maybe_load_widgets', 0 );
+            remove_action('after_setup_theme', 'wp_setup_widgets_block_editor', 1);
+            remove_action('plugins_loaded', 'wp_maybe_load_widgets', 0);
         }
 
         /**
@@ -325,22 +341,36 @@ class Mod_WP_Customizer extends Module
             $this->setting_field(__('Disable Core Blocks', 'wpopt'), "core-blocks", "checkbox"),
             $this->setting_field(__('Disable Auto Paragraph', 'wpopt'), "wpautop", "checkbox"),
 
+            $this->setting_field(__('Theme', 'wpopt'), false, 'separator'),
+            $this->setting_field(__('Disable theme blocks and global style', 'wpopt'), "theme-block-disable", "checkbox"),
+            $this->setting_field(__('Disable theme widgets', 'wpopt'), "widgets-disable", "checkbox"),
+            $this->setting_field(__('Disable custom css', 'wpopt'), "disable.custom_css_cb", "checkbox"),
+
             $this->setting_field(__('Comments', 'wpopt'), false, 'separator'),
-            $this->setting_field(__("Disable comments everywhere", 'wpopt'), "disable-comments", "checkbox"),
+            $this->setting_field(__("Disable comments", 'wpopt'), "disable-comments", "checkbox"),
             $this->setting_field(__("Hide comments shortcuts from admin pages", 'wpopt'), "admin-hide-comments", "checkbox"),
 
             $this->setting_field(__('Tips useful for speed up', 'wpopt'), false, 'separator'),
             $this->setting_field(__('Disable WordPress sitemap', 'wpopt'), "core-sitemap", "checkbox"),
-            $this->setting_field(__('Prevent load of core widgets', 'wpopt'), "widgets-init", "checkbox"),
             $this->setting_field(__('Disable DNS prefetch', 'wpopt'), "disable.dns-prefetch", "checkbox"),
             $this->setting_field(__('Disable short-link generator', 'wpopt'), "disable.shortlink", "checkbox"),
-            $this->setting_field(__('Disable custom css', 'wpopt'), "disable.custom_css_cb", "checkbox"),
             $this->setting_field(__('Disable pings', 'wpopt'), "ping", "checkbox"),
             $this->setting_field(__('Disable Self ping', 'wpopt'), "selfping", "checkbox"),
             $this->setting_field(__('Disable WordPress Emoji support', 'wpopt'), "emoji", "checkbox"),
             $this->setting_field(__('Disable Feed links', 'wpopt'), "feed-links", "checkbox"),
             $this->setting_field(__('Disable jQuery Migrate', 'wpopt'), "jquery-migrate", "checkbox"),
         );
+    }
+
+    protected function infos()
+    {
+        return [
+            'theme-block-disable'   => __('If your theme does not support blocks, this feature just slow down your site, safe to disable.', 'wpopt'),
+            'disable.dns-prefetch'  => __("WordPress DNS prefetch, preloads domain name system (DNS) information for external resources, reducing the time it takes to connect to them. If no external resources is used it's possible to disable it.", 'wpopt'),
+            'disable.shortlink'     => __("WordPress short-link generator creates shortened URLs for posts, pages or custom post types. In most cases not necessary.", 'wpopt'),
+            'disable.custom_css_cb' => __("WordPress Custom CSS is a feature that allows users to add their own custom styles to a WordPress website, without modifying the theme files.", 'wpopt'),
+            'jquery-migrate'        => __("WordPress jQuery Migrate is a plugin that restores deprecated jQuery features removed in newer versions, ensuring compatibility with older themes and plugins.", 'wpopt')
+        ];
     }
 }
 

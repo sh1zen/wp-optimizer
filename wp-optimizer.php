@@ -1,7 +1,7 @@
 <?php
 /**
  * @author    sh1zen
- * @copyright Copyright (C)  2022
+ * @copyright Copyright (C) 2023.
  * @license   http://www.gnu.org/licenses/gpl.html GNU/GPL
  */
 
@@ -13,10 +13,10 @@
  * Author URI: https://sh1zen.github.io/
  * Text Domain: wpopt
  * Domain Path: /languages
- * Version: 1.9.3
+ * Version: 2.0.0
  */
 
-const WPOPT_VERSION = '1.9.3';
+const WPOPT_VERSION = '2.0.0';
 
 const WPOPT_FILE = __FILE__;
 
@@ -42,16 +42,24 @@ if (!defined('SHZN_FRAMEWORK')) {
     require_once WPOPT_VENDORS . 'shzn-framework/loader.php';
 }
 
-shzn('wpopt', ['path' => WPOPT_MODULES, 'table_name' => "wpopt"], [
-    'meter'         => true,
-    'cache'         => true,
-    'storage'       => true,
-    'settings'      => true,
-    'cron'          => true,
-    'ajax'          => true,
-    'moduleHandler' => true,
-    'options'       => true
-]);
+shzn(
+    'wpopt',
+    [
+        'path'         => WPOPT_MODULES,
+        'table_name'   => "wpopt",
+        'use_memcache' => true
+    ],
+    [
+        'meter'         => true,
+        'cache'         => true,
+        'storage'       => true,
+        'settings'      => true,
+        'cron'          => true,
+        'ajax'          => true,
+        'moduleHandler' => true,
+        'options'       => true
+    ]
+);
 
 // initializer class
 require_once WPOPT_ADMIN . 'PluginInit.class.php';

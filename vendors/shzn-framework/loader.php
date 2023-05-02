@@ -1,13 +1,15 @@
 <?php
 /**
  * @author    sh1zen
- * @copyright Copyright (C)  2022
+ * @copyright Copyright (C) 2023.
  * @license   http://www.gnu.org/licenses/gpl.html GNU/GPL
  */
 
 use SHZN\core\UtilEnv;
 
 const SHZN_FRAMEWORK = __DIR__ . '/';
+const SHZN_DRIVERS = SHZN_FRAMEWORK . 'drivers/';
+
 define('SHZN_DEBUG', $_SERVER["SERVER_ADDR"] === '127.0.0.1');
 
 const SHZN_VERSION = "1.2.1";
@@ -21,6 +23,7 @@ require_once SHZN_FRAMEWORK . 'functions.php';
 
 require_once SHZN_FRAMEWORK . 'shzn_wrapper.php';
 
+require_once SHZN_FRAMEWORK . 'Actions.class.php';
 require_once SHZN_FRAMEWORK . 'StringHelper.class.php';
 
 require_once SHZN_FRAMEWORK . 'Utility.class.php';
@@ -82,14 +85,10 @@ function shzn($context = 'common', $args = false, $components = [])
 
         if (!isset($cached[$context]) or !is_object($cached[$context])) {
             $cached[$context] = new \SHZN\core\shzn_wrapper($context, $args, $components);
-
             $cached[$context]->setup();
-
-            do_action($context . '_core_setup');
         }
         else {
             $cached[$context]->update_components($components, $args);
-            do_action($context . '_core_update');
         }
     }
     elseif (!isset($cached[$context])) {

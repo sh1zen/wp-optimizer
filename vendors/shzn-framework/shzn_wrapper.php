@@ -1,7 +1,7 @@
 <?php
 /**
  * @author    sh1zen
- * @copyright Copyright (C)  2022
+ * @copyright Copyright (C) 2023.
  * @license   http://www.gnu.org/licenses/gpl.html GNU/GPL
  */
 
@@ -73,8 +73,7 @@ class shzn_wrapper
     {
         $this->args = array_merge($this->args, [
             'path'          => '',
-            'use_wp_cache'  => false,
-            'disk_autosave' => true,
+            'use_memcache'  => false,
             'table_name'    => ''
         ], (array)$args);
     }
@@ -114,11 +113,11 @@ class shzn_wrapper
         }
 
         if ($this->components['cache']) {
-            $this->cache = new Cache($this->args['use_wp_cache']);
+            $this->cache = new Cache($this->args['use_memcache']);
         }
 
         if ($this->components['storage']) {
-            $this->storage = new Storage($this->args['disk_autosave'], $this->context);
+            $this->storage = new Storage($this->context);
         }
 
         if ($this->components['options']) {

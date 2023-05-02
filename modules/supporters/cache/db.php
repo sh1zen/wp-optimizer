@@ -1,15 +1,21 @@
 <?php
 /**
  * @author    sh1zen
- * @copyright Copyright (C)  2022
+ * @copyright Copyright (C) 2023.
  * @license   http://www.gnu.org/licenses/gpl.html GNU/GPL
  */
 
-use SHZN\core\Storage;
+use SHZN\core\Cache;
 
 define('WPOPT_DB_ABSPATH', dirname(__FILE__, 4) . '/');
 
-require_once ABSPATH . WPINC . '/wp-db.php';
+if (file_exists(ABSPATH . WPINC . '/class-wpdb.php')) {
+    require_once ABSPATH . WPINC . '/class-wpdb.php';
+}
+else {
+    require_once ABSPATH . WPINC . '/wp-db.php';
+}
+
 require_once WPOPT_DB_ABSPATH . 'inc/constants.php';
 
 // no caching during activation or if is admin
@@ -19,12 +25,25 @@ if (!((defined('WP_INSTALLING') and WP_INSTALLING) or is_admin())) {
 
 // shzn-framework commons
 if (!defined('SHZN_FRAMEWORK')) {
-    require_once WPOPT_DB_ABSPATH . 'vendors/shzn-framework/loader.php';
+
+    if (file_exists(WPOPT_DB_ABSPATH . 'vendors/shzn-framework/loader.php')) {
+        require_once WPOPT_DB_ABSPATH . 'vendors/shzn-framework/loader.php';
+    }
+    else {
+        require_once dirname(__FILE__, 5) . '/flexy-seo/vendors/shzn-framework/loader.php';
+    }
 }
 
-shzn('wpopt', [], [
-    'storage' => true,
-]);
+shzn(
+    'wpopt',
+    [
+        'use_memcache' => true
+    ],
+    [
+        'cache'   => true,
+        'storage' => true,
+    ]
+);
 
 class WPOPT_DB extends wpdb
 {
@@ -38,11 +57,6 @@ class WPOPT_DB extends wpdb
     public function __construct($dbuser, $dbpassword, $dbname, $dbhost)
     {
         parent::__construct($dbuser, $dbpassword, $dbname, $dbhost);
-    }
-
-    public static function clear_cache()
-    {
-        shzn('wpopt')->storage->delete(self::get_cache_group());
     }
 
     private static function get_cache_group()
@@ -66,7 +80,7 @@ class WPOPT_DB extends wpdb
             $result = parent::get_var($query, $x, $y);
 
             if ($this->timer_stop() > WPOPT_CACHE_DB_THRESHOLD_STORE) {
-                shzn('wpopt')->storage->set($result, self::get_cache_group(), $key, WPOPT_CACHE_DB_LIFETIME);
+                shzn('wpopt')->storage->set($result, $key, self::get_cache_group(), WPOPT_CACHE_DB_LIFETIME);
             }
         }
 
@@ -75,7 +89,7 @@ class WPOPT_DB extends wpdb
 
     private function cache_disabled($query)
     {
-        if (preg_match('#' . $this->options . '#', $query)) {
+        if ($query and str_contains($query, $this->options)) {
             return true;
         }
 
@@ -84,7 +98,7 @@ class WPOPT_DB extends wpdb
 
     private function generate_key($query, ...$args)
     {
-        return Storage::generate_key(preg_replace("~{[^}]+}~", "", $query), $args);
+        return Cache::generate_key(preg_replace("#{[^}]+}#", "", $query ?: ''), $args);
     }
 
     public function get_results($query = null, $output = OBJECT)
@@ -103,7 +117,7 @@ class WPOPT_DB extends wpdb
             $result = parent::get_results($query, $output);
 
             if ($this->timer_stop() > WPOPT_CACHE_DB_THRESHOLD_STORE) {
-                shzn('wpopt')->storage->set($result, self::get_cache_group(), $key, WPOPT_CACHE_DB_LIFETIME);
+                shzn('wpopt')->storage->set($result, $key, self::get_cache_group(), WPOPT_CACHE_DB_LIFETIME);
             }
         }
 
@@ -126,7 +140,7 @@ class WPOPT_DB extends wpdb
             $result = parent::get_col($query, $x);
 
             if ($this->timer_stop() > WPOPT_CACHE_DB_THRESHOLD_STORE) {
-                shzn('wpopt')->storage->set($result, self::get_cache_group(), $key, WPOPT_CACHE_DB_LIFETIME);
+                shzn('wpopt')->storage->set($result, $key, self::get_cache_group(), WPOPT_CACHE_DB_LIFETIME);
             }
         }
 
@@ -149,7 +163,7 @@ class WPOPT_DB extends wpdb
             $result = parent::get_row($query, $output, $y);
 
             if ($this->timer_stop() > WPOPT_CACHE_DB_THRESHOLD_STORE) {
-                shzn('wpopt')->storage->set($result, self::get_cache_group(), $key, WPOPT_CACHE_DB_LIFETIME);
+                shzn('wpopt')->storage->set($result, $key, self::get_cache_group(), WPOPT_CACHE_DB_LIFETIME);
             }
         }
 

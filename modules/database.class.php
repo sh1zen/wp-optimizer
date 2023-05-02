@@ -1,7 +1,7 @@
 <?php
 /**
  * @author    sh1zen
- * @copyright Copyright (C)  2022
+ * @copyright Copyright (C) 2023.
  * @license   http://www.gnu.org/licenses/gpl.html GNU/GPL
  */
 
@@ -33,7 +33,7 @@ class Mod_Database extends Module
                 'mysqldump_path'  => ''
             ),
             'sweep'  => array(
-                'excluded_taxonomies' => array(),
+                'excluded_tables' => array(),
             )
         );
 
@@ -716,10 +716,6 @@ class Mod_Database extends Module
 
     public function validate_settings($input, $valid)
     {
-        $valid['sweep'] = array(
-            'excluded_taxonomies' => array_map('trim', explode(',', $input['sweep.excluded_taxonomies']))
-        );
-
         $valid['backup'] = array(
             'excluded_tables' => array_map('trim', explode(',', $input['backup.excluded_tables']))
         );
@@ -744,9 +740,6 @@ class Mod_Database extends Module
     protected function setting_fields($filter = '')
     {
         return $this->group_setting_fields(
-
-            $this->setting_field(__('Sweeps:', 'wpopt'), false, "separator"),
-            $this->setting_field(__('Excluded Taxonomies (comma separated)', 'wpopt'), "sweep.excluded_taxonomies", "textarea", ['value' => implode(', ', $this->option('sweep.excluded_taxonomies', array()))]),
 
             $this->setting_field(__('Backups:', 'wpopt'), false, "separator"),
             $this->setting_field(__('Excluded Tables (comma separated)', 'wpopt'), "backup.excluded_tables", "textarea", ['value' => implode(', ', $this->option('backup.excluded_tables', array()))])

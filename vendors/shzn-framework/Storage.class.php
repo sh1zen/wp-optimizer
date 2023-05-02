@@ -1,7 +1,7 @@
 <?php
 /**
  * @author    sh1zen
- * @copyright Copyright (C)  2022
+ * @copyright Copyright (C) 2023.
  * @license   http://www.gnu.org/licenses/gpl.html GNU/GPL
  */
 
@@ -9,53 +9,34 @@ namespace SHZN\core;
 
 class Storage
 {
-    private array $cache;
+    private Cache $cache;
 
     private $storage_name;
 
     private $custom_storage_name;
 
-    private bool $auto_save;
-
-    private bool $autosave_action_set = false;
-
-    public function __construct($autosave, $storage_name)
+    public function __construct($context)
     {
-        $this->cache = array();
+        $this->cache = shzn($context)->cache;
 
-        $this->storage_name = $storage_name;
-
-        $this->auto_save = $autosave;
+        $this->storage_name = $context;
     }
 
     public static function generate_id($identifier, ...$args)
     {
         if (is_array($identifier) or is_object($identifier)) {
-            return self::generate_key($identifier, ...$args);
+            return Cache::generate_key($identifier, ...$args);
         }
 
-        return 'ID:' . $identifier . '_' . self::generate_key($identifier . serialize($args));
-    }
-
-    public static function generate_key(...$args)
-    {
-        return hash('md5', serialize($args));
-    }
-
-    public function disable_autosave()
-    {
-        $this->auto_save = false;
-        if ($this->autosave_action_set) {
-            remove_action('shutdown', array($this, 'autosave'));
-        }
+        return 'ID:' . $identifier . '_' . Cache::generate_key($identifier . serialize($args));
     }
 
     public function get($key = '', $context = 'default', $blog_id = 0)
     {
-        $_context = $this->filter_context($context, $blog_id);
+        $context = $this->filter_context($context, $blog_id);
 
-        if (isset($this->cache[$_context][$key])) {
-            return $this->cache[$_context][$key]['data'];
+        if ($res = $this->cache->get($key, $context)) {
+            return $res['data'];
         }
 
         return $this->load($key, $context, true, $blog_id);
@@ -105,7 +86,7 @@ class Storage
         }
 
         if ($cache) {
-            $this->cache[$context][$key] = $data;
+            $this->cache->set($key, $data, $context, true);
         }
 
         return $data['data'];
@@ -115,9 +96,70 @@ class Storage
     {
         $context = str_replace('default', '', $context);
 
-        $sub_folder = $this->custom_storage_name ? $this->custom_storage_name : $this->storage_name;
+        $sub_folder = $this->custom_storage_name ?: $this->storage_name;
 
         return WP_CONTENT_DIR . "/{$sub_folder}/{$context}/{$key}";
+    }
+
+    public function set($data, $key = 'main', $context = 'default', $expire = false, $force = false, $blog_id = 0)
+    {
+        $context = $this->filter_context($context, $blog_id);
+
+        if (!$force and $this->cache->has($key, $context)) {
+            $force = Cache::generate_key($data) !== Cache::generate_key($this->cache->get($key, $context)['data'] ?? '');
+
+            if (!$force) {
+                return;
+            }
+        }
+
+        // auto add time() to expire if passed just lifespan
+        if ($expire <= time()) {
+            $expire += time();
+        }
+
+        $args = array(
+            'expire' => $expire,
+            'data'   => $data,
+            'force'  => $force
+        );
+
+        $this->cache->set($key, $args, $context, true);
+
+        $this->save($data, $key, $context, $expire, $force, $blog_id);
+    }
+
+    //$key, $value, $group, $expires, true
+    public function save($data, $key, $context = 'default', $expire = false, $force = false, $blog_id = 0)
+    {
+        $context = $this->filter_context($context, $blog_id);
+
+        // auto add time() to expire if passed just lifespan
+        if ($expire <= time()) {
+            $expire += time();
+        }
+
+        $args = array(
+            'expire' => $expire,
+            'force'  => $force,
+            'data'   => $data
+        );
+
+        $path = $this->generate_path($context);
+
+        if (file_exists($path . $key) and !$force) {
+            return false;
+        }
+
+        $cached = serialize($args);
+
+        if (!$cached) {
+            return false;
+        }
+
+        Disk::make_path($path);
+
+        return file_put_contents($path . $key, $cached);
     }
 
     public function use_custom_storage_name($name)
@@ -151,49 +193,7 @@ class Storage
     {
         $context = $this->filter_context($context, $blog_id);
 
-        if (!empty($key)) {
-            unset($this->cache[$context][$key]);
-        }
-        else {
-            unset($this->cache[$context]);
-        }
-    }
-
-    private function handle_autosave()
-    {
-        if ($this->auto_save and !$this->autosave_action_set) {
-            $this->autosave_action_set = add_action('shutdown', array($this, 'autosave'));
-        }
-    }
-
-    public function set($data, $context = 'default', $key = 'main', $expire = false, $force = false, $blog_id = 0)
-    {
-        $context = $this->filter_context($context, $blog_id);
-
-        if (!$force and isset($this->cache[$context][$key])) {
-            $force = self::generate_key($data) !== self::generate_key($this->cache[$context][$key]['data']);
-
-            if (!$force) {
-                return;
-            }
-        }
-
-        // auto add time() to expire if passed just lifespan
-        if ($expire <= time()) {
-            $expire += time();
-        }
-
-        $args = array(
-            'expire'    => $expire,
-            'data'      => $data,
-            'file_name' => $key,
-            'context'   => $context,
-            'force'     => $force
-        );
-
-        $this->cache[$context][$key] = $args;
-
-        $this->handle_autosave();
+        return empty($key) ? $this->cache->flush_group($context) : $this->cache->delete($key, $context);
     }
 
     public function get_size($contexts = '', $blog_id = 0)
@@ -215,76 +215,9 @@ class Storage
         return size_format($size);
     }
 
-    public function autosave()
-    {
-        foreach ($this->cache as $context) {
-
-            foreach ($context as $element) {
-
-                if ($element['expire'] and $element['expire'] < time()) {
-                    continue;
-                }
-
-                $path = $this->generate_path($element['context']);
-
-                if (file_exists($path . $element['file_name']) and !$element['force']) {
-                    continue;
-                }
-
-                if (!($cached = serialize($element))) {
-                    continue;
-                }
-
-                if (!file_exists($path)) {
-                    mkdir($path, 0774, true);
-                }
-
-                file_put_contents($path . $element['file_name'], $cached);
-            }
-        }
-    }
-
     public function get_path($context = 'default', $key = '', $blog_id = 0)
     {
         return $this->generate_path($this->filter_context($context, $blog_id), $key);
-    }
-
-    public function save($args = array(), $blog_id = 0)
-    {
-        $args = array_merge(array(
-            'expire'    => false,
-            'file_name' => 'main',
-            'context'   => 'default',
-            'force'     => false,
-            'data'      => []
-        ), $args);
-
-        $args['context'] = $this->filter_context($args['context'], $blog_id);
-
-        if ($args['expire'] <= time()) {
-            $args['expire'] += time();
-        }
-
-        $path = $this->generate_path($args['context']);
-
-        if (file_exists($path . $args['file_name']) and !$args['force']) {
-            return false;
-        }
-
-        $cached = serialize($args);
-
-        if (!$cached) {
-            return false;
-        }
-
-        Disk::make_path($path);
-
-        return file_put_contents($path . $args['file_name'], $cached);
-    }
-
-    public function enable_autosave()
-    {
-        $this->auto_save = true;
     }
 }
 

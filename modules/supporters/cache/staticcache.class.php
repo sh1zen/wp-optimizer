@@ -1,7 +1,7 @@
 <?php
 /**
  * @author    sh1zen
- * @copyright Copyright (C)  2022
+ * @copyright Copyright (C) 2023.
  * @license   http://www.gnu.org/licenses/gpl.html GNU/GPL
  */
 
@@ -15,7 +15,7 @@ class StaticCache extends Cache_Dispatcher
 
     private Rewriter $rewriter;
 
-    private $clear = true;
+    private $is_cached_content = false;
 
     protected function __construct($args)
     {
@@ -23,11 +23,11 @@ class StaticCache extends Cache_Dispatcher
             return false;
         }
 
-        ob_start([$this, "cache_buffer"]);
-
         $this->rewriter = Rewriter::getInstance();
 
-        add_action("parse_query", [$this, "cache_handler"]);
+        ob_start([$this, "cache_buffer"]);
+
+        add_action("parse_query", [$this, "cache_handler"], 100, 1);
 
         return true;
     }
@@ -47,58 +47,60 @@ class StaticCache extends Cache_Dispatcher
         return self::$_Instance;
     }
 
-    public function cache_handler()
+    public function cache_handler(\WP_Query $wp_query)
     {
-        $this->cache_active = $this->active();
+        if (!$wp_query->is_main_query() or is_user_logged_in()) {
+            return;
+        }
 
-        $this->cache_key = $this->generate_key($this->rewriter->request_path . serialize($this->rewriter->request_args));
+        $this->cache_active = $this->is_cacheable($wp_query);
+
+        $this->cache_key = $this->generate_key($this->rewriter->request_path . $wp_query->query_vars_hash);
 
         $this->maybe_render_cache();
     }
 
-    private function active()
+    private function is_cacheable(\WP_Query $wp_query)
     {
-        global $wp_query;
-
         $cache_this_page = true;
 
-        if (!$wp_query->is_main_query() || $wp_query->is_admin) {
+        if ($wp_query->is_admin or is_login() or $wp_query->is_robots or $wp_query->is_feed or $wp_query->is_comment_feed or $wp_query->is_preview) {
             $cache_this_page = false;
         }
-        if ($wp_query->is_404) {
+        elseif (wp_doing_ajax() or wp_doing_cron()) {
             $cache_this_page = false;
         }
-        elseif (defined('DONOTCACHEPAGE') || defined("WPOPT_DISABLE_CACHE")) {
+        elseif (defined('DONOTCACHEPAGE') || (defined("WPOPT_DISABLE_CACHE") and WPOPT_DISABLE_CACHE)) {
             $cache_this_page = false;
         }
-        elseif ($_SERVER["REQUEST_METHOD"] === 'POST' || !empty($_POST)) {
-            $cache_this_page = false;
-        }
-        elseif ($_SERVER["REQUEST_METHOD"] === 'PUT') {
-            $cache_this_page = false;
-        }
-        elseif ($_SERVER["REQUEST_METHOD"] === 'DELETE') {
+        elseif ($_SERVER["REQUEST_METHOD"] !== 'GET') {
             $cache_this_page = false;
         }
         elseif (isset($_GET['preview']) || isset($_GET['s'])) {
             $cache_this_page = false;
         }
 
-        return apply_filters('wpopt_caching_pages', $cache_this_page, $wp_query);
+        return apply_filters('wpopt_allow_static_cache', $cache_this_page, $wp_query);
     }
 
     private function maybe_render_cache()
     {
+        if (!$this->cache_active) {
+            return;
+        }
+
         if ($data = parent::cache_get($this->cache_key)) {
-            $this->clear = false;
+            $this->is_cached_content = true;
             echo $data;
-            die();
+            exit();
         }
     }
 
     public function cache_buffer($buffer)
     {
-        if ($this->clear) {
+        global $wp_the_query;
+
+        if (!$this->is_cached_content and $this->cache_active and !$wp_the_query->is_404) {
             parent::cache_set($this->cache_key, $buffer);
         }
 

@@ -1,7 +1,7 @@
 <?php
 /**
  * @author    sh1zen
- * @copyright Copyright (C)  2022
+ * @copyright Copyright (C) 2023.
  * @license   http://www.gnu.org/licenses/gpl.html GNU/GPL
  */
 
@@ -468,11 +468,10 @@ class Mod_Media extends Module
     protected function setting_fields($filter = '')
     {
         return $this->group_setting_fields(
-            $this->setting_field(__('Theme', 'wpopt'), false, 'separator'),
             $this->setting_field(__('Try to make media loading lazy', 'wpopt'), "loading_lazy", "checkbox"),
 
             $this->setting_field(__('Images optimization preferences', 'wpopt'), false, 'separator'),
-            $this->setting_field(__('Auto optimize uploads', 'wpopt'), false, 'link', ['value' => ['text' => __('set it here', 'wpopt'), 'href' => admin_url('admin.php?page=wpopt-settings#settings-cron')]]),
+            $this->setting_field(__('Auto optimize uploads', 'wpopt'), 'auto_optimize_uploads', 'link', ['value' => ['text' => __('set it here', 'wpopt'), 'href' => admin_url('admin.php?page=wpopt-settings#settings-cron')]]),
             $this->setting_field(__('Use Imagick (if installed)', 'wpopt'), "use_imagick", "checkbox", ['default_value' => true]),
             $this->setting_field(__('Optimization quality', 'wpopt'), "quality", "number", ['default_value' => 80]),
             $this->setting_field(__('Keep all the EXIF data of your images', 'wpopt'), "keep_exif", "checkbox", ['default_value' => false]),
@@ -488,6 +487,15 @@ class Mod_Media extends Module
             $this->setting_field(__('Optimize WEBP', 'wpopt'), "format.webp", "checkbox", ['default_value' => true]),
             $this->setting_field(__('Optimize other formats (tiff, heic, bmp)', 'wpopt'), "format.others", "checkbox", ['default_value' => false]),
         );
+    }
+
+    protected function infos()
+    {
+        return [
+            'auto_optimize_uploads' => __("Automatically compresses and resizes images for faster loading, improving website performance.", 'wpopt'),
+            'use_imagick'           => __("A PHP extension for creating, modifying and manipulating images, it makes optimization faster.", 'wpopt'),
+            'convert_to_webp'       => __("WebP is a modern image format with superior compression efficiency, reducing file size and improving website performance.", 'wpopt'),
+        ];
     }
 }
 

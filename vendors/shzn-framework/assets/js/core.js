@@ -1,6 +1,6 @@
 /**
  * @author    sh1zen
- * @copyright Copyright (C)  2022
+ * @copyright Copyright (C) 2023.
  * @license   http://www.gnu.org/licenses/gpl.html GNU/GPL
  */
 
@@ -12,13 +12,7 @@
         return null;
     }
 
-    let guid = 1, version = "1.0.0";
-
-    let semaphoreList = {};
-
-    let $window = $(window), $document = $('document');
-
-    let shznCore = {};
+    let guid = 1, semaphoreList = {}, shznCore = {};
 
     // Define a local copy of shzn
     let shzn = function (selector, context) {
@@ -58,13 +52,10 @@
 
             shzn.addUX({
                 'is-landscape': function () {
-                    return screen.availHeight > screen.availWidth
+                    return window.matchMedia("(orientation: landscape)").matches
                 },
                 'is-mobile': function () {
-                    if (shzn.getUX('is-landscape'))
-                        return (screen.availWidth <= 1366) || (screen.availHeight <= 1024)
-                    else
-                        return (screen.availWidth <= 1024) || (screen.availHeight <= 1366)
+                    return shzn.getUX('is-landscape') ? (screen.availWidth <= 1366) || (screen.availHeight <= 1024) : (screen.availWidth <= 1024) || (screen.availHeight <= 1366);
                 },
                 'is-phone': function () {
                     return (screen.availWidth <= 480) || (screen.availHeight <= 480)
@@ -151,13 +142,15 @@
             );
         },
 
-        booleanize: function (string) {
+        booleanize: function (string, strict = false) {
 
-            if (!string)
+            if (!string) {
                 return false;
+            }
 
-            if (typeof string === 'string')
+            if (typeof string === 'string') {
                 string = string.toLowerCase().trim();
+            }
 
             switch (string) {
                 case "true":
@@ -171,12 +164,13 @@
                 case "off":
                 case null:
                     return false;
+
                 default:
-                    return Boolean(string);
+                    return strict ? string === true : Boolean(string);
             }
         },
 
-        removeEmpty: function (item, default_ = null, strict = false) {
+        removeEmpty: function (item, deFault = null, strict = false) {
             let res = null;
 
             if (this.isDefined(item)) {
@@ -199,9 +193,9 @@
                 } else if (this.isArray(item)) {
                     if (item.length > 0) {
 
-                        res = item.map(el => {
+                        res = item.map(function (el) {
                             return shzn.removeEmpty(el, null, strict);
-                        }).filter(el => {
+                        }).filter(function (el) {
                             return shzn.isDefined(el) && (shzn.isArray(el) ? el.length > 0 : true);
                         });
 
@@ -212,73 +206,73 @@
                 }
             }
 
-            return shzn.isDefined(res, default_);
+            return shzn.isDefined(res, deFault);
         },
 
-        parse_args_deep: function (default_, ...sources) {
-            if (!sources.length) return default_;
+
+        parse_args_deep: function (deFault, ...sources) {
+            if (!sources.length) return deFault;
             const source = sources.shift();
 
-            if (this.isObject(default_) && this.isObject(source)) {
+            if (this.isObject(deFault) && this.isObject(source)) {
                 for (const key in source) {
                     if (this.isObject(source[key])) {
-                        if (!default_[key]) Object.assign(default_, {[key]: {}});
-                        this.parse_args_deep(default_[key], source[key]);
+                        deFault[key] = this.parse_args_deep(deFault[key] || {}, source[key]);
                     } else {
-                        Object.assign(default_, {[key]: source[key]});
+                        Object.assign(deFault, {[key]: source[key]});
                     }
                 }
             }
 
-            return this.parse_args_deep(default_, ...sources);
+            return this.parse_args_deep(deFault, ...sources);
         },
 
-        parse_args: function (default_, ...sources) {
-            if (!sources.length) return default_;
+        parse_args: function (deFault, ...sources) {
+            if (!sources.length) return deFault;
             const source = sources.shift();
 
-            if (this.isObject(default_) && this.isObject(source)) {
-                Object.assign(default_, source);
+            if (this.isObject(deFault) && this.isObject(source)) {
+                Object.assign(deFault, source);
             }
 
-            return this.parse_args(default_, ...sources);
+            return this.parse_args(deFault, ...sources);
         },
 
-        filter_args_deep: function (default_, ...sources) {
-            if (!sources.length) return default_;
+        filter_args_deep: function (deFault, ...sources) {
+            if (!sources.length) return deFault;
             const source = sources.shift();
 
-            if (this.isObject(default_) && this.isObject(source)) {
+            if (this.isObject(deFault) && this.isObject(source)) {
                 for (const key in source) {
-                    if (key in default_) {
-                        if (this.isObject(default_[key])) {
+                    if (key in deFault) {
+                        if (this.isObject(deFault[key])) {
                             if (!source[key])
                                 Object.assign(source, {[key]: {}});
-                            this.filter_args_deep(default_[key], source[key]);
+                            this.filter_args_deep(deFault[key], source[key]);
                         } else {
-                            Object.assign(default_, {[key]: source[key]});
+                            Object.assign(deFault, {[key]: source[key]});
                         }
                     }
                 }
             }
 
-            return this.filter_args_deep(default_, ...sources);
+            return this.filter_args_deep(deFault, ...sources);
         },
 
-        filter_args: function (default_, ...sources) {
+        filter_args: function (deFault, ...sources) {
 
-            if (!this.isObject(default_))
+            if (!this.isObject(deFault))
                 return Object.assign({}, ...sources);
 
             let merged = Object.assign({}, ...sources);
 
-            for (const key in default_) {
+            for (const key in deFault) {
                 if (key in merged) {
-                    Object.assign(default_, {[key]: merged[key]});
+                    Object.assign(deFault, {[key]: merged[key]});
                 }
             }
 
-            return default_;
+            return deFault;
         },
 
         delete: function (array, position = 0) {
@@ -286,26 +280,18 @@
             return array;
         },
 
-        maybe_exec: function (item, runtime_args = null, context = null) {
+        maybe_exec: function (item, runtime_args = null, context = null, asFilter = false) {
 
             if (shzn.isFunction(item)) {
                 return item.call(context, runtime_args);
             }
 
-            if (shzn.isObject(item) && item.callback) {
+            if (shzn.isObject(item) && shzn.isFunction(item.callback)) {
                 // context used for this, runtime args, static args
                 return item.callback.call(context, item.args, runtime_args)
             }
 
-            return item;
-        },
-
-        utf8_encode: function (str) {
-            return unescape(encodeURIComponent(str));
-        },
-
-        utf8_decode: function (str_data) {
-            return decodeURIComponent(escape(str_data));
+            return asFilter ? runtime_args : item;
         },
 
         serialize: function (obj, prefix) {
@@ -323,6 +309,22 @@
             return str.join("&");
         },
 
+        domPath: function (elem, path) {
+            // convert indexes to properties
+            // strip a leading dot
+            path = path.replace(/\[(\w+)]/g, '.$1').replace(/^\./, '').split('.');
+            let k, i;
+            for (i = 0; i < path.length; i++) {
+                k = path[i];
+                if (k in elem) {
+                    elem = elem[k];
+                } else {
+                    return;
+                }
+            }
+            return elem;
+        },
+
         addUX: function (ux) {
             shzn.extend(shznCore.ux, ux);
         },
@@ -336,33 +338,22 @@
         },
 
         removeUX: function (item) {
+
             if (typeof shznCore.ux[item] === "undefined")
                 return false;
 
             delete shznCore.ux[item];
         },
 
-        addOption: function (opt) {
-            shzn.extend(shznCore.options, opt);
-        },
-
-        getOption: function (item, default_ = '') {
-
-            if (typeof shznCore.options[item] === "undefined")
-                return this.getUX(item, default_);
-
-            return shznCore.options[item];
-        },
-
         json: {
             stringify: JSON.stringify,
 
-            parse: function (data, default_) {
+            parse: function (data, deFault) {
 
                 if (shzn.isObject(data))
                     return data;
 
-                let parsed = default_;
+                let parsed = deFault;
 
                 if (data) {
                     try {
@@ -372,20 +363,44 @@
                     }
                 }
 
-                return parsed || default_;
+                return parsed || deFault;
             }
         },
 
-        addStorage: function (key, value) {
-            localStorage.setItem(key, this.json.stringify(value));
-        },
+        storage: {
+            add: function (key, value, limit = null) {
 
-        getStorage: function (key, _default = {}) {
-            return this.json.parse(localStorage.getItem(key), _default);
-        },
+                if (limit !== null) {
 
-        removeStorage: function (key) {
-            localStorage.removeItem(key);
+                    let items = this.get(key, []);
+
+                    items.unshift(value);
+
+                    while (items.length > limit)
+                        items.pop();
+
+                    value = items;
+                }
+
+                localStorage.setItem(key, shzn.json.stringify(value));
+            },
+            get: function (key, deFault = {}) {
+                return shzn.json.parse(localStorage.getItem(key), deFault);
+            },
+            remove: function (key, index = null) {
+
+                let storage = this.get(key, []);
+
+                if (index !== null) {
+                    let removed = storage.splice(index, 1);
+                    this.add(key, storage);
+                    return removed;
+                }
+
+                localStorage.removeItem(key);
+
+                return storage;
+            },
         },
 
         hash: function (string, length = 12) {
@@ -842,142 +857,6 @@
             }
         },
 
-        tabHandler: function () {
-
-            // Store current URL hash.
-            let hash = window.location.hash.substring(1);
-
-            let $tabs = $(this);
-
-            if ($tabs.length === 0 || $tabs.find(".shzn-ar-tablist").length === 0) {
-                return;
-            }
-
-            let form_action = 'options.php';
-
-            // handle tab content
-            $tabs.each(function () {
-
-                let has_selected = false, $tab = $(this);
-
-                $tab.find(".shzn-ar-tablist").each(function () {
-
-                    let $this_tab_list = $(this),
-                        $this_tab_list_items = $this_tab_list.children(".shzn-ar-tab"),
-                        $this_tab_list_links = $this_tab_list.find(".shzn-ar-tab_link");
-
-                    // roles init
-                    $this_tab_list.attr("role", "tablist"); // ul
-                    $this_tab_list_items.attr("role", "presentation"); // li
-                    $this_tab_list_links.attr("role", "tab"); // a
-
-                    // controls/tabindex attributes
-                    $this_tab_list_links.each(function () {
-
-                        let $this = $(this),
-                            $href = $this.attr("href");
-
-                        if (typeof $href !== "undefined" && $href !== "" && $href !== "#") {
-                            $this.attr({
-                                "aria-controls": $href.replace("#", ""),
-                                "tabindex": -1,
-                                "aria-selected": "false"
-                            });
-                        }
-
-                        $this.removeAttr("href");
-                    });
-
-                    $this_tab_list.on("click", ".shzn-ar-tab_link[aria-disabled='true']", function (e) {
-                        e.preventDefault();
-                    });
-
-                    $this_tab_list.on("click", ".shzn-ar-tab_link:not([aria-disabled='true'])", function (event) {
-
-                        let $this = $(this),
-                            $hash_to_update = $this.attr("aria-controls"),
-                            $tab_content_linked = $("#" + $this.attr("aria-controls")),
-                            $parent = $this.closest(".shzn-ar-tabs"),
-
-                            $all_tab_links = $parent.find(".shzn-ar-tab_link"),
-                            $all_tab_contents = $parent.find(".shzn-ar-tabcontent"),
-
-                            $form = $tab_content_linked.find('#shzn-uoptions');
-
-                        // aria selected false on all links
-                        $all_tab_links.attr({
-                            "tabindex": -1,
-                            "aria-selected": "false"
-                        });
-
-                        // add aria selected on $this
-                        $this.attr({
-                            "aria-selected": "true",
-                            "tabindex": 0
-                        });
-
-                        // add aria-hidden on all tabs contents
-                        $all_tab_contents.attr("aria-hidden", "true");
-
-                        if (typeof $form !== 'undefined') {
-                            $form.attr('action', form_action + '#' + $hash_to_update);
-                        }
-
-                        // remove aria-hidden on tab linked
-                        $tab_content_linked.removeAttr("aria-hidden");
-
-                        setTimeout(function () {
-                            history.pushState(null, null, location.pathname + location.search + '#' + $hash_to_update)
-                        }, 300);
-
-                        event.preventDefault();
-                    });
-                });
-
-                $tab.find(".shzn-ar-tabcontent").each(function () {
-
-                    let $this = $(this), $this_id = $this.attr("id");
-
-                    let attrs = {
-                        "role": "tabpanel", // contents
-                        "aria-labelledby": "lbl_" + $this_id, // label by link
-                    };
-
-                    // search if hash is ON not disabled tab
-                    if (hash === $this_id && $this.attr('aria-disabled') !== 'true') {
-
-                        has_selected = true;
-
-                        $('#lbl_' + $this_id).attr("aria-selected", "true");
-                        $this.find('#shzn-uoptions').attr('action', form_action + '#' + hash);
-
-                        attrs["aria-hidden"] = "false";
-                        attrs["aria-selected"] = "true";
-                        attrs["tabindex"] = 0;
-
-                    } else {
-                        attrs["aria-hidden"] = "true";
-                        attrs["tabindex"] = "-1";
-                    }
-
-                    $this.attr(attrs);
-                });
-
-                // if not selected => select first not disabled
-                if (!has_selected) {
-                    let $first_link = $tab.find('.shzn-ar-tab_link:not([aria-disabled="true"]):first');
-
-                    $first_link.attr({
-                        "aria-selected": "true",
-                        "tabindex": 0
-                    });
-
-                    // first content
-                    $('#' + $first_link.attr('aria-controls')).removeAttr("aria-hidden");
-                }
-            });
-        },
-
         TextBoxHighlighter: function (options) {
             return this.each(function () {
                 let $this = $(this),
@@ -1161,7 +1040,7 @@
                 visibleAction = parents.substr(parents.indexOf(parent) - 1, 1) === "!" ? !visible : visible;
 
             if (!$this.hasClass('shzn-separator')) {
-                cntx = $this.closest('tr');
+                cntx = $this.closest('row');
             }
 
             if ($this.is('input')) {
@@ -1174,10 +1053,8 @@
 
             if (visibleAction) {
                 cntx.removeClass('shzn-disabled-blur');
-                //cntx.slideToggle();
             } else {
                 cntx.addClass('shzn-disabled-blur');
-                //cntx.slideToggle();
             }
         });
     }
@@ -1247,7 +1124,66 @@
             });
         });
 
-        $('.shzn-ar-tabs').tabHandler();
+        $('.shzn-ar-tabs').each(function () {
+
+            let has_selected = false, $tab = $(this);
+
+            let $all_tab_links = $tab.find("li[aria-controls]"),
+                $all_tab_contents = $tab.find(".shzn-ar-tabcontent");
+
+            $tab.find("ul").on("click", "li[aria-controls]:not([aria-disabled='true'])", function (event) {
+
+                let $this = $(this),
+                    $hash_to_update = $this.attr("aria-controls"),
+                    $tab_content_linked = $("#" + $this.attr("aria-controls"));
+
+                // aria selected false on all links
+                $all_tab_links.attr({"aria-selected": "false"});
+
+                // add aria-hidden on all tabs contents
+                $all_tab_contents.attr("aria-hidden", "true");
+
+                // add aria selected on $this
+                $this.attr({"aria-selected": "true"});
+
+                // remove aria-hidden on tab linked
+                $tab_content_linked.attr("aria-hidden", "false");
+
+                history.pushState(null, null, location.pathname + location.search + '#' + $hash_to_update)
+
+                event.preventDefault();
+            });
+
+            $tab.find(".shzn-ar-tabcontent").each(function () {
+
+                let attrs = {}, $this = $(this), $this_id = $this.attr("id");
+
+                // search if hash is ON not disabled tab
+                if (window.location.hash.substring(1) === $this_id && $this.attr('aria-disabled') !== 'true') {
+
+                    has_selected = true;
+
+                    $all_tab_links.filter("[aria-controls='" + $this_id + "']").attr("aria-selected", "true");
+
+                    attrs["aria-hidden"] = "false";
+                    attrs["aria-selected"] = "true";
+
+                } else {
+                    attrs["aria-hidden"] = "true";
+                }
+
+                $this.attr(attrs);
+            });
+
+            if (!has_selected) {
+
+                let $first_link = $tab.find('li[aria-controls]:not([aria-disabled="true"]):first');
+
+                $first_link.attr({"aria-selected": "true"});
+
+                $all_tab_contents.filter("#" + $first_link.attr('aria-controls')).attr("aria-hidden", "false");
+            }
+        });
 
         $(".shzn-apple-switch").each(function () {
 
@@ -1317,6 +1253,11 @@
                 })
             });
         });
+
+        $('icon.shzn-option-info-icon').on('click', function () {
+            $(this).closest('row').find('label.shzn-option-info').slideToggle();
+        });
+
     });
 
     $window.on('beforeunload', function (e) {

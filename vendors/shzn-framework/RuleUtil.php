@@ -1,7 +1,7 @@
 <?php
 /**
  * @author    sh1zen
- * @copyright Copyright (C)  2022
+ * @copyright Copyright (C) 2023.
  * @license   http://www.gnu.org/licenses/gpl.html GNU/GPL
  */
 
@@ -25,34 +25,23 @@ class RuleUtil
      * @param string $start start marker
      * @param string $end end marker
      * @param array $order order where to place if some marker exists
-     * @param bool $data
+     * @param bool $virtual_page
      * @return bool
      */
-    public static function add_rules($rules, $start, $end, $order = array(), $data = false)
+    public static function add_rules($rules, $start, $end, $order = array(), &$virtual_page = '')
     {
-        if ($data) {
-            $write_out = false;
-        }
-        else {
-            $write_out = true;
-            $data = self::get_rules();
+        // removal mode: rule doesn't exist
+        if (empty($rules) and !str_contains($virtual_page, $start)) {
+            return false;
         }
 
-        if (empty($rules)) {
-            // rules removal mode
-            if (!str_contains($data, $start)) {
-                return true;
-            }
-        }
-        else {
-            // rules creation mode
-            if (str_contains(RuleUtil::clean_rules($data), RuleUtil::clean_rules($rules))) {
-                return true;
-            }
+        // add mode: rule already exist
+        if ($rules and str_contains(self::clean_rules($virtual_page), self::clean_rules($rules))) {
+            return false;
         }
 
-        $replace_start = strpos($data, $start);
-        $replace_end = strpos($data, $end);
+        $replace_start = strpos($virtual_page, $start);
+        $replace_end = strpos($virtual_page, $end);
 
         if ($replace_start !== false and $replace_end !== false and $replace_start < $replace_end) {
             // old rules exists, replace mode
@@ -64,7 +53,7 @@ class RuleUtil
 
             foreach (array_reverse($order) as $string) {
 
-                if (($pos = strpos($data, $string)) !== false) {
+                if (($pos = strpos($virtual_page, $string)) !== false) {
 
                     $length = str_contains($string, 'END') ? strlen($string) + 1 : 0;
 
@@ -76,48 +65,14 @@ class RuleUtil
             }
         }
 
-        if ($replace_start != false) {
-            $data = RuleUtil::trim_rules(substr_replace($data, $rules, $replace_start, $replace_length));
+        if ($replace_start !== false) {
+            $virtual_page = self::trim_rules(substr_replace($virtual_page, $rules, $replace_start, $replace_length));
         }
         else {
-            $data = RuleUtil::trim_rules(rtrim($data) . "\n" . $rules);
+            $virtual_page = self::trim_rules(rtrim($virtual_page) . "\n" . $rules);
         }
 
-        if ($write_out)
-            return self::write_rules($data);
-
-        return $data;
-    }
-
-    public static function get_rules()
-    {
-        $path = self::get_rules_path();
-
-        $data = Disk::read($path);
-
-        if (!$data)
-            $data = '';
-
-        return $data;
-    }
-
-    /**
-     * Returns path of core rules file
-     *
-     * @return string
-     */
-    public static function get_rules_path()
-    {
-        switch (true) {
-            case UtilEnv::is_apache():
-            case UtilEnv::is_litespeed():
-                return UtilEnv::normalize_path(ABSPATH, true) . '.htaccess';
-
-            case UtilEnv::is_nginx():
-                return UtilEnv::normalize_path(ABSPATH, true) . 'nginx.conf';
-        }
-
-        return false;
+        return true;
     }
 
     /**
@@ -128,12 +83,8 @@ class RuleUtil
      */
     private static function clean_rules($rules)
     {
-        $rules = preg_replace('~[\n]+~', "\n", $rules);
-        $rules = preg_replace('~[\r\n]+~', "\n", $rules);
-        $rules = preg_replace('~^\s+~m', '', $rules);
-        $rules = RuleUtil::trim_rules($rules);
-
-        return $rules;
+        $rules = preg_replace('#([\n\r]{2,})#m', "\n\n", $rules);
+        return self::trim_rules($rules);
     }
 
     /**
@@ -153,16 +104,28 @@ class RuleUtil
         return $rules;
     }
 
-    private static function write_rules($rules)
+    public static function get_rules($item = '')
     {
         $path = self::get_rules_path();
 
-        return Disk::write($path, $rules);
+        return Disk::read($path) ?: '';
     }
 
-    public static function export_rule()
+    /**
+     * Returns path of core rules file
+     *
+     * @return string
+     */
+    public static function get_rules_path()
     {
-        return self::clean_rules(self::get_rules());
+        if (UtilEnv::is_apache() or UtilEnv::is_litespeed()) {
+            return UtilEnv::normalize_path(ABSPATH, true) . '.htaccess';
+        }
+        elseif (UtilEnv::is_nginx()) {
+            return UtilEnv::normalize_path(ABSPATH, true) . 'nginx.conf';
+        }
+
+        return false;
     }
 
     /**
@@ -173,7 +136,7 @@ class RuleUtil
      * @param string $end
      * @return int
      */
-    public static function has_rules(string $rules, string $start, string $end)
+    public static function has_rule(string $rules, string $start, string $end)
     {
         return preg_match('~' . UtilEnv::preg_quote($start) . "\n.*?" . UtilEnv::preg_quote($end) . "\n*~s", $rules);
     }
@@ -182,30 +145,18 @@ class RuleUtil
      * Remove rules
      * @param $start
      * @param $end
-     * @param bool $data
+     * @param string $virtual_page
      * @return bool
      */
-    public static function remove_rules($start, $end, bool $data = false)
+    public static function remove_rules($start, $end, string &$virtual_page = '')
     {
-        if ($data) {
-            $write_out = false;
-        }
-        else {
-            $write_out = true;
-            $data = self::get_rules();
-        }
-
-        if (!str_contains($data, $start)) {
+        if (!str_contains($virtual_page, $start)) {
             return false;
         }
 
-        $data = RuleUtil::erase_rules($data, $start, $end);
+        $virtual_page = self::erase_rules($virtual_page, $start, $end);
 
-        if ($write_out) {
-            return self::write_rules($data);
-        }
-
-        return $data;
+        return true;
     }
 
     /**
@@ -222,16 +173,13 @@ class RuleUtil
 
         $rules = preg_replace($r, '', $rules);
 
-        return RuleUtil::trim_rules($rules);
+        return self::trim_rules($rules);
     }
 
-    /**
-     * Returns true if we can check rules
-     *
-     * @return bool
-     */
-    public static function can_check_rules()
+    public static function write_rules($rules)
     {
-        return UtilEnv::is_apache() or UtilEnv::is_litespeed() or UtilEnv::is_nginx() or UtilEnv::is_iis();
+        $path = self::get_rules_path();
+
+        return Disk::write($path, self::clean_rules($rules), 0);
     }
 }

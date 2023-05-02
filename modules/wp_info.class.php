@@ -1,7 +1,7 @@
 <?php
 /**
  * @author    sh1zen
- * @copyright Copyright (C)  2022
+ * @copyright Copyright (C) 2023.
  * @license   http://www.gnu.org/licenses/gpl.html GNU/GPL
  */
 
@@ -10,7 +10,7 @@ namespace WPOptimizer\modules;
 use SHZN\core\UtilEnv;
 use SHZN\modules\Module;
 
-class Mod_Sysinfo extends Module
+class Mod_WP_Info extends Module
 {
     public static $name = "System Info";
 
@@ -98,7 +98,9 @@ class Mod_Sysinfo extends Module
                 __('Memory Limit', 'wpopt')           => ini_get('memory_limit'),
                 __('Post Max Size', 'wpopt')          => ini_get('post_max_size'),
                 __('Upload Max File size', 'wpopt')   => ini_get('upload_max_filesize'),
+                __('Upload Max Files', 'wpopt')       => ini_get('max_file_uploads'),
                 __('Script execution limit', 'wpopt') => ini_get('max_execution_time') . ' s',
+                __('FPM', 'wpopt')                    => substr(php_sapi_name(), 0, 3) == 'fpm' ? __('On', 'wpopt') : __('Off', 'wpopt'),
                 __('Short Tag', 'wpopt')              => ini_get('short_open_tag') ? __('On', 'wpopt') : __('Off', 'wpopt'),
             ),
 

@@ -1,16 +1,15 @@
 <?php
 /**
  * @author    sh1zen
- * @copyright Copyright (C)  2022
+ * @copyright Copyright (C) 2023.
  * @license   http://www.gnu.org/licenses/gpl.html GNU/GPL
  */
 
 namespace WPOptimizer\modules;
 
 use SHZN\modules\Module;
-
 use SHZN\core\Settings;
-use WPOptimizer\modules\supporters\WP_Enhancer;
+use WPOptimizer\modules\supporters\WP_Htaccess;
 
 /**
  * Module for updates handling
@@ -123,19 +122,19 @@ class Mod_WP_Security extends Module
 
     public function validate_settings($input, $valid)
     {
-        require_once WPOPT_SUPPORTERS . 'optisec/WP_Enhancer.class.php';
+        require_once WPOPT_SUPPORTERS . 'optisec/WP_Htaccess.class.php';
 
         $new_valid = parent::validate_settings($input, $valid);
 
+        $htaccess = new WP_Htaccess($new_valid);
+
         foreach ($this->server_conf_hooks as $server_hooks => $value) {
 
-            if ($this->deactivating("{$server_hooks}.active", $input)) {
-                WP_Enhancer::server_conf($server_hooks, 'remove');
-            }
-            elseif (Settings::get_option($new_valid, "{$server_hooks}.active")) {
-                // do also if not activating to ensure children settings changes are performed
-                WP_Enhancer::server_conf($server_hooks, 'add', $new_valid);
-            }
+            $htaccess->toggle_rule($server_hooks, Settings::get_option($new_valid, "{$server_hooks}.active"));
+        }
+
+        if ($htaccess->edited()) {
+            $htaccess->write();
         }
 
         return $new_valid;
@@ -153,28 +152,23 @@ class Mod_WP_Security extends Module
     {
         if ($context === 'header') {
 
-            if (true or !is_writable(ABSPATH . '.htaccess')) {
+            if (!is_writable(ABSPATH . '.htaccess')) {
 
                 require_once WPOPT_SUPPORTERS . 'optisec/WP_Enhancer.class.php';
 
-                $virtual_page = WP_Enhancer::server_conf('', 'get');
-
-                $htaccess_init_len = strlen($virtual_page);
+                $htaccess = new WP_Htaccess($this->option());
 
                 foreach ($this->server_conf_hooks as $server_hooks => $value) {
 
-                    if ($this->option($server_hooks)) {
-
-                        WP_Enhancer::server_conf($server_hooks, 'add', $this->option(), $virtual_page);
-                    }
+                    $htaccess->toggle_rule($server_hooks, $this->option("{$server_hooks}.active"));
                 }
 
-                $htaccess_end_len = strlen($virtual_page);
+                if ($htaccess->edited() and !$htaccess->write()) {
 
-                $virtual_page = htmlentities($virtual_page);
+                    $virtual_page = htmlentities($htaccess->get_rules());
 
-                if ($htaccess_init_len !== $htaccess_end_len)
-                    return "<p><b>" . __("To manually modifies your server for enhanced mode copy and paste this to your htaccess.", 'wpopt') . "</b><br><br><textarea style='width: 100%; height: 200px'>$virtual_page</textarea></p>";
+                    return "<p><b>" . __("Your htaccess file is not modifiable, to make desired enhancements copy and paste those lines to .htaccess file.", 'wpopt') . "</b><br><br><textarea style='width: 100%; height: 200px'>$virtual_page</textarea></p>";
+                }
             }
         }
 
@@ -187,7 +181,7 @@ class Mod_WP_Security extends Module
             $this->setting_field(__('Some configuration are available only in apache.', 'wpopt'), false, "separator"),
             $this->setting_field(__('Requests and Server', 'wpopt'), "srv_security.active", "checkbox"),
             $this->setting_field(__('Disable directory listing', 'wpopt'), "srv_security.listings", "checkbox", ['parent' => 'srv_security.active', 'default_value' => true]),
-            $this->setting_field(__('Disable access to configuration file', 'wpopt'), "srv_security.protect_htaccess", "checkbox", ['parent' => 'srv_security.active', 'default_value' => true]),
+            $this->setting_field(__('Disable access to configuration file (.htaccess)', 'wpopt'), "srv_security.protect_htaccess", "checkbox", ['parent' => 'srv_security.active', 'default_value' => true]),
             $this->setting_field(__('Enable HTTPS Strict Transport Security', 'wpopt'), "srv_security.hsts", "checkbox", ['parent' => 'srv_security.active', 'default_value' => true]),
             $this->setting_field(__('Disable Cross-Origin Resource Sharing', 'wpopt'), "srv_security.cors", "checkbox", ['parent' => 'srv_security.active', 'default_value' => true]),
             $this->setting_field(__('Disable HTTP Track & Trace', 'wpopt'), "srv_security.http_track&trace", "checkbox", ['parent' => 'srv_security.active', 'default_value' => true]),
@@ -197,21 +191,33 @@ class Mod_WP_Security extends Module
             $this->setting_field(__('Send No Frame Header', 'wpopt'), "srv_security.noframe", "checkbox", ['parent' => 'srv_security.active']),
             $this->setting_field(__('Disable server signature ', 'wpopt'), "srv_security.signature", "checkbox", ['parent' => 'srv_security.active']),
 
-            $this->setting_field('', false, "divide"),
             $this->setting_field(__('Disable Information Disclosure & Remove Meta information.', 'wpopt'), "dcl_security.active", "checkbox"),
             $this->setting_field(__('Hide WordPress Version Number', 'wpopt'), "dcl_security.nowpversion", "checkbox", ['parent' => 'dcl_security.active']),
             $this->setting_field(__('Remove WordPress Meta Generator Tag', 'wpopt'), "dcl_security.nowpgenerator", "checkbox", ['parent' => 'dcl_security.active']),
             $this->setting_field(__('Remove Version from Stylesheet', 'wpopt'), "dcl_security.nocssversion", "checkbox", ['parent' => 'dcl_security.active']),
             $this->setting_field(__('Remove Version from Script', 'wpopt'), "dcl_security.nojsversion", "checkbox", ['parent' => 'dcl_security.active']),
 
-            $this->setting_field('', false, "divide"),
             $this->setting_field(__('Admin & API Security', 'wpopt'), "a_api.active", "checkbox"),
             $this->setting_field(__('Disable WP User Enumeration', 'wpopt'), "a_api.nousernum", "checkbox", ['parent' => 'a_api.active']),
             $this->setting_field(__('Disable WP File Editor', 'wpopt'), "a_api.disable_file_editor", "checkbox", ['parent' => 'a_api.active']),
             $this->setting_field(__('Disable XMLRPC', 'wpopt'), "a_api.disable_xml_rpc", "checkbox", ['parent' => 'a_api.active']),
             $this->setting_field(__('Disable WP API JSON', 'wpopt'), "a_api.disable_jsonapi", "checkbox", ['parent' => 'a_api.active'])
         );
+    }
 
+    protected function infos()
+    {
+        return [
+            'srv_security.listings'         => __("Directory listing is a web server feature that displays the contents of a directory when an index file is not present, potentially exposing sensitive information.", 'wpopt'),
+            'srv_security.protect_htaccess' => __("Disabling access to .htaccess files prevents unauthorized modification of server configuration settings, improving website security..", 'wpopt'),
+            'srv_security.hsts'             => __("Enabling HTTPS Strict Transport Security (HSTS) enforces secure HTTPS connections, reducing the risk of man-in-the-middle attacks and improving website security.", 'wpopt'),
+            'srv_security.cors'             => __("Disabling Cross-Origin Resource Sharing (CORS) restricts cross-domain requests, improving website security by preventing unauthorized access to resources.", 'wpopt'),
+            'srv_security.http_track&trace' => __("Disabling HTTP track and trace prevents servers from disclosing information about requests, improving website security by reducing the risk of sensitive data leaks.", 'wpopt'),
+            'srv_security.xss'              => __("Blocking cross-site scripting (XSS) prevents malicious scripts from executing on a website, improving website security and protecting user data.", 'wpopt'),
+            'srv_security.nosniff'          => __("Sending NoSniff header instructs web browsers to prevent MIME type sniffing, improving website security by reducing the risk of content spoofing attacks.", 'wpopt'),
+            'srv_security.noreferrer'       => __("Sending no referrer header prevents the browser from sending information about the previous page visited, improving user privacy and security.", 'wpopt'),
+            'srv_security.noframe'          => __("Sending no-frame headers prevent website content from being displayed within an iframe, improving website security and preventing clickjacking attacks.", 'wpopt'),
+        ];
     }
 }
 

@@ -1,7 +1,7 @@
 <?php
 /**
  * @author    sh1zen
- * @copyright Copyright (C)  2022
+ * @copyright Copyright (C) 2023.
  * @license   http://www.gnu.org/licenses/gpl.html GNU/GPL
  */
 
@@ -143,10 +143,12 @@ class Module
                 $response = $this->process_custom_actions($action, $_POST);
             }
 
-            if ($response)
+            if ($response) {
                 $this->add_notices('success', __('Action was correctly executed', $this->context));
-            else
+            }
+            else {
                 $this->add_notices('warning', __('Action execution failed', $this->context));
+            }
         }
     }
 
@@ -246,18 +248,18 @@ class Module
 
         $_divider = false;
 
-        $_setting_fields = $this->setting_fields($filter);
+        $setting_fields = $this->setting_fields($filter);
 
         $option_name = shzn($this->context)->settings->option_name;
 
         ob_start();
 
-        if (!empty($_setting_fields)) {
+        if (!empty($setting_fields)) {
 
             $_divider = true;
 
             ?>
-            <form id="shzn-uoptions" action="options.php" method="post">
+            <form action="options.php" method="post" autocomplete="off" autocapitalize="off">
                 <?php
 
                 if ($_header) {
@@ -267,14 +269,12 @@ class Module
                 settings_fields("{$this->context}-settings");
                 ?>
                 <input type="hidden" name="<?php echo "{$option_name}[change]" ?>" value="<?php echo $this->slug; ?>">
-                <table class="shzn shzn-settings">
-                    <tbody>
-                    <?php Graphic::generate_fields($_setting_fields, array('name_prefix' => $option_name)); ?>
-                    </tbody>
-                </table>
-                <p class="shzn-submit">
+                <block class="shzn-options">
+                    <?php Graphic::generate_fields($setting_fields, $this->infos(), array('name_prefix' => $option_name)); ?>
+                </block>
+                <section class="shzn-submit">
                     <input type="submit" class="button-primary" value="<?php _e('Save Changes', $this->context) ?>"/>
-                </p>
+                </section>
             </form>
             <?php
         }
@@ -335,6 +335,11 @@ class Module
         return array();
     }
 
+    protected function infos()
+    {
+        return [];
+    }
+
     private function custom_actions_form()
     {
         $options = $this->custom_actions();
@@ -359,7 +364,7 @@ class Module
                 $option['classes'] = "button {$option['button_types']} button-large";
                 $option['context'] = "action";
 
-                echo "<p>" . Graphic::generate_field($option, false) . "</p>";
+                Graphic::generate_field($option);
                 ?>
             </form>
             <?php

@@ -1,7 +1,7 @@
 <?php
 /**
  * @author    sh1zen
- * @copyright Copyright (C)  2022
+ * @copyright Copyright (C) 2023.
  * @license   http://www.gnu.org/licenses/gpl.html GNU/GPL
  */
 
@@ -228,8 +228,8 @@ class StringHelper
     public static function strtolower(string $string)
     {
         if (self::mbstring_available()) {
-            //mb_strtolower($string, mb_detect_encoding($string));
-            return mb_strtolower($string);
+            //get_option('blog_charset')
+            return mb_strtolower($string, mb_detect_encoding($string));
         }
 
         return strtolower($string);
@@ -336,4 +336,105 @@ class StringHelper
         return $string;
     }
 
+    /**
+     * Returns the string after it is encoded with htmlspecialchars().
+     *
+     * @param \string $string The \string to encode.
+     * @return \string         The encoded string.
+     */
+    public static function encodeOutputHtml($string)
+    {
+        return htmlspecialchars($string, ENT_COMPAT | ENT_HTML401, get_option('blog_charset'), false);
+    }
+
+    /**
+     * Convert to snake case.
+     *
+     * @param \string $string The string to convert.
+     * @return \string         The converted string.
+     */
+    public static function toSnakeCase($string)
+    {
+        $string[0] = strtolower($string[0]);
+        return \preg_replace_callback('/([A-Z])/', function ($value) {
+            return '_' . strtolower($value[1]);
+        }, $string);
+    }
+
+    /**
+     * Convert to camel case.
+     *
+     * @param \string $string The string to convert.
+     * @param bool $capitalize Whether or not to capitalize the first letter.
+     * @return \string             The converted string.
+     */
+    public static function toCamelCase($string, $capitalize = false)
+    {
+        $string[0] = strtolower($string[0]);
+        if ($capitalize) {
+            $string[0] = strtoupper($string[0]);
+        }
+        return preg_replace_callback('/_([a-z0-9])/', function ($value) {
+            return strtoupper($value[1]);
+        }, $string);
+    }
+
+    /**
+     * Converts kebab case to camel case.
+     *
+     * @param \string $string The string to convert.
+     * @param bool $capitalizeFirstCharacter
+     * @return \string             The converted string.
+     */
+    public static function dashesToCamelCase($string, $capitalizeFirstCharacter = false)
+    {
+        $string = str_replace(' ', '', ucwords(str_replace('-', ' ', $string)));
+        if (!$capitalizeFirstCharacter) {
+            $string[0] = strtolower($string[0]);
+        }
+        return $string;
+    }
+
+    /**
+     * Truncates a given string.
+     *
+     * @param \string $string The string.
+     * @param int $maxCharacters The max. amount of characters.
+     * @param boolean $shouldHaveEllipsis Whether the string should have a trailing ellipsis (defaults to true).
+     * @return \string
+     */
+    public static function truncate($string, $maxCharacters, $shouldHaveEllipsis = true)
+    {
+        $length = strlen($string);
+        $excessLength = $length - $maxCharacters;
+        if (0 < $excessLength) {
+            // If the string is longer than 65535 characters, we first need to shorten it due to the character limit of the regex pattern quantifier.
+            if (65535 < $length) {
+                $string = substr($string, 0, 65534);
+            }
+            $string = preg_replace("#[^\pZ\pP]*.{{$excessLength}}$#", '', $string);
+            if ($shouldHaveEllipsis) {
+                $string = $string . ' ...';
+            }
+        }
+        return $string;
+    }
+
+    /**
+     * Check if a string is JSON encoded or not.
+     *
+     * @param \string $string The string to check.
+     * @return bool           True if it is JSON or false if not.
+     */
+    public function isJson($string)
+    {
+        if (!is_string($string)) {
+            return false;
+        }
+
+        json_decode($string);
+
+        // Return a boolean whether the last error matches.
+        return json_last_error() === JSON_ERROR_NONE;
+    }
 }

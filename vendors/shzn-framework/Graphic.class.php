@@ -1,7 +1,7 @@
 <?php
 /**
  * @author    sh1zen
- * @copyright Copyright (C)  2022
+ * @copyright Copyright (C) 2023.
  * @license   http://www.gnu.org/licenses/gpl.html GNU/GPL
  */
 
@@ -9,18 +9,18 @@ namespace SHZN\core;
 
 class Graphic
 {
-    public static function generate_fields($fields_args, $args = [], $display = true)
+    public static function generate_fields($fields_args, $infos, $args = [], $display = true)
     {
         $output = '';
         $levels = array();
 
         foreach ($fields_args as $field_args) {
 
-            if (!empty($args['name_prefix'])) {
-                $field_args['name_prefix'] = $args['name_prefix'];
-            }
+            $field_args['name_prefix'] = $args['name_prefix'] ?: false;
 
-            if (isset($field_args['id']) and $field_args['id']) {
+            if (!empty($field_args['id'])) {
+
+                $field_args['label'] = $infos[$field_args['id']] ?? '';
 
                 $levels[$field_args['id']] = 0;
 
@@ -43,101 +43,97 @@ class Graphic
 
     public static function generate_field($args, $display = true)
     {
+        if (empty($args)) {
+            return '';
+        }
+
         if (is_callable($args)) {
             return call_user_func($args);
         }
 
         if (is_string($args)) {
-            return "<block class='shzn-options--before'>$args</block>";
+            return $args;
         }
 
         $args = array_merge(array(
-            'parent'       => false,
-            'nexted_level' => 0,
             'before'       => false,
             'after'        => false,
             'id'           => '',
             'name'         => '',
             'value'        => '',
-            'note'         => '',
             'placeholder'  => '',
             'type'         => '',
             'classes'      => '',
+            'label'        => '',
             'context'      => 'table',
             'name_prefix'  => false,
-            'data-values'  => [],
-            'depend'       => false
+            'attr'         => [],
+            'parent'       => false,
+            'depend'       => false,
+            'nexted_level' => 0
         ), $args);
 
-        $context = $args['context'];
-
-        $_oInner = $_oBefore = $_oAfter = '';;
+        $o_inner = $p_open_wrapper = $o_close_wrapper = '';
 
         if ($args['before']) {
-            $_oInner .= self::generate_field($args['before'], false);
+            $o_inner .= self::generate_field($args['before'], false);
         }
-
-        $args['input_name'] = $args['name_prefix'] ? "{$args['name_prefix']}[{$args['id']}]" : $args['id'];
 
         if (!is_array($args['classes'])) {
             $args['classes'] = [$args['classes']];
         }
 
-        if ($context === 'action') {
-            $_oInner .= "<input name='action' type='hidden' value='{$args['id']}'>";
+        $args['classes'] = array_filter($args['classes']);
+
+        $label = $args['label'] ? "<label class='shzn-option-info' for='{$args['id']}'>{$args['label']}</label>" : '';
+        $label_icon = $args['label'] ? '<icon class="shzn-option-info-icon"><span>i</span></icon>' : '';
+
+        if ($args['context'] === 'action') {
+
+            $o_inner .= "<input name='action' type='hidden' value='{$args['id']}'>";
 
             if (empty($args['type'])) {
                 $args['type'] = 'submit';
             }
         }
-        elseif ($context === 'table') {
+        elseif ($args['context'] === 'table') {
 
             $padding_left = 30 * $args['nexted_level'];
 
-            $row_class = $padding_left !== 0 ? 'shzn-child' : '';
+            $row_class = $padding_left ? 'shzn-child' : '';
 
             $_style = $padding_left ? "style='padding-left: {$padding_left}px'" : '';
 
-            $_oBefore = "<tr class='{$row_class}'><td class='option' {$_style}><strong>{$args['name']}:</strong></td><td class='value'><label for='{$args['id']}'></label>";
-            $_oAfter = "</td></tr>";
+            $p_open_wrapper = "<row class='shzn-row {$row_class}'><div class='shzn-option' {$_style}><strong>{$args['name']}</strong>{$label_icon}</div><div class='shzn-value'>";
+            $o_close_wrapper = "</div>{$label}</row>";
         }
-        else {
-            $args['classes'][] = " shzn-{$context}";
-        }
+
+        $args['input_name'] = empty($args['name_prefix']) ? $args['id'] : "{$args['name_prefix']}[{$args['id']}]";
 
         if ($args['parent'] or $args['depend']) {
-
-            $args['data-values']['parent'] = trim(implode(':', array_merge((array)$args['parent'], (array)$args['depend'])), ' :');
+            $args['attr']['data-parent'] = trim(implode(':', array_merge((array)$args['parent'], (array)$args['depend'])), ' :');
         }
 
         $dataValues = '';
-        foreach ($args['data-values'] as $key => $value) {
-            $dataValues .= " data-{$key}='{$value}'";
-        }
+        if (!empty($args['attr'])) {
 
-        $dataValues = trim($dataValues, " \n\t\r");
+            foreach ($args['attr'] as $key => $value) {
+                $dataValues .= " {$key}='{$value}'";
+            }
+
+            $dataValues = trim($dataValues);
+        }
 
         switch (strtolower($args['type'])) {
 
             case 'divide':
-                $_oAfter = $_oBefore = '';
-                if ($context === 'table') {
-                    $_oInner .= "<tr class='blank-row'></tr>";
-                }
+                $p_open_wrapper = $o_close_wrapper = '';
+                $o_inner .= "<br>";
                 break;
 
             case 'separator':
-                $_oAfter = $_oBefore = '';
-                if ($context === 'table') {
-                    $_oInner .= "</tbody></table><br>";
-
-                    $args['classes'][] = 'shzn-separator';
-
-                    if (isset($args['name']))
-                        $_oInner .= "<h3 class='" . self::classes($args['classes']) . "' {$dataValues}>{$args['name']}</h3>";
-
-                    $_oInner .= "<table class='shzn shzn-settings'><tbody>";
-                }
+                $p_open_wrapper = $o_close_wrapper = '';
+                $o_inner .= "<row class='shzn-row-title'><h3><strong>{$args['name']}</strong>{$label_icon}</h3>{$label}</row>";
                 break;
 
             case "time":
@@ -151,7 +147,9 @@ class Graphic
                 $args['classes'][] = 'shzn';
                 $args['classes'][] = 'shzn-' . strtolower($args['type']);
 
-                $_oInner .= "<input " . self::buildProps([
+                $o_inner .= self::buildField(
+                    "input",
+                    [
                         'class'        => self::classes($args['classes']),
                         'autocomplete' => 'off',
                         'type'         => $args['type'],
@@ -159,8 +157,10 @@ class Graphic
                         'id'           => $args['id'],
                         'placeholder'  => $args['placeholder'],
                         'spellcheck'   => 'false',
-                        'value'        => (string)$args['value']
-                    ]) . " {$dataValues}/>";
+                        'value'        => (string)$args['value'],
+                        ...$args['attr']
+                    ]
+                );
                 break;
 
             case "upload-input":
@@ -169,9 +169,9 @@ class Graphic
                 $args['classes'][] = 'shzn-input-upload';
                 $args['classes'][] = 'shzn-input__wrapper';
 
-                $_oInner .= "<div class='" . self::classes($args['classes']) . "'>";
+                $o_inner .= "<div class='" . self::classes($args['classes']) . "'>";
 
-                $_oInner .= "<input " . self::buildProps([
+                $o_inner .= "<input " . self::buildProps([
                         'autocomplete' => 'off',
                         'type'         => 'text',
                         'name'         => $args['input_name'],
@@ -180,9 +180,9 @@ class Graphic
                         'value'        => (string)$args['value']
                     ]) . " {$dataValues}/>";
 
-                $_oInner .= "<div class='shzn-uploader__init' data-type='image'>Upload Image</div>";
+                $o_inner .= "<div class='shzn-uploader__init' data-type='image'>Upload Image</div>";
 
-                $_oInner .= "</div>";
+                $o_inner .= "</div>";
 
                 break;
 
@@ -190,105 +190,97 @@ class Graphic
 
                 $args['classes'][] = "shzn-apple-switch";
 
-                $_oInner .= "<input " . self::buildProps([
-                        'class' => self::classes($args['classes']),
-                        'type'  => 'checkbox',
-                        'name'  => $args['input_name'],
-                        'id'    => $args['id'],
-                        'value' => (bool)$args['value']
-                    ]) . " " . checked(1, $args['value'], false) . "  {$dataValues}/>";
+                $o_inner .= self::buildField(
+                    "input",
+                    [
+                        'class'   => self::classes($args['classes']),
+                        'type'    => 'checkbox',
+                        'name'    => $args['input_name'],
+                        'id'      => $args['id'],
+                        'value'   => (bool)$args['value'],
+                        'checked' => UtilEnv::to_boolean($args['value']) ? 'checked' : '',
+                        ...$args['attr']
+                    ]);
                 break;
 
             case "textarea":
 
                 $args['classes'][] = "shzn";
 
-                $_oInner .= "<textarea " . self::buildProps([
+                $o_inner .= self:: buildField(
+                    "textarea",
+                    [
                         'class'      => self::classes($args['classes']),
                         'rows'       => '4',
                         'cols'       => '80',
                         'type'       => 'textarea',
                         'name'       => $args['input_name'],
                         'id'         => $args['id'],
-                        'spellcheck' => 'false'
-                    ]) . " {$dataValues}/>{$args['value']}</textarea>";
+                        'spellcheck' => 'false',
+                        ...$args['attr']
+                    ],
+                    $args['value']
+                );
                 break;
 
             case "label":
-                $_oInner .= "<span " . self::buildProps([
+                $o_inner .= self::buildField(
+                    'span',
+                    [
                         'class' => self::classes($args['classes']),
-                    ]) . " {$dataValues}>{$args['value']}</span>";
+                        ...$args['attr']
+                    ],
+                    $args['value']
+                );
                 break;
 
             case "link":
-                $_oInner .= "<a " . self::buildProps([
+
+                $o_inner .= self::buildField(
+                    'a',
+                    [
                         'class' => self::classes($args['classes']),
-                    ]) . " {$dataValues} href='{$args['value']['href']}'>{$args['value']['text']}</a>";
-                break;
+                        'href'  => $args['value']['href'],
+                        ...$args['attr']
+                    ],
+                    $args['value']['text']
+                );
 
-            case "action":
-
-                $args['classes'][] = 'shzn';
-                $args['classes'][] = 'button';
-
-                $_oInner .= "<button " . self::buildProps([
-                        'class' => self::classes($args['classes']),
-                    ]) . " {$dataValues}>{$args['value']}</button>";
                 break;
 
             case "dropdown":
-
-                $args['classes'][] = 'shzn';
-
-                $_oInner .= "<div " . self::buildProps([
-                        'class' => self::classes($args['classes']),
-                    ]) . " {$dataValues}>" . self::buildDropdown($args) . "</div>";
+                $args['classes'][] = 'dropdown';
+                $o_inner .= self::buildDropdown($args, ['class' => self::classes($args['classes']), ...$args['attr']]);
                 break;
 
             case 'raw':
             case 'html':
-                $_oInner .= $args['value'];
+                $o_inner .= $args['value'];
                 break;
         }
 
-        $_oInner = "{$_oBefore}{$_oInner}{$_oAfter}";
+        $o_inner = "{$p_open_wrapper}{$o_inner}{$o_close_wrapper}";
 
         if ($args['after']) {
-            $_oInner .= self::generate_field($args['after'], false);
+            $o_inner .= self::generate_field($args['after'], false);
         }
 
         if ($display) {
-            echo $_oInner;
+            echo $o_inner;
         }
 
-        return $_oInner;
+        return $o_inner;
     }
 
     private static function classes($classes = [])
     {
-        return trim(implode(' ', array_filter(array_unique($classes))));
+        return trim(implode(' ', array_unique(array_filter($classes))));
     }
 
     public static function buildProps($props = [], $strip_empty = false)
     {
         $_props = '';
-        /*
-                foreach ($props as $key => $value) {
 
-                    if (is_array($value))
-                        $_props .= self::buildProps($value, $strip_empty);
-                    else {
-                        if (is_string($value))
-                            $_props .= $key . '="' . $value . '" ';
-                        else {
-                            if ($strip_empty and $value)
-                                $_props .= $key . ' ';
-                            else if (!$strip_empty)
-                                $_props .= $key . ' ';
-                        }
-                    }
-                }
-        */
         foreach ($props as $key => $value) {
 
             if (is_array($value)) {
@@ -316,7 +308,7 @@ class Graphic
         return trim($_props);
     }
 
-    private static function buildDropdown($args)
+    private static function buildDropdown($args, $props = [])
     {
         ob_start();
 
@@ -330,7 +322,7 @@ class Graphic
         $items = $args['list'];
 
         ?>
-        <div class="shzn-dropdown">
+        <dropdown class="shzn-dropdown" <?php self::buildProps($props) ?>>
             <div class="shzn-input__wrapper">
                 <input name="<?php echo $args['input_name'] ?>" id="<?php echo $args['id'] ?>" type="text"
                        value="<?php echo $args['value'] ?>" autocomplete="off"
@@ -351,14 +343,18 @@ class Graphic
                     ?>
                 </ul>
             </div>
-        </div>
+        </dropdown>
         <?php
         return ob_get_clean();
     }
 
     public static function buildField($type, $props = [], $content = '')
     {
-        return "<{$type} " . self::buildProps($props) . ">{$content}</{$type}>";
+        if (!$content and str_contains('input.br.hr.link.meta.img.source', $type)) {
+            return "<{$type} " . self::buildProps($props, true) . "/>";
+        }
+
+        return "<{$type} " . self::buildProps($props, true) . ">{$content}</{$type}>";
     }
 
 
@@ -387,37 +383,31 @@ class Graphic
         ob_start();
 
         ?>
-        <div class="shzn-ar-tabs" id="ar-tabs">
-            <ul class="shzn-ar-tablist" aria-label="shzn-menu">
+        <section class="shzn-ar-tabs" id="ar-tabs">
+            <ul class="shzn-ar-tablist">
                 <?php
+                $panels = '';
                 foreach ($fields as $field) {
                     $tab_title = empty($field['tab-title']) ? $field['panel-title'] : $field['tab-title'];
                     ?>
-                    <li class="shzn-ar-tab">
-                        <a id="lbl_<?php echo $field['id']; ?>" class="shzn-ar-tab_link"
-                           href="#<?php echo $field['id']; ?>"><?php echo $tab_title; ?></a>
-                    </li>
+                    <li class="shzn-ar-tab" aria-controls="<?php echo $field['id']; ?>"
+                        aria-selected="false"><?php echo $tab_title; ?></li>
                     <?php
-                }
-                ?>
-            </ul><?php
 
-            foreach ($fields as $field) {
-                /**
-                 * Support for limiting the rendering to only specific tab
-                 */
-                if ($limit_ids) {
-                    if (!in_array($field['id'], $limit_ids))
-                        continue;
+                    // Support for limiting the rendering to only specific tab
+                    if ($limit_ids) {
+                        if (!in_array($field['id'], $limit_ids))
+                            continue;
+                    }
+
+                    $aria_ajax = isset($field['ajax-callback']) ? "aria-ajax='" . json_encode($field['ajax-callback']) . "'" : '';
+
+                    $panels .= "<panel id='{$field['id']}' class='shzn-ar-tabcontent' aria-hidden='true' {$aria_ajax}>" . self::generatePanelContent($field) . "</panel>";
                 }
                 ?>
-                <panel id="<?php echo $field['id']; ?>" class="shzn-ar-tabcontent" aria-hidden="true"
-                    <?php echo isset($field['ajax-callback']) ? "aria-ajax='" . json_encode($field['ajax-callback']) . "'" : '' ?>>
-                    <?php echo self::generatePanelContent($field); ?>
-                </panel>
-                <?php
-            }
-            ?></div>
+            </ul>
+            <?php echo $panels; ?>
+        </section>
         <?php
         return ob_get_clean();
     }
