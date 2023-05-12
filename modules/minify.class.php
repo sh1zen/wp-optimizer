@@ -19,19 +19,9 @@ use WPOptimizer\modules\supporters\Minify_JS;
  */
 class Mod_Minify extends Module
 {
-    public $scopes = array('settings', 'autoload');
+    public array $scopes = array('settings', 'autoload');
 
-    public function __construct()
-    {
-        require_once WPOPT_SUPPORTERS . '/minifier/Minify.class.php';
-        require_once WPOPT_SUPPORTERS . '/minifier/Minify_HTML.class.php';
-        require_once WPOPT_SUPPORTERS . '/minifier/Minify_CSS.class.php';
-        require_once WPOPT_SUPPORTERS . '/minifier/Minify_JS.class.php';
-
-        parent::__construct('wpopt');
-
-        ob_start([$this, "minify"]);
-    }
+    protected string $context = 'wpopt';
 
     public function minify($buffer)
     {
@@ -54,7 +44,7 @@ class Mod_Minify extends Module
 
                 list($script, $original_url) = $matches;
 
-                if (!str_contains($original_url, 'min') and str_starts_with($original_url, shzn()->utility->home_url)) {
+                if (!str_contains($original_url, 'min') and str_starts_with($original_url, shzn_utils()->home_url)) {
 
                     $file_path = WPOPT_STORAGE . "minify/js/" . md5($original_url) . ".js";
 
@@ -88,7 +78,7 @@ class Mod_Minify extends Module
 
                 list($script, $original_url) = $matches;
 
-                if (!str_contains($original_url, 'min') and str_starts_with($original_url, shzn()->utility->home_url) and str_contains($script, 'stylesheet')) {
+                if (!str_contains($original_url, 'min') and str_starts_with($original_url, shzn_utils()->home_url) and str_contains($script, 'stylesheet')) {
 
                     $file_path = WPOPT_STORAGE . "minify/css/" . md5($original_url) . ".css";
 
@@ -190,7 +180,7 @@ class Mod_Minify extends Module
         return false;
     }
 
-    public function restricted_access($context = '')
+    public function restricted_access($context = ''): bool
     {
         if ($context === 'settings') {
             return !current_user_can('manage_options');
@@ -199,41 +189,50 @@ class Mod_Minify extends Module
         return false;
     }
 
-    protected function setting_fields($filter = '')
+    protected function init()
+    {
+        require_once WPOPT_SUPPORTERS . '/minifier/Minify.class.php';
+        require_once WPOPT_SUPPORTERS . '/minifier/Minify_HTML.class.php';
+        require_once WPOPT_SUPPORTERS . '/minifier/Minify_CSS.class.php';
+        require_once WPOPT_SUPPORTERS . '/minifier/Minify_JS.class.php';
+
+        ob_start([$this, "minify"]);
+    }
+
+    protected function setting_fields($filter = ''): array
     {
         return $this->group_setting_fields(
 
-            $this->setting_field(__('Minify HTML', 'wpopt'), "html.active", "checkbox"),
-            $this->setting_field(__('Remove Comments', 'wpopt'), "html.remove_comments", "checkbox", ['parent' => 'html.active']),
-            $this->setting_field(__('Minify inline css', 'wpopt'), "html.minify_css", "checkbox", ['parent' => 'html.active']),
-            $this->setting_field(__('Minify inline js', 'wpopt'), "html.minify_js", "checkbox", ['parent' => 'html.active']),
-
-            $this->setting_field(__('Minify JavaScript', 'wpopt'), "js.active", "checkbox"),
-            $this->setting_field(__('Try to combine scripts', 'wpopt'), "js.combine", "checkbox", ['parent' => 'js.active']),
-
-            $this->setting_field(__('Minify CSS', 'wpopt'), "css.active", "checkbox"),
-            $this->setting_field(__('Try to combine scripts', 'wpopt'), "css.combine", "checkbox", ['parent' => 'css.active']),
+            $this->group_setting_fields(
+                $this->setting_field(__('Minify HTML', 'wpopt'), "html.active", "checkbox"),
+                $this->setting_field(__('Remove Comments', 'wpopt'), "html.remove_comments", "checkbox", ['parent' => 'html.active']),
+                $this->setting_field(__('Minify inline css', 'wpopt'), "html.minify_css", "checkbox", ['parent' => 'html.active']),
+                $this->setting_field(__('Minify inline js', 'wpopt'), "html.minify_js", "checkbox", ['parent' => 'html.active']),
+            ),
+            $this->group_setting_fields(
+                $this->setting_field(__('Minify JavaScript', 'wpopt'), "js.active", "checkbox"),
+                $this->setting_field(__('Try to combine scripts', 'wpopt'), "js.combine", "checkbox", ['parent' => 'js.active']),
+            ),
+            $this->group_setting_fields(
+                $this->setting_field(__('Minify CSS', 'wpopt'), "css.active", "checkbox"),
+                $this->setting_field(__('Try to combine scripts', 'wpopt'), "css.combine", "checkbox", ['parent' => 'css.active']),
+            )
         );
     }
 
-    protected function setting_form_templates($context)
+    protected function print_header(): string
     {
-        if ($context === 'header') {
-
-            ob_start();
-            ?>
-            <block class="shzn">
-                <h2><?php _e('Beta version.', 'wpopt'); ?></h2>
-                <p>
-                    <?php echo __('This module is under developing.'); ?><br>
-                    <?php echo __('Should work fine, but to be safe activate this feature only if you know what to do in case of bugs. ', 'wpopt'); ?>
-                </p>
-            </block>
-            <?php
-            return ob_get_clean();
-        }
-
-        return '';
+        ob_start();
+        ?>
+        <block class="shzn">
+            <h2><?php _e('Beta version.', 'wpopt'); ?></h2>
+            <p>
+                <?php echo __('This module is under developing.'); ?><br>
+                <?php echo __('Should work fine, but to be safe activate this feature only if you know what to do in case of bugs. ', 'wpopt'); ?>
+            </p>
+        </block>
+        <?php
+        return ob_get_clean();
     }
 }
 

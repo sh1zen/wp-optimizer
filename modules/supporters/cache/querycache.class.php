@@ -9,113 +9,47 @@ namespace WPOptimizer\modules\supporters;
 
 class QueryCache extends Cache_Dispatcher
 {
-    protected static $_Instance;
+    private array $data = [];
 
-    /**
-     * @var array|null Query result
-     */
-    protected $query_result;
-
-    /**
-     * @var int|null Found posts
-     */
-    protected $total_found;
-
-    protected function __construct($args)
+    public function action_found_posts($found_posts, \WP_Query $wp_query)
     {
-        parent::__construct($args);
-
-        //check if this can enable cache for this wp_query
-        add_filter('posts_request', array($this, 'action_enable_cache'), 10, 2);
-
-        // to load
-        add_filter('posts_pre_query', array($this, 'action_posts_pre_query'), 10, 2);
-    }
-
-    /**
-     * Return a singleton instance of the current class
-     *
-     * @param array $args
-     * @return Cache_Dispatcher
-     */
-    public static function Initialize($args = array())
-    {
-        if (!self::$_Instance) {
-            self::$_Instance = new self($args);
+        if (isset($this->data[$wp_query->query_vars_hash])) {
+            $this->data[$wp_query->query_vars_hash]['found_posts'] = $found_posts;
         }
 
-        return self::$_Instance;
+        return $found_posts;
     }
 
-    public function action_enable_cache($request, $wp_query)
+    public function action_posts_pre_query($posts, \WP_Query $wp_query)
     {
-        $this->reset();
-
-        if ($wp_query->query_vars['cache_results']) {
-            $this->cache_active = true;
-        }
-
-        return $request;
-    }
-
-    /**
-     * Reset query info
-     */
-    protected function reset()
-    {
-        parent::reset();
-        $this->query_result = array();
-        $this->total_found = 0;
-    }
-
-    public function action_found_posts($found_posts, $wp_query)
-    {
-        return $this->total_found = $found_posts;
-    }
-
-    public function action_posts_pre_query($posts, $wp_query)
-    {
-        if (!$this->cache_active) {
+        if (!$wp_query->query_vars['cache_results'] or $wp_query->query_vars['suppress_filters']) {
             return $posts;
         }
 
-        $cached_data = $this->cache_get($this->generate_key($wp_query->query_vars));
+        $cached_data = $this->cache_get($wp_query->query_vars_hash);
 
         if ($cached_data) {
 
-            $posts = $this->objectify_cached($cached_data['posts']);
+            $posts = $this->restore_cached_object($cached_data['posts']);
 
             if (!is_null($posts)) {
 
-                $wp_query->found_posts = $cached_data['found_posts'];
+                $wp_query->found_posts = $cached_data['found_posts'] ?? 0;
                 $wp_query->max_num_pages = ceil($cached_data['found_posts'] / $wp_query->get('posts_per_page'));
             }
-
-            $this->reset();
         }
 
         if (is_null($posts)) {
-            $this->try_to_cache_hooks();
+            $this->data[$wp_query->query_vars_hash] = [];
         }
 
         return $posts;
     }
 
-    private function try_to_cache_hooks()
+    public function action_posts_results($posts, \WP_Query $wp_query)
     {
-        // to keep queried posts
-        add_filter('posts_results', array($this, 'action_posts_results'), 10, 2);
-
-        // to keep queried found_posts
-        add_filter('found_posts', array($this, 'action_found_posts'), 10, 2);
-
-        add_filter('the_posts', array($this, 'commit'), 10, 2);
-    }
-
-    public function action_posts_results($posts, $wp_query)
-    {
-        if ($this->cache_active) {
-            $this->query_result = $posts;
+        if (isset($this->data[$wp_query->query_vars_hash])) {
+            $this->data[$wp_query->query_vars_hash]['posts'] = $posts;
         }
 
         return $posts;
@@ -123,28 +57,39 @@ class QueryCache extends Cache_Dispatcher
 
     /**
      * Filter the posts array to contain cached search results.
-     *
-     * @param array $posts
-     * @param $wp_query
-     * @return array
      */
-    public function commit($posts, $wp_query)
+    public function commit($posts, \WP_Query $wp_query)
     {
-        if (!$this->cache_active)
-            return $posts;
+        if (isset($this->data[$wp_query->query_vars_hash])) {
 
-        $key = $this->generate_key($wp_query->query_vars);
-
-        $data = array(
-            'posts'       => $this->query_result,
-            'found_posts' => $this->total_found,
-        );
-
-        $this->cache_set($key, $data);
-
-        $this->reset();
+            $this->cache_set(
+                $wp_query->query_vars_hash,
+                array_merge(
+                    [
+                        'posts'       => [],
+                        'found_posts' => 0,
+                    ],
+                    $this->data[$wp_query->query_vars_hash]
+                )
+            );
+            unset($this->data[$wp_query->query_vars_hash]);
+        }
 
         return $posts;
     }
-}
 
+    protected function launcher()
+    {
+        //check if this can enable cache for this wp_query
+        add_filter('posts_pre_query', array($this, 'action_posts_pre_query'), 10, 2);
+
+        // to keep queried posts
+        add_filter('posts_results', array($this, 'action_posts_results'), 10, 2);
+
+        // to keep queried found_posts
+        add_filter('found_posts', array($this, 'action_found_posts'), 10, 2);
+
+        // maybe save cached
+        add_filter('the_posts', array($this, 'commit'), 10, 2);
+    }
+}

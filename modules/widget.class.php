@@ -15,46 +15,21 @@ class Mod_Widget extends Module
 {
     public static $name = "Widget";
 
-    public $scopes = array('settings', 'admin');
+    public array $scopes = array('settings', 'admin');
 
-    private $paths;
+    private array $paths = [];
 
     private array $cache = [];
 
     private bool $update_cache = false;
 
-    /**
-     * Adds actions and such.
-     *
-     * @uses    add_action
-     */
-    public function __construct()
+    protected string $context = 'wpopt';
+
+    protected function init()
     {
-        $default = [
-            'folder-size' => [
-                'active' => false,
-                'paths'  => [ABSPATH, WP_CONTENT_DIR]
-            ],
-            'server-info' => [
-                'active' => true,
-            ],
-        ];
-
-        parent::__construct('wpopt', array(
-            'settings' => $default
-        ));
-
-        $this->paths = array_filter($this->option('paths', array()));
+        $this->paths = array_filter($this->option('folder-size.paths', []));
 
         add_action("wp_dashboard_setup", array($this, 'dashboard_setup'));
-    }
-
-    public function validate_settings($input, $valid)
-    {
-        $valid = parent::validate_settings($input, $valid);
-        $valid['paths'] = array_map('sanitize_text_field', explode(PHP_EOL, $input['paths']));
-
-        return $valid;
     }
 
     /**
@@ -65,7 +40,9 @@ class Mod_Widget extends Module
     public function dashboard_setup()
     {
         $hasWidget = false;
+
         if ($this->option('folder-size.active', false)) {
+
             foreach ($this->paths as $path) {
 
                 wp_add_dashboard_widget($this->generate_id($path), basename($path) . " size", array($this, "wp_dashboard_foldersize"), array($this, 'widget_handle'), array('path' => $path));
@@ -81,7 +58,6 @@ class Mod_Widget extends Module
             $hasWidget = true;
         }
 
-
         if ($hasWidget) {
             add_action('admin_head', array($this, "head_style"));
         }
@@ -95,8 +71,6 @@ class Mod_Widget extends Module
 
     /**
      * Prints table styles in dashboard head
-     *
-     * @access public
      */
     public function head_style()
     {
@@ -281,12 +255,11 @@ class Mod_Widget extends Module
         echo "<p><label><input name='$name' id='$name' type='checkbox' value='1' />" . __('Check to empty the cache', 'wpopt') . "</label><br /><em style='margin-left: 23px'>$cache_msg</em></p>";
     }
 
-    protected function setting_fields($filter = '')
+    protected function setting_fields($filter = ''): array
     {
         return $this->group_setting_fields(
             $this->setting_field(__('Installation size', 'wpopt'), "folder-size.active", "checkbox"),
-            $this->setting_field(__('Paths', 'wpopt'), "folder-size.paths", "textarea", ['parent' => "folder-size.active", 'value' => implode(PHP_EOL, $this->option('paths', array()))]),
-
+            $this->setting_field(__('Paths (one per line)', 'wpopt'), "folder-size.paths", "textarea_array", ['parent' => "folder-size.active", 'value' => implode(PHP_EOL, $this->option('folder-size.paths', []))]),
             $this->setting_field(__('Server info', 'wpopt'), "server-info.active", "checkbox"),
         );
     }

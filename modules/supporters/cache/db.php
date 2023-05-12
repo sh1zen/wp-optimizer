@@ -36,9 +36,7 @@ if (!defined('SHZN_FRAMEWORK')) {
 
 shzn(
     'wpopt',
-    [
-        'use_memcache' => true
-    ],
+    null,
     [
         'cache'   => true,
         'storage' => true,
@@ -47,19 +45,12 @@ shzn(
 
 class WPOPT_DB extends wpdb
 {
-    /**
-     * Class constructor
-     * @param $dbuser
-     * @param $dbpassword
-     * @param $dbname
-     * @param $dbhost
-     */
     public function __construct($dbuser, $dbpassword, $dbname, $dbhost)
     {
         parent::__construct($dbuser, $dbpassword, $dbname, $dbhost);
     }
 
-    private static function get_cache_group()
+    private static function get_cache_group(): string
     {
         return 'cache/db';
     }
@@ -75,6 +66,7 @@ class WPOPT_DB extends wpdb
         $result = shzn('wpopt')->storage->get($key, self::get_cache_group());
 
         if (!$result) {
+
             $this->timer_start();
 
             $result = parent::get_var($query, $x, $y);
@@ -87,17 +79,20 @@ class WPOPT_DB extends wpdb
         return $result;
     }
 
-    private function cache_disabled($query)
+    private function cache_disabled($query): bool
     {
-        if ($query and str_contains($query, $this->options)) {
-            return true;
+        static $disabled;
+
+        if (!isset($disabled)) {
+            $disabled = is_admin() or wp_doing_cron() or wp_doing_ajax();
         }
 
-        return false;
+        return $disabled or !$query or (!WPOPT_CACHE_DB_OPTIONS and str_contains($query, $this->options));
     }
 
-    private function generate_key($query, ...$args)
+    private function generate_key($query, ...$args): string
     {
+        // preg_replace prevents different keys when query contains LIKE %% passed to $wpdb->prepare(...)
         return Cache::generate_key(preg_replace("#{[^}]+}#", "", $query ?: ''), $args);
     }
 

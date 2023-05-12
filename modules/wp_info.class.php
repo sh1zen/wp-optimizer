@@ -14,14 +14,11 @@ class Mod_WP_Info extends Module
 {
     public static $name = "System Info";
 
-    public $scopes = array('admin-page');
+    public array $scopes = array('admin-page');
 
-    public function __construct()
-    {
-        parent::__construct('wpopt');
-    }
+    protected string $context = 'wpopt';
 
-    public function render_admin_page()
+    public function render_admin_page(): void
     {
         ?>
         <section class="shzn-wrap">

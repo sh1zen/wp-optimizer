@@ -12,7 +12,6 @@ use SHZN\core\Cron;
 use SHZN\core\Graphic;
 use SHZN\core\StringHelper;
 use SHZN\core\UtilEnv;
-use SHZN\core\Settings;
 use SHZN\modules\Module;
 
 use WPOptimizer\modules\supporters\Media_Table;
@@ -23,60 +22,9 @@ use WPOptimizer\modules\supporters\ImagesProcessor;
  */
 class Mod_Media extends Module
 {
-    public static array $images_mime_types = array(
-        'jpg|jpeg|jpe' => 'image/jpeg',
-        'gif'          => 'image/gif',
-        'png'          => 'image/png',
-        'ico'          => 'image/x-icon',
-        'pjpeg'        => 'image/pjpeg',
-        'webp'         => 'image/webp',
-        'bmp'          => 'image/bmp',
-        'tiff|tif'     => 'image/tiff',
-        'heic'         => 'image/heic'
-    );
+    public array $scopes = array('autoload', 'cron', 'admin-page', 'settings');
 
-    public $scopes = array('autoload', 'cron', 'admin-page', 'settings');
-
-    public function __construct()
-    {
-        parent::__construct('wpopt', array(
-            'settings'      => array(
-                'use_imagick'          => true,
-                'format'               => array(
-                    'jpg'    => true,
-                    'png'    => false,
-                    'gif'    => true,
-                    'webp'   => true,
-                    'others' => false
-                ),
-                'quality'              => 80,
-                'keep_exif'            => false,
-                'convert_to_webp'      => false,
-                'resize_larger_images' => false,
-                'resize_width_px'      => 2560,
-                'resize_height_px'     => 1440
-            ),
-            'cron_settings' => array(
-                'active' => false
-            )
-        ));
-
-        if (is_admin() or wp_doing_cron()) {
-
-            require_once WPOPT_SUPPORTERS . '/media/ImagesProcessor.class.php';
-        }
-
-        if ($this->option('loading_lazy', false)) {
-
-            wp_register_script('wpopt-lazy-loading', UtilEnv::path_to_url(__DIR__) . 'supporters/media/jquery.lazy.min.js', ['jquery'], false);
-
-            add_action('wp_enqueue_scripts', function () {
-                wp_enqueue_script('wpopt-lazy-loading');
-            });
-
-            ob_start([$this, "lazy_maker"]);
-        }
-    }
+    protected string $context = 'wpopt';
 
     public function lazy_maker($buffer)
     {
@@ -91,19 +39,19 @@ class Mod_Media extends Module
         );
 
         $loadingGIF = UtilEnv::path_to_url(__DIR__) . 'supporters/media/loading.gif';
-
+        // todo move this to default loading=lazy browsers support
         return preg_replace(
             "/<img(?! (data-img-src|data-orig))([^']*?) src=\"([^']*?)\"([^']*?)>/",
-            "<img$2$1 data-src='$3' src='{$loadingGIF}' $4>",
+            "<img$2$1 data-src='$3' src='{$loadingGIF}' $4 loading='lazy'>",
             $buffer
         );
     }
 
-    public function cron_setting_fields($cron_settings = [])
+    public function cron_setting_fields(): array
     {
-        $cron_settings[] = array('type' => 'checkbox', 'name' => __('Auto optimize images', 'wpopt'), 'id' => 'media.active', 'value' => Settings::check($this->cron_settings, 'active'), 'depend' => 'active');
-
-        return $cron_settings;
+        return [
+            ['type' => 'checkbox', 'name' => __('Auto optimize images', 'wpopt'), 'id' => 'media.active', 'value' => shzn($this->context)->cron->is_active($this->slug), 'depend' => 'active']
+        ];
     }
 
     public function ajax_handler($args = array())
@@ -177,7 +125,7 @@ class Mod_Media extends Module
 
     public function orphaned_media_scanner_cron_handler()
     {
-        $ImagesPerformer = ImagesProcessor::getInstance($this->settings);
+        $ImagesPerformer = ImagesProcessor::getInstance($this->option());
 
         $this->status('orphan-media-scanner', 'running');
 
@@ -190,7 +138,7 @@ class Mod_Media extends Module
         }
     }
 
-    public function enqueue_scripts()
+    public function enqueue_scripts(): void
     {
         parent::enqueue_scripts();
         wp_enqueue_script('wpopt-media-page', UtilEnv::path_to_url(WPOPT_ABSPATH) . 'modules/supporters/media/media.js', array('vendor-shzn-js'), WPOPT_VERSION);
@@ -315,7 +263,7 @@ class Mod_Media extends Module
         return ob_get_clean();
     }
 
-    public function render_admin_page()
+    public function render_admin_page(): void
     {
         ?>
         <section class="shzn-wrap">
@@ -359,7 +307,7 @@ class Mod_Media extends Module
      */
     public function ipc_scanner_cron_handler($args = [])
     {
-        $ImagesPerformer = ImagesProcessor::getInstance($this->settings);
+        $ImagesPerformer = ImagesProcessor::getInstance($this->option());
 
         $this->status('optimization', 'running');
 
@@ -420,9 +368,9 @@ class Mod_Media extends Module
         ?>
         <section class="shzn">
             <notice class="shzn">
-                <h3><?php echo sprintf(__('Media optimized: %d.', 'wpopt'), $optimized_images_count) ?></h3>
+                <h3><?php echo sprintf(__('Media optimized: %d', 'wpopt'), $optimized_images_count); ?> | <?php echo sprintf(__('Left: %d.', 'wpopt'), $all_media_count - $optimized_images_count); ?></h3>
                 <br>
-                <block class="shzn-row">
+                <block class="shzn-card__wrapper">
                     <block class="shzn-card">
                         <h3><?php echo sprintf(__('Processed media library:', 'wpopt'), $processed_percentile) ?></h3>
                         <div class='shzn-progressbarCircle' data-percent='<?php echo $processed_percentile; ?>'
@@ -451,7 +399,7 @@ class Mod_Media extends Module
         return ob_get_clean();
     }
 
-    public function restricted_access($context = '')
+    public function restricted_access($context = ''): bool
     {
         switch ($context) {
 
@@ -465,31 +413,57 @@ class Mod_Media extends Module
         }
     }
 
-    protected function setting_fields($filter = '')
+    protected function init()
+    {
+        if (is_admin() or wp_doing_cron()) {
+
+            require_once WPOPT_SUPPORTERS . '/media/ImagesProcessor.class.php';
+        }
+
+        if ($this->option('loading_lazy', false)) {
+
+            wp_register_script('wpopt-lazy-loading', UtilEnv::path_to_url(__DIR__) . 'supporters/media/jquery.lazy.min.js', ['jquery'], false);
+
+            add_action('wp_enqueue_scripts', function () {
+                wp_enqueue_script('wpopt-lazy-loading');
+            });
+
+            ob_start([$this, "lazy_maker"]);
+        }
+    }
+
+    protected function setting_fields($filter = ''): array
     {
         return $this->group_setting_fields(
-            $this->setting_field(__('Try to make media loading lazy', 'wpopt'), "loading_lazy", "checkbox"),
 
-            $this->setting_field(__('Images optimization preferences', 'wpopt'), false, 'separator'),
-            $this->setting_field(__('Auto optimize uploads', 'wpopt'), 'auto_optimize_uploads', 'link', ['value' => ['text' => __('set it here', 'wpopt'), 'href' => admin_url('admin.php?page=wpopt-settings#settings-cron')]]),
-            $this->setting_field(__('Use Imagick (if installed)', 'wpopt'), "use_imagick", "checkbox", ['default_value' => true]),
-            $this->setting_field(__('Optimization quality', 'wpopt'), "quality", "number", ['default_value' => 80]),
-            $this->setting_field(__('Keep all the EXIF data of your images', 'wpopt'), "keep_exif", "checkbox", ['default_value' => false]),
-            $this->setting_field(__('Resize larger images', 'wpopt'), "resize_larger_images", "checkbox", ['default_value' => false]),
-            $this->setting_field(__('max with (px)', 'wpopt'), "resize_width_px", "number", ['default_value' => 2560, 'parent' => 'resize_larger_images']),
-            $this->setting_field(__('max height (px)', 'wpopt'), "resize_height_px", "number", ['default_value' => 1440, 'parent' => 'resize_larger_images']),
+            $this->group_setting_fields(
+                $this->setting_field(__('Try to make media loading lazy', 'wpopt'), "loading_lazy", "checkbox"),
+            ),
 
-            $this->setting_field(__('Formats', 'wpopt'), false, 'separator'),
-            $this->setting_field(__('Convert all images to new webp format', 'wpopt'), "convert_to_webp", "checkbox", ['default_value' => false]),
-            $this->setting_field(__('Optimize JPG/JPEG', 'wpopt'), "format.jpg", "checkbox", ['default_value' => true]),
-            $this->setting_field(__('Optimize PNG', 'wpopt'), "format.png", "checkbox", ['default_value' => false]),
-            $this->setting_field(__('Optimize GIF', 'wpopt'), "format.gif", "checkbox", ['default_value' => true]),
-            $this->setting_field(__('Optimize WEBP', 'wpopt'), "format.webp", "checkbox", ['default_value' => true]),
-            $this->setting_field(__('Optimize other formats (tiff, heic, bmp)', 'wpopt'), "format.others", "checkbox", ['default_value' => false]),
+            $this->group_setting_fields(
+                $this->setting_field(__('Images optimization preferences', 'wpopt'), false, 'separator'),
+                $this->setting_field(__('Auto optimize uploads', 'wpopt'), 'auto_optimize_uploads', 'link', ['value' => ['text' => __('set it here', 'wpopt'), 'href' => admin_url('admin.php?page=wpopt-settings#settings-cron')]]),
+                $this->setting_field(__('Use Imagick (if installed)', 'wpopt'), "use_imagick", "checkbox", ['default_value' => true]),
+                $this->setting_field(__('Optimization quality', 'wpopt'), "quality", "number", ['default_value' => 80]),
+                $this->setting_field(__('Keep all the EXIF data of your images', 'wpopt'), "keep_exif", "checkbox", ['default_value' => false]),
+                $this->setting_field(__('Resize larger images', 'wpopt'), "resize_larger_images", "checkbox", ['default_value' => false]),
+                $this->setting_field(__('max with (px)', 'wpopt'), "resize_width_px", "number", ['default_value' => 2560, 'parent' => 'resize_larger_images']),
+                $this->setting_field(__('max height (px)', 'wpopt'), "resize_height_px", "number", ['default_value' => 1440, 'parent' => 'resize_larger_images']),
+            ),
+
+            $this->group_setting_fields(
+                $this->setting_field(__('Formats', 'wpopt'), false, 'separator'),
+                $this->setting_field(__('Convert all images to new webp format', 'wpopt'), "convert_to_webp", "checkbox", ['default_value' => false]),
+                $this->setting_field(__('Optimize JPG/JPEG', 'wpopt'), "format.jpg", "checkbox", ['default_value' => true]),
+                $this->setting_field(__('Optimize PNG', 'wpopt'), "format.png", "checkbox", ['default_value' => false]),
+                $this->setting_field(__('Optimize GIF', 'wpopt'), "format.gif", "checkbox", ['default_value' => true]),
+                $this->setting_field(__('Optimize WEBP', 'wpopt'), "format.webp", "checkbox", ['default_value' => true]),
+                $this->setting_field(__('Optimize other formats (tiff, heic, bmp)', 'wpopt'), "format.others", "checkbox", ['default_value' => false]),
+            )
         );
     }
 
-    protected function infos()
+    protected function infos(): array
     {
         return [
             'auto_optimize_uploads' => __("Automatically compresses and resizes images for faster loading, improving website performance.", 'wpopt'),

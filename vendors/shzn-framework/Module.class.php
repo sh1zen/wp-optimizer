@@ -8,9 +8,11 @@
 namespace SHZN\modules;
 
 use SHZN\core\Ajax;
+use SHZN\core\ModuleHandler;
 use SHZN\core\StringHelper;
 use SHZN\core\Graphic;
 use SHZN\core\Settings;
+use SHZN\core\UtilEnv;
 
 class Module
 {
@@ -39,84 +41,93 @@ class Module
      *
      * default: empty - never loaded
      */
-    public $scopes = array();
-
-    /**
-     * Module settings
-     * @var array
-     */
-    public $settings;
-
-    /**
-     * Module Cron settings
-     * @var array
-     */
-    public $cron_settings;
+    public array $scopes = array();
 
     /**
      * Module name without prefix Mod_
-     * @var string
      */
     public $slug;
 
     /**
+     * Current module unique identifier
+     */
+    protected string $hash;
+
+    protected string $context = '';
+    protected string $action_hook;
+
+    /**
+     * Module settings
+     */
+    private array $settings;
+
+    /**
      * keep a list of notices to display for current module
      */
-    private $notices = array();
+    private array $notices = array();
 
-    private $context;
-
-    public function __construct($context, $args = array())
+    public function __construct()
     {
-        $this->context = $context;
+        if (empty($this->context)) {
+            die(__('A context must be set', 'wpopt'));
+        }
 
-        $this->slug = shzn($this->context)->moduleHandler->module_slug(get_class($this), true);
+        $this->slug = ModuleHandler::module_slug(get_class($this), true);
 
-        $default_setting = $args['settings'] ?? array();
+        $this->hash = md5($this->context . $this->slug);
 
-        $this->settings = shzn($this->context)->settings->get($this->slug, $default_setting, true);
+        $this->settings = shzn($this->context)->settings->get($this->slug);
+
+        $this->action_hook = "$this->context-$this->slug-action-hook";
+
+        if (!shzn($this->context)->moduleHandler->module_is_active($this->slug)) {
+            return;
+        }
+
+        $this->init();
 
         // check if this module loads on cron and do a cronjob
-        if (is_admin() or wp_doing_cron()) {
+        if (wp_doing_cron()) {
 
-            if (in_array('cron', $this->scopes)) {
+            if (in_array('cron', $this->scopes) and shzn($this->context)->cron->is_active($this->slug)) {
 
-                $cron_defaults = $args['cron_settings'] ?? array();
-
-                $this->cron_settings = shzn($this->context)->cron->get_settings($this->slug, $cron_defaults);
-
-                add_filter("{$this->context}_validate_cron_settings", array($this, 'cron_validate_settings'), 10, 2);
-                add_filter("{$this->context}_cron_settings_fields", array($this, 'cron_setting_fields'), 10, 1);
-
-                if (Settings::check($this->cron_settings, 'active')) {
-
-                    add_action("{$this->context}_exec_cron", array($this, 'cron_handler'), 10, 1);
-                }
-            }
-
-            if (is_admin()) {
-
-                if (Graphic::is_on_screen($this->slug)) {
-
-                    if (did_action('admin_enqueue_scripts')) {
-                        $this->enqueue_scripts();
-                    }
-                    else {
-                        add_action('admin_enqueue_scripts', [$this, 'enqueue_scripts']);
-                    }
-                }
-
-                add_action('admin_notices', array($this, 'admin_notices'));
+                add_action("{$this->context}_exec_cron", array($this, 'cron_handler'), 10, 1);
             }
         }
 
-        add_action('init', array($this, 'handle_process_custom_actions'));
+        if (is_admin()) {
+
+            if (Graphic::is_on_screen($this->slug)) {
+
+                if (did_action('admin_enqueue_scripts')) {
+                    $this->enqueue_scripts();
+                }
+                else {
+                    add_action('admin_enqueue_scripts', [$this, 'enqueue_scripts']);
+                }
+            }
+
+            add_action('admin_notices', array($this, 'admin_notices'));
+
+            add_action('admin_init', array($this, 'actions'));
+        }
+        else {
+            add_action('init', array($this, 'actions'));
+        }
     }
 
-    public function enqueue_scripts()
+    protected function init()
+    {
+    }
+
+    public function enqueue_scripts(): void
     {
         wp_enqueue_style('vendor-shzn-css');
         wp_enqueue_script('vendor-shzn-js');
+    }
+
+    public function actions()
+    {
     }
 
     public function admin_notices()
@@ -128,56 +139,28 @@ class Module
         }
     }
 
-    /**
-     * check whether there is a POST action request for current module
-     */
-    public function handle_process_custom_actions()
+    public function cron_validate_settings($input, $filtering = false): array
     {
-        if (isset($_POST["{$this->context}-{$this->slug}-custom-action"])) {
-
-            $action_allowed = wp_verify_nonce($_POST["{$this->context}-{$this->slug}-custom-action"], "{$this->context}-{$this->slug}-custom-action");
-            $response = false;
-
-            if ($action_allowed) {
-                $action = sanitize_text_field($_POST["action"]);
-                $response = $this->process_custom_actions($action, $_POST);
-            }
-
-            if ($response) {
-                $this->add_notices('success', __('Action was correctly executed', $this->context));
-            }
-            else {
-                $this->add_notices('warning', __('Action execution failed', $this->context));
-            }
-        }
+        return $this->settings_validator($this->cron_setting_fields(), $input, $filtering);
     }
 
-    protected function process_custom_actions($action, $options)
+    private function settings_validator($settings, $input, $filtering = false): array
     {
-        return false;
-    }
+        $valid = [];
 
-    /**
-     * @param $status -> wrong, success, error, info
-     * @param $message
-     */
-    protected function add_notices($status, $message)
-    {
-        $this->notices[] = array('status' => $status, 'message' => $message);
-    }
-
-    public function cron_validate_settings($valid, $input)
-    {
-        return $this->internal_validate_settings($this->cron_setting_fields(), $input, $valid);
-    }
-
-    private function internal_validate_settings($settings, $input, $valid)
-    {
         foreach ($settings as $field) {
 
+            if ($filtering) {
+                $field_value = Settings::get_option($input, $field['id'], $field['value']);
+            }
+            else {
+                $field_value = $input[$field['id']] ?? $field['value'];
+            }
+
             switch ($field['type']) {
+
                 case 'checkbox':
-                    $value = isset($input[$field['id']]);
+                    $value = $filtering ? $field_value : isset($input[$field['id']]);
                     break;
 
                 case 'time':
@@ -186,12 +169,27 @@ class Module
                 case 'dropdown':
                 case 'textarea':
                 case 'upload-input':
-                    $value = StringHelper::sanitize_text_field($input[$field['id']]);
+                    $value = StringHelper::sanitize_text($field_value, false);
+                    break;
+
+                case 'textarea_array':
+
+                    if ($filtering) {
+                        $value = is_array($field_value) ? $field_value : [];
+                    }
+                    else {
+                        $value = array_filter(
+                            array_map(
+                                'trim',
+                                preg_split("#[\r\n]+#", StringHelper::sanitize_text($field_value, true))
+                            )
+                        );
+                    }
                     break;
 
                 case 'number':
                 case 'numeric':
-                    $value = intval($input[$field['id']]);
+                    $value = intval($field_value);
                     break;
 
                 default:
@@ -215,17 +213,16 @@ class Module
             $_valid = $value;
         }
 
-        return (array)$valid;
+        return $valid;
     }
 
-    public function cron_setting_fields($cron_settings = [])
+    public function cron_setting_fields(): array
     {
-        return $cron_settings;
+        return [];
     }
 
     public function cron_handler($args = array())
     {
-        return true;
     }
 
     public function ajax_handler($args = array())
@@ -236,7 +233,7 @@ class Module
         ], 'error');
     }
 
-    public function render_settings($filter = '')
+    public function render_settings($filter = ''): string
     {
         if ($this->restricted_access('settings')) {
             ob_start();
@@ -244,13 +241,13 @@ class Module
             return ob_get_clean();
         }
 
-        $_header = $this->setting_form_templates('header');
+        $_header = $this->print_header();
 
         $_divider = false;
 
         $setting_fields = $this->setting_fields($filter);
 
-        $option_name = shzn($this->context)->settings->option_name;
+        $option_name = shzn($this->context)->settings->get_context();
 
         ob_start();
 
@@ -263,11 +260,12 @@ class Module
                 <?php
 
                 if ($_header) {
-                    echo "<h3 class='shzn'>{$_header}</h3>";
+                    echo "<h3 class='shzn'>$_header</h3>";
                 }
 
-                settings_fields("{$this->context}-settings");
+                settings_fields("$this->context-settings");
                 ?>
+                <input type="hidden" name="option_panel" value="settings-<?php echo $this->slug; ?>">
                 <input type="hidden" name="<?php echo "{$option_name}[change]" ?>" value="<?php echo $this->slug; ?>">
                 <block class="shzn-options">
                     <?php Graphic::generate_fields($setting_fields, $this->infos(), array('name_prefix' => $option_name)); ?>
@@ -279,7 +277,7 @@ class Module
             <?php
         }
 
-        $_footer = $this->setting_form_templates('footer');
+        $_footer = $this->print_footer();
 
         if (!empty($_footer)) {
 
@@ -287,26 +285,13 @@ class Module
                 echo "<hr class='shzn-hr'>";
             }
 
-            $_divider = true;
-
             echo "<section class='shzn-setting-footer'>" . $_footer . "</section>";
-        }
-
-        $custom_action_form = $this->custom_actions_form();
-
-        if (!empty($custom_action_form)) {
-
-            if ($_divider) {
-                echo "<hr class='shzn-hr'>";
-            }
-
-            echo $custom_action_form;
         }
 
         return ob_get_clean();
     }
 
-    public function restricted_access($context = '')
+    public function restricted_access($context = ''): bool
     {
         return false;
     }
@@ -318,112 +303,90 @@ class Module
         <?php
     }
 
-    /**
-     * Provides the setting page content
-     * header, footer, sidebar
-     *
-     * @param $context
-     * @return string
-     */
-    protected function setting_form_templates($context)
+    protected function print_header(): string
     {
         return '';
     }
 
-    protected function setting_fields($filter = '')
+    protected function setting_fields($filter = ''): array
     {
         return array();
     }
 
-    protected function infos()
+    protected function infos(): array
     {
         return [];
     }
 
-    private function custom_actions_form()
+    protected function print_footer(): string
     {
-        $options = $this->custom_actions();
-
-        if (empty($options))
-            return '';
-
-        ob_start();
-
-        foreach ($options as $option) {
-            ?>
-            <form class="shzn-custom-action" method="POST">
-                <?php
-
-                Graphic::generate_field(array(
-                    'type'    => 'hidden',
-                    'id'      => "{$this->context}-{$this->slug}-custom-action",
-                    'value'   => wp_create_nonce("{$this->context}-{$this->slug}-custom-action"),
-                    'context' => 'nonce'
-                ));
-
-                $option['classes'] = "button {$option['button_types']} button-large";
-                $option['context'] = "action";
-
-                Graphic::generate_field($option);
-                ?>
-            </form>
-            <?php
-        }
-        return ob_get_clean();
+        return '';
     }
 
-    protected function custom_actions()
-    {
-        return array();
-    }
-
-    public function render_admin_page()
+    public function render_admin_page(): void
     {
         if ($this->restricted_access('render-admin')) {
             $this->render_disabled();
         }
     }
 
+    public function filter_settings()
+    {
+        // use the new settings available after import
+        $this->settings = $this->validate_settings(shzn($this->context)->settings->get($this->slug), true);
+        shzn($this->context)->settings->update($this->slug, $this->settings, true);
+    }
+
     /**
      * Provides general setting validator
      * for custom settings : override it
-     *
-     * @param $input
-     * @param $valid
-     * @return array
      */
-    public function validate_settings($input, $valid)
+    public function validate_settings($input, $filtering = false): array
     {
-        return $this->internal_validate_settings($this->setting_fields(), $input, $valid);
+        return $this->settings_validator(UtilEnv::array_flatter($this->setting_fields(), true), $input, $filtering);
     }
 
-    protected function group_setting_fields(...$args)
+    /**
+     * @param $status -> wrong, success, error, info
+     * @param $message
+     */
+    protected function add_notices($status, $message)
     {
-        return array_merge(array_filter($args));
+        $this->notices[] = array('status' => $status, 'message' => $message);
     }
 
-    protected function group_setting_sections($fields, $filter = '')
+    protected function group_setting_fields(...$args): array
+    {
+        return array_filter($args);
+    }
+
+    protected function group_setting_sections($fields, $filter = ''): array
     {
         $res = array();
 
-        if (!empty($filter)) {
-            foreach ((array)$filter as $_filter) {
-                if (isset($fields[$_filter]))
-                    $res = array_merge($res, $fields[$_filter]);
-            }
+        if (empty($filter)) {
+            $res = array_values($fields);
         }
         else {
-            $res = call_user_func_array('array_merge', array_values($fields));
+
+            if (!is_array($filter)) {
+                $filter = [$filter];
+            }
+
+            foreach ($filter as $_filter) {
+                if (isset($fields[$_filter])) {
+                    $res = array_merge($res, $fields[$_filter]);
+                }
+            }
         }
 
         return $res;
     }
 
-    protected function setting_field($name, $id = false, $type = 'text', $args = [])
+    protected function setting_field($name, $id = false, $type = 'text', $args = []): array
     {
         $args = array_merge([
-            'value'         => false,
-            'tooltips'      => false,
+            'value'         => null,
             'default_value' => '',
             'allow_empty'   => true,
             'parent'        => false,
@@ -433,7 +396,7 @@ class Module
         ], $args);
 
         if ($id or $type === 'link') {
-            $value = ($args['value'] === false) ? $this->option($id, $args['default_value']) : $args['value'];
+            $value = is_null($args['value']) ? $this->option($id, $args['default_value']) : $args['value'];
         }
         else {
             $value = '';
@@ -457,34 +420,16 @@ class Module
 
     public function option($path_name = '', $default = false)
     {
-        return Settings::get_option($this->settings, "{$path_name}", $default);
+        return Settings::get_option($this->settings, $path_name, $default);
     }
 
-    protected function activating($setting_field, $new_settings)
+    protected function activating($setting_field, $new_settings): bool
     {
         return !$this->option($setting_field) and isset($new_settings[$setting_field]);
     }
 
-    protected function deactivating($setting_field, $new_settings)
+    protected function deactivating($setting_field, $new_settings): bool
     {
         return $this->option($setting_field) and !isset($new_settings[$setting_field]);
-    }
-
-    protected function cache_get($key, $group = '', $default = false)
-    {
-        if (empty($group)) {
-            $group = "module_{$this->slug}";
-        }
-
-        return shzn($this->context)->cache->get($key, $group, $default);
-    }
-
-    protected function cache_set($key, $data, $group = '', $force = false)
-    {
-        if (empty($group)) {
-            $group = "module_{$this->slug}";
-        }
-
-        return shzn($this->context)->cache->set($key, $data, $group, $force);
     }
 }

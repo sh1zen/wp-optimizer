@@ -7,10 +7,14 @@
 
 namespace WPOptimizer\modules\supporters;
 
+if (!class_exists('WP_List_Table')) {
+    require_once(ABSPATH . 'wp-admin/includes/class-wp-list-table.php');
+}
+
 use SHZN\core\UtilEnv;
 
 /**
- * Core class used to implement displaying media items in a list table.
+ * Core class used to display media items in a list table.
  *
  * @since 1.5.0
  *
@@ -42,11 +46,29 @@ class Media_Table extends \WP_List_Table
             )
         );
 
+        add_screen_option(
+            'per_page',
+            array(
+                'default' => 50,
+                'label'   => __('Images per page', 'wpopt'),
+                'option'  => 'media_cleaner_images_per_page',
+            )
+        );
+
+        add_filter('set-screen-option', array($this, 'set_screen_option'), 10, 3);
+    }
+
+    public function set_screen_option($status, $option, $value)
+    {
+        if ('media_cleaner_images_per_page' === $option)
+            return $value;
+
+        return $status;
     }
 
     public static function process_bulk_action()
     {
-        if (isset($_REQUEST['filter_action']) && !empty($_REQUEST['filter_action'])) {
+        if (!empty($_REQUEST['filter_action'])) {
             return false;
         }
 
@@ -72,23 +94,10 @@ class Media_Table extends \WP_List_Table
         return false;
     }
 
-    /**
-     * @return bool
-     */
-    public function ajax_user_can()
-    {
-        return current_user_can('upload_files');
-    }
-
     public function set_items($items)
     {
-        $this->items = array_slice($items, ($this->get_pagenum() - 1) * $this->get_per_page(), $this->get_per_page());
+        $this->items = array_slice($items, ($this->get_pagenum() - 1) * $this->get_items_per_page('media_cleaner_images_per_page', 50), $this->get_items_per_page('media_cleaner_images_per_page', 50));
         $this->total_count = count($items);
-    }
-
-    private function get_per_page()
-    {
-        return 50;
     }
 
     /**
@@ -100,14 +109,12 @@ class Media_Table extends \WP_List_Table
     public function prepare_items()
     {
         $columns = $this->get_columns();
-        $hidden = $this->get_hidden_columns();
-        $sortable = $this->get_sortable_columns();
 
-        $this->_column_headers = array($columns, $hidden, $sortable);
+        $this->_column_headers = array($columns, [], []);
 
         $this->set_pagination_args(array(
             'total_items' => $this->total_count,
-            'per_page'    => $this->get_per_page()
+            'per_page'    => $this->get_items_per_page('media_cleaner_images_per_page', 50)
         ));
     }
 
@@ -119,27 +126,9 @@ class Media_Table extends \WP_List_Table
         return array(
             'cb'    => '<input type="checkbox" />',
             'image' => __('Image', 'wpopt'),
-            'path' => __('Path', 'wpopt'),
+            'path'  => __('Path', 'wpopt'),
             'size'  => __('Size', 'wpopt'),
             'cdate' => __('Last Modify Date', 'wpopt')
-        );
-    }
-
-    /** WP: Get columns that should be hidden */
-    function get_hidden_columns()
-    {
-        return array();
-    }
-
-    /**
-     * @return array
-     */
-    protected function get_sortable_columns()
-    {
-        return array(
-            'name'  => 'name',
-            'size'  => 'size',
-            'cdate' => 'cdate',
         );
     }
 

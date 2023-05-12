@@ -25,7 +25,7 @@ class ImagesProcessor
 {
     private array $settings;
 
-    private array $metadata;
+    private array $metadata = [];
 
     private function __construct($settings = array())
     {
@@ -48,20 +48,14 @@ class ImagesProcessor
             ],
             $settings
         );
-
-        $this->metadata = [];
     }
 
-    /**
-     * @param array $settings
-     * @return ImagesProcessor
-     */
-    public static function getInstance($settings = array())
+    public static function getInstance(array $settings = array()): ImagesProcessor
     {
         return new self($settings);
     }
 
-    public static function remove($media_id, bool $unlink)
+    public static function remove($media_id, bool $unlink): void
     {
         $media = shzn('wpopt')->options->get_by_id($media_id);
 
@@ -74,47 +68,64 @@ class ImagesProcessor
 
     public function find_orphaned_media()
     {
-        global $wpdb;
+        $uploadDir = realpath(UtilEnv::wp_upload_dir('basedir') . '/');
 
-        if (!($root = realpath(UtilEnv::wp_upload_dir('basedir') . '/'))) {
+        if (!$uploadDir) {
             return IPC_FAIL;
         }
 
-        $item_count = 0;
-        $last_scanned = shzn('wpopt')->options->get('last_scanned', 'find_orphaned_media', 'media', 0);
+        $restore_path = shzn('wpopt')->options->get('path', 'orphaned_media_progress', 'media');
+        // todo check if file still exist
+        $restore_file = shzn('wpopt')->options->get('file', 'orphaned_media_progress', 'media');
+
+        $root = trailingslashit($restore_path ?: $uploadDir);
 
         $iterator = new \RecursiveIteratorIterator(
             new \RecursiveDirectoryIterator($root, FilesystemIterator::SKIP_DOTS),
             \RecursiveIteratorIterator::SELF_FIRST,
-            \RecursiveIteratorIterator::CATCH_GET_CHILD // Ignore "Permission denied"
+            \RecursiveIteratorIterator::CATCH_GET_CHILD
         );
 
         $return = IPC_SUCCESS;
 
+        $iter = 0;
+
         foreach ($iterator as $fileInfo) {
 
-            if ($this->do_pause("orphan-media-scanner")) {
-                break;
-            }
+            if (UtilEnv::safe_time_limit(3, 60) === false or $this->do_pause("orphan-media-scanner")) {
 
-            if (!UtilEnv::safe_time_limit(3, 60)) {
+                //saving progress
+                shzn('wpopt')->options->update(
+                    'path',
+                    'orphaned_media_progress',
+                    $fileInfo->getPath(),
+                    'media'
+                );
+
+                shzn('wpopt')->options->update(
+                    'file',
+                    'orphaned_media_progress',
+                    $fileInfo->getBasename(),
+                    'media'
+                );
+
                 $return = IPC_TIME_LIMIT;
                 break;
             }
 
-            if ($item_count++ < $last_scanned) {
+            if ($restore_file and ($fileInfo->getBasename() !== $restore_file)) {
                 continue;
             }
 
-            if ($fileInfo->isFile()) {
+            $restore_file = false;
 
-                $image = $fileInfo->getBasename();
+            if ($fileInfo->isFile() and $fileInfo->isWritable() and $this->allow_media_clean($fileInfo->getExtension())) {
 
-                $res = $wpdb->get_var("SELECT ID FROM {$wpdb->posts} WHERE guid LIKE '%{$image}%';");
-
-                if (!$res) {
-                    $res = $wpdb->get_var("SELECT post_id FROM {$wpdb->postmeta} WHERE meta_value LIKE '%{$image}%';");
+                if ($iter++ > 10) {
+                    die();
                 }
+
+                $res = wps_attachment_path_to_postid($fileInfo->getRealPath());
 
                 if (!$res) {
                     shzn('wpopt')->options->add(
@@ -124,20 +135,18 @@ class ImagesProcessor
                             'size' => $fileInfo->getSize(),
                             'time' => $fileInfo->getCTime(),
                         ],
-                        'media',
-                        MONTH_IN_SECONDS
+                        'media'
                     );
                 }
+
                 usleep(1000);
             }
         }
 
-        shzn('wpopt')->options->update('last_scanned', 'find_orphaned_media', $item_count, 'media', DAY_IN_SECONDS * 3);
-
         return $return;
     }
 
-    public function do_pause($context)
+    public function do_pause($context): bool
     {
         return shzn('wpopt')->options->get("status", $context, "media", '', false) === 'paused';
     }
@@ -150,7 +159,7 @@ class ImagesProcessor
 
         $return = IPC_SUCCESS;
 
-        while (UtilEnv::safe_time_limit(5, 60)) {
+        while (UtilEnv::safe_time_limit(5, 60) !== false) {
 
             $post_ids = $wpdb->get_col("SELECT ID FROM {$wpdb->posts} WHERE post_type = 'attachment' AND ID > {$scannedID} ORDER BY ID ASC LIMIT 20");
 
@@ -192,7 +201,7 @@ class ImagesProcessor
             return IPC_MEDIA_NOT_FOUND;
         }
 
-        if (!UtilEnv::safe_time_limit(6, 60)) {
+        if (UtilEnv::safe_time_limit(6, 60) === false) {
             return IPC_TIME_LIMIT;
         }
 
@@ -272,7 +281,7 @@ class ImagesProcessor
     {
         $image_path = UtilEnv::normalize_path($image_path);
 
-        if (!UtilEnv::safe_time_limit(3, 60)) {
+        if (UtilEnv::safe_time_limit(3, 60) === false) {
             return IPC_TIME_LIMIT;
         }
 
@@ -519,5 +528,13 @@ class ImagesProcessor
         }
 
         return IPC_SUCCESS;
+    }
+
+    private function allow_media_clean($getExtension)
+    {
+        return match (strtolower($getExtension)) {
+            'php', 'htaccess' => false,
+            default => true,
+        };
     }
 }

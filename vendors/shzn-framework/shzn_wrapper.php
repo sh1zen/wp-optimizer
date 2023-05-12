@@ -9,50 +9,21 @@ namespace SHZN\core;
 
 class shzn_wrapper
 {
-    /**
-     * @var PerformanceMeter
-     */
-    public $meter;
+    public ?PerformanceMeter $meter = null;
 
-    /**
-     * @var Cache
-     */
-    public $cache;
+    public ?Cache $cache = null;
 
-    /**
-     * @var Storage
-     */
-    public $storage;
+    public ?Storage $storage = null;
 
-    /**
-     * @var Utility
-     */
-    public $utility;
+    public ?Settings $settings = null;
 
-    /**
-     * @var Settings
-     */
-    public $settings;
+    public ?Cron $cron = null;
 
-    /**
-     * @var Cron
-     */
-    public $cron;
+    public ?Ajax $ajax = null;
 
-    /**
-     * @var Ajax
-     */
-    public $ajax;
+    public ?Options $options = null;
 
-    /**
-     * @var Options
-     */
-    public $options;
-
-    /**
-     * @var ModuleHandler
-     */
-    public $moduleHandler;
+    public ?ModuleHandler $moduleHandler = null;
 
     private array $args = [];
 
@@ -72,15 +43,18 @@ class shzn_wrapper
     private function filter_args($args)
     {
         $this->args = array_merge($this->args, [
-            'path'          => '',
-            'use_memcache'  => false,
-            'table_name'    => ''
+            'path'       => '',
+            'table_name' => ''
         ], (array)$args);
     }
 
     private function filter_components($components)
     {
-        $defaults = empty($this->components) ? [
+        if (!empty($this->components)) {
+            $components = array_diff_key($components, array_filter($this->components));
+        }
+
+        $this->components = array_merge([
             'meter'         => false,
             'cache'         => false,
             'storage'       => false,
@@ -88,11 +62,8 @@ class shzn_wrapper
             'cron'          => false,
             'ajax'          => false,
             'moduleHandler' => false,
-            'utility'       => false,
             'options'       => false
-        ] : $this->components;
-
-        $this->components = array_merge($defaults, $components);
+        ], $components);
     }
 
     public function update_components($components, $args)
@@ -104,16 +75,12 @@ class shzn_wrapper
 
     public function setup()
     {
-        if ($this->components['utility']) {
-            $this->utility = new Utility();
-        }
-
         if ($this->components['meter']) {
-            $this->meter = new PerformanceMeter("loading-{$this->context}");
+            $this->meter = new PerformanceMeter("loading-$this->context");
         }
 
         if ($this->components['cache']) {
-            $this->cache = new Cache($this->args['use_memcache']);
+            $this->cache = new Cache(defined('WP_PERSISTENT_CACHE') ? WP_PERSISTENT_CACHE : false);
         }
 
         if ($this->components['storage']) {
@@ -128,22 +95,22 @@ class shzn_wrapper
             $this->settings = new Settings($this->context);
         }
 
-        if ($this->components['cron']) {
-            $this->cron = new Cron($this->context);
+        if ($this->components['moduleHandler']) {
+            $this->moduleHandler = new ModuleHandler($this->context, $this->args['path']);
         }
 
         if ($this->components['ajax'] and wp_doing_ajax()) {
             $this->ajax = new Ajax($this->context);
         }
 
-        if ($this->components['moduleHandler']) {
-            $this->moduleHandler = new ModuleHandler($this->args['path'], $this->context);
+        if ($this->components['cron']) {
+            $this->cron = new Cron($this->context);
         }
     }
 
     public function __get($name)
     {
         $fn = shzn_debug_backtrace(2);
-        trigger_error("SHZN Framework >> object {$name} not defined in {$fn}.", E_USER_WARNING);
+        trigger_error("SHZN Framework >> object $name not defined in $fn.", E_USER_WARNING);
     }
 }

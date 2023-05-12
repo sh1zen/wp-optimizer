@@ -11,52 +11,55 @@ class Storage
 {
     private Cache $cache;
 
-    private $storage_name;
+    private string $storage_name;
 
-    private $custom_storage_name;
+    private bool $is_multisite;
+    private string $blog_prefix;
 
     public function __construct($context)
     {
         $this->cache = shzn($context)->cache;
 
+        $this->is_multisite = is_multisite();
+
+        $this->switch_to_blog();
+
         $this->storage_name = $context;
     }
 
-    public static function generate_id($identifier, ...$args)
+    public function switch_to_blog($blog_id = 0): bool
     {
-        if (is_array($identifier) or is_object($identifier)) {
-            return Cache::generate_key($identifier, ...$args);
+        if ($blog_id === 0) {
+            $blog_id = get_current_blog_id();
         }
 
-        return 'ID:' . $identifier . '_' . Cache::generate_key($identifier . serialize($args));
+        $this->blog_prefix = $this->is_multisite ? "#$blog_id" : '';
+
+        return $this->is_multisite;
     }
 
     public function get($key = '', $context = 'default', $blog_id = 0)
     {
-        $context = $this->filter_context($context, $blog_id);
-
-        if ($res = $this->cache->get($key, $context)) {
+        if ($res = $this->cache->get($key, $this->filter_context($context, $blog_id))) {
             return $res['data'];
         }
 
         return $this->load($key, $context, true, $blog_id);
     }
 
-    private function filter_context($context, $_blog_id = 0)
+    private function filter_context($context, $blog_id = 0)
     {
-        $blog_id = '';
+        $this->switch_to_blog($blog_id);
 
-        if (is_multisite()) {
-
-            if ($_blog_id) {
-                $blog_id = "blog_{$_blog_id}/";
-            }
-            else {
-                $blog_id = "blog_" . get_current_blog_id() . "/";
-            }
+        if (empty($context)) {
+            $context = 'default';
         }
 
-        return $blog_id . $context;
+        if ($this->is_multisite) {
+            $context = "$context/$this->blog_prefix";
+        }
+
+        return $context;
     }
 
     public function load($key, $context = 'default', $cache = false, $blog_id = 0)
@@ -92,29 +95,27 @@ class Storage
         return $data['data'];
     }
 
-    private function generate_path($context, $key = '')
+    private function generate_path($context, $key = ''): string
     {
         $context = str_replace('default', '', $context);
 
-        $sub_folder = $this->custom_storage_name ?: $this->storage_name;
-
-        return WP_CONTENT_DIR . "/{$sub_folder}/{$context}/{$key}";
+        return WP_CONTENT_DIR . "/$this->storage_name/$context/$key";
     }
 
     public function set($data, $key = 'main', $context = 'default', $expire = false, $force = false, $blog_id = 0)
     {
+        if (empty($key)) {
+            return false;
+        }
+
         $context = $this->filter_context($context, $blog_id);
 
         if (!$force and $this->cache->has($key, $context)) {
-            $force = Cache::generate_key($data) !== Cache::generate_key($this->cache->get($key, $context)['data'] ?? '');
-
-            if (!$force) {
-                return;
-            }
+            return false;
         }
 
-        // auto add time() to expire if passed just lifespan
-        if ($expire <= time()) {
+        // todo check
+        if ($expire < YEAR_IN_SECONDS) {
             $expire += time();
         }
 
@@ -126,74 +127,50 @@ class Storage
 
         $this->cache->set($key, $args, $context, true);
 
-        $this->save($data, $key, $context, $expire, $force, $blog_id);
+        return $this->save($args, $key, $context, $force);
     }
 
-    //$key, $value, $group, $expires, true
-    public function save($data, $key, $context = 'default', $expire = false, $force = false, $blog_id = 0)
+    private function save($content, $key, $context, $force = false)
     {
-        $context = $this->filter_context($context, $blog_id);
-
-        // auto add time() to expire if passed just lifespan
-        if ($expire <= time()) {
-            $expire += time();
-        }
-
-        $args = array(
-            'expire' => $expire,
-            'force'  => $force,
-            'data'   => $data
-        );
-
         $path = $this->generate_path($context);
 
         if (file_exists($path . $key) and !$force) {
             return false;
         }
 
-        $cached = serialize($args);
-
-        if (!$cached) {
+        if (!$cached = serialize($content)) {
             return false;
         }
 
-        Disk::make_path($path);
+        if (!Disk::make_path($path)) {
+            return false;
+        }
 
         return file_put_contents($path . $key, $cached);
     }
 
-    public function use_custom_storage_name($name)
+    public function delete_old($context = 'default', $lifetime = 0, $blog_id = 0): int
     {
-        $this->custom_storage_name = $name;
+        return Disk::delete($this->get_path($context, '', $blog_id), $lifetime);
     }
 
-    public function delete($context = 'default', $key = '', $blog_id = 0)
+    public function delete($context = 'default', $key = '', $blog_id = 0): int
     {
         $this->remove($context, $key, $blog_id);
 
-        $context = $this->filter_context($context, $blog_id);
-
-        $identifier = $key;
-        if ($key and (str_contains($key, 'ID:'))) {
-            $key = '';
-        }
-
-        $path = $this->generate_path($context, $key);
-
-        if (!file_exists($path)) {
-            return false;
-        }
-
-        Disk::delete_files($path, $identifier);
-
-        return true;
+        return Disk::delete($this->get_path($context, $key, $blog_id));
     }
 
-    public function remove($context = 'default', $key = '', $blog_id = 0)
+    public function remove($context = 'default', $key = '', $blog_id = 0): bool
     {
         $context = $this->filter_context($context, $blog_id);
 
         return empty($key) ? $this->cache->flush_group($context) : $this->cache->delete($key, $context);
+    }
+
+    public function get_path($context = 'default', $key = '', $blog_id = 0): string
+    {
+        return $this->generate_path($this->filter_context($context, $blog_id), $key);
     }
 
     public function get_size($contexts = '', $blog_id = 0)
@@ -213,11 +190,6 @@ class Storage
         }
 
         return size_format($size);
-    }
-
-    public function get_path($context = 'default', $key = '', $blog_id = 0)
-    {
-        return $this->generate_path($this->filter_context($context, $blog_id), $key);
     }
 }
 

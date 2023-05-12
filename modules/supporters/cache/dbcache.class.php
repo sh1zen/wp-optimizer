@@ -15,18 +15,19 @@ class DBCache extends Cache_Dispatcher
     {
         Disk::write(
             WP_CONTENT_DIR . DIRECTORY_SEPARATOR . "db.php",
-            "<?php" . PHP_EOL . PHP_EOL . "include_once('" . WPOPT_SUPPORTERS . "cache/db.php');"
+            "<?php" . PHP_EOL . PHP_EOL . "include_once('" . WPOPT_SUPPORTERS . "cache/db.php');",
+            0
         );
     }
 
-    protected static function get_cache_group()
+    protected static function get_cache_group(): string
     {
         return "cache/db";
     }
 
     public static function deactivate()
     {
-        Disk::delete_files(WP_CONTENT_DIR . DIRECTORY_SEPARATOR . "db.php");
-        self::clear_cache();
+        Disk::delete(WP_CONTENT_DIR . DIRECTORY_SEPARATOR . "db.php");
+        self::flush();
     }
 }

@@ -9,13 +9,7 @@ use SHZN\core\Cron;
 use WPOptimizer\core\PluginInit;
 use WPOptimizer\modules\supporters\ImagesProcessor;
 
-/**
- * @author    sh1zen
- * @copyright Copyright (C)  2022
- * @license   http://www.gnu.org/licenses/gpl.html GNU/GPL
- */
-
-function wpopt()
+function wpopt(): PluginInit
 {
     return PluginInit::getInstance();
 }
@@ -41,12 +35,8 @@ function wpopt_optimize_image(string $path, bool $replace = true, array $setting
 
 /**
  * wpopt utility useful to scan a directory and optimize images present
- *
- * @param string $path
- * @param array $settings
- * @return bool
  */
-function wpopt_optimize_media_path(string $path, array $settings = [])
+function wpopt_optimize_media_path(string $path, array $settings = []): bool
 {
     if (!shzn('wpopt')) {
         return false;
@@ -67,6 +57,7 @@ function wpopt_optimize_media_path(string $path, array $settings = [])
         Cron::unschedule_function('wpopt_optimize_media_path', [$path, $settings]);
         shzn('wpopt')->options->update("status", 'optimization', 'paused', "media");
     }
+
     return true;
 }
 

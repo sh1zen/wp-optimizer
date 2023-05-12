@@ -9,26 +9,15 @@ namespace SHZN\core;
 
 class Settings
 {
-    /**
-     * Plugin options name
-     */
-    public $option_name;
-
     private $settings;
 
-    private $context;
+    private string $context;
 
-    public function __construct($option_name)
+    public function __construct($context)
     {
-        $this->option_name = $option_name;
+        $this->context = $context;
 
-        $this->context = $option_name;
-
-        $this->settings = get_option($option_name);
-
-        if (!$this->settings) {
-            $this->settings = array();
-        }
+        $this->settings = get_option($context) ?: [];
 
         if (is_admin()) {
             add_action('admin_init', array($this, 'register_hooks'));
@@ -40,34 +29,6 @@ class Settings
         $res = self::get_option($settings, $key, null);
 
         return $res === null ? $default : $res;
-    }
-
-    /**
-     * Access to settings by path -> delimiter: "."
-     *
-     * @param string $context
-     * @param mixed $default
-     * @param bool $update -> if no option were found, update theme, with defaults values
-     *
-     * @return array|mixed|object|string
-     */
-    public function get(string $context = '', $default = [], bool $update = false)
-    {
-        $res = self::get_option($this->settings, $context, null);
-
-        if (is_null($res)) {
-            if ($update) {
-                $this->update($context, $default);
-            }
-
-            return $default;
-        }
-
-        if (is_array($default) and is_array($res)) {
-            $res = array_merge($default, $res);
-        }
-
-        return $res;
     }
 
     public static function get_option($settings, $setting_path, $default = false)
@@ -99,7 +60,35 @@ class Settings
         return $settings;
     }
 
-    public function update($context, $option_data, $force = false)
+    /**
+     * Access to settings by path -> delimiter: "."
+     *
+     * @param string $context
+     * @param mixed $default
+     * @param bool $update -> if no option were found, update theme, with defaults values
+     *
+     * @return array|mixed|object|string
+     */
+    public function get(string $context = '', $default = [], bool $update = false)
+    {
+        $res = self::get_option($this->settings, $context, null);
+
+        if (is_null($res)) {
+            if ($update) {
+                $this->update($context, $default);
+            }
+
+            return $default;
+        }
+
+        if (is_array($default) and is_array($res)) {
+            $res = array_merge($default, $res);
+        }
+
+        return $res;
+    }
+
+    public function update($context, $option_data, $force = false): bool
     {
         if (empty($context)) {
             return false;
@@ -141,11 +130,11 @@ class Settings
         return $this->reset($this->settings);
     }
 
-    public function reset($options = array())
+    public function reset($options = array()): bool
     {
         $this->settings = $options;
 
-        return update_option($this->option_name, $options);
+        return update_option($this->context, $options, 'yes');
     }
 
     public function render_core_settings()
@@ -153,7 +142,7 @@ class Settings
         /**
          * Consider only modules with settings handlers
          */
-        $modules = shzn($this->context)->moduleHandler->get_modules(array('scopes' => array('core-settings')));
+        $modules = shzn($this->context)->moduleHandler->get_modules(array('scopes' => array('core-settings')), false);
 
         settings_errors();
         ?>
@@ -165,6 +154,7 @@ class Settings
                 if (!empty($modules)) {
                     echo $this->generateHTML_tabpan($modules);
                 }
+
                 ?>
             </block>
         </section>
@@ -198,7 +188,7 @@ class Settings
 
     public function register_hooks()
     {
-        register_setting("{$this->option_name}-settings", $this->option_name, array(
+        register_setting("$this->context-settings", $this->context, array(
             'type'              => 'array',
             'sanitize_callback' => array($this, 'validate')
         ));
@@ -224,7 +214,7 @@ class Settings
                     echo $this->generateHTML_tabpan($modules);
                 }
                 else {
-                    echo "<h2>" . sprintf(__("No modules enabled. To enable them go <a href='%s'>here</a>.", $this->context), admin_url("admin.php?page={$this->option_name}-settings")) . "</h2>";
+                    echo "<h2>" . sprintf(__("No modules enabled. To enable them go <a href='%s'>here</a>.", $this->context), admin_url("admin.php?page={$this->context}-settings")) . "</h2>";
                 }
                 ?>
             </block>
@@ -234,12 +224,12 @@ class Settings
 
     public function activate()
     {
-        $options = get_option($this->option_name, array());
+        $options = get_option($this->context, array());
 
         if (empty($options)) {
 
             /**
-             * Load all modules to be allow them to set up their options
+             * Load all modules to be allowed them to set up their options
              */
             shzn($this->context)->moduleHandler->setup_modules('all');
 
@@ -249,7 +239,6 @@ class Settings
 
     public function validate($input)
     {
-
         if (!isset($input['change'])) {
             return $input;
         }
@@ -260,26 +249,43 @@ class Settings
             die();
         }
 
-        $valid = $object->validate_settings($input, $object->settings);
+        $valid = $object->validate_settings($input);
 
         $this->settings = wp_parse_args(array($object->slug => $valid), $this->settings);
+
+        add_action('shutdown', function () {
+
+            if (isset($_REQUEST['option_page'], $_REQUEST['option_panel'])) {
+
+                $rewriter = Rewriter::getInstance();
+
+                $rewriter->set_fragment($_REQUEST['option_panel']);
+
+                $rewriter->replace_path($_REQUEST['_wp_http_referer']);
+            }
+        });
 
         return $this->settings;
     }
 
-    public function export()
+    public function export(): string
     {
         return base64_encode(serialize($this->settings));
     }
 
-    public function import($import_settings)
+    public function import($import_settings): bool
     {
-        $settings = unserialize(base64_decode($import_settings));
+        $settings = unserialize(base64_decode($import_settings) ?: '');
 
         if (!$settings or !is_array($settings)) {
             return false;
         }
 
         return $this->reset($settings);
+    }
+
+    public function get_context(): string
+    {
+        return $this->context;
     }
 }

@@ -7,6 +7,7 @@
 
 namespace WPOptimizer\modules;
 
+use SHZN\core\Rewriter;
 use SHZN\modules\Module;
 use SHZN\core\Settings;
 use WPOptimizer\modules\supporters\WP_Htaccess;
@@ -16,24 +17,64 @@ use WPOptimizer\modules\supporters\WP_Htaccess;
  */
 class Mod_WP_Security extends Module
 {
-    public $scopes = array('settings', 'autoload');
+    public array $scopes = array('settings', 'autoload');
+    protected string $context = 'wpopt';
+    private array $server_conf_hooks = array(
+        'srv_security' => array(
+            'active' => false,
+        )
+    );
 
-    private $server_conf_hooks;
-
-    public function __construct()
+    public function hash_version_script($target_url)
     {
-        $this->server_conf_hooks = array(
-            'srv_security' => array(
-                'active' => false,
-            )
-        );
+        $rewriter = Rewriter::getInstance($target_url);
 
-        parent::__construct('wpopt',
-            array(
-                'settings' => $this->server_conf_hooks
-            )
-        );
+        if ($this->option('dcl_security.hideversion')) {
+            $rewriter->remove_query_arg('version');
+            $rewriter->remove_query_arg('ver');
+        }
+        else {
+            $rewriter->set_query_arg('ver', md5(SHZN_SALT . $rewriter->get_query_var('ver', $rewriter->remove_query_arg('version'))));
+        }
 
+        return $rewriter->get_uri(false);
+    }
+
+    public function validate_settings($input, $filtering = false): array
+    {
+        $this->load_dependencies();
+
+        $new_valid = parent::validate_settings($input, $filtering);
+
+        $htaccess = new WP_Htaccess($new_valid);
+
+        foreach ($this->server_conf_hooks as $server_hooks => $value) {
+
+            $htaccess->toggle_rule($server_hooks, Settings::get_option($new_valid, "$server_hooks.active"));
+        }
+
+        if ($htaccess->edited()) {
+            $htaccess->write();
+        }
+
+        return $new_valid;
+    }
+
+    private function load_dependencies()
+    {
+        require_once WPOPT_SUPPORTERS . 'optisec/WP_Htaccess.class.php';
+    }
+
+    public function restricted_access($context = ''): bool
+    {
+        if ($context === 'settings')
+            return !current_user_can('manage_options');
+
+        return false;
+    }
+
+    protected function init(): void
+    {
         if (is_admin()) {
             if (!is_writable(ABSPATH . '.htaccess')) {
                 $this->add_notices('error', sprintf(__("<b><i>'%s'</i> is not writable.</b><br>Modify (<b>run chmod 774</b>) it's group permission to allow WP-Security to make changes automatically.", 'wpopt'), ABSPATH . '.htaccess'));
@@ -43,51 +84,20 @@ class Mod_WP_Security extends Module
         $this->security();
     }
 
-    private function security()
+    private function security(): void
     {
         if ($this->option('a_api.active')) {
             // user enumeration patch
-            if ($this->option('security.nousernum') and !is_admin()) {
+            if ($this->option('a_api.nousernum') and !is_admin()) {
                 // default URL format
                 if (preg_match('/author=([0-9]*)/i', $_SERVER['QUERY_STRING']) or preg_match('/\?author=([0-9]*)(\/*)/i', $_SERVER['QUERY_STRING'])) {
-                    wp_redirect(get_option('home'), 302);
+                    Rewriter::getInstance()->redirect(get_option('home'), 302);
                     exit;
                 }
             }
 
-            // disable xml rpc
-            if ($this->option('security.disable_xml_rpc')) {
-
-                if (stripos(strtolower($_SERVER['REQUEST_URI']), 'xmlrpc') !== false) {
-                    die();
-                }
-
-                // Disable use XML-RPC
-                add_filter('xmlrpc_enabled', '__return_false');
-
-                // Disable X-Pingback to header
-                add_filter('wp_headers', function ($headers) {
-                    unset($headers['X-Pingback']);
-
-                    return $headers;
-                });
-            }
-
-            // disable json api
-            if ($this->option('security.disable_jsonapi')) {
-                add_filter('rest_authentication_errors', function ($result) {
-                    if (!empty($result)) {
-                        return $result;
-                    }
-                    if (!is_user_logged_in()) {
-                        return new \WP_Error('rest_not_logged_in', 'You are not currently logged in.', array('status' => 401));
-                    }
-                    return $result;
-                });
-            }
-
             // disable file edit
-            if ($this->option('security.disable_file_editor') and !defined('DISALLOW_FILE_EDIT')) {
+            if ($this->option('a_api.disable_file_editor') and !defined('DISALLOW_FILE_EDIT')) {
                 define('DISALLOW_FILE_EDIT', true);
             }
         }
@@ -100,112 +110,76 @@ class Mod_WP_Security extends Module
                 // remove version from rss
                 add_filter('the_generator', '__return_empty_string');
 
-                if (function_exists('remove_yoast_seo_comments_fn'))
-                    add_action('template_redirect', 'remove_yoast_seo_comments_fn', 9999);
-            }
-
-            if ($this->option('dcl_security.nocssversion')) {
-                add_filter('style_loader_src', array($this, 'remove_version_script_style'), 20000);
-            }
-
-            if ($this->option('dcl_security.nojsversion')) {
-                add_filter('script_loader_src', array($this, 'remove_version_script_style'), 20000);
-            }
-        }
-    }
-
-    public function remove_version_script_style($target_url)
-    {
-        $target_url = remove_query_arg('ver', $target_url);
-        return remove_query_arg('version', $target_url);
-    }
-
-    public function validate_settings($input, $valid)
-    {
-        require_once WPOPT_SUPPORTERS . 'optisec/WP_Htaccess.class.php';
-
-        $new_valid = parent::validate_settings($input, $valid);
-
-        $htaccess = new WP_Htaccess($new_valid);
-
-        foreach ($this->server_conf_hooks as $server_hooks => $value) {
-
-            $htaccess->toggle_rule($server_hooks, Settings::get_option($new_valid, "{$server_hooks}.active"));
-        }
-
-        if ($htaccess->edited()) {
-            $htaccess->write();
-        }
-
-        return $new_valid;
-    }
-
-    public function restricted_access($context = '')
-    {
-        if ($context === 'settings')
-            return !current_user_can('manage_options');
-
-        return false;
-    }
-
-    protected function setting_form_templates($context)
-    {
-        if ($context === 'header') {
-
-            if (!is_writable(ABSPATH . '.htaccess')) {
-
-                require_once WPOPT_SUPPORTERS . 'optisec/WP_Enhancer.class.php';
-
-                $htaccess = new WP_Htaccess($this->option());
-
-                foreach ($this->server_conf_hooks as $server_hooks => $value) {
-
-                    $htaccess->toggle_rule($server_hooks, $this->option("{$server_hooks}.active"));
+                if (function_exists('remove_yoast_seo_comments_fn')) {
+                    add_action('template_redirect', 'remove_yoast_seo_comments_fn', 10000);
                 }
+            }
 
-                if ($htaccess->edited() and !$htaccess->write()) {
+            if (!is_admin() and ($this->option('dcl_security.hashversion') or $this->option('dcl_security.hideversion'))) {
+                add_filter('style_loader_src', array($this, 'hash_version_script'), 10000);
+                add_filter('script_loader_src', array($this, 'hash_version_script'), 10000);
+            }
+        }
+    }
 
-                    $virtual_page = htmlentities($htaccess->get_rules());
+    protected function print_header(): string
+    {
+        if (!is_writable(ABSPATH . '.htaccess')) {
 
-                    return "<p><b>" . __("Your htaccess file is not modifiable, to make desired enhancements copy and paste those lines to .htaccess file.", 'wpopt') . "</b><br><br><textarea style='width: 100%; height: 200px'>$virtual_page</textarea></p>";
-                }
+            $this->load_dependencies();
+
+            $htaccess = new WP_Htaccess($this->option());
+
+            foreach ($this->server_conf_hooks as $server_hooks => $value) {
+
+                $htaccess->toggle_rule($server_hooks, $this->option("{$server_hooks}.active"));
+            }
+
+            if ($htaccess->edited() and !$htaccess->write()) {
+
+                $virtual_page = htmlentities($htaccess->get_rules());
+
+                return "<p><b>" . __("Your htaccess file is not modifiable, to make desired enhancements copy and paste those lines to .htaccess file.", 'wpopt') . "</b><br><br><textarea style='width: 100%; height: 200px'>$virtual_page</textarea></p>";
             }
         }
 
         return '';
     }
 
-    protected function setting_fields($filter = '')
+    protected function setting_fields($filter = ''): array
     {
         return $this->group_setting_fields(
             $this->setting_field(__('Some configuration are available only in apache.', 'wpopt'), false, "separator"),
-            $this->setting_field(__('Requests and Server', 'wpopt'), "srv_security.active", "checkbox"),
-            $this->setting_field(__('Disable directory listing', 'wpopt'), "srv_security.listings", "checkbox", ['parent' => 'srv_security.active', 'default_value' => true]),
-            $this->setting_field(__('Disable access to configuration file (.htaccess)', 'wpopt'), "srv_security.protect_htaccess", "checkbox", ['parent' => 'srv_security.active', 'default_value' => true]),
-            $this->setting_field(__('Enable HTTPS Strict Transport Security', 'wpopt'), "srv_security.hsts", "checkbox", ['parent' => 'srv_security.active', 'default_value' => true]),
-            $this->setting_field(__('Disable Cross-Origin Resource Sharing', 'wpopt'), "srv_security.cors", "checkbox", ['parent' => 'srv_security.active', 'default_value' => true]),
-            $this->setting_field(__('Disable HTTP Track & Trace', 'wpopt'), "srv_security.http_track&trace", "checkbox", ['parent' => 'srv_security.active', 'default_value' => true]),
-            $this->setting_field(__('Block Cross Site Scripting', 'wpopt'), "srv_security.xss", "checkbox", ['parent' => 'srv_security.active', 'default_value' => true]),
-            $this->setting_field(__('Send No Sniff Header', 'wpopt'), "srv_security.nosniff", "checkbox", ['parent' => 'srv_security.active', 'default_value' => true]),
-            $this->setting_field(__('Send No Referrer Header', 'wpopt'), "srv_security.noreferrer", "checkbox", ['parent' => 'srv_security.active']),
-            $this->setting_field(__('Send No Frame Header', 'wpopt'), "srv_security.noframe", "checkbox", ['parent' => 'srv_security.active']),
-            $this->setting_field(__('Disable server signature ', 'wpopt'), "srv_security.signature", "checkbox", ['parent' => 'srv_security.active']),
 
-            $this->setting_field(__('Disable Information Disclosure & Remove Meta information.', 'wpopt'), "dcl_security.active", "checkbox"),
-            $this->setting_field(__('Hide WordPress Version Number', 'wpopt'), "dcl_security.nowpversion", "checkbox", ['parent' => 'dcl_security.active']),
-            $this->setting_field(__('Remove WordPress Meta Generator Tag', 'wpopt'), "dcl_security.nowpgenerator", "checkbox", ['parent' => 'dcl_security.active']),
-            $this->setting_field(__('Remove Version from Stylesheet', 'wpopt'), "dcl_security.nocssversion", "checkbox", ['parent' => 'dcl_security.active']),
-            $this->setting_field(__('Remove Version from Script', 'wpopt'), "dcl_security.nojsversion", "checkbox", ['parent' => 'dcl_security.active']),
-
-            $this->setting_field(__('Admin & API Security', 'wpopt'), "a_api.active", "checkbox"),
-            $this->setting_field(__('Disable WP User Enumeration', 'wpopt'), "a_api.nousernum", "checkbox", ['parent' => 'a_api.active']),
-            $this->setting_field(__('Disable WP File Editor', 'wpopt'), "a_api.disable_file_editor", "checkbox", ['parent' => 'a_api.active']),
-            $this->setting_field(__('Disable XMLRPC', 'wpopt'), "a_api.disable_xml_rpc", "checkbox", ['parent' => 'a_api.active']),
-            $this->setting_field(__('Disable WP API JSON', 'wpopt'), "a_api.disable_jsonapi", "checkbox", ['parent' => 'a_api.active'])
+            $this->group_setting_fields(
+                $this->setting_field(__('Requests and Server', 'wpopt'), "srv_security.active", "checkbox"),
+                $this->setting_field(__('Disable directory listing', 'wpopt'), "srv_security.listings", "checkbox", ['parent' => 'srv_security.active', 'default_value' => true]),
+                $this->setting_field(__('Disable access to configuration file (.htaccess)', 'wpopt'), "srv_security.protect_htaccess", "checkbox", ['parent' => 'srv_security.active', 'default_value' => true]),
+                $this->setting_field(__('Enable HTTPS Strict Transport Security', 'wpopt'), "srv_security.hsts", "checkbox", ['parent' => 'srv_security.active', 'default_value' => true]),
+                $this->setting_field(__('Disable Cross-Origin Resource Sharing', 'wpopt'), "srv_security.cors", "checkbox", ['parent' => 'srv_security.active', 'default_value' => true]),
+                $this->setting_field(__('Disable HTTP Track & Trace', 'wpopt'), "srv_security.http_track&trace", "checkbox", ['parent' => 'srv_security.active', 'default_value' => true]),
+                $this->setting_field(__('Block Cross Site Scripting', 'wpopt'), "srv_security.xss", "checkbox", ['parent' => 'srv_security.active', 'default_value' => true]),
+                $this->setting_field(__('Send No Sniff Header', 'wpopt'), "srv_security.nosniff", "checkbox", ['parent' => 'srv_security.active', 'default_value' => true]),
+                $this->setting_field(__('Send No Referrer Header', 'wpopt'), "srv_security.noreferrer", "checkbox", ['parent' => 'srv_security.active']),
+                $this->setting_field(__('Send No Frame Header', 'wpopt'), "srv_security.noframe", "checkbox", ['parent' => 'srv_security.active']),
+                $this->setting_field(__('Disable server signature ', 'wpopt'), "srv_security.signature", "checkbox", ['parent' => 'srv_security.active', 'default_value' => true]),
+            ),
+            $this->group_setting_fields(
+                $this->setting_field(__('Disable Information Disclosure & Remove Meta information.', 'wpopt'), "dcl_security.active", "checkbox"),
+                $this->setting_field(__('Hide WordPress Version Number', 'wpopt'), "dcl_security.nowpversion", "checkbox", ['parent' => 'dcl_security.active', 'default_value' => true]),
+                $this->setting_field(__('Remove WordPress Meta Generator Tag', 'wpopt'), "dcl_security.nowpgenerator", "checkbox", ['parent' => 'dcl_security.active', 'default_value' => true]),
+                $this->setting_field(__('Hash versioned Styles and Scripts', 'wpopt'), "dcl_security.hashversion", "checkbox", ['parent' => 'dcl_security.active']),
+                $this->setting_field(__('Hide version from Styles and Scripts', 'wpopt'), "dcl_security.hideversion", "checkbox", ['parent' => 'dcl_security.active']),
+            ),
+            $this->group_setting_fields(
+                $this->setting_field(__('Admin & API Security', 'wpopt'), "a_api.active", "checkbox"),
+                $this->setting_field(__('Disable WP User Enumeration', 'wpopt'), "a_api.nousernum", "checkbox", ['parent' => 'a_api.active', 'default_value' => true]),
+                $this->setting_field(__('Disable WP File Editor', 'wpopt'), "a_api.disable_file_editor", "checkbox", ['parent' => 'a_api.active']),
+            )
         );
     }
 
-    protected function infos()
+    protected function infos(): array
     {
         return [
             'srv_security.listings'         => __("Directory listing is a web server feature that displays the contents of a directory when an index file is not present, potentially exposing sensitive information.", 'wpopt'),

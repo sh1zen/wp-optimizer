@@ -9,12 +9,17 @@ namespace SHZN\core;
 
 class Graphic
 {
-    public static function generate_fields($fields_args, $infos, $args = [], $display = true)
+    public static function generate_fields($fields_args, $infos = [], $args = [], $display = true): string
     {
         $output = '';
         $levels = array();
 
         foreach ($fields_args as $field_args) {
+
+            if (isset($field_args[0])) {
+                $output .= "<block class='shzn-boxed--light'>" . self::generate_fields($field_args, $infos, $args, false) . "</block>";
+                continue;
+            }
 
             $field_args['name_prefix'] = $args['name_prefix'] ?: false;
 
@@ -26,7 +31,6 @@ class Graphic
 
                 if (!empty($field_args['parent'])) {
                     $levels[$field_args['id']] = $levels[ltrim($field_args['parent'], '!')] + 1;
-
                     $field_args['nexted_level'] = $levels[$field_args['id']];
                 }
             }
@@ -58,19 +62,19 @@ class Graphic
         $args = array_merge(array(
             'before'       => false,
             'after'        => false,
+            'type'         => '',
             'id'           => '',
             'name'         => '',
             'value'        => '',
             'placeholder'  => '',
-            'type'         => '',
-            'classes'      => '',
             'label'        => '',
-            'context'      => 'table',
+            'classes'      => '',
             'name_prefix'  => false,
-            'attr'         => [],
+            'props'        => [],
             'parent'       => false,
             'depend'       => false,
-            'nexted_level' => 0
+            'nexted_level' => 0,
+            'context'      => 'table'
         ), $args);
 
         $o_inner = $p_open_wrapper = $o_close_wrapper = '';
@@ -79,8 +83,10 @@ class Graphic
             $o_inner .= self::generate_field($args['before'], false);
         }
 
+        $args['type'] = strtolower($args['type']);
+
         if (!is_array($args['classes'])) {
-            $args['classes'] = [$args['classes']];
+            $args['classes'] = explode(' ', $args['classes']) ?: [];
         }
 
         $args['classes'] = array_filter($args['classes']);
@@ -88,52 +94,62 @@ class Graphic
         $label = $args['label'] ? "<label class='shzn-option-info' for='{$args['id']}'>{$args['label']}</label>" : '';
         $label_icon = $args['label'] ? '<icon class="shzn-option-info-icon"><span>i</span></icon>' : '';
 
-        if ($args['context'] === 'action') {
+        switch ($args['context']) {
 
-            $o_inner .= "<input name='action' type='hidden' value='{$args['id']}'>";
+            case 'button':
 
-            if (empty($args['type'])) {
-                $args['type'] = 'submit';
-            }
-        }
-        elseif ($args['context'] === 'table') {
+                if (empty($args['type'])) {
+                    $args['type'] = 'button';
+                }
 
-            $padding_left = 30 * $args['nexted_level'];
+                break;
 
-            $row_class = $padding_left ? 'shzn-child' : '';
+            case 'action':
+                $o_inner .= "<input name='action' type='hidden' value='{$args['id']}'>";
 
-            $_style = $padding_left ? "style='padding-left: {$padding_left}px'" : '';
+                if (empty($args['type'])) {
+                    $args['type'] = 'submit';
+                }
+                break;
 
-            $p_open_wrapper = "<row class='shzn-row {$row_class}'><div class='shzn-option' {$_style}><strong>{$args['name']}</strong>{$label_icon}</div><div class='shzn-value'>";
-            $o_close_wrapper = "</div>{$label}</row>";
+            case 'table':
+                $padding_left = 30 * $args['nexted_level'];
+
+                $row_class = $padding_left ? 'shzn-child' : '';
+
+                $_style = $padding_left ? "style='padding-left: {$padding_left}px'" : '';
+
+                $p_open_wrapper = "<row class='shzn-row $row_class' $_style><div class='shzn-option'><strong>{$args['name']}</strong>$label_icon</div><div class='shzn-value'>";
+                $o_close_wrapper = "</div>$label</row>";
+                break;
         }
 
         $args['input_name'] = empty($args['name_prefix']) ? $args['id'] : "{$args['name_prefix']}[{$args['id']}]";
 
         if ($args['parent'] or $args['depend']) {
-            $args['attr']['data-parent'] = trim(implode(':', array_merge((array)$args['parent'], (array)$args['depend'])), ' :');
+            $args['props']['data-parent'] = trim(implode(':', array_merge((array)$args['parent'], (array)$args['depend'])), ' :');
         }
 
         $dataValues = '';
-        if (!empty($args['attr'])) {
+        if (!empty($args['props'])) {
 
-            foreach ($args['attr'] as $key => $value) {
-                $dataValues .= " {$key}='{$value}'";
+            foreach ($args['props'] as $key => $value) {
+                $dataValues .= " $key='$value'";
             }
 
             $dataValues = trim($dataValues);
         }
 
-        switch (strtolower($args['type'])) {
+        switch ($args['type']) {
 
             case 'divide':
                 $p_open_wrapper = $o_close_wrapper = '';
-                $o_inner .= "<br>";
+                $o_inner .= "<br><br>";
                 break;
 
             case 'separator':
                 $p_open_wrapper = $o_close_wrapper = '';
-                $o_inner .= "<row class='shzn-row-title'><h3><strong>{$args['name']}</strong>{$label_icon}</h3>{$label}</row>";
+                $o_inner .= "<row class='shzn-row-title' $dataValues><h3><strong>{$args['name']}</strong>$label_icon</h3>$label</row>";
                 break;
 
             case "time":
@@ -141,16 +157,15 @@ class Graphic
             case "text":
             case "numeric":
             case "number":
-            case "button":
             case "submit":
 
                 $args['classes'][] = 'shzn';
-                $args['classes'][] = 'shzn-' . strtolower($args['type']);
+                $args['classes'][] = "shzn-{$args['type']}";
 
                 $o_inner .= self::buildField(
                     "input",
                     [
-                        'class'        => self::classes($args['classes']),
+                        'class'        => self::parse_classes($args['classes']),
                         'autocomplete' => 'off',
                         'type'         => $args['type'],
                         'name'         => $args['input_name'],
@@ -158,8 +173,26 @@ class Graphic
                         'placeholder'  => $args['placeholder'],
                         'spellcheck'   => 'false',
                         'value'        => (string)$args['value'],
-                        ...$args['attr']
+                        ...$args['props']
                     ]
+                );
+                break;
+
+            case 'button':
+                $args['classes'][] = 'shzn';
+                $args['classes'][] = "shzn-{$args['type']}";
+
+                $o_inner .= self::buildField(
+                    "button",
+                    [
+                        'id'    => $args['id'],
+                        'class' => self::parse_classes($args['classes']),
+                        'type'  => 'submit',
+                        'name'  => $args['input_name'],
+                        'value' => (string)$args['value'],
+                        ...$args['props']
+                    ],
+                    $args['name']
                 );
                 break;
 
@@ -169,7 +202,7 @@ class Graphic
                 $args['classes'][] = 'shzn-input-upload';
                 $args['classes'][] = 'shzn-input__wrapper';
 
-                $o_inner .= "<div class='" . self::classes($args['classes']) . "'>";
+                $o_inner .= "<div class='" . self::parse_classes($args['classes']) . "'>";
 
                 $o_inner .= "<input " . self::buildProps([
                         'autocomplete' => 'off',
@@ -178,7 +211,7 @@ class Graphic
                         'id'           => $args['id'],
                         'placeholder'  => $args['placeholder'],
                         'value'        => (string)$args['value']
-                    ]) . " {$dataValues}/>";
+                    ]) . " $dataValues/>";
 
                 $o_inner .= "<div class='shzn-uploader__init' data-type='image'>Upload Image</div>";
 
@@ -193,31 +226,32 @@ class Graphic
                 $o_inner .= self::buildField(
                     "input",
                     [
-                        'class'   => self::classes($args['classes']),
+                        'class'   => self::parse_classes($args['classes']),
                         'type'    => 'checkbox',
                         'name'    => $args['input_name'],
                         'id'      => $args['id'],
                         'value'   => (bool)$args['value'],
                         'checked' => UtilEnv::to_boolean($args['value']) ? 'checked' : '',
-                        ...$args['attr']
+                        ...$args['props']
                     ]);
                 break;
 
             case "textarea":
+            case "textarea_array":
 
                 $args['classes'][] = "shzn";
 
                 $o_inner .= self:: buildField(
                     "textarea",
                     [
-                        'class'      => self::classes($args['classes']),
+                        'class'      => self::parse_classes($args['classes']),
                         'rows'       => '4',
                         'cols'       => '80',
                         'type'       => 'textarea',
                         'name'       => $args['input_name'],
                         'id'         => $args['id'],
                         'spellcheck' => 'false',
-                        ...$args['attr']
+                        ...$args['props']
                     ],
                     $args['value']
                 );
@@ -227,8 +261,8 @@ class Graphic
                 $o_inner .= self::buildField(
                     'span',
                     [
-                        'class' => self::classes($args['classes']),
-                        ...$args['attr']
+                        'class' => self::parse_classes($args['classes']),
+                        ...$args['props']
                     ],
                     $args['value']
                 );
@@ -239,9 +273,9 @@ class Graphic
                 $o_inner .= self::buildField(
                     'a',
                     [
-                        'class' => self::classes($args['classes']),
+                        'class' => self::parse_classes($args['classes']),
                         'href'  => $args['value']['href'],
-                        ...$args['attr']
+                        ...$args['props']
                     ],
                     $args['value']['text']
                 );
@@ -250,7 +284,10 @@ class Graphic
 
             case "dropdown":
                 $args['classes'][] = 'dropdown';
-                $o_inner .= self::buildDropdown($args, ['class' => self::classes($args['classes']), ...$args['attr']]);
+
+                $parent = $args['parent'] ?: $args['depend'] ?: '';
+
+                $o_inner .= self::buildDropdown($args, ['class' => self::parse_classes($args['classes']), ...$args['props']], $parent);
                 break;
 
             case 'raw':
@@ -259,7 +296,7 @@ class Graphic
                 break;
         }
 
-        $o_inner = "{$p_open_wrapper}{$o_inner}{$o_close_wrapper}";
+        $o_inner = $p_open_wrapper . $o_inner . $o_close_wrapper;
 
         if ($args['after']) {
             $o_inner .= self::generate_field($args['after'], false);
@@ -272,12 +309,16 @@ class Graphic
         return $o_inner;
     }
 
-    private static function classes($classes = [])
+    public static function buildField($type, $props = [], $content = ''): string
     {
-        return trim(implode(' ', array_unique(array_filter($classes))));
+        if (!$content and str_contains('input.br.hr.link.meta.img.source', $type)) {
+            return "<$type " . self::buildProps($props, true) . "/>";
+        }
+
+        return "<$type " . self::buildProps($props, true) . ">$content</$type>";
     }
 
-    public static function buildProps($props = [], $strip_empty = false)
+    public static function buildProps($props = [], $strip_empty = false): string
     {
         $_props = '';
 
@@ -308,7 +349,12 @@ class Graphic
         return trim($_props);
     }
 
-    private static function buildDropdown($args, $props = [])
+    private static function parse_classes($classes = []): string
+    {
+        return trim(implode(' ', array_unique(array_filter($classes))));
+    }
+
+    private static function buildDropdown($args, $props = [], $parent = '')
     {
         ob_start();
 
@@ -321,11 +367,15 @@ class Graphic
 
         $items = $args['list'];
 
+        if ($parent) {
+            $parent = "data-parent='$parent'";
+        }
+
         ?>
         <dropdown class="shzn-dropdown" <?php self::buildProps($props) ?>>
             <div class="shzn-input__wrapper">
-                <input name="<?php echo $args['input_name'] ?>" id="<?php echo $args['id'] ?>" type="text"
-                       value="<?php echo $args['value'] ?>" autocomplete="off"
+                <input name="<?php echo $args['input_name']; ?>" id="<?php echo $args['id']; ?>" type="text"
+                       value="<?php echo $args['value']; ?>" autocomplete="off" <?php echo $parent; ?>
                        placeholder="<?php _e("Choose a type or enter one manually.", 'shzn'); ?>">
                 <div class="shzn-dropdown__opener">
                     <svg class="shzn-icon shzn-icon__arrow" viewBox="0 0 16 16" width="16" height="16">
@@ -336,9 +386,8 @@ class Graphic
             <div class="shzn-multiselect__wrapper">
                 <ul class='shzn-multiselect'>
                     <?php
-                    foreach ($items as $key => $value) {
-
-                        echo "<li data-value='{$value}' class='shzn-multiselect__element'><span>{$value}</span></li>";
+                    foreach ($items as $value) {
+                        echo "<li data-value='$value' class='shzn-multiselect__element'><span>$value</span></li>";
                     }
                     ?>
                 </ul>
@@ -348,16 +397,6 @@ class Graphic
         return ob_get_clean();
     }
 
-    public static function buildField($type, $props = [], $content = '')
-    {
-        if (!$content and str_contains('input.br.hr.link.meta.img.source', $type)) {
-            return "<{$type} " . self::buildProps($props, true) . "/>";
-        }
-
-        return "<{$type} " . self::buildProps($props, true) . ">{$content}</{$type}>";
-    }
-
-
     /**
      * Renders for panel-tabs
      * support specif tabs with $limit_ids arg
@@ -366,7 +405,7 @@ class Graphic
      * @param array $limit_ids
      * @return false|string
      */
-    public static function generateHTML_tabs_panels($fields, $limit_ids = array())
+    public static function generateHTML_tabs_panels($fields, array $limit_ids = array())
     {
         if (!is_array($limit_ids)) {
             $limit_ids = array($limit_ids);
@@ -388,7 +427,7 @@ class Graphic
                 <?php
                 $panels = '';
                 foreach ($fields as $field) {
-                    $tab_title = empty($field['tab-title']) ? $field['panel-title'] : $field['tab-title'];
+                    $tab_title = $field['tab-title'] ?? $field['panel-title'];
                     ?>
                     <li class="shzn-ar-tab" aria-controls="<?php echo $field['id']; ?>"
                         aria-selected="false"><?php echo $tab_title; ?></li>
@@ -402,7 +441,7 @@ class Graphic
 
                     $aria_ajax = isset($field['ajax-callback']) ? "aria-ajax='" . json_encode($field['ajax-callback']) . "'" : '';
 
-                    $panels .= "<panel id='{$field['id']}' class='shzn-ar-tabcontent' aria-hidden='true' {$aria_ajax}>" . self::generatePanelContent($field) . "</panel>";
+                    $panels .= "<panel id='{$field['id']}' class='shzn-ar-tabcontent' aria-hidden='true' $aria_ajax>" . self::generatePanelContent($field) . "</panel>";
                 }
                 ?>
             </ul>
@@ -412,7 +451,7 @@ class Graphic
         return ob_get_clean();
     }
 
-    private static function generatePanelContent($field)
+    private static function generatePanelContent($field): string
     {
         if (!is_array($field))
             return '';
@@ -433,39 +472,20 @@ class Graphic
         return $HTML;
     }
 
-    public static function newField($name, $id = false, $type = 'text', $args = [])
-    {
-        if (!is_array($args)) {
-            $args = ['value' => $args];
-        }
-
-        $args = array_merge([
-            'value'         => false,
-            'default_value' => '',
-            'allow_empty'   => true
-        ], $args);
-
-        if ($id) {
-            $value = ($args['value'] === false) ? '' : $args['value'];
-        }
-        else {
-            $value = $args['value'];
-        }
-
-        if (empty($value) and !$args['allow_empty']) {
-            $value = $args['default_value'];
-        }
-
-        return array_merge($args, [
-            'type'  => $type,
-            'name'  => $name,
-            'id'    => $id,
-            'value' => $value,
-        ]);
-    }
-
-    public static function is_on_screen($slug)
+    public static function is_on_screen($slug): bool
     {
         return isset($_GET['page']) and str_contains($_GET['page'], trim($slug));
+    }
+
+    public static function nonce_field($hook, $display = true): string
+    {
+        $fields = wp_nonce_field(Actions::$nonce_action, Actions::$nonce_name, true, false);
+        $fields .= "<input type='hidden' name='action' value='$hook'/>";
+
+        if ($display) {
+            echo $fields;
+        }
+
+        return $fields;
     }
 }

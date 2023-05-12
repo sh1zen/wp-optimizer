@@ -19,7 +19,8 @@ class UtilEnv
             ),
             function ($ver) use ($ver_start, $ver_to) {
                 return version_compare($ver, $ver_start, '>') and version_compare($ver, $ver_to, '<=');
-            });
+            }
+        );
 
         usort($upgrades, 'version_compare');
 
@@ -27,11 +28,11 @@ class UtilEnv
 
         while (!empty($upgrades)) {
 
-            self::rise_time_limit(30);
+            self::rise_time_limit();
 
             $next_ver = array_shift($upgrades);
 
-            require_once $upgrade_path . "{$next_ver}.php";
+            require_once $upgrade_path . "$next_ver.php";
 
             $current_ver = $next_ver;
         }
@@ -39,16 +40,22 @@ class UtilEnv
         return $current_ver;
     }
 
-    public static function rise_time_limit($time = 30)
+    public static function rise_time_limit($rise_time = false)
     {
-        if (absint(ini_get('max_execution_time')) === 0) {
-            return true;
+        if ($rise_time === false) {
+            $rise_time = ini_get('max_execution_time');
         }
 
-        return function_exists('set_time_limit') and set_time_limit($time);
+        $rise_time = absint($rise_time);
+
+        if (function_exists('set_time_limit') and set_time_limit($rise_time)) {
+            return $rise_time;
+        }
+
+        return false;
     }
 
-    public static function db_create($table_name, $args, $drop_if_exist = false)
+    public static function db_create($table_name, $args, $drop_if_exist = false): array
     {
         global $wpdb;
 
@@ -59,13 +66,13 @@ class UtilEnv
         }
 
         if ($drop_if_exist) {
-            $wpdb->query("DROP TABLE IF EXISTS {$table_name}");
+            $wpdb->query("DROP TABLE IF EXISTS $table_name");
         }
 
-        $sql = "CREATE TABLE IF NOT EXISTS {$table_name} ( ";
+        $sql = "CREATE TABLE IF NOT EXISTS $table_name ( ";
 
         foreach ($args['fields'] as $key => $value) {
-            $sql .= " {$key} {$value}, ";
+            $sql .= " $key $value, ";
         }
 
         $sql .= " PRIMARY KEY  ({$args['primary_key']})";
@@ -88,35 +95,43 @@ class UtilEnv
             $conditions = [];
 
             foreach ($where as $field => $value) {
-                $conditions[] = "{$field} = {$value}";
+                $conditions[] = "$field = $value";
             }
 
             $_where = "WHERE " . implode(' AND ', $conditions);
         }
 
-        return $wpdb->query($wpdb->prepare("UPDATE {$table} SET {$column} = REPLACE({$column}, '%s', '%s') {$_where};", $search, $replace));
+        return $wpdb->query($wpdb->prepare("UPDATE $table SET $column = REPLACE($column, '%s', '%s') $_where;", $search, $replace));
     }
 
-    /**
-     * @param $items
-     * @param bool|string $keep_key_format string, numeric, bool, object
-     * @return array
-     */
-    public static function array_flatter($items, $keep_key_format = false)
+    public static function array_flatter($items, $one_level_array = false, $filter_key_format = false): array
     {
         if (!is_array($items)) {
             return array($items);
         }
 
-        if ($keep_key_format and !in_array($keep_key_format, array('string', 'numeric', 'bool', 'object'), true))
-            $keep_key_format = false;
+        if ($one_level_array) {
+            $res = array();
 
-        if ($keep_key_format) {
+            foreach ($items as $value) {
+                if (is_array($value) and isset($value[0]))
+                    $res = array_merge($res, self::array_flatter($value, true, false));
+                else
+                    $res[] = $value;
+            }
+
+            return $res;
+        }
+
+        if ($filter_key_format and !in_array($filter_key_format, array('string', 'numeric', 'bool', 'object'), true))
+            $filter_key_format = false;
+
+        if ($filter_key_format) {
             $res = array();
             foreach ($items as $key => $value) {
-                if (!call_user_func("is_{$keep_key_format}", $key))
+                if (!call_user_func("is_$filter_key_format", $key))
                     $key = array();
-                $res = array_merge($res, (array)$key, self::array_flatter($value, $keep_key_format));
+                $res = array_merge($res, (array)$key, self::array_flatter($value, $filter_key_format));
             }
             return $res;
         }
@@ -127,25 +142,9 @@ class UtilEnv
     }
 
     /**
-     * Standardize whitespace in a string.
-     *
-     * Replace line breaks, carriage returns, tabs with a space, then remove double spaces.
-     *
-     * @param string $string String input to standardize.
-     *
-     * @return string
-     */
-    public static function sanitize_whitespace($string)
-    {
-        return \trim(\str_replace('  ', ' ', \str_replace(["\t", "\n", "\r", "\f"], ' ', $string)));
-    }
-
-    /**
      * Returns true if server is Apache
-     *
-     * @return boolean
      */
-    public static function is_apache()
+    public static function is_apache(): bool
     {
         // assume apache when unknown, since most common
         if (empty($_SERVER['SERVER_SOFTWARE']))
@@ -156,32 +155,18 @@ class UtilEnv
 
     /**
      * Check whether server is LiteSpeed
-     *
-     * @return bool
      */
-    public static function is_litespeed()
+    public static function is_litespeed(): bool
     {
         return isset($_SERVER['SERVER_SOFTWARE']) and stristr($_SERVER['SERVER_SOFTWARE'], 'LiteSpeed') !== false;
     }
 
     /**
      * Returns true if server is nginx
-     *
-     * @return boolean
      */
-    public static function is_nginx()
+    public static function is_nginx(): bool
     {
         return isset($_SERVER['SERVER_SOFTWARE']) and stristr($_SERVER['SERVER_SOFTWARE'], 'nginx') !== false;
-    }
-
-    /**
-     * Returns true if server is iis
-     *
-     * @return boolean
-     */
-    public static function is_iis()
-    {
-        return isset($_SERVER['SERVER_SOFTWARE']) and stristr($_SERVER['SERVER_SOFTWARE'], 'IIS') !== false;
     }
 
     /**
@@ -206,10 +191,8 @@ class UtilEnv
 
     /**
      * Returns if there is multisite mode
-     *
-     * @return boolean
      */
-    public static function is_wpmu()
+    public static function is_wpmu(): bool
     {
         static $wpmu = null;
 
@@ -225,10 +208,8 @@ class UtilEnv
 
     /**
      * Returns true if WPMU uses vhosts
-     *
-     * @return boolean
      */
-    public static function is_wpmu_subdomain()
+    public static function is_wpmu_subdomain(): bool
     {
         return ((defined('SUBDOMAIN_INSTALL') and SUBDOMAIN_INSTALL) ||
             (defined('VHOST') and VHOST == 'yes'));
@@ -236,27 +217,23 @@ class UtilEnv
 
     /**
      * Returns true if current connection is secure
-     *
-     * @return boolean
      */
-    public static function is_https()
+    public static function is_https(): bool
     {
         return isset($_SERVER['HTTPS']) and self::to_boolean($_SERVER['HTTPS']) or (isset($_SERVER['SERVER_PORT']) and (int)$_SERVER['SERVER_PORT'] == 443) or (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) and $_SERVER['HTTP_X_FORWARDED_PROTO'] == 'https');
     }
 
     /**
      * Converts value to boolean
-     *
-     * @param mixed $value
-     * @return boolean
      */
-    public static function to_boolean($value, $strict = false)
+    public static function to_boolean($value, $strict = false): bool
     {
         if (is_string($value)) {
             switch (strtolower($value)) {
                 case '+':
                 case '1':
                 case 'y':
+                case 'si':
                 case 'on':
                 case 'yes':
                 case 'true':
@@ -275,7 +252,7 @@ class UtilEnv
         }
 
         if ($strict) {
-            return false;
+            return $value === true;
         }
 
         return (boolean)$value;
@@ -283,23 +260,16 @@ class UtilEnv
 
     /**
      * Check if URL is valid
-     *
-     * @param string $url
-     * @return boolean
      */
-    public static function is_url($url)
+    public static function is_url($url): bool
     {
-        return is_string($url) and preg_match('~^(https?:)?//~', $url);
+        return is_string($url) and preg_match('#^(https?:)?//#', $url);
     }
 
     /**
      * Quotes regular expression string
-     *
-     * @param string $string
-     * @param string $delimiter
-     * @return string
      */
-    public static function preg_quote($string, $delimiter = '~')
+    public static function preg_quote($string, $delimiter = '~'): string
     {
         $string = preg_quote($string, $delimiter);
         return strtr($string, array(
@@ -309,9 +279,6 @@ class UtilEnv
 
     /**
      * Returns real path of given path
-     *
-     * @param string $path
-     * @return string
      */
     public static function realpath($path, $exist = false, $trailing_slash = false)
     {
@@ -345,12 +312,8 @@ class UtilEnv
 
     /**
      * Converts win path to unix
-     *
-     * @param string $path
-     * @param bool $trailing_slash
-     * @return string
      */
-    public static function normalize_path($path, $trailing_slash = false)
+    public static function normalize_path(string $path, bool $trailing_slash = false): string
     {
         $wrapper = '';
 
@@ -375,31 +338,30 @@ class UtilEnv
         }
 
         // Standardise all paths to use '/' and replace multiple slashes down to a singular.
-        $path = preg_replace('#(?<=.)[/\\\]+#', '/', $path);
+        $path = preg_replace('#[/\\\]+#', '/', $path);
 
         return $wrapper . $path;
     }
 
-    public static function path_to_url($path, $file = false)
+    public static function path_to_url($path, $file = false): string
     {
         $base_dir = self::normalize_path(ABSPATH, false);
 
         return site_url(str_replace($base_dir, '', self::normalize_path($path, !$file)));
     }
 
+    public static function is_this_site(string $url): bool
+    {
+        return str_starts_with($url, get_option('home'));
+    }
+
     /**
      * Get the attachment absolute path from its url
-     *
      * @param string $url the attachment url to get its absolute path
-     *
      * @return bool|string It returns the absolute path of an attachment
      */
     public static function url_to_path(string $url)
     {
-        if (!is_string($url)) {
-            return false;
-        }
-
         $parsed_url_path = parse_url($url, PHP_URL_PATH);
 
         if (empty($parsed_url_path)) {
@@ -409,7 +371,7 @@ class UtilEnv
         return realpath($_SERVER['DOCUMENT_ROOT'] . $parsed_url_path);
     }
 
-    public static function plugin_basename($file)
+    public static function plugin_basename($file): string
     {
         $plugin_dir = self::normalize_path(WP_PLUGIN_DIR);
         $mu_plugin_dir = self::normalize_path(WPMU_PLUGIN_DIR);
@@ -421,7 +383,14 @@ class UtilEnv
 
     public static function change_file_extension($file, $extension, $unique = false)
     {
-        $changed = str_replace(pathinfo($file, PATHINFO_EXTENSION), $extension, $file);
+        $old_extension = pathinfo($file, PATHINFO_EXTENSION);
+
+        if ($old_extension) {
+            $changed = str_replace($old_extension, $extension, $file);
+        }
+        else {
+            $changed = "$file.$extension";
+        }
 
         if ($unique) {
             $changed = self::unique_filename($changed);
@@ -430,11 +399,13 @@ class UtilEnv
         return $changed;
     }
 
-    public static function unique_filename(string $filename, bool $obfuscation = false)
+    public static function unique_filename(string $filename, bool $obfuscation = false): string
     {
         $iter = 0;
 
         $path_parts = pathinfo($filename);
+
+        $ext = isset($path_parts['extension']) ? '.' . $path_parts['extension'] : '';
 
         $filename = $obfuscation ? md5(SHZN_SALT . $path_parts['filename']) : $path_parts['filename'];
 
@@ -442,19 +413,17 @@ class UtilEnv
 
         do {
 
-            $out_name = $iter > 0 ? "{$filename}-{$iter}" : $filename;
+            $out_name = $iter > 0 ? "$filename-$iter" : $filename;
 
             $iter++;
 
-        } while (file_exists("{$path}{$out_name}.{$path_parts['extension']}"));
+        } while (file_exists($path . $out_name . $ext));
 
-        return "{$path}{$out_name}.{$path_parts['extension']}";
+        return $path . $out_name . $ext;
     }
 
     /**
      * Returns the apache, nginx version
-     *
-     * @return string
      */
     public static function get_server_version()
     {
@@ -482,7 +451,7 @@ class UtilEnv
             else {
 
                 $data = @system('uptime');
-                preg_match('/(.*):{1}(.*)/', $data, $matches);
+                preg_match('/(.*):(.*)/', $data, $matches);
                 $load_arr = explode(',', $matches[2]);
                 $server_load = trim($load_arr[0]);
             }
@@ -502,18 +471,18 @@ class UtilEnv
         }
 
         if (empty($server_load)) {
-            $server_load = __('N/A', 'wpopt');
+            $server_load = 'N/A';
         }
 
         return $server_load;
     }
 
-    public static function is_function_disabled($function_name)
+    public static function is_function_disabled($function_name): bool
     {
         return in_array($function_name, array_map('trim', explode(',', ini_get('disable_functions'))), true);
     }
 
-    public static function is_shell_exec_available()
+    public static function is_shell_exec_available(): bool
     {
         if (self::is_safe_mode_active())
             return false;
@@ -529,7 +498,7 @@ class UtilEnv
         return true;
     }
 
-    public static function is_safe_mode_active($ini_get_callback = 'ini_get')
+    public static function is_safe_mode_active($ini_get_callback = 'ini_get'): bool
     {
         if (($safe_mode = @call_user_func($ini_get_callback, 'safe_mode')) and strtolower($safe_mode) != 'off')
             return true;
@@ -537,7 +506,7 @@ class UtilEnv
         return false;
     }
 
-    public static function size2bytes($val)
+    public static function size2bytes($val): int
     {
         $val = trim($val);
 
@@ -575,7 +544,7 @@ class UtilEnv
         ob_start();
 
         header('Expires: 0');
-        header("Cache-Control: public");
+        header("Cache-Control: private");
         header('Cache-Control: must-revalidate, post-check=0, pre-check=0');
         header('Content-Description: File Transfer');
         header('Content-Type: application/force-download');
@@ -611,8 +580,6 @@ class UtilEnv
      * @param int $current Current number.
      * @param int $total Total number.
      * @return string Number in percentage
-     *
-     * @access public
      */
     public static function format_percentage($current, $total)
     {
@@ -632,18 +599,24 @@ class UtilEnv
     public static function safe_time_limit(int $margin = 0, int $extend = 0)
     {
         static $time_reset = WP_START_TIMESTAMP;
+        static $max_execution_time = null;
 
-        if (($max_exec_time = absint(ini_get('max_execution_time'))) === 0) {
+        if (is_null($max_execution_time)) {
+            $max_execution_time = absint(ini_get('max_execution_time'));
+        }
+
+        if ($max_execution_time === 0) {
             return true;
         }
 
-        $left_time = $max_exec_time - (microtime(true) - $time_reset);
+        $left_time = $max_execution_time - (microtime(true) - $time_reset);
 
         if ($margin > $left_time) {
 
-            if ($extend and self::rise_time_limit($extend)) {
+            if ($extend and ($extended = self::rise_time_limit($extend)) !== false) {
                 $time_reset = microtime(true);
-                return $extend;
+                $max_execution_time = $extended;
+                return $extended;
             }
 
             return false;
@@ -655,13 +628,18 @@ class UtilEnv
     public static function verify_nonce($name, $nonce = false)
     {
         if (!$nonce) {
-            $nonce = trim($_REQUEST['_wpnonce']);
+            if (isset($_REQUEST['_ajax_nonce'])) {
+                $nonce = $_REQUEST['_ajax_nonce'];
+            }
+            elseif (isset($_REQUEST['_wpnonce'])) {
+                $nonce = $_REQUEST['_wpnonce'];
+            }
         }
 
-        return wp_verify_nonce($nonce, $name);
+        return \wp_verify_nonce($nonce, $name);
     }
 
-    public static function is_safe_buffering()
+    public static function is_safe_buffering(): bool
     {
         $noOptimize = false;
 
@@ -683,27 +661,27 @@ class UtilEnv
 
         // Also honor PageSpeed=off parameter as used by mod_pagespeed, in use by some pagebuilders,
         // see https://www.modpagespeed.com/doc/experiment#ModPagespeed for info on that.
-        if (false === $noOptimize and array_key_exists('PageSpeed', $_GET) and 'off' === $_GET['PageSpeed']) {
+        if (false === $noOptimize and \array_key_exists('PageSpeed', $_GET) and 'off' === $_GET['PageSpeed']) {
             $noOptimize = true;
         }
 
         // Check for site being previewed in the Customizer (available since WP 4.0).
         $is_customize_preview = false;
-        if (function_exists('is_customize_preview') and is_customize_preview()) {
-            $is_customize_preview = is_customize_preview();
+        if (function_exists('is_customize_preview') and \is_customize_preview()) {
+            $is_customize_preview = \is_customize_preview();
         }
 
         /**
          * We only buffer the frontend requests (and then only if not a feed
          * and not turned off explicitly and not when being previewed in Customizer)!
          */
-        return (!is_admin() and !is_feed() and !is_embed() and !$noOptimize and !$is_customize_preview);
+        return (!\is_admin() and !\is_feed() and !\is_embed() and !$noOptimize and !$is_customize_preview);
     }
 
-    public static function relativePath(string $from, string $to)
+    public static function relativePath(string $from, string $to): string
     {
-        $fromA = explode('/', rtrim($from, '/'));
-        $toA = explode('/', $to);
+        $fromA = \explode('/', \rtrim($from, '/'));
+        $toA = \explode('/', $to);
 
         $descend = [];
         $ascend = [];
@@ -719,7 +697,6 @@ class UtilEnv
                 if (isset($toA[$i])) {
                     $descend[] = $toA[$i];
                 }
-
             }
         }
 
@@ -728,5 +705,64 @@ class UtilEnv
         }
 
         return implode('/', array_merge($ascend, $descend));
+    }
+
+    public static function epochs_timestamp($epoch, $current_time = false): array
+    {
+        if (!$current_time) {
+            $current_time = time();
+        }
+
+        switch ($epoch) {
+            case 'today':
+                $start_time = mktime(0, 0, 0, date('m', $current_time), date('d', $current_time), date('Y', $current_time));
+                $end_time = mktime(23, 59, 59, date('m', $current_time), date('d', $current_time), date('Y', $current_time));
+                break;
+            case 'yesterday':
+                $start_time = strtotime('yesterday', mktime(0, 0, 0, date('m', $current_time), date('d', $current_time), date('Y', $current_time)));
+                $end_time = mktime(23, 59, 59, date('m', $start_time), date('d', $start_time), date('Y', $start_time));
+                break;
+            case 'week':
+                $start_time = strtotime('-1 week', mktime(0, 0, 0, date('m', $current_time), date('d', $current_time), date('Y', $current_time)));
+                $end_time = mktime(23, 59, 59, date('m', $start_time), date('d', $start_time), date('Y', $start_time));
+                break;
+            case 'month':
+                $start_time = strtotime('-1 month', mktime(0, 0, 0, date('m', $current_time), date('d', $current_time), date('Y', $current_time)));
+                $end_time = mktime(23, 59, 59, date('m', $start_time), date('d', $start_time), date('Y', $start_time));
+                break;
+            default:
+                $date_array = explode('/', $epoch);
+
+                if (count($date_array) === 3) {
+                    $start_time = mktime(0, 0, 0, (int)$date_array[1], (int)$date_array[0], (int)$date_array[2]);
+                    $end_time = mktime(23, 59, 59, (int)$date_array[1], (int)$date_array[0], (int)$date_array[2]);
+                }
+                break;
+        }
+
+        return [$start_time ?? 0, $end_time ?? 0];
+    }
+
+    public static function get_ip(): string
+    {
+        $server_ip_keys = array(
+            'HTTP_CF_CONNECTING_IP', // CloudFlare
+            'HTTP_TRUE_CLIENT_IP', // CloudFlare Enterprise header
+            'HTTP_CLIENT_IP',
+            'HTTP_X_FORWARDED_FOR',
+            'HTTP_X_FORWARDED',
+            'HTTP_X_CLUSTER_CLIENT_IP',
+            'HTTP_FORWARDED_FOR',
+            'HTTP_FORWARDED',
+            'REMOTE_ADDR',
+        );
+
+        foreach ($server_ip_keys as $key) {
+            if (isset($_SERVER[$key]) and filter_var($_SERVER[$key], FILTER_VALIDATE_IP)) {
+                return $_SERVER[$key];
+            }
+        }
+
+        return '127.0.0.1';
     }
 }

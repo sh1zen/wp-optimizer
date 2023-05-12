@@ -56,6 +56,13 @@ function wp_cache_flush_group($group)
     return $wp_object_cache->flush_group($group);
 }
 
+function wp_cache_flush_runtime()
+{
+    global $wp_object_cache;
+
+    return $wp_object_cache->flush_volatile();
+}
+
 function wp_cache_close()
 {
     global $wp_object_cache;

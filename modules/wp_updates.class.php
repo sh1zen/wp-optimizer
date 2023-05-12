@@ -14,12 +14,20 @@ use SHZN\modules\Module;
  */
 class Mod_WP_Updates extends Module
 {
-    public $scopes = array('settings', 'autoload');
+    public array $scopes = array('settings', 'autoload');
 
-    public function __construct()
+    protected string $context = 'wpopt';
+
+    public function restricted_access($context = ''): bool
     {
-         parent::__construct('wpopt');
+        if ($context === 'settings')
+            return !current_user_can('manage_options');
 
+        return false;
+    }
+
+    protected function init()
+    {
         $this->disable_updates();
     }
 
@@ -114,15 +122,7 @@ class Mod_WP_Updates extends Module
         }
     }
 
-    public function restricted_access($context = '')
-    {
-        if ($context === 'settings')
-            return !current_user_can('manage_options');
-
-        return false;
-    }
-
-    protected function setting_fields($filter = '')
+    protected function setting_fields($filter = ''): array
     {
         return $this->group_setting_fields(
             $this->setting_field(__('Disable Wordpress Core Updates', 'wpopt'), "core-updates", "checkbox"),

@@ -10,25 +10,25 @@ namespace WPOptimizer\core;
 use SHZN\core\UtilEnv;
 
 /**
- * Main class, used to setup the plugin
+ * Main class, used to set up the plugin
  */
 class PluginInit
 {
-    private static $_instance;
+    private static ?PluginInit $_instance;
 
     /**
      * Holds the plugin base name
      */
-    public $plugin_basename;
+    public string $plugin_basename;
 
     /**
      * Holds the plugin base url
      */
-    public $plugin_base_url;
+    public string $plugin_base_url;
 
-    public $pages_handler;
+    public ?PagesHandler $pages_handler;
 
-    public function __construct()
+    private function __construct()
     {
         $this->plugin_basename = UtilEnv::plugin_basename(WPOPT_FILE);
         $this->plugin_base_url = UtilEnv::path_to_url(WPOPT_ABSPATH);
@@ -38,7 +38,7 @@ class PluginInit
             $this->register_actions();
         }
 
-        $this->load_textdomain('wpopt');
+        $this->load_textdomain();
 
         $this->maybe_upgrade();
     }
@@ -49,28 +49,24 @@ class PluginInit
         register_activation_hook(WPOPT_FILE, array($this, 'plugin_activation'));
         register_deactivation_hook(WPOPT_FILE, array($this, 'plugin_deactivation'));
 
-        add_filter("plugin_action_links_{$this->plugin_basename}", array($this, 'extra_plugin_link'), 10, 2);
+        add_filter("plugin_action_links_$this->plugin_basename", array($this, 'extra_plugin_link'), 10, 2);
         add_filter('plugin_row_meta', array($this, 'donate_link'), 10, 4);
     }
 
     /**
      * Loads text domain for the plugin.
-     *
-     * @param $domain
-     * @return bool
-     * @action plugins_loaded
      */
-    private function load_textdomain($domain)
+    private function load_textdomain(): void
     {
-        $locale = apply_filters('wpopt_plugin_locale', get_locale(), $domain);
+        $locale = apply_filters('wpopt_plugin_locale', get_locale(), 'wpopt');
 
-        $mo_file = "{$domain}-{$locale}.mo";
+        $mo_file = "wpopt-$locale.mo";
 
-        if (load_textdomain($domain, WP_LANG_DIR . '/plugins/wp-optimizer/' . $mo_file)) {
-            return true;
+        if (load_textdomain('wpopt', WP_LANG_DIR . '/plugins/wp-optimizer/' . $mo_file)) {
+            return;
         }
 
-        return load_textdomain($domain, UtilEnv::normalize_path(WPOPT_ABSPATH . 'languages/' ). $mo_file);
+        load_textdomain('wpopt', UtilEnv::normalize_path(WPOPT_ABSPATH . 'languages/') . $mo_file);
     }
 
     private function maybe_upgrade()
@@ -79,11 +75,14 @@ class PluginInit
 
         // need upgrade
         if (!$version or version_compare($version, WPOPT_VERSION, '<')) {
+
             require_once __DIR__ . '/upgrader.php';
+
+            shzn('wpopt')->moduleHandler->upgrade();
         }
     }
 
-    public static function getInstance()
+    public static function getInstance(): PluginInit
     {
         if (!isset(self::$_instance)) {
             return self::Initialize();
@@ -92,9 +91,9 @@ class PluginInit
         return self::$_instance;
     }
 
-    public static function Initialize()
+    public static function Initialize(): PluginInit
     {
-        $object = self::$_instance = new self();
+        self::$_instance = new self();
 
         /**
          * Keep Ajax requests fast:
@@ -121,7 +120,7 @@ class PluginInit
             /**
              * Load the admin pages handler and store it here
              */
-            $object->pages_handler = new PagesHandler();
+            self::$_instance->pages_handler = new PagesHandler();
 
             /**
              * Instancing all modules that need to interact in admin area
@@ -149,8 +148,6 @@ class PluginInit
      *
      * @param boolean $network_wide Is network wide.
      * @return void
-     *
-     * @access public
      */
     public function plugin_activation($network_wide)
     {
@@ -186,8 +183,6 @@ class PluginInit
      *
      * @param boolean $network_wide Is network wide.
      * @return void
-     *
-     * @access public
      */
     public function plugin_deactivation($network_wide)
     {
@@ -225,7 +220,7 @@ class PluginInit
      * @param string $status
      * @return array
      */
-    public function donate_link($plugin_meta, $plugin_file, $plugin_data, $status)
+    public function donate_link($plugin_meta, $plugin_file, $plugin_data, $status): array
     {
         if ($plugin_file == $this->plugin_basename) {
             $plugin_meta[] = '&hearts; <a target="_blank" href="https://www.paypal.com/donate/?business=dev.sh1zen%40outlook.it&item_name=Thank+you+in+advanced+for+the+kind+donations.+You+will+sustain+me+developing+WP-Optimizer.&currency_code=EUR">' . __('Buy me a beer', 'wpopt') . ' :o)</a>';

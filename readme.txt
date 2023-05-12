@@ -1,19 +1,19 @@
 === WP Optimizer ===
 Contributors: sh1zen
-Tags: optimize, database, images, cache, minify, speed, seo, server, updates, webp, performances, convert
+Tags: loading speed, optimization, optimize, performance, images, cache, minify, database, speed, seo, updates, activity log, optimizer
 Donate link: https://www.paypal.com/donate?business=dev.sh1zen%40outlook.it&item_name=Thank+you+in+advanced+for+the+kind+donations.+You+will+sustain+me+developing+WP-Optimizer.&currency_code=EUR
 Requires at least: 5.0.0
-Tested up to: 6.2
+Tested up to: 6.4
 Requires PHP: 7.4
-Stable tag: 2.0.0
+Stable tag: 2.1.6
 License: GNU v3.0 License
 URI: https://github.com/sh1zen/wp-optimizer/blob/master/LICENSE
 
-Optimize your WordPress website performances and improve the search engines ranking with this Performance Optimization Plugin (WPOPT) - Automatic image compression, CSS JavaScript HTML minification, integrated caching, database cleanup, and server enhancements included
+Optimize your WordPress website performances and improve the search engines ranking with this Performance Optimization Plugin (WPOPT) - Automatic image compression, CSS JavaScript HTML minification, integrated caching, database cleanup, server enhancements and WordPress activity log.
 
 == Description ==
 
-Improve Your WordPress Performance and SEO with WP-Optimizer (WPOPT) - Contains the Most Requested Features for Maintaining WordPress. Customize in Easy Steps to Increase Website Speed and Reduce Load Times for Enhanced User Experience.
+Improve Your WordPress Performance and SEO with WP-Optimizer (WPOPT) - Contains the most requested features for maintaining WordPress. Customizable in few easy steps to increase your website performances for an enhanced and safer user experience.
 
 **WHY USING WP Optimizer?**
 
@@ -35,18 +35,67 @@ Improve Your WordPress Performance and SEO with WP-Optimizer (WPOPT) - Contains 
 * Up to 80% bandwidth savings when images are optimized and HTML, CSS and JS are minified.
 * Storage saver, optimized images required less disk space.
 
+
 **FEATURES**
 
-* ***Cache:*** an advanced caching system to ensure best speed performance, and the lowest space used.
-* ***Database:*** a powerful tool to manage, clean up and speed up your WordPress database.
-* ***Media:*** an advanced image converter supporting latest webp format and media leftovers clean up tool.
-* ***Server Info:*** a detailed useful information about your server, database, php and WordPress.
-* ***Dashboard installation size:*** a useful tool to know the size of your WordPress installation.
-* ***WP Optimizer:*** offers many features to improve SEO and server performances.
-* ***WP Updates:*** allow admins to disable some or all WordPress updates check.
-* ***WP Security:*** offers an easy way to set up some basic security enhancements.
-* ***WP Customizer:*** offers the most used features to customize your WordPress, like Block Editor disabler, Admin Bar hider and so on...
-* ***Minify:*** HTML, JavaScript and CSS optimization on the fly.
+* ***Activity Log:*** 
+  * A useful WordPress activity log for users, posts and terms
+  * Monito also bad access attempts like xss (cross-site-scripting) and sql injection 
+  * Supports custom rule monitoring
+
+
+* ***Cache:*** an advanced caching system to ensure best speed performance, with the lowest space used.
+  * Object Caching: supports Memcached and Redis PHP extensions
+  * WordPress Query Caching
+  * Database Caching
+  * Static page Caching
+
+
+* ***Database:*** 
+  * Backup, optimize, delete database tables
+  * Clean up junk contents of WordPress leftovers items.
+
+
+* ***Media:*** 
+  * Image optimization and conversion supporting latest webp format 
+  * Media leftovers clean up tool
+  * Auto image optimization in background
+  * Runs in background, supporting also server with limited php execution time
+
+
+* ***Server Info:*** 
+  * Detailed useful information about your server, database, php and WordPress installation.
+
+
+* ***WP Optimizer:*** 
+  * WordPress Cron improver
+  * Server htaccess enhancements
+  * Server ongoing scripts compression (gzip, brotli)
+  * Full control over Browser caching lifetime
+
+
+* ***WP Updates:*** 
+  * Get full controls over WordPress updates.
+
+
+* ***WP Security:*** 
+  * Offers an easy way to set up some basic security enhancements.
+  * Soon will be available also blocking some specific attack patterns
+
+
+* ***WP Customizer:*** 
+  * Prevent access to WordPress dashboard for non admins 
+  * Hide Admin Bar
+  * Disable Block Editor
+  * Disable Block Theme
+  * Disable comments
+  * Disable QuickPress, WordPress Blog and Welcome Panel
+  * Fast category list filter in your editor
+  * Disable WordPress sitemap, short-link generator, self-ping and many other features
+
+
+* ***Minify:*** 
+  * HTML, JavaScript and CSS optimization on the fly.
 
 **DONATIONS**
 
@@ -142,6 +191,37 @@ work! Otherwise, go to the new added module "Setting" and try a reset.
 
 == Changelog ==
 
+= 2.1.6 =
+
+* improved media scan
+* improved core performances
+* extended support for WordPress 6.4
+
+= 2.1.5 =
+
+* added support to disable oembed and rest
+* improved activity log module
+* updated translations file
+
+= 2.1.3 =
+
+* extended support to WordPress 6.3
+
+= 2.1.2 =
+
+* added runtime actualization of imported settings
+* improved settings reset
+* updated some options
+* fixed a bug where no active modules where found in same cases
+
+= 2.1.0 =
+
+* added a new module to register WordPress activity log and bad requests
+* added possibility to hash versioned styles and scripts
+* added auto-clean cache on interval to reduce space used especially for static caching method
+* added possibility to try to fix plugin settings, without fully reset settings
+* improved core performances
+* fixed some bugs
 
 = 2.0.0 =
 
@@ -154,7 +234,7 @@ work! Otherwise, go to the new added module "Setting" and try a reset.
 * extended support to PHP 8.2
 * updated faqs
 * updated UI/UX
-* updated translations
+* updated translations file
 * fixed .htaccess bug
 * moved minimum WordPress support to version 4.6.0
 

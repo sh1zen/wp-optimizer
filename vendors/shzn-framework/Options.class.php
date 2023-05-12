@@ -8,19 +8,17 @@
 namespace SHZN\core;
 
 /**
- * Access to wpopt custom database table options and metadata
+ * Access to custom database table options and metadata
  */
 class Options
 {
-    private string $environment;
-
     private string $table_name;
 
     private Cache $cache;
 
     public function __construct($context, $table_name)
     {
-        $this->environment = $context;
+        global $wpdb;
 
         $this->cache = shzn($context)->cache;
 
@@ -28,7 +26,7 @@ class Options
             trigger_error("SHZN Framework >> Options has not defined table name.", E_USER_WARNING);
         }
 
-        $this->table_name = $table_name;
+        $this->table_name = str_starts_with($table_name, $wpdb->prefix) ? $table_name : $wpdb->prefix . $table_name;
 
         /**
          * remove expired values once a day
@@ -82,9 +80,7 @@ class Options
 
     public function table_name()
     {
-        global $wpdb;
-
-        return $wpdb->prefix . $this->table_name;
+        return $this->table_name;
     }
 
     public function remove($obj_id, $option, $context = 'core')
@@ -162,7 +158,7 @@ class Options
             return false;
         }
 
-        shzn($this->environment)->cache->set($obj_id . $option . $context, $value, 'db_cache', true);
+        $this->cache->set($obj_id . $option . $context, $value, 'db_cache', true);
 
         return true;
     }

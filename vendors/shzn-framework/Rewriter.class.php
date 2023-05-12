@@ -9,85 +9,110 @@ namespace SHZN\core;
 
 class Rewriter
 {
-    private static Rewriter $_instance;
+    private static Rewriter $_Instance;
+    public string $matched_rule;
+    public string $raw_url;
 
-    public $request_path;
-    public $request_args;
-    public $matched_rule;
-    private $home_url;
-    private $query_vars;
-    private $matches;
-    private $matched_query;
+    private string $base_url;
+    private string $request_path;
+    private array $matches;
+    private array $matched_query_vars;
+    private string $matched_query;
+    private string $query;
+    private array $query_args = [];
+    private string $fragment = '';
 
-    private $rewrite_rules;
-
-    private function __construct()
+    private function __construct($url = null, $base = null)
     {
-        $this->home_url = get_option('home') . '/';
+        if (!$url) {
+            $url = ((isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http") . "://{$_SERVER['HTTP_HOST']}{$_SERVER['REQUEST_URI']}");
+            $base = $base ?: get_option('home') . '/';
+        }
+
+        if (str_starts_with($url, '/')) {
+            $url = get_option('home') . $url;
+        }
+
+        $this->raw_url = urldecode($url);
+
+        $parsed = parse_url($this->raw_url);
+
+        $this->base_url = $base ?: "{$parsed['scheme']}://{$parsed['host']}/";
+
+        // handle query args
+        $this->query = $parsed['query'] ?? '';
+        if (!empty($this->query)) {
+            parse_str($this->query, $this->query_args);
+        }
+
+        $req_uri = $parsed['path'] ?? '';
+
+        $this->request_path = $this->filter_prefix($this->base_url, $req_uri);
 
         $this->reset();
+    }
 
-        $this->rewrite_rules = [];
-
-        $this->parse_request();
-
-        add_filter('do_parse_request', [$this, 'query_matcher'], 100, 2);
+    private function filter_prefix($base_url, $req_uri): string
+    {
+        $prefix = parse_url($base_url, PHP_URL_PATH);
+        return trim(str_starts_with($req_uri, $prefix) ? substr($req_uri, strlen($prefix)) : $req_uri, '/');
     }
 
     public function reset()
     {
-        $this->matched_rule = false;
-        $this->query_vars = [];
+        $this->matched_query_vars = [];
         $this->matches = [];
         $this->matched_query = '';
+        $this->matched_rule = '';
     }
 
-    private function parse_request()
+    public static function getClone($url = null, $base = null): Rewriter
     {
-        $request = explode('?', $_SERVER['REQUEST_URI']);
-        $req_uri = $request[0];
-        $req_args = $request[1] ?? '';
-
-        $home_path = trim(parse_url($this->home_url, PHP_URL_PATH), '/');
-        $home_path_regex = sprintf('|^%s|i', preg_quote($home_path, '|'));
-
-        $req_uri = trim($req_uri, '/');
-        $req_uri = preg_replace($home_path_regex, '', $req_uri);
-
-        $this->request_path = trim($req_uri, '/');
-
-        $this->request_args = [];
-
-        if (!empty($req_args)) {
-            parse_str($_SERVER['QUERY_STRING'], $this->request_args);
-        }
-    }
-
-    public static function getInstance()
-    {
-        if (!isset(self::$_instance)) {
-            self::$_instance = new self();
+        if (!empty($url) or !empty($base)) {
+            return self::getInstance();
         }
 
-        return self::$_instance;
+        return clone self::getInstance();
     }
 
-    public function get_base($extension = '')
+    public static function getInstance($url = null, $base = null): Rewriter
+    {
+        if ($url) {
+            return new self($url, $base);
+        }
+
+        if (!isset(self::$_Instance)) {
+            self::$_Instance = new self($url, $base);
+        }
+
+        return self::$_Instance;
+    }
+
+    public static function compile_endpoint($endpoint)
+    {
+        $endpoint = preg_replace('#\(/\)#', '/?', $endpoint);
+
+        // compile optional parameters
+        $regex_endpoint = preg_replace("#:([^:]+):\?#", "(?<$1>[^/]*)", $endpoint);
+        $regex_endpoint = preg_replace("#/(\(\?<\w+>\[\^/]\*\))+#", "/?$1?", $regex_endpoint);
+
+        // compile requested parameters
+        $regex_endpoint = preg_replace("#:([^:]+):#", "(?<$1>[^/]+)", $regex_endpoint);
+
+        $regex_endpoint = rtrim($regex_endpoint, '/');
+
+        return preg_replace('#/+#', '/', "^$regex_endpoint/?$");
+    }
+
+    public static function reload()
+    {
+        header("Refresh:0");
+        exit();
+    }
+
+    public function get_basename($extension = ''): string
     {
         return basename($this->request_path, $extension);
-    }
-
-    /**
-     * @param $rule string[]
-     * @param $callback callable
-     */
-    public function add_rewrite_rule($rule, $callback, $callback_arguments = [])
-    {
-        if (!is_array($callback_arguments)) {
-            $callback_arguments = [$callback_arguments];
-        }
-
-        $this->rewrite_rules[] = ['rule' => $rule, 'callback' => $callback, 'args' => $callback_arguments];
     }
 
     public function get_matches($index = false)
@@ -96,56 +121,18 @@ class Rewriter
             return $this->matches;
         }
 
-        return isset($this->matches[$index]) ? $this->matches[$index] : false;
+        return $this->matches[$index] ?? false;
     }
 
     public function get_query_var($item = '', $default = false)
     {
-        if (isset($this->query_vars[$item])) {
-            if (empty($this->query_vars[$item]))
-                return $default;
-
-            return $this->query_vars[$item];
-        }
-
-        return $default;
-    }
-
-    public function query_matcher($do_parse, $wp)
-    {
-        global $paged;
-
-        remove_filter('do_parse_request', [$this, 'query_matcher']);
-
-        foreach ($this->rewrite_rules as $rewrite_rule) {
-
-            if ($this->rewrite_rules_matcher($rewrite_rule['rule'])) {
-
-                $wp->query_vars = array();
-
-                $wp->request = $this->request_path;
-                $wp->matched_rule = $this->matched_rule;
-                $wp->matched_query = $this->get_query_matched_query();
-                $wp->query_vars = $this->get_query_vars();
-
-                if (isset($wp->query_vars['paged'])) {
-                    $paged = max(1, absint($wp->query_vars['paged']));
-                }
-
-                if (is_callable($rewrite_rule['callback'])) {
-                    call_user_func_array($rewrite_rule['callback'], $rewrite_rule['args']);
-                    return false;
-                }
-            }
-        }
-
-        return $do_parse;
+        return $this->matched_query_vars[$item] ?? $default;
     }
 
     /**
      * Check if a rewrite rule match with the current queried url
      */
-    public function rewrite_rules_matcher($rewrite_rules = array())
+    public function match_rewrite_rule($rewrite_rules = array())
     {
         $this->reset();
 
@@ -155,7 +142,7 @@ class Rewriter
 
         foreach ($rewrite_rules as $regex => $query) {
 
-            if (preg_match("#^$regex#", urldecode($this->request_path), $matches)) {
+            if (preg_match("#^$regex#Ui", urldecode($this->request_path), $matches)) {
                 $matched_rule = $regex;
                 break;
             }
@@ -164,8 +151,8 @@ class Rewriter
         if ($matched_rule) {
             $this->matches = $matches;
             $this->matched_query = $query;
-            $this->populate_query_vars();
             $this->matched_rule = $matched_rule;
+            $this->populate_query_vars();
         }
 
         return $matched_rule;
@@ -174,18 +161,18 @@ class Rewriter
     private function populate_query_vars()
     {
         // Trim the query of everything up to the '?'.
-        $query = preg_replace('!^.+\?!', '', $this->matched_query);
+        $query = preg_replace('#^.+\?#', '', $this->matched_query);
 
         // Substitute the substring matches into the query.
         $query = addslashes($this->MatchesMapRegex_apply($query, $this->matches));
 
         // Parse the query.
-        parse_str($query, $this->query_vars);
+        parse_str($query, $this->matched_query_vars);
     }
 
     private function MatchesMapRegex_apply($subject, $_matches)
     {
-        return preg_replace_callback('(\$matches\[[1-9]+[0-9]*])', function ($matches) use ($_matches) {
+        return preg_replace_callback('(\$matches\[[1-9]+\d*])', function ($matches) use ($_matches) {
 
             $index = intval(substr($matches[0], 9, -1));
             return (isset($_matches[$index]) ? urlencode($_matches[$index]) : '');
@@ -193,36 +180,36 @@ class Rewriter
         }, $subject);
     }
 
-    public function get_query_matched_query()
+    public function get_matched_query(): string
     {
         return $this->matched_query;
     }
 
-    public function get_query_vars()
+    public function get_matched_query_vars(): array
     {
-        return $this->query_vars;
+        return $this->matched_query_vars;
     }
 
-    public function match($regex, $url = '')
+    public function match($regex, $start = true, $url = '')
     {
-        if (!$url) {
-            $url = $this->request_path;
-        }
+        $url = $url ? urldecode($url) : $this->request_path;
 
         $matched_rule = false;
 
-        if (preg_match("#^$regex#", urldecode($url), $matches)) {
-            $matched_rule = $regex;
+        if ($start and !str_starts_with($regex, '^')) {
+            $regex = '^' . $regex;
         }
 
-        return $matched_rule;
+        if (preg_match("#$regex#iD", $url, $matches)) {
+            $matched_rule = true;
+        }
+
+        return $matched_rule ? $matches : false;
     }
 
-    public function contain($word, $url = '')
+    public function contain($word, $url = ''): bool
     {
-        if (!$url) {
-            $url = $this->request_path;
-        }
+        $url = $url ? urldecode($url) : $this->request_path;
 
         if (empty($word)) {
             return $url === '';
@@ -230,5 +217,176 @@ class Rewriter
 
         return str_contains(strtolower(urldecode($url)), $word);
     }
-}
 
+    public function get_next_endpoint($base): string
+    {
+        $base = trim($base, '/');
+
+        if (preg_match("#$base/([^/?]+)/?#i", urldecode($this->request_path), $matches)) {
+            return $matches[1] ?: '';
+        }
+
+        return '';
+    }
+
+    public function replace($search, $replace, $status = false)
+    {
+        $res = str_replace($search, $replace, urldecode($this->raw_url));
+
+        if ($status) {
+            $this->redirect($res ?: '/', 301);
+        }
+
+        return $res;
+    }
+
+    public function redirect($path = '', $status = 302, $x_redirect_by = '')
+    {
+        if (empty($path)) {
+            $path = $this->get_uri();
+        }
+        else {
+            $path = filter_var($path, FILTER_VALIDATE_URL) ? $path : $this->home_url($path);
+        }
+
+        if (headers_sent()) {
+            echo "<script>window.location.replace('" . sec_js_str($path, false) . "');</script>";
+        }
+        else {
+            require_once(ABSPATH . 'wp-includes/pluggable.php');
+            wp_redirect($path, $status, $x_redirect_by);
+        }
+
+        exit;
+    }
+
+    public function get_uri($trailingslashit = true): string
+    {
+        $url = $this->base_url . $this->get_request_path($trailingslashit);
+
+        $query_args = http_build_query($this->query_args);
+
+        if (!empty($query_args)) {
+            $query_args = "?$query_args";
+        }
+
+        return $url . $query_args . $this->fragment;
+    }
+
+    public function get_request_path(bool $trailingslashit = false): string
+    {
+        $url = $this->request_path;
+
+        if ($trailingslashit and !(str_ends_with($url, '.php'))) {
+            $url = trailingslashit($url);
+        }
+
+        return $url;
+    }
+
+    public function get_base(bool $trailingslashit = false): string
+    {
+        $url = $this->base_url;
+
+        if ($trailingslashit and !(str_ends_with($url, '.php'))) {
+            $url = trailingslashit($url);
+        }
+
+        return $url;
+    }
+
+    public function home_url(string $path = '', bool $trailingslash = false, bool $display = false): string
+    {
+        if (!empty($path)) {
+            $path = ltrim(self::sanitize_url($path), '/');
+            $path = preg_replace("#[/\\\\]+#", "/", $path);
+        }
+
+        $url = $this->base_url . $path;
+
+        if ($trailingslash and !preg_match("#[?\#]#U", $url)) {
+            $url = rtrim($url, '/') . '/';
+        }
+
+        if ($display) {
+            echo $url;
+        }
+
+        return $url;
+    }
+
+    public static function sanitize_url(string $url, bool $remove_accents = false): string
+    {
+        if (empty($url)) {
+            return '';
+        }
+
+        $url = str_replace(["'", " "], ["", "-"], $url);
+
+        $url = trim(preg_replace('#-+#', '-', $url), '-');
+
+        if ($remove_accents) {
+
+            $pre_filter_url = $url;
+
+            $url = iconv('UTF-8', 'ASCII//TRANSLIT', $url);
+
+            if (!$url) {
+                $url = remove_accents($pre_filter_url);
+            }
+        }
+
+        return preg_replace("#[^a-z\dà-ù.\-_~:/?\#[\]@!\$&'()*+,;=]+#Ui", "", $url);
+    }
+
+    public function remove_query_arg(string $item, $default = '')
+    {
+        $value = $this->get_query_arg($item, $default);
+        unset($this->query_args[$item]);
+        return $value;
+    }
+
+    public function get_query_arg($item = '', $default = false)
+    {
+        return $this->query_args[$item] ?? $default;
+    }
+
+    public function add_query_args(array $query_arg): Rewriter
+    {
+        foreach ($query_arg as $item => $value) {
+            $this->set_query_arg($item, $value, false);
+        }
+
+        return $this;
+    }
+
+    public function set_query_arg($item, $value, $replace = true): bool
+    {
+        if (!$replace and isset($this->query_args[$item])) {
+            return false;
+        }
+
+        $this->query_args[$item] = $value;
+
+        return true;
+    }
+
+    public function remove_query_args(): Rewriter
+    {
+        $this->query_args = [];
+        return $this;
+    }
+
+    public function replace_path($new_base)
+    {
+        $this->request_path = $this->filter_prefix($this->base_url, $new_base);
+
+        $this->redirect();
+    }
+
+    public function set_fragment(string $fragment): Rewriter
+    {
+        $this->fragment = empty($fragment) ? '' : "#$fragment";
+        return $this;
+    }
+}

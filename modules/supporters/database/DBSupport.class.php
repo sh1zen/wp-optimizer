@@ -458,12 +458,12 @@ class DBSupport
         /*
          * Clear wp transients
          */
-        $results += $wpdb->query("DELETE FROM {$wpdb->prefix}options WHERE option_name LIKE '%_transient_%';");
+        $results += $wpdb->query("DELETE FROM {$wpdb->options}options WHERE option_name LIKE '%_transient_%';");
 
         /*
          * Delete posts and pages auto-draft
          */
-        $results += $wpdb->query("DELETE FROM {$wpdb->prefix}posts WHERE post_status = 'revision';");
+        $results += $wpdb->query("DELETE FROM {$wpdb->posts} WHERE post_status = 'revision';");
 
         /*
         * Delete orphaned post attachments
@@ -473,49 +473,42 @@ class DBSupport
         /*
          * Delete orphaned comments
          */
-        $results += $wpdb->query("DELETE FROM {$wpdb->prefix}commentmeta WHERE comment_id NOT IN (SELECT comment_id FROM {$wpdb->prefix}comments);");
+        $results += $wpdb->query("DELETE FROM {$wpdb->commentmeta} WHERE comment_id NOT IN (SELECT comment_id FROM {$wpdb->comments});");
 
         /*
          * Delete duplicated post meta
          */
-        $results += $wpdb->query("DELETE t1 FROM {$wpdb->prefix}postmeta t1 INNER JOIN {$wpdb->prefix}postmeta t2 WHERE t1.meta_id < t2.meta_id AND t1.meta_key = t2.meta_key AND t1.meta_value = t2.meta_value AND t1.post_id = t2.post_id");
+        $results += $wpdb->query("DELETE t1 FROM {$wpdb->postmeta} t1 INNER JOIN {$wpdb->postmeta} t2 WHERE t1.meta_id < t2.meta_id AND t1.meta_key = t2.meta_key AND t1.meta_value = t2.meta_value AND t1.post_id = t2.post_id");
 
         /*
          * Delete useless post meta
          */
-        $results += $wpdb->query("DELETE FROM {$wpdb->prefix}postmeta WHERE meta_key = '_edit_lock';");
-        $results += $wpdb->query("DELETE FROM {$wpdb->prefix}postmeta WHERE meta_key = '_edit_last';");
-        $results += $wpdb->query("DELETE FROM {$wpdb->prefix}postmeta WHERE meta_key = '_gform-entry-id';");
-        $results += $wpdb->query("DELETE FROM {$wpdb->prefix}postmeta WHERE meta_key = '_gform-form-id';");
-        $results += $wpdb->query("DELETE FROM {$wpdb->prefix}postmeta WHERE meta_key = '_encloseme';");
+        $results += $wpdb->query("DELETE FROM {$wpdb->postmeta} WHERE meta_key = '_edit_lock';");
+        $results += $wpdb->query("DELETE FROM {$wpdb->postmeta} WHERE meta_key = '_edit_last';");
+        $results += $wpdb->query("DELETE FROM {$wpdb->postmeta} WHERE meta_key = '_gform-entry-id';");
+        $results += $wpdb->query("DELETE FROM {$wpdb->postmeta} WHERE meta_key = '_gform-form-id';");
+        $results += $wpdb->query("DELETE FROM {$wpdb->postmeta} WHERE meta_key = '_encloseme';");
 
         /*
          * Delete orphaned post meta
          */
-        $results += $wpdb->query("DELETE pm FROM {$wpdb->prefix}postmeta pm LEFT JOIN {$wpdb->prefix}posts wp ON wp.ID = pm.post_id WHERE wp.ID IS NULL;");
+        $results += $wpdb->query("DELETE pm FROM {$wpdb->postmeta} AS pm LEFT JOIN {$wpdb->posts} wp ON wp.ID = pm.post_id WHERE wp.ID IS NULL;");
 
         /*
         * Delete empty postmeta
         */
-        $results += $wpdb->query("DELETE FROM {$wpdb->prefix}postmeta WHERE meta_value = '';");
+        $results += $wpdb->query("DELETE FROM {$wpdb->postmeta} WHERE meta_value = '';");
 
         /*
         * Clear terms relationships
         */
-        $results += $wpdb->query("DELETE tr FROM {$wpdb->prefix}term_taxonomy tr LEFT JOIN {$wpdb->prefix}terms ON tr.term_id = {$wpdb->prefix}terms.term_id WHERE {$wpdb->prefix}terms.term_id is NULL;");
-        $results += $wpdb->query("DELETE tr FROM {$wpdb->prefix}term_relationships tr LEFT JOIN {$wpdb->prefix}posts ON tr.object_id = {$wpdb->prefix}posts.ID LEFT JOIN {$wpdb->prefix}term_taxonomy ON tr.term_taxonomy_id = {$wpdb->prefix}term_taxonomy.term_taxonomy_id WHERE {$wpdb->prefix}posts.ID is NULL AND ({$wpdb->prefix}term_taxonomy.taxonomy = 'category' OR {$wpdb->prefix}term_taxonomy.taxonomy is NULL);");
+        $results += $wpdb->query("DELETE tr FROM {$wpdb->term_taxonomy} AS tr LEFT JOIN {$wpdb->terms} ON tr.term_id = {$wpdb->terms}.term_id WHERE {$wpdb->terms}.term_id is NULL;");
+        $results += $wpdb->query("DELETE tr FROM {$wpdb->term_relationships} AS tr LEFT JOIN {$wpdb->posts} ON tr.object_id = {$wpdb->posts}.ID LEFT JOIN {$wpdb->term_taxonomy} ON tr.term_taxonomy_id = {$wpdb->term_taxonomy}.term_taxonomy_id WHERE {$wpdb->posts}.ID is NULL AND ({$wpdb->term_taxonomy}.taxonomy = 'category' OR {$wpdb->term_taxonomy}.taxonomy is NULL);");
 
-        Report::getInstance()->add(
-            'database',
-            sprintf(__('Rows affected %s.', 'wpopt'), $results),
-            'success'
-        );
+        return $results;
     }
 
-    /**
-     * @return DBSupport
-     */
-    public static function getInstance()
+    public static function getInstance(): DBSupport
     {
         if (!isset(self::$_Instance)) {
             self::$_Instance = new self();

@@ -11,8 +11,6 @@ class Disk
 {
     private static $wp_filesystem;
 
-    private static bool $suspended = false;
-
     public static function read($path)
     {
         // writing to system rules file, may be potentially write-protected
@@ -23,7 +21,6 @@ class Disk
     }
 
     /**
-     * sdes
      * @return \WP_Filesystem_Direct
      */
     private static function wp_filesystem()
@@ -40,13 +37,15 @@ class Disk
         return self::$wp_filesystem;
     }
 
-    public static function write($path, $data, $flag = FILE_APPEND)
+    public static function write($path, $data, $flag = FILE_APPEND): bool
     {
-        if (self::$suspended)
+        $container = dirname($path);
+
+        if (self::is_suspended(UtilEnv::realpath($container, true, true)))
             return false;
 
-        if (!file_exists($path)) {
-            self::make_path(dirname($path));
+        if (!file_exists($container)) {
+            self::make_path($container);
         }
 
         // writing to system rules file, may be potentially write-protected
@@ -56,66 +55,12 @@ class Disk
         return self::wp_filesystem()->put_contents($path, $data);
     }
 
-    public static function delete_files($target, $identifier = '')
+    private static function is_suspended($dir): bool
     {
-        self::suspend_cache();
-
-        $target = realpath($target);
-
-        if (is_dir($target)) {
-
-            if (empty($identifier)) {
-                /**
-                 * get all folders/files (even the hidden ones)
-                 * This will prevent listing "." or ".." in the result
-                 */
-                $identifier = '{,.}[!.,!..]*';
-            }
-
-            $target = trailingslashit($target);
-
-            $files = glob($target . $identifier, GLOB_MARK | GLOB_NOSORT | GLOB_BRACE); //GLOB_MARK adds a slash to directories returned
-
-            foreach ($files as $file) {
-                self::delete_files($file);
-            }
-
-            rmdir($target);
-        }
-        elseif (is_file($target)) {
-            unlink($target);
-        }
-
-        self::resume_cache();
+        return file_exists($dir . md5($dir) . '.lock');
     }
 
-    public static function suspend_cache()
-    {
-        self::$suspended = true;
-    }
-
-    public static function resume_cache()
-    {
-        self::$suspended = false;
-    }
-
-    /**
-     * @param $directory
-     * @return false|int|mixed
-     */
-    public static function calc_size($directory)
-    {
-        $bytesTotal = 0;
-        $path = realpath($directory);
-        if ($path !== false && $path != '' && file_exists($path)) {
-            foreach (new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($path, \FilesystemIterator::SKIP_DOTS)) as $object) {
-                $bytesTotal += $object->getSize();
-            }
-        }
-        return $bytesTotal;
-    }
-
-    public static function make_path($target, $private = false, $dir_perms = 0777)
+    public static function make_path($target, $private = false, $dir_perms = false): bool
     {
         global $is_IIS;
 
@@ -123,15 +68,19 @@ class Disk
             return false;
         }
 
+        if ($private and !$dir_perms) {
+            $dir_perms = 0750;
+        }
+
+        if (!$dir_perms) {
+            $dir_perms = 0777;
+        }
+
         if (file_exists($target)) {
             $res = @is_dir($target) and @chmod($target, $dir_perms);
         }
         else {
             $res = @mkdir($target, $dir_perms, true);
-        }
-
-        if ($private) {
-            $dir_perms = 0750;
         }
 
         if ($res) {
@@ -153,22 +102,23 @@ class Disk
                 }
             }
 
-            if ($private and wp_is_writable($target)) {
+            if ($private and is_writable($target)) {
 
                 $plugin_path = __DIR__ . "/utils/";
 
                 if ($is_IIS) {
-                    if (!is_file($target . '/Web.config')) {
+                    if (!file_exists($target . '/Web.config')) {
                         @copy($plugin_path . '/Web.config', $target . '/Web.config');
                     }
                 }
                 else {
-                    if (!is_file($target . '/.htaccess')) {
+                    if (!file_exists($target . '/.htaccess')) {
                         @copy($plugin_path . '/.htaccess', $target . '/.htaccess');
                     }
                 }
-                if (!is_file($target . '/index.php')) {
-                    file_put_contents($target . '/index.php', '<?php');
+
+                if (!file_exists($target . '/index.php')) {
+                    @file_put_contents($target . '/index.php', '<?php');
                 }
             }
         }
@@ -176,46 +126,117 @@ class Disk
         return $res;
     }
 
-    public static function autocomplete($path = '')
+    public static function delete($target, $lifetime = 0, $identifier = ''): int
     {
-        $response = array();
+        $target = UtilEnv::realpath($target, true);
 
-        $abspath = UtilEnv::normalize_path(ABSPATH, true);
-
-        $_search_path = UtilEnv::normalize_path($abspath . $path, true);
-        $search_sub_path = false;
-
-        while (!($search_path = realpath($_search_path))) {
-
-            $_search_path = untrailingslashit($_search_path);
-
-            $search_sub_path = substr($_search_path, strrpos($_search_path, '/') + 1);
-            $_search_path = substr($_search_path, 0, strrpos($_search_path, '/'));
+        if (!$target) {
+            return 0;
         }
 
-        $search_path = UtilEnv::normalize_path($search_path, true);
-
-        // to prevent go upper than ABSPATH
-        if (!str_contains($search_path, $abspath)) {
-            $search_path = $abspath;
+        if (is_file($target)) {
+            @unlink($target);
+            return 1;
         }
 
-        $dir_list = scandir($search_path);
+        $target = trailingslashit($target);
 
-        foreach ($dir_list as $value) {
+        self::suspend_write($target);
 
-            if ($value === '.' or $value === '..')
+        $deleted = self::deleter($target, $lifetime, true, $identifier);
+
+        self::resume($target);
+
+        if (!$identifier and !$lifetime) {
+            @rmdir($target);
+            $deleted++;
+        }
+
+        return $deleted;
+    }
+
+    /**
+     * Expects that $dir is real and normalized
+     */
+    private static function suspend_write($dir)
+    {
+        return file_put_contents($dir . md5($dir) . '.lock', time(), 0);
+    }
+
+    private static function deleter(string $path, $lifetime = 0, $recursive = false, $identifier = false)
+    {
+        $handle = @opendir($path);
+
+        if (!$handle) {
+            return false;
+        }
+
+        UtilEnv::rise_time_limit();
+
+        $deleted = 0;
+
+        $time = time();
+
+        while (false !== ($read = readdir($handle))) {
+
+            if ($read == '.' or $read == '..') {
                 continue;
+            }
 
-            if (is_dir($search_path . $value)) {
+            $file_path = $path . DIRECTORY_SEPARATOR . $read;
 
-                if ($search_sub_path and !str_contains($value, $search_sub_path))
+            if (is_dir($file_path)) {
+                if ($recursive) {
+                    $deleted += self::deleter($file_path, $lifetime, $recursive, $identifier);
+
+                    if (!$identifier and !$lifetime) {
+                        @rmdir($path);
+                        $deleted++;
+                    }
+                }
+            }
+            else {
+
+                if (!empty($identifier) and !preg_match("#$identifier#", $read)) {
                     continue;
+                }
 
-                $response[] = str_replace($abspath, '', $search_path . $value . '/');
+                if ($lifetime) {
+                    if (filemtime($file_path) < $time - $lifetime) {
+                        @unlink($file_path);
+                        $deleted++;
+                    }
+                }
+                else {
+                    @unlink($file_path);
+                    $deleted++;
+                }
             }
         }
 
-        return $response;
+        closedir($handle);
+
+        return $deleted;
+    }
+
+    private static function resume($dir)
+    {
+        return @unlink($dir . md5($dir) . '.lock');
+    }
+
+    /**
+     * @param $directory
+     * @return false|int|mixed
+     */
+    public static function calc_size($directory)
+    {
+        $bytesTotal = 0;
+        $path = realpath($directory);
+        if ($path !== false && $path != '' && file_exists($path)) {
+            foreach (new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($path, \FilesystemIterator::SKIP_DOTS)) as $object) {
+                $bytesTotal += $object->getSize();
+            }
+        }
+        return $bytesTotal;
     }
 }

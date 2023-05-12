@@ -14,8 +14,9 @@ if (!defined("WPOPT_CACHE_DB_THRESHOLD_STORE")) {
 }
 
 if (!defined("WPOPT_CACHE_DB_LIFETIME")) {
-    define('WPOPT_CACHE_DB_LIFETIME', MINUTE_IN_SECONDS * 30);
+    define('WPOPT_CACHE_DB_LIFETIME', HOUR_IN_SECONDS);
 }
 
-
-
+if (!defined("WPOPT_CACHE_DB_OPTIONS")) {
+    define('WPOPT_CACHE_DB_OPTIONS', false);
+}

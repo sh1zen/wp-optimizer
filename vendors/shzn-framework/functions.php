@@ -1,12 +1,24 @@
 <?php
-
 /**
  * @author    sh1zen
  * @copyright Copyright (C) 2023.
  * @license   http://www.gnu.org/licenses/gpl.html GNU/GPL
  */
 
-function shzn_get_user($user)
+function shzn_time()
+{
+    $gmt_offset = get_option('gmt_offset');
+
+    if ($gmt_offset) {
+        $timezone_offset = $gmt_offset * 3600;
+
+        return time() + $timezone_offset;
+    }
+
+    return time();
+}
+
+function shzn_get_user($user): ?WP_User
 {
     if (!is_object($user)) {
         if (is_email($user)) {
@@ -20,7 +32,7 @@ function shzn_get_user($user)
     return $user instanceof WP_User ? $user : null;
 }
 
-function shzn_get_post($post)
+function shzn_get_post($post): ?WP_Post
 {
     if (is_numeric($post)) {
         $post = WP_Post::get_instance($post);
@@ -32,7 +44,7 @@ function shzn_get_post($post)
     return $post instanceof WP_Post ? $post : null;
 }
 
-function shzn_get_term($term, $taxonomy = '', $output = OBJECT, $filter = 'raw')
+function shzn_get_term($term, $taxonomy = '', $output = OBJECT, $filter = 'raw'): ?WP_Term
 {
     if (is_numeric($term)) {
         $term = WP_Term::get_instance($term, $taxonomy);
@@ -44,7 +56,7 @@ function shzn_get_term($term, $taxonomy = '', $output = OBJECT, $filter = 'raw')
     return $term instanceof WP_Term ? $term : null;
 }
 
-function shzn_localize($data = [])
+function shzn_localize($data = []): bool
 {
     global $wp_scripts;
 
@@ -62,7 +74,7 @@ function shzn_localize($data = [])
     return true;
 }
 
-function shzn_convert_to_javascript_object(array $arr, $sequential_keys = false, $quotes = false, $beautiful_json = false)
+function shzn_convert_to_javascript_object(array $arr, $sequential_keys = false, $quotes = false, $beautiful_json = false): string
 {
     $output = "{";
     $count = 0;
@@ -95,23 +107,25 @@ function shzn_convert_to_javascript_object(array $arr, $sequential_keys = false,
     return $output;
 }
 
-function shzn_is_assoc(array $arr)
+function shzn_is_assoc(array $arr): bool
 {
-    if (array() === $arr) return false;
+    if (empty($arr)) {
+        return false;
+    }
     return array_keys($arr) !== range(0, count($arr) - 1);
 }
 
-function shzn_module_panel_url($module = '', $panel = '')
+function shzn_module_panel_url($module = '', $panel = ''): ?string
 {
     return admin_url("admin.php?page={$module}#{$panel}");
 }
 
-function shzn_module_setting_url($context, $panel = '')
+function shzn_module_setting_url($context, $panel = ''): ?string
 {
     return admin_url("admin.php?page={$context}-modules-settings#settings-{$panel}");
 }
 
-function shzn_setting_panel_url($context, $panel = '')
+function shzn_setting_panel_url($context, $panel = ''): ?string
 {
     return admin_url("admin.php?page={$context}-settings#settings-{$panel}");
 }
@@ -124,10 +138,8 @@ function shzn_var_dump(...$vars)
     echo '</br></br>';
 }
 
-/**
- * @return string
- */
-function shzn_debug_backtrace($level = 2)
+
+function shzn_debug_backtrace($level = 2): string
 {
     $caller = debug_backtrace(DEBUG_BACKTRACE_PROVIDE_OBJECT, $level + 1);
 
@@ -151,12 +163,10 @@ function shzn_debug_backtrace($level = 2)
 
 function shzn_timestr2seconds($time = '')
 {
-    if (!$time)
+    if (!$time or !preg_match("#^(\d{2}):(\d{2})#", "$time", $matches))
         return 0;
 
-    list($hour, $minute) = explode(':', $time);
-
-    return $hour * HOUR_IN_SECONDS + $minute * MINUTE_IN_SECONDS;
+    return $matches[1] * HOUR_IN_SECONDS + $matches[2] * MINUTE_IN_SECONDS;
 }
 
 function shzn_add_timezone($timestamp = false)
@@ -168,6 +178,25 @@ function shzn_add_timezone($timestamp = false)
     $timezone = get_option('gmt_offset') * HOUR_IN_SECONDS;
 
     return $timestamp - $timezone;
+}
+
+function shzn_doing_it_wrong($function_name, $message, $debug = false)
+{
+    if ($debug) {
+        $trace = debug_backtrace();
+    }
+
+    $caller = isset($trace[2]) ? "Called by {$trace[2]['function']} in {$trace[2]['file']} {$trace[2]['line']} URL({$_SERVER['REQUEST_URI']})" : $_SERVER['REQUEST_URI'];
+
+    trigger_error(
+        sprintf(
+            'Function %1$s was called incorrectly. %2$s >> %3$s',
+            $function_name,
+            $message,
+            $caller
+        ),
+        E_USER_NOTICE
+    );
 }
 
 function shzn_log($_data, $file_name = 'shzn-debug.log', $mode = FILE_APPEND)

@@ -12,39 +12,133 @@ class StringHelper
     const REPLACER_HASH = 'e8c6d78284cffb10afdfeea37929bd75';
 
     /**
-     * Internal helper function to sanitize a string from user input or from the db
+     * Internal helper function to escape a string before usage
+     *
+     * @param string $str String to sanitize.
+     * @param bool $keep_newlines Optional. Whether to keep newlines. Default: false.
+     * @param bool $pre_filter
+     * @return string
+     * @since 1.3.0
+     */
+    public static function escape_text(string $str, bool $keep_newlines = false, bool $pre_filter = false): string
+    {
+        if ($pre_filter) {
+            $str = self::filter_text($str, !$keep_newlines);
+        }
+
+        if (!preg_match('/[&<>"\']/', $str)) {
+            return $str;
+        }
+
+        $str = wp_check_invalid_utf8($str);
+
+        $str = htmlspecialchars($str, ENT_QUOTES, self::get_charset(), false);
+
+        return self::clear($str, $keep_newlines and !$pre_filter, ' ');
+    }
+
+    /**
+     * Internal helper function to sanitize a string from user input
+     * Removes php code, script, style and html comments
+     * strip_tags
+     * @since 1.3.0
+     */
+    public static function filter_text($text, $strip_new_lines = false): string
+    {
+        if (empty($text)) {
+            return '';
+        }
+
+        // makes sure there is no HTML encode content
+        $text = html_entity_decode($text, ENT_QUOTES, self::get_charset());
+
+        // Don't bother if there are no < - saves some processing.
+        if (str_contains($text, '<')) {
+
+            // remove HTML comments
+            $text = preg_replace('#<!--.*?-->#s', '', $text);
+
+            // remove also style and scripts
+            $text = preg_replace('#<(script|style)[^>]*?>.*?</\\1>#si', '', $text);
+
+            // Remove PHP code
+            $text = preg_replace('#<\?php.*?\?>#s', '', $text);
+
+            // Remove HTML tags but
+            // todo try to keep < and > if there is space
+            $text = preg_replace('#<[^><]+>#s', '', $text);
+        }
+
+        // Remove WordPress shortcodes raw and dirty method, but fine in most cases
+        $text = preg_replace('#\[.*?]#', '', $text);
+
+        return self::clear($text, !$strip_new_lines);
+    }
+
+    public static function get_charset()
+    {
+        static $charset;
+
+        if (!isset($charset)) {
+            $charset = get_option('blog_charset');
+        }
+
+        return $charset;
+    }
+
+    public static function clear(string $string, $keep_new_lines = false, $delimiter = ' '): string
+    {
+        if (empty($string)) {
+            return '';
+        }
+
+        if (!$keep_new_lines) {
+            $string = preg_replace('#[\r\n\t\s]+#', $delimiter, $string);
+        }
+
+        $delimiter = preg_quote($delimiter, '#');
+
+        $string = preg_replace("#$delimiter+#", $delimiter, $string) ?: '';
+
+        return trim($string);
+    }
+
+    /**
+     * Internal helper function to sanitize a string from user input
      *
      * @param string $str String to sanitize.
      * @param bool $keep_newlines Optional. Whether to keep newlines. Default: false.
      * @return string Sanitized string.
      * @since 1.0.0
-     *
      */
-    public static function sanitize_text_field($str, $keep_newlines = false)
+    public static function sanitize_text(string $str, bool $keep_newlines = false): string
     {
-        if (is_object($str) or is_array($str)) {
+        if (empty($str)) {
             return '';
         }
 
-        $str = (string)$str;
+        $str = wp_check_invalid_utf8(trim($str));
 
-        $filtered = wp_check_invalid_utf8($str);
-
-        if (str_contains($filtered, '<')) {
-            $filtered = wp_pre_kses_less_than($filtered);
-            // This will strip extra whitespace for us.
-            $filtered = wp_strip_all_tags($filtered, false);
-
-            // Use HTML entities in a special case to make sure no later
-            // newline stripping stage could lead to a functional tag.
-            $filtered = str_replace("<\n", "&lt;\n", $filtered);
+        if (empty($str)) {
+            return '';
         }
 
-        if (!$keep_newlines) {
-            $filtered = preg_replace('/[\r\n\t ]+/', ' ', $filtered);
+        if (str_contains($str, '<')) {
+
+            $str = preg_replace_callback('#<[^>]*?((?=<)|>|$)#', ['self', 'pre_kses_less_than_callback'], $str);
+
+            // remove also style and scripts
+            $str = preg_replace('#<(script|style)[^>]*?>.*?</\\1>#si', '', $str);
+            $str = strip_tags($str);
+
+            /*
+             * Use HTML entities in a special case to make sure that
+             * later newline stripping stages cannot lead to a functional tag.
+             */
+            $str = str_replace("<\n", "&lt;\n", $str);
         }
 
-        return trim($filtered);
+        return self::clear($str, $keep_newlines, ' ');
     }
 
     /**
@@ -54,13 +148,13 @@ class StringHelper
      * effectively creating our named markers (`%%{$marker}%%`.
      *
      * @param string $marker Marker name (without percent characters).
-     * @param string $search A string or full blown regex pattern to search for in $content. Uses `strpos()` or `preg_match()`.
-     * @param string $re_replace_pattern Regex pattern to use when replacing contents.
+     * @param string $search A string or full-blown regex pattern to search for in $content. Uses `strpos()` or `preg_match()`.
+     * @param string $replace_pattern Regex pattern to use when replacing contents.
      * @param string $content Content to work on.
      *
      * @return string
      */
-    public static function replace_contents_with_marker_if_exists($marker, $search, $re_replace_pattern, $content)
+    public static function replace_contents_with_marker_if_exists(string $marker, string $search, string $replace_pattern, string $content): string
     {
         $is_regex = self::str_is_valid_regex($search);
         if ($is_regex) {
@@ -72,7 +166,7 @@ class StringHelper
 
         if ($found) {
             $content = preg_replace_callback(
-                $re_replace_pattern,
+                $replace_pattern,
                 function ($matches) use ($marker) {
                     return self::build_marker($marker, $matches[0]);
                 },
@@ -83,7 +177,7 @@ class StringHelper
         return $content;
     }
 
-    public static function str_is_valid_regex(string $string)
+    public static function str_is_valid_regex(string $string): bool
     {
         set_error_handler(function () {
         }, E_WARNING);
@@ -92,7 +186,6 @@ class StringHelper
 
         return $is_regex;
     }
-
 
     /**
      * Creates and returns a `%%`-style named marker which holds
@@ -107,7 +200,7 @@ class StringHelper
      *
      * @return string
      */
-    public static function build_marker($name, $data, $hash = null)
+    public static function build_marker(string $name, string $data, string $hash = null): string
     {
         // Start the marker, add the data.
         $marker = '%%' . $name . self::REPLACER_HASH . '%%' . base64_encode($data);
@@ -129,7 +222,7 @@ class StringHelper
      *
      * @return string
      */
-    public static function restore_marked_content($marker, $content)
+    public static function restore_marked_content(string $marker, string $content): string
     {
         if (str_contains($content, $marker)) {
             $content = preg_replace_callback(
@@ -144,9 +237,8 @@ class StringHelper
         return $content;
     }
 
-    public static function inject_in_html($content, $payload, $where)
+    public static function inject_in_html($content, $payload, $where): string
     {
-        $warned = false;
         $position = self::strpos($content, $where[0]);
         if (false !== $position) {
             // Found the tag, setup content/injection as specified.
@@ -172,11 +264,9 @@ class StringHelper
         else {
             // Couldn't find what was specified, just append and add a warning.
             $content .= $payload;
-            if (!$warned) {
-                $tag_display = str_replace(array('<', '>'), '', $where[0]);
-                $content .= '<!--noptimize--><!-- WPOPT found a problem with the HTML in your Theme, tag `' . $tag_display . '` missing --><!--/noptimize-->';
-                $warned = true;
-            }
+
+            $tag_display = str_replace(array('<', '>'), '', $where[0]);
+            $content .= '<!--noptimize--><!-- Found a problem with the HTML in your Theme, tag `' . $tag_display . '` missing --><!--/noptimize-->';
         }
 
         return $content;
@@ -193,7 +283,8 @@ class StringHelper
      *
      * @return int|false
      */
-    public static function strpos($haystack, $needle, $offset = 0, $encoding = null)
+
+    public static function strpos(string $haystack, string $needle, int $offset = 0, string $encoding = null)
     {
         if (self::mbstring_available()) {
             return (null === $encoding) ? \mb_strpos($haystack, $needle, $offset) : \mb_strpos($haystack, $needle, $offset, $encoding);
@@ -210,7 +301,7 @@ class StringHelper
      *
      * @return bool
      */
-    public static function mbstring_available($override = null)
+    public static function mbstring_available(bool $override = null): bool
     {
         static $available = null;
 
@@ -223,16 +314,6 @@ class StringHelper
         }
 
         return $available;
-    }
-
-    public static function strtolower(string $string)
-    {
-        if (self::mbstring_available()) {
-            //get_option('blog_charset')
-            return mb_strtolower($string, mb_detect_encoding($string));
-        }
-
-        return strtolower($string);
     }
 
     /**
@@ -249,7 +330,7 @@ class StringHelper
      *
      * @return string
      */
-    public static function substr_replace($string, $replacement, $start, $length = null, $encoding = null)
+    public static function substr_replace(string $string, string $replacement, int $start, int $length = null, string $encoding = null): string
     {
         if (self::mbstring_available()) {
             $strlen = self::strlen($string, $encoding);
@@ -266,7 +347,7 @@ class StringHelper
                 $start = $strlen;
             }
 
-            if (null === $length || '' === $length) {
+            if (null === $length) {
                 $start2 = $strlen;
             }
             elseif ($length < 0) {
@@ -305,7 +386,7 @@ class StringHelper
      * @return int Number of characters or bytes in given $string
      *             (characters if/when supported, bytes otherwise).
      */
-    public static function strlen($string, $encoding = null)
+    public static function strlen(string $string, string $encoding = null): int
     {
         if (self::mbstring_available()) {
             return (null === $encoding) ? \mb_strlen($string) : \mb_strlen($string, $encoding);
@@ -315,36 +396,13 @@ class StringHelper
         }
     }
 
-    /**
-     * Given an array of key/value pairs to replace in $string,
-     * it does so by replacing the longest-matching strings first.
-     *
-     * @param string $string string in which to replace.
-     * @param array $replacements to be replaced strings and replacement.
-     *
-     * @return string
-     */
-    protected static function replace_longest_matches_first($string, $replacements = array())
+    public static function strtolower(string $string): string
     {
-        if (!empty($replacements)) {
-            // Sort the replacements array by key length in desc order (so that the longest strings are replaced first).
-            $keys = array_map('strlen', array_keys($replacements));
-            array_multisort($keys, SORT_DESC, $replacements);
-            $string = str_replace(array_keys($replacements), array_values($replacements), $string);
+        if (self::mbstring_available()) {
+            return mb_strtolower($string, self::get_charset());
         }
 
-        return $string;
-    }
-
-    /**
-     * Returns the string after it is encoded with htmlspecialchars().
-     *
-     * @param \string $string The \string to encode.
-     * @return \string         The encoded string.
-     */
-    public static function encodeOutputHtml($string)
-    {
-        return htmlspecialchars($string, ENT_COMPAT | ENT_HTML401, get_option('blog_charset'), false);
+        return strtolower($string);
     }
 
     /**
@@ -353,7 +411,7 @@ class StringHelper
      * @param \string $string The string to convert.
      * @return \string         The converted string.
      */
-    public static function toSnakeCase($string)
+    public static function toSnakeCase(string $string): string
     {
         $string[0] = strtolower($string[0]);
         return \preg_replace_callback('/([A-Z])/', function ($value) {
@@ -365,10 +423,10 @@ class StringHelper
      * Convert to camel case.
      *
      * @param \string $string The string to convert.
-     * @param bool $capitalize Whether or not to capitalize the first letter.
+     * @param bool $capitalize Whether to capitalize the first letter.
      * @return \string             The converted string.
      */
-    public static function toCamelCase($string, $capitalize = false)
+    public static function toCamelCase(string $string, bool $capitalize = false): string
     {
         $string[0] = strtolower($string[0]);
         if ($capitalize) {
@@ -386,7 +444,7 @@ class StringHelper
      * @param bool $capitalizeFirstCharacter
      * @return \string             The converted string.
      */
-    public static function dashesToCamelCase($string, $capitalizeFirstCharacter = false)
+    public static function dashesToCamelCase(string $string, bool $capitalizeFirstCharacter = false): string
     {
         $string = str_replace(' ', '', ucwords(str_replace('-', ' ', $string)));
         if (!$capitalizeFirstCharacter) {
@@ -397,44 +455,60 @@ class StringHelper
 
     /**
      * Truncates a given string.
-     *
-     * @param \string $string The string.
-     * @param int $maxCharacters The max. amount of characters.
-     * @param boolean $shouldHaveEllipsis Whether the string should have a trailing ellipsis (defaults to true).
-     * @return \string
      */
-    public static function truncate($string, $maxCharacters, $shouldHaveEllipsis = true)
+    public static function truncate($string, int $maxCharacters, $ellipsis = ''): string
     {
-        $length = strlen($string);
-        $excessLength = $length - $maxCharacters;
-        if (0 < $excessLength) {
-            // If the string is longer than 65535 characters, we first need to shorten it due to the character limit of the regex pattern quantifier.
-            if (65535 < $length) {
-                $string = substr($string, 0, 65534);
-            }
-            $string = preg_replace("#[^\pZ\pP]*.{{$excessLength}}$#", '', $string);
-            if ($shouldHaveEllipsis) {
-                $string = $string . ' ...';
-            }
+        if (empty($string) or strlen($string) < $maxCharacters) {
+            return $string;
         }
-        return $string;
+
+        $truncatedText = substr($string, 0, $maxCharacters);
+        $lastSpaceIndex = strrpos($truncatedText, ' ');
+
+        if ($lastSpaceIndex !== false) {
+            $truncatedText = substr($truncatedText, 0, $lastSpaceIndex);
+        }
+
+        return $truncatedText . $ellipsis;
     }
 
     /**
      * Check if a string is JSON encoded or not.
-     *
-     * @param \string $string The string to check.
-     * @return bool           True if it is JSON or false if not.
      */
-    public function isJson($string)
+    public static function isJson(string $string): bool
     {
-        if (!is_string($string)) {
-            return false;
-        }
-
         json_decode($string);
 
         // Return a boolean whether the last error matches.
         return json_last_error() === JSON_ERROR_NONE;
+    }
+
+    /**
+     * Given an array of key/value pairs to replace in $string,
+     * it does so by replacing the longest-matching strings first.
+     *
+     * @param string $string string in which to replace.
+     * @param array $replacements to be replaced strings and replacement.
+     *
+     * @return string
+     */
+    protected static function replace_longest_matches_first(string $string, array $replacements = array()): string
+    {
+        if (!empty($replacements)) {
+            // Sort the replacements array by key length in desc order (so that the longest strings are replaced first).
+            $keys = array_map('strlen', array_keys($replacements));
+            array_multisort($keys, SORT_DESC, $replacements);
+            $string = str_replace(array_keys($replacements), array_values($replacements), $string);
+        }
+
+        return $string;
+    }
+
+    private static function pre_kses_less_than_callback($matches)
+    {
+        if (false === strpos($matches[0], '>')) {
+            return htmlspecialchars($matches[0], ENT_QUOTES, self::get_charset());
+        }
+        return $matches[0];
     }
 }

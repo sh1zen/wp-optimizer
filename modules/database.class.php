@@ -11,7 +11,6 @@ use SHZN\core\Ajax;
 use SHZN\core\Disk;
 use SHZN\core\Graphic;
 use SHZN\core\UtilEnv;
-use SHZN\core\Settings;
 use SHZN\modules\Module;
 
 use WPOptimizer\modules\supporters\DB_List_Table;
@@ -20,54 +19,27 @@ use WPOptimizer\modules\supporters\DBSupport;
 class Mod_Database extends Module
 {
     const BACKUP_PATH = WPOPT_STORAGE . 'backup-db/';
-    public $scopes = array('admin-page', 'cron', 'settings');
-    private int $ajax_limit;
+    public array $scopes = array('admin-page', 'cron', 'settings');
+    private int $ajax_limit = 100;
 
-    public function __construct()
-    {
-        require_once WPOPT_SUPPORTERS . '/database/DBSupport.class.php';
-
-        $default = array(
-            'backup' => array(
-                'excluded_tables' => array(),
-                'mysqldump_path'  => ''
-            ),
-            'sweep'  => array(
-                'excluded_tables' => array(),
-            )
-        );
-
-        $default_cron = array(
-            'active' => false
-        );
-
-        parent::__construct('wpopt',
-            array(
-                'settings'      => $default,
-                'cron_settings' => $default_cron
-            )
-        );
-
-        $this->ajax_limit = 100;
-    }
+    protected string $context = 'wpopt';
 
     public function cron_handler($args = array())
     {
         DBSupport::cron_job();
     }
 
-    public function cron_setting_fields($cron_settings = [])
+    public function cron_setting_fields(): array
     {
-        $cron_settings[] = array('type' => 'checkbox', 'name' => __('Auto optimize Database', 'wpopt'), 'id' => 'database.active', 'value' => Settings::check($this->cron_settings, 'active'), 'depend' => 'active');
-
-        return $cron_settings;
+        return [
+            ['type' => 'checkbox', 'name' => __('Auto optimize Database', 'wpopt'), 'id' => 'database.active', 'value' => shzn($this->context)->cron->is_active($this->slug), 'depend' => 'active']
+        ];
     }
 
     /**
      * Handle the gui for tables list
-     * @param array $settings
      */
-    public function render_tablesList_panel($settings = array())
+    public function render_tablesList_panel($settings = array()): string
     {
         require_once WPOPT_SUPPORTERS . '/database/DB_List_Table.class.php';
 
@@ -93,9 +65,8 @@ class Mod_Database extends Module
 
     /**
      * Handle the gui for exec-sql panel
-     * @return string
      */
-    public function render_execSQL_panel()
+    public function render_execSQL_panel(): string
     {
         ob_start();
         ?>
@@ -137,10 +108,8 @@ class Mod_Database extends Module
 
     /**
      * Handle the gui for backup panel
-     * @param array $settings
-     * @return string
      */
-    public function render_backup_panel($settings = array())
+    public function render_backup_panel($settings = array()): string
     {
         global $wpdb;
 
@@ -356,7 +325,7 @@ class Mod_Database extends Module
         }
     }
 
-    private function exec_sql($sql)
+    private function exec_sql($sql): array
     {
         $sql = trim($sql);
 
@@ -400,7 +369,7 @@ class Mod_Database extends Module
         return $this->new_response(number_format_i18n($success_query) . '/' . number_format_i18n($total_query) . ' ' . __('Query(s) executed successfully', 'wpopt'), 'info', $query_status);
     }
 
-    private function new_response($text, $status = 'success', $extra_data = [])
+    private function new_response($text, $status = 'success', $extra_data = []): array
     {
         return array('text' => $text, 'status' => $status, 'list' => $extra_data);
     }
@@ -463,7 +432,7 @@ class Mod_Database extends Module
 
                     $res = DBSupport::mysqlDump_db(
                         $backup_path,
-                        $this->option('backup.excluded_tables', array()),
+                        $this->option('backup.excluded_tables', []),
                         $this->option('backup.mysqldump_path', '')
                     );
                 }
@@ -471,7 +440,7 @@ class Mod_Database extends Module
                 if (!$res) {
                     $res = DBSupport::queryDump_db(
                         $backup_path,
-                        $this->option('backup.excluded_tables', array())
+                        $this->option('backup.excluded_tables', [])
                     );
                 }
 
@@ -508,20 +477,15 @@ class Mod_Database extends Module
         return $response;
     }
 
-    public function enqueue_scripts()
+    public function enqueue_scripts(): void
     {
         parent::enqueue_scripts();
         wp_enqueue_script('wpopt-db-sweep', UtilEnv::path_to_url(WPOPT_ABSPATH) . 'modules/supporters/database/database.js', array('vendor-shzn-js'), WPOPT_VERSION);
     }
 
-    public function render_admin_page()
+    public function render_admin_page(): void
     {
-        if (WPOPT_DEBUG) {
-            set_time_limit(0);
-        }
-        else {
-            set_time_limit(60);
-        }
+        UtilEnv::rise_time_limit(WPOPT_DEBUG ? 120 : 60);
         ?>
         <section class="shzn-wrap">
             <div id="wpopt-ajax-message" class="shzn-notice"></div>
@@ -577,7 +541,7 @@ class Mod_Database extends Module
                   'type'   => 'postmeta',
                   'sweeps' => array(
                       __('Orphan Postmeta', 'wpopt')     => 'orphan_postmeta',
-                      __('Duplicated Postmeta', 'wpopt') => 'duplicated_postmeta',
+                      __('Duplicated Postmeta', 'wpopt') => $this->option('sweeper.duplicated_postmeta') ? 'duplicated_postmeta' : '',
                       __('Oembed Postmeta', 'wpopt')     => 'oembed_postmeta'
                   )
             ),
@@ -670,6 +634,10 @@ class Mod_Database extends Module
                     $alternate = false;
                     foreach ($sweeper['sweeps'] as $name => $sweep_id) {
 
+                        if (empty($sweep_id)) {
+                            continue;
+                        }
+
                         $count = DBSupport::count($sweep_id);
                         ?>
                         <tr <?php echo $alternate ? "class='alternate'" : ''; ?>>
@@ -681,7 +649,8 @@ class Mod_Database extends Module
                                 <span class="sweep-count"><?php echo number_format_i18n($count); ?></span>
                             </td>
                             <td>
-                                <span class="sweep-percentage"><?php echo UtilEnv::format_percentage($count, $total); ?></span>
+                                <span
+                                        class="sweep-percentage"><?php echo UtilEnv::format_percentage($count, $total); ?></span>
                             </td>
                             <td>
                                 <?php if ($count > 0) :
@@ -714,16 +683,16 @@ class Mod_Database extends Module
         return ob_get_clean();
     }
 
-    public function validate_settings($input, $valid)
+    public function validate_settings($input, $filtering = false): array
     {
-        $valid['backup'] = array(
-            'excluded_tables' => array_map('trim', explode(',', $input['backup.excluded_tables']))
-        );
+        $new_valid = parent::validate_settings($input, $filtering);
 
-        return $valid;
+        $new_valid['backup']['excluded_tables'] = array_map('esc_sql', $new_valid['backup']['excluded_tables']);
+
+        return $new_valid;
     }
 
-    public function restricted_access($context = 'settings')
+    public function restricted_access($context = 'settings'): bool
     {
         switch ($context) {
 
@@ -737,12 +706,20 @@ class Mod_Database extends Module
         }
     }
 
-    protected function setting_fields($filter = '')
+    protected function init()
+    {
+        require_once WPOPT_SUPPORTERS . '/database/DBSupport.class.php';
+    }
+
+    protected function setting_fields($filter = ''): array
     {
         return $this->group_setting_fields(
 
+            $this->setting_field(__('Sweeper:', 'wpopt'), false, "separator"),
+            $this->setting_field(__('Check for duplicate postmeta?', 'wpopt'), "sweeper.duplicated_postmeta", "checkbox", ['default_value' => false]),
+
             $this->setting_field(__('Backups:', 'wpopt'), false, "separator"),
-            $this->setting_field(__('Excluded Tables (comma separated)', 'wpopt'), "backup.excluded_tables", "textarea", ['value' => implode(', ', $this->option('backup.excluded_tables', array()))])
+            $this->setting_field(__('Excluded Tables (one per line)', 'wpopt'), "backup.excluded_tables", "textarea_array", ['value' => implode("\n", $this->option('backup.excluded_tables', []))])
         );
     }
 }

@@ -16,7 +16,7 @@ class Cache
     private int $hits = 0;
     private int $miss = 0;
 
-    private bool $multisite;
+    private bool $is_multisite;
     private string $blog_prefix;
     private string $context = '';
     private array $global_groups = [];
@@ -24,68 +24,98 @@ class Cache
 
     public function __construct($use_memcache = false)
     {
-        $this->multisite = is_multisite();
-        $this->blog_prefix = $this->multisite ? get_current_blog_id() . ':' : '';
+        $this->is_multisite = is_multisite();
+
+        $this->switch_to_blog();
 
         if ($use_memcache) {
 
-            require_once SHZN_DRIVERS . 'cache/CacheInterface.class.php';
+            require_once SHZN_DRIVERS_PATH . 'cache/CacheInterface.class.php';
 
             $this->driver = Drivers\CacheInterface::initialize();
         }
     }
 
-    public static function generate_key(...$args)
+    public function switch_to_blog($blog_id = 0): bool
+    {
+        if ($blog_id === 0) {
+            $blog_id = get_current_blog_id();
+        }
+
+        $this->blog_prefix = $this->is_multisite ? "#$blog_id" : '';
+
+        return $this->is_multisite;
+    }
+
+    public static function generate_key(...$args): string
     {
         return md5(serialize($args));
     }
 
-    public function switch_to_blog($blog_id)
-    {
-        $this->blog_prefix = $this->multisite ? $blog_id . ':' : '';
-
-        return $this->multisite;
-    }
-
-    public function set_context($context)
+    public function switch_context($context)
     {
         $this->context = $context;
-
-        return true;
     }
 
     public function add_global_groups($groups)
     {
         $groups = (array)$groups;
 
-        $groups = array_fill_keys($groups, true);
-        $this->global_groups = array_merge($this->global_groups, $groups);
+        foreach ($groups as $group) {
+
+            // filter group for current context and blog_id
+            $group = $this->filter_group($group);
+
+            $this->global_groups[$group] = true;
+        }
+    }
+
+    private function filter_group($group): string
+    {
+        if (empty($group)) {
+            $group = 'default';
+        }
+
+        if ($this->context) {
+            $group = "$this->context/$group";
+        }
+
+        if ($this->is_multisite and !isset($this->global_groups[$group])) {
+            $group = "$this->blog_prefix/$group";
+        }
+
+        return $group;
     }
 
     public function add_non_persistent_groups($groups)
     {
         $groups = (array)$groups;
 
-        $groups = array_fill_keys($groups, true);
-        $this->non_persistent_groups = array_merge($this->non_persistent_groups, $groups);
+        foreach ($groups as $group) {
+
+            // filter group for current context and blog_id
+            $group = $this->filter_group($group);
+
+            $this->non_persistent_groups[$group] = true;
+        }
     }
 
-    public function get($key, $group = 'default', $default = false)
+    public function get($key, $group = 'default', $default = false, $clone_objects = true)
     {
-        list($key, $group) = $this->filter_key_group($key, $group);
+        $group = $this->filter_group($group);
 
         if ($this->has_volatile($key, $group)) {
 
             $this->hits++;
 
-            if (is_object($this->cache[$group][$key])) {
+            if ($clone_objects and is_object($this->cache[$group][$key])) {
                 return clone $this->cache[$group][$key];
             }
 
             return $this->cache[$group][$key];
         }
 
-        if ($this->driver) {
+        if ($this->is_persistent()) {
             $res = $this->driver->get($key, $group, false);
 
             if ($res) {
@@ -99,29 +129,17 @@ class Cache
         return $default;
     }
 
-    private function filter_key_group($key, $group)
-    {
-        if (empty($group)) {
-            $group = 'default';
-        }
-
-        if ($this->context) {
-            $group = "{$this->context}:{$group}";
-        }
-
-        if ($this->multisite and !isset($this->global_groups[$group])) {
-            $key = $this->blog_prefix . $key;
-        }
-
-        return [$key, $group];
-    }
-
-    private function has_volatile($key, $group)
+    private function has_volatile($key, $group): bool
     {
         return isset($this->cache[$group]) and isset($this->cache[$group][$key]);
     }
 
-    private function set_volatile($key, $data, $group, $force = false)
+    public function is_persistent(): bool
+    {
+        return (bool)$this->driver;
+    }
+
+    private function set_volatile($key, $data, $group, $force = false): bool
     {
         if (!$force and $this->has_volatile($key, $group)) {
             return false;
@@ -138,59 +156,63 @@ class Cache
         return true;
     }
 
-    public function replace($key, $data, $group = 'default', $expire = 0)
+    public function replace($key, $value, $group = 'default', $expire = false): bool
     {
-        list($key, $group) = $this->filter_key_group($key, $group);
+        $group = $this->filter_group($group);
 
-        if ($this->driver) {
-            return $this->driver->replace($key, $data, $group, $expire);
+        if (!$this->is_persistent() or isset($this->non_persistent_groups[$group])) {
+            $expire = false;
         }
 
-        return $this->set($key, $data, $group, true, $expire);
+        if ($expire !== false and !($value instanceof \Closure)) {
+            return $this->driver->replace($key, $value, $group, $expire);
+        }
+
+        return $this->set_volatile($key, $value, $group, true);
     }
 
     /**
-     * set new data in cache if expire = 0 use only volatile memory otherwise if persistent one is available try to use that one
+     * set new data in cache if expire = false use only volatile memory otherwise use persistent one if available
      */
-    public function set($key, $value, $group = 'default', $force = false, $expire = false)
+    public function set($key, $value, $group = 'default', $force = false, $expire = false): bool
     {
-        list($key, $group) = $this->filter_key_group($key, $group);
+        $group = $this->filter_group($group);
 
-        if (isset($this->non_persistent_groups[$group])) {
-            $expire = 0;
+        if (!$this->is_persistent() or isset($this->non_persistent_groups[$group])) {
+            $expire = false;
         }
 
-        if ($expire !== 0 and $this->driver and !($value instanceof \Closure)) {
+        if ($expire !== false and !($value instanceof \Closure)) {
             return $this->driver->set($key, $value, $group, $force, $expire);
         }
 
         return $this->set_volatile($key, $value, $group, $force);
     }
 
-    public function has($key, $group = 'default')
+    public function has($key, $group = 'default'): bool
     {
-        list($key, $group) = $this->filter_key_group($key, $group);
+        $group = $this->filter_group($group);
 
-        if ($this->driver) {
+        if ($this->is_persistent()) {
             return $this->driver->has($key, $group);
         }
 
         return $this->has_volatile($key, $group);
     }
 
-    public function report()
+    public function report(): array
     {
         return [
-            'engine'       => $this->driver ? get_class($this->driver) : 'volatile',
+            'engine'       => $this->is_persistent() ? get_class($this->driver) : 'volatile',
             'local_stats'  => $this->stats(),
             'engine_stats' => $this->stats(true),
         ];
     }
 
-    public function stats($memcache = false)
+    public function stats($memcache = false): array
     {
         if ($memcache) {
-            return $this->driver ? $this->driver->stats() : ['hits' => 0, 'miss' => 0, 'total' => 0];
+            return $this->is_persistent() ? $this->driver->stats() : ['hits' => 0, 'miss' => 0, 'total' => 0];
         }
 
         return ['hits' => $this->hits, 'miss' => $this->miss, 'total' => $this->cached_data];
@@ -199,7 +221,7 @@ class Cache
     public function dump($group = 'default', $memcache = false)
     {
         if ($memcache) {
-            return $this->driver ? $this->driver->dump($group) : [];
+            return $this->is_persistent() ? $this->driver->dump($group) : [];
         }
 
         if (empty($group)) {
@@ -211,11 +233,11 @@ class Cache
 
     public function delete($key, $group = 'default')
     {
-        list($key, $group) = $this->filter_key_group($key, $group);
+        $group = $this->filter_group($group);
 
-        $res = true;
+        $res = false;
 
-        if ($this->driver) {
+        if ($this->is_persistent()) {
             $res = $this->driver->delete($key, $group);
         }
 
@@ -227,16 +249,16 @@ class Cache
 
         $this->cached_data--;
 
-        return $res;
+        return $this->is_persistent() ? $res : true;
     }
 
     public function flush_group($group = 'default')
     {
-        list($key, $group) = $this->filter_key_group('', $group);
+        $group = $this->filter_group($group);
 
         $res = false;
 
-        if ($this->driver) {
+        if ($this->is_persistent()) {
             $res = $this->driver->flush_group($group);
         }
 
@@ -248,14 +270,14 @@ class Cache
 
         unset($this->cache[$group]);
 
-        return $res;
+        return $this->is_persistent() ? $res : true;
     }
 
     public function flush()
     {
         $res = true;
 
-        if ($this->driver) {
+        if ($this->is_persistent()) {
             $res = $this->driver->flush();
         }
 
@@ -268,7 +290,12 @@ class Cache
         return $res;
     }
 
-    public function close()
+    public function flush_volatile()
+    {
+        $this->cache = [];
+    }
+
+    public function close(): bool
     {
         if ($this->driver) {
             return $this->driver->close();

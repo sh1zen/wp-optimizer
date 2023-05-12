@@ -52,7 +52,7 @@ class Ajax
         $object = shzn($this->context)->moduleHandler->get_module_instance($request['mod']);
 
         $args = array(
-            'action'    => sanitize_text_field($request['mod_action']),
+            'action'    => StringHelper::sanitize_text($request['mod_action']),
             'nonce'     => $request['mod_nonce'],
             'options'   => $request['mod_args'],
             'form_data' => $request['mod_form'],

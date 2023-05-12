@@ -11,24 +11,16 @@ use SHZN\modules\Module;
 
 class Mod_Cron extends Module
 {
-    public $scopes = array('core-settings');
+    public array $scopes = array('core-settings');
 
-    public function __construct()
+    protected string $context = 'wpopt';
+
+    public function validate_settings($input, $filtering = false): array
     {
-        /**
-         * we need to load all modules with cron scope
-         */
-        shzn('wpopt')->moduleHandler->setup_modules('cron');
-
-        parent::__construct('wpopt');
+        return shzn('wpopt')->cron->cron_setting_validator($input, $filtering);
     }
 
-    public function validate_settings($input, $valid)
-    {
-        return shzn('wpopt')->cron->cron_setting_validator($input, $valid);
-    }
-
-    public function restricted_access($context = '')
+    public function restricted_access($context = ''): bool
     {
         switch ($context) {
 
@@ -40,7 +32,15 @@ class Mod_Cron extends Module
         }
     }
 
-    protected function setting_fields($filter = '')
+    protected function init()
+    {
+        /**
+         * we need to load all modules with cron scope
+         */
+        shzn('wpopt')->moduleHandler->setup_modules('cron');
+    }
+
+    protected function setting_fields($filter = ''): array
     {
         /**
          * Load here all module cron settings

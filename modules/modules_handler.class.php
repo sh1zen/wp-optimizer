@@ -11,37 +11,13 @@ use SHZN\modules\Module;
 
 class Mod_Modules_Handler extends Module
 {
-    public $scopes = array('core-settings');
+    public array $scopes = array('core-settings');
 
-    private $modules_slug2name;
+    private array $modules_slug2name = [];
 
-    public function __construct()
-    {
-        $modules = shzn('wpopt')->moduleHandler->get_modules(array('excepts' => array('modules_handler', 'settings', 'cron')), false);
+    protected string $context = 'wpopt';
 
-        $slugs = array_column($modules, 'slug');
-
-        $this->modules_slug2name = array_combine($slugs, array_column($modules, 'name'));
-
-        parent::__construct('wpopt', array(
-            'settings' => array_fill_keys($slugs, true)
-        ));
-    }
-
-    protected function setting_fields($filter = '')
-    {
-        $settings = array();
-
-        foreach ($this->option() as $key => $value) {
-            if (isset($this->modules_slug2name[$key])) {
-                $settings[] = $this->setting_field($this->modules_slug2name[$key], $key, 'checkbox', ['value' => $value]);
-            }
-        }
-
-        return $settings;
-    }
-
-    public function restricted_access($context = '')
+    public function restricted_access($context = ''): bool
     {
         switch ($context) {
 
@@ -51,6 +27,25 @@ class Mod_Modules_Handler extends Module
             default:
                 return false;
         }
+    }
+
+    protected function init()
+    {
+        $modules = shzn('wpopt')->moduleHandler->get_modules(array('excepts' => array('modules_handler', 'settings', 'cron')), false);
+
+        $this->modules_slug2name = array_combine(array_column($modules, 'slug'), array_column($modules, 'name'));
+    }
+
+    protected function setting_fields($filter = ''): array
+    {
+        $settings = array();
+
+        foreach ($this->modules_slug2name as $slug => $name) {
+
+            $settings[] = $this->setting_field($name, $slug, 'checkbox', ['value' => $this->option($slug, true)]);
+        }
+
+        return $settings;
     }
 }
 

@@ -1,11 +1,5 @@
 <?php
 /**
- * @author    sh1zen
- * @copyright Copyright (C) 2023.
- * @license   http://www.gnu.org/licenses/gpl.html GNU/GPL
- */
-
-/**
  * Plugin Name: WP Optimizer
  * Plugin URI: https://github.com/sh1zen/wp-optimizer
  * Description: Search Engine (SEO) & Performance Optimization plugin, support automatic image compression, integrated caching, database and server enhancements.
@@ -13,10 +7,10 @@
  * Author URI: https://sh1zen.github.io/
  * Text Domain: wpopt
  * Domain Path: /languages
- * Version: 2.0.0
+ * Version: 2.1.6
  */
 
-const WPOPT_VERSION = '2.0.0';
+const WPOPT_VERSION = '2.1.6';
 
 const WPOPT_FILE = __FILE__;
 
@@ -34,6 +28,7 @@ require_once WPOPT_INCPATH . 'constants.php';
 require_once WPOPT_INCPATH . 'functions.php';
 require_once WPOPT_INCPATH . 'Report.class.php';
 
+
 // shzn-framework commons
 if (!defined('SHZN_FRAMEWORK')) {
     if (!file_exists(WPOPT_VENDORS . 'shzn-framework/loader.php')) {
@@ -47,7 +42,6 @@ shzn(
     [
         'path'         => WPOPT_MODULES,
         'table_name'   => "wpopt",
-        'use_memcache' => true
     ],
     [
         'meter'         => true,
@@ -68,3 +62,5 @@ require_once WPOPT_ADMIN . 'PluginInit.class.php';
  * Initialize the plugin.
  */
 WPOptimizer\core\PluginInit::Initialize();
+
+shzn('wpopt')->meter->lap('wpopt-loaded');

@@ -22,14 +22,13 @@ class Report
 
     public static function export($write_out = false)
     {
-        shzn('wpopt')->meter->lap();
-
         $report_data = self::getInstance()->report;
 
-        if (!$write_out)
+        if (!$write_out) {
             return $report_data;
+        }
 
-        $report = sprintf(__("Report %s : [ %s s : %s ]\n\n", 'wpopt'), wp_date('Y-m-d H:i:s'), round(shzn('wpopt')->meter->get_time(), 3), shzn('wpopt')->meter->get_memory());
+        $report = sprintf(__("Report %s : [ %s s : %s ]\n\n", 'wpopt'), wp_date('Y-m-d H:i:s'), round(shzn('wpopt')->meter->get_time('start', 'now'), 3), shzn('wpopt')->meter->get_memory());
 
         foreach ($report_data as $scope => $table_report) {
 
@@ -70,13 +69,10 @@ class Report
 
         $report .= PHP_EOL . PHP_EOL;
 
-        return Disk::write(WPOPT_STORAGE . 'wpopt-report.txt', $report, FILE_APPEND);
+        return Disk::write(WPOPT_STORAGE . 'report-' . time() . '.txt', $report, FILE_APPEND);
     }
 
-    /**
-     * @return Report
-     */
-    public static function getInstance()
+    public static function getInstance(): Report
     {
         if (!isset(self::$_instance)) {
             self::$_instance = new self();

@@ -34,58 +34,58 @@ class CacheInterface
         return $default;
     }
 
-    public function set($key, $value, $group, $force = false, $expire = false)
+    public function set($key, $value, $group, $force = false, $expire = 0): bool
     {
         return false;
     }
 
-    public function has($key, $group)
+    public function has($key, $group): bool
     {
         return false;
     }
 
-    public function dump($group = '')
+    public function dump($group = ''): array
     {
         return [];
     }
 
-    public function delete($key, $group)
+    public function delete($key, $group): bool
     {
         return false;
     }
 
-    public function flush_group($group)
+    public function flush_group($group): bool
     {
         return false;
     }
 
-    public function flush()
+    public function flush(): bool
     {
         return false;
     }
 
-    public function has_group($group)
+    public function has_group($group): bool
     {
         return false;
     }
 
-    public function replace($key, $data, $group, $expire = false)
+    public function replace($key, $data, $group, $expire = 0): bool
     {
         return $this->set($key, $data, $group, true, $expire);
     }
 
-    public function close()
+    public function close(): bool
     {
         return false;
     }
 
-    public function stats()
+    public function stats(): array
     {
         return ['hits' => 0, 'miss' => 0, 'total' => 0];
     }
 
-    protected function co_group($key, $group)
+    protected function co_group($key, $group): string
     {
-        return "{$key}#{$group}";
+        return "$group#$key";
     }
 }

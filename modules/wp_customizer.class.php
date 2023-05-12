@@ -16,20 +16,68 @@ use SHZN\modules\Module;
  */
 class Mod_WP_Customizer extends Module
 {
-    public $scopes = array('settings', 'autoload');
+    public array $scopes = array('settings', 'autoload');
 
-    public function __construct()
+    protected string $context = 'wpopt';
+
+    public function customize_after_init(): void
     {
-        parent::__construct('wpopt');
+        if ($this->option('admin-bar.hide-non-admin') and !current_user_can('administrator')) {
+            add_filter('show_admin_bar', '__return_false');
+        }
 
+        if ($this->option('admin-panel.block-non-admin') and !current_user_can('administrator') and !wp_doing_ajax()) {
+
+            add_action('admin_init', function () {
+                if (headers_sent()) {
+                    echo '<script>window.location.replace("' . shzn_utils()->home_url . $this->option('non-admin-redirect_to', '') . '");</script>';
+                }
+                else {
+                    Rewriter::getInstance()->redirect($this->option('non-admin-redirect_to', '/') ?: '/', 302);
+                }
+
+                exit;
+            });
+        }
+    }
+
+    public function admin_bar_remove_items(): void
+    {
+        global $wp_admin_bar;
+
+        if ($this->option('admin-bar-items.wp-logo')) {
+            $wp_admin_bar->remove_menu('wp-logo');
+        }
+
+        if ($this->option('admin-hide-comments')) {
+            $wp_admin_bar->remove_menu('comments');
+        }
+
+        if ($this->option('admin-bar-items.updates')) {
+            $wp_admin_bar->remove_menu('updates');
+        }
+    }
+
+    public function restricted_access($context = ''): bool
+    {
+        if ($context === 'settings') {
+            return !current_user_can('manage_options');
+        }
+
+        return false;
+    }
+
+    protected function init(): void
+    {
         $this->customize();
 
         add_action('init', [$this, 'customize_after_init']);
     }
 
-    private function customize()
+    private function customize(): void
     {
         if ($this->option('blocks-editor')) {
+
             remove_filter('the_content', 'do_blocks');
 
             remove_all_filters('use_block_editor_for_post');
@@ -95,16 +143,19 @@ class Mod_WP_Customizer extends Module
             remove_action('init', 'wp_sitemaps_get_server');
         }
 
-        if ($this->option('category-filter')) {
+        if ($this->option('category-filter') and is_admin()) {
 
-            $screen_base = Rewriter::getInstance()->get_base('.php');
+            $screen_base = Rewriter::getInstance()->get_basename('.php');
 
             if ('post' === $screen_base or 'edit' === $screen_base) {
-                wp_enqueue_script('wpopt-admin-script', UtilEnv::path_to_url(__DIR__, true) . '/supporters/filter-categories.js', array('jquery'), WPOPT_VERSION, true);
-                wp_localize_script('wpopt-admin-script', 'fc_plugin', array(
-                    'placeholder' => esc_html__('Filter %s', 'wpopt'),
-                    'screenName'  => $screen_base
-                ));
+
+                add_action('admin_enqueue_scripts', function () use ($screen_base) {
+                    wp_enqueue_script('wpopt-admin-script', UtilEnv::path_to_url(__DIR__, true) . '/supporters/filter-categories.js', array('jquery'), WPOPT_VERSION, true);
+                    wp_localize_script('wpopt-admin-script', 'fc_plugin', array(
+                        'placeholder' => esc_html__('Filter %s', 'wpopt'),
+                        'screenName'  => $screen_base
+                    ));
+                });
             }
         }
 
@@ -157,9 +208,18 @@ class Mod_WP_Customizer extends Module
             });
         }
 
-        if ($this->option('feed-links')) {
+        // disable feed links
+        if ($this->option('disable.feed-links')) {
             remove_action('wp_head', 'feed_links', 2);
             remove_action('wp_head', 'feed_links_extra', 3);
+        }
+
+        // disable xml rpc
+        if ($this->option('disable.xmlrpc')) {
+
+            // Disable use XML-RPC
+            add_filter('xmlrpc_enabled', '__return_false');
+            remove_action('wp_head', 'rsd_link');
         }
 
         if ($this->option('admin-bar.hide')) {
@@ -268,104 +328,113 @@ class Mod_WP_Customizer extends Module
             remove_action('template_redirect', 'wp_shortlink_header', 11);
             remove_action('wp_head', 'wp_shortlink_wp_head', 10);
         }
-    }
 
-    public function customize_after_init()
-    {
-        if ($this->option('admin-bar.hide-non-admin') and !current_user_can('administrator')) {
-            add_filter('show_admin_bar', '__return_false');
-        }
+        if ($this->option('disable.oembed_and_rest')) {
 
-        if ($this->option('admin-panel.block-non-admin') and !current_user_can('administrator') and !wp_doing_ajax()) {
-
-            add_action('admin_init', function () {
-                if (headers_sent()) {
-                    echo '<script>window.location.replace("' . shzn()->utility->home_url . $this->option('non-admin-redirect_to', '') . '");</script>';
-                }
-                else {
-                    wp_redirect(shzn()->utility->home_url . $this->option('non-admin-redirect_to', ''), 302);
-                }
-
-                exit;
+            add_filter('rest_authentication_errors', function () {
+                return new \WP_Error('rest_disabled', __('The REST API has been disabled on this site.', 'wpopt'), array('status' => 403));
             });
+
+            // Remove the REST API lines from the HTML Header
+            remove_action('wp_head', 'rest_output_link_wp_head', 10);
+            remove_action('wp_head', 'wp_oembed_add_discovery_links', 10);
+
+            // Filters for WP-API version 1.x
+            add_filter('json_enabled', '__return_false');
+            add_filter('json_jsonp_enabled', '__return_false');
+
+            // Filters for WP-API version 2.x
+            add_filter('rest_enabled', '__return_false');
+            add_filter('rest_jsonp_enabled', '__return_false');
+
+            // Remove the REST API endpoint.
+            remove_action('rest_api_init', 'wp_oembed_register_route');
+
+            // Turn off oEmbed auto discovery.
+            add_filter('embed_oembed_discover', '__return_false');
+
+            // Don't filter oEmbed results.
+            remove_filter('oembed_dataparse', 'wp_filter_oembed_result', 10);
+            remove_filter('oembed_dataparse', 'wp_filter_oembed_iframe_title_attribute', 5);
+            remove_filter('oembed_response_data', 'get_oembed_response_data_rich', 10);
+            remove_filter('pre_oembed_result', 'wp_filter_pre_oembed_result', 10);
+            remove_filter('embed_oembed_html', 'wp_maybe_enqueue_oembed_host_js');
+
+            // Remove oEmbed-specific JavaScript from the front-end and back-end.
+            remove_action('wp_head', 'wp_oembed_add_host_js');
+
+            remove_action('template_redirect', 'rest_output_link_header', 11);
+        }
+
+        if ($this->option('disable.post_relational_links')) {
+            remove_action('wp_head', 'start_post_rel_link');
+            remove_action('wp_head', 'parent_post_rel_link');
+            remove_action('wp_head', 'index_rel_link');
+            remove_action('wp_head', 'adjacent_posts_rel_link');
         }
     }
 
-    public function admin_bar_remove_items()
-    {
-        global $wp_admin_bar;
-
-        if ($this->option('admin-bar-items.wp-logo')) {
-            $wp_admin_bar->remove_menu('wp-logo');
-        }
-
-        if ($this->option('admin-bar-items.comments') or $this->option('admin-hide-comments')) {
-            $wp_admin_bar->remove_menu('comments');
-        }
-
-        if ($this->option('admin-bar-items.updates')) {
-            $wp_admin_bar->remove_menu('updates');
-        }
-    }
-
-    public function restricted_access($context = '')
-    {
-        if ($context === 'settings') {
-            return !current_user_can('manage_options');
-        }
-
-        return false;
-    }
-
-    protected function setting_fields($filter = '')
+    protected function setting_fields($filter = ''): array
     {
         return $this->group_setting_fields(
 
-            $this->setting_field(__('Dashboard', 'wpopt'), false, 'separator'),
-            $this->setting_field(__('Disable Dashboard Welcome Panel', 'wpopt'), "welcome-panel", "checkbox"),
-            $this->setting_field(__('Disable Dashboard WordPress Blog', 'wpopt'), "dashboard.wpblog", "checkbox"),
-            $this->setting_field(__('Disable Dashboard WordPress Quick Press', 'wpopt'), "dashboard.quickpress", "checkbox"),
-
-            $this->setting_field(__('Admin Bar', 'wpopt'), false, 'separator'),
-            $this->setting_field(__('Hide Admin Bar', 'wpopt'), "admin-bar.hide", "checkbox"),
-            $this->setting_field(__('Hide Admin Bar for non admins', 'wpopt'), "admin-bar.hide-non-admin", "checkbox"),
-            $this->setting_field(__('Prevent access to admin panel for non admins', 'wpopt'), "admin-panel.block-non-admin", "checkbox"),
-            $this->setting_field(__('Redirect to', 'wpopt'), "non-admin-redirect_to", "text", ['parent' => 'admin-panel.block-non-admin']),
-            $this->setting_field(__('Remove WP logo', 'wpopt'), "admin-bar-items.wp-logo", "checkbox"),
-            $this->setting_field(__('Remove comments shortcut', 'wpopt'), "admin-bar-items.comments", "checkbox"),
-            $this->setting_field(__('Remove updates shortcut', 'wpopt'), "admin-bar-items.updates", "checkbox"),
-
-            $this->setting_field(__('Page Editor - SEO', 'wpopt'), false, 'separator'),
-            $this->setting_field(__('Add a selection filter in category list', 'wpopt'), 'category-filter', 'checkbox'),
-            $this->setting_field(__('Disable Block Editor (Gutenberg)', 'wpopt'), "blocks-editor", "checkbox"),
-            $this->setting_field(__('Disable Core Blocks', 'wpopt'), "core-blocks", "checkbox"),
-            $this->setting_field(__('Disable Auto Paragraph', 'wpopt'), "wpautop", "checkbox"),
-
-            $this->setting_field(__('Theme', 'wpopt'), false, 'separator'),
-            $this->setting_field(__('Disable theme blocks and global style', 'wpopt'), "theme-block-disable", "checkbox"),
-            $this->setting_field(__('Disable theme widgets', 'wpopt'), "widgets-disable", "checkbox"),
-            $this->setting_field(__('Disable custom css', 'wpopt'), "disable.custom_css_cb", "checkbox"),
-
-            $this->setting_field(__('Comments', 'wpopt'), false, 'separator'),
-            $this->setting_field(__("Disable comments", 'wpopt'), "disable-comments", "checkbox"),
-            $this->setting_field(__("Hide comments shortcuts from admin pages", 'wpopt'), "admin-hide-comments", "checkbox"),
-
-            $this->setting_field(__('Tips useful for speed up', 'wpopt'), false, 'separator'),
-            $this->setting_field(__('Disable WordPress sitemap', 'wpopt'), "core-sitemap", "checkbox"),
-            $this->setting_field(__('Disable DNS prefetch', 'wpopt'), "disable.dns-prefetch", "checkbox"),
-            $this->setting_field(__('Disable short-link generator', 'wpopt'), "disable.shortlink", "checkbox"),
-            $this->setting_field(__('Disable pings', 'wpopt'), "ping", "checkbox"),
-            $this->setting_field(__('Disable Self ping', 'wpopt'), "selfping", "checkbox"),
-            $this->setting_field(__('Disable WordPress Emoji support', 'wpopt'), "emoji", "checkbox"),
-            $this->setting_field(__('Disable Feed links', 'wpopt'), "feed-links", "checkbox"),
-            $this->setting_field(__('Disable jQuery Migrate', 'wpopt'), "jquery-migrate", "checkbox"),
+            $this->group_setting_fields(
+                $this->setting_field(__('Dashboard', 'wpopt'), false, 'separator'),
+                $this->setting_field(__('Disable Dashboard Welcome Panel', 'wpopt'), "welcome-panel", "checkbox", ['default_value' => true]),
+                $this->setting_field(__('Disable Dashboard WordPress Blog', 'wpopt'), "dashboard.wpblog", "checkbox", ['default_value' => true]),
+                $this->setting_field(__('Disable Dashboard WordPress Quick Press', 'wpopt'), "dashboard.quickpress", "checkbox", ['default_value' => true]),
+            ),
+            $this->group_setting_fields(
+                $this->setting_field(__('Admin', 'wpopt'), false, 'separator'),
+                $this->setting_field(__('Hide Admin Bar', 'wpopt'), "admin-bar.hide", "checkbox"),
+                $this->setting_field(__('Hide Admin Bar for non admins', 'wpopt'), "admin-bar.hide-non-admin", "checkbox", ['default_value' => true]),
+                $this->setting_field(__('Prevent access to admin dashboard for non admins', 'wpopt'), "admin-panel.block-non-admin", "checkbox"),
+                $this->setting_field(__('Redirect to', 'wpopt'), "non-admin-redirect_to", "text", ['parent' => 'admin-panel.block-non-admin', 'default_value' => '/']),
+                $this->setting_field(__('Remove WP logo', 'wpopt'), "admin-bar-items.wp-logo", "checkbox"),
+                $this->setting_field(__('Remove updates shortcut', 'wpopt'), "admin-bar-items.updates", "checkbox", ['default_value' => true]),
+            ),
+            $this->group_setting_fields(
+                $this->setting_field(__('Page Editor', 'wpopt'), false, 'separator'),
+                $this->setting_field(__('Add a selection filter in category list', 'wpopt'), 'category-filter', 'checkbox'),
+                $this->setting_field(__('Disable Block Editor (Gutenberg)', 'wpopt'), "blocks-editor", "checkbox"),
+                $this->setting_field(__('Disable Core Blocks', 'wpopt'), "core-blocks", "checkbox"),
+                $this->setting_field(__('Disable Auto Paragraph', 'wpopt'), "wpautop", "checkbox"),
+            ),
+            $this->group_setting_fields(
+                $this->setting_field(__('Theme', 'wpopt'), false, 'separator'),
+                $this->setting_field(__('Disable theme Blocks and Global-Style', 'wpopt'), "theme-block-disable", "checkbox"),
+                $this->setting_field(__('Disable theme widgets', 'wpopt'), "widgets-disable", "checkbox"),
+                $this->setting_field(__('Disable custom css', 'wpopt'), "disable.custom_css_cb", "checkbox"),
+            ),
+            $this->group_setting_fields(
+                $this->setting_field(__('Comments', 'wpopt'), false, 'separator'),
+                $this->setting_field(__("Disable comments", 'wpopt'), "disable-comments", "checkbox"),
+                $this->setting_field(__("Hide comments shortcuts from admin pages", 'wpopt'), "admin-hide-comments", "checkbox"),
+            ),
+            $this->group_setting_fields(
+                $this->setting_field(__('Link Tags Feed WP-JSON', 'wpopt'), false, 'separator'),
+                $this->setting_field(__('Disable DNS prefetch', 'wpopt'), "disable.dns-prefetch", "checkbox"),
+                $this->setting_field(__('Disable short-link generator', 'wpopt'), "disable.shortlink", "checkbox", ['default_value' => true]),
+                $this->setting_field(__('Disable Feed links', 'wpopt'), "disable.feed-links", "checkbox"),
+                $this->setting_field(__('Disable WP-JSON API and oembed', 'wpopt'), "disable.oembed_and_rest", "checkbox"),
+                $this->setting_field(__('Disable Post Relational Links', 'wpopt'), "disable.post_relational_links", "checkbox"),
+                $this->setting_field(__('Disable XML-RPC', 'wpopt'), "disable.xmlrpc", "checkbox"),
+            ),
+            $this->group_setting_fields(
+                $this->setting_field(__('Miscellanea', 'wpopt'), false, 'separator'),
+                $this->setting_field(__('Disable WordPress sitemap', 'wpopt'), "core-sitemap", "checkbox"),
+                $this->setting_field(__('Disable pings', 'wpopt'), "ping", "checkbox"),
+                $this->setting_field(__('Disable Self ping', 'wpopt'), "selfping", "checkbox", ['default_value' => true]),
+                $this->setting_field(__('Disable WordPress Emoji support', 'wpopt'), "emoji", "checkbox"),
+                $this->setting_field(__('Disable jQuery Migrate', 'wpopt'), "jquery-migrate", "checkbox"),
+            )
         );
     }
 
-    protected function infos()
+    protected function infos(): array
     {
         return [
-            'theme-block-disable'   => __('If your theme does not support blocks, this feature just slow down your site, safe to disable.', 'wpopt'),
+            'theme-block-disable'   => __('If your theme does not support blocks, this feature is safe to disable.', 'wpopt'),
             'disable.dns-prefetch'  => __("WordPress DNS prefetch, preloads domain name system (DNS) information for external resources, reducing the time it takes to connect to them. If no external resources is used it's possible to disable it.", 'wpopt'),
             'disable.shortlink'     => __("WordPress short-link generator creates shortened URLs for posts, pages or custom post types. In most cases not necessary.", 'wpopt'),
             'disable.custom_css_cb' => __("WordPress Custom CSS is a feature that allows users to add their own custom styles to a WordPress website, without modifying the theme files.", 'wpopt'),

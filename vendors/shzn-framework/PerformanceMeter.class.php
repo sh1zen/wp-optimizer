@@ -5,16 +5,16 @@
  * @license   http://www.gnu.org/licenses/gpl.html GNU/GPL
  */
 
-/**
- * Timer that collects timing and memory usage.
- */
 
 namespace SHZN\core;
 
+/**
+ * Timer that collects timing and memory usage.
+ */
 class PerformanceMeter
 {
-    private $laps = array();
-    private $lap_n = 0;
+    private array $laps = array();
+    private int $lap_n = 0;
 
     public function __construct($data = null)
     {
@@ -28,7 +28,7 @@ class PerformanceMeter
         $this->laps['start'] = $this->collect($data);
     }
 
-    private function collect($data = null)
+    private function collect($data = null): array
     {
         if (is_null($data)) {
             $data = shzn_debug_backtrace(3);
@@ -53,7 +53,7 @@ class PerformanceMeter
         $this->laps[$name] = $lap;
     }
 
-    public function get_laps()
+    public function get_laps(): array
     {
         $laps = array();
         $_lap = [];
@@ -93,7 +93,7 @@ class PerformanceMeter
         if ($name === 'last')
             $lap = end($this->laps);
         else
-            $lap = isset($this->laps[$name]) ? $this->laps[$name] : $this->laps['start'];
+            $lap = $this->laps[$name] ?? $this->laps['start'];
 
         if ($property)
             return $lap[$property];

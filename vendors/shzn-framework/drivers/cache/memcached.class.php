@@ -16,7 +16,7 @@ class MemcacheD extends CacheInterface
         $this->conn->addServer('localhost', 11211, 1);
     }
 
-    public function set($key, $value, $group, $force = false, $expire = false)
+    public function set($key, $value, $group, $force = false, $expire = 0): bool
     {
         if (!$this->conn) {
             return false;
@@ -31,7 +31,7 @@ class MemcacheD extends CacheInterface
         return $this->conn->set($key, $value, $expire);
     }
 
-    public function has($key, $group)
+    public function has($key, $group): bool
     {
         if (!$this->conn) {
             return false;
@@ -51,11 +51,11 @@ class MemcacheD extends CacheInterface
         return $this->conn->get($this->co_group($key, $group)) ?: $default;
     }
 
-    public function dump($group = '')
+    public function dump($group = ''): array
     {
         $dump = [];
         foreach ($this->conn->getAllKeys() as $key) {
-            if (str_contains($key, "#$group")) {
+            if (str_starts_with($key, $group)) {
                 $dump[$key] = $this->conn->get($key);
             }
         }
@@ -63,17 +63,17 @@ class MemcacheD extends CacheInterface
         return $dump;
     }
 
-    public function delete_group($group)
+    public function delete_group($group): bool
     {
         foreach ($this->conn->getAllKeys() as $key) {
-            if (str_contains($key, "#$group")) {
+            if (str_starts_with($key, $group)) {
                 $this->conn->delete($key, 0);
             }
         }
         return false;
     }
 
-    public function delete($key, $group)
+    public function delete($key, $group): bool
     {
         if (!$this->conn) {
             return false;
@@ -84,7 +84,7 @@ class MemcacheD extends CacheInterface
         return $this->conn->delete($key, 0);
     }
 
-    public function replace($key, $data, $group, $expire = false)
+    public function replace($key, $data, $group, $expire = 0): bool
     {
         if (!$this->conn) {
             return false;
@@ -95,37 +95,38 @@ class MemcacheD extends CacheInterface
         return $this->conn->replace($key, $data, $expire);
     }
 
-    public function has_group($group)
+    public function has_group($group): bool
     {
         foreach ($this->conn->getAllKeys() as $key) {
-            if (str_contains($key, "#$group")) {
+            if (str_starts_with($key, $group)) {
                 return true;
             }
         }
         return false;
     }
 
-    public function flush()
+    public function flush(): bool
     {
         return $this->conn->flush();
     }
 
-    public function flush_group($group)
+    public function flush_group($group): bool
     {
         foreach ($this->conn->getAllKeys() as $key) {
-            if (str_contains($key, "#$group")) {
+            if (str_starts_with($key, $group)) {
                 $this->conn->delete($key, 0);
             }
         }
+        return true;
     }
 
-    public function stats()
+    public function stats(): array
     {
         $info = $this->conn->getStats()['localhost:11211'] ?? [];
         return ['hits' => $info['get_hits'] ?? 0, 'miss' => $info['get_misses'] ?? 0, 'total' => $info['total_items'] ?? 0];
     }
 
-    public function close()
+    public function close(): bool
     {
         return $this->conn->quit();
     }

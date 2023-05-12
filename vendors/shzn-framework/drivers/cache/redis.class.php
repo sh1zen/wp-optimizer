@@ -51,10 +51,10 @@ class Redis extends CacheInterface
         return $value ?: $default;
     }
 
-    public function dump($group = '')
+    public function dump($group = ''): array
     {
         if (!$this->conn) {
-            return false;
+            return [];
         }
 
         $res = [];
@@ -74,7 +74,7 @@ class Redis extends CacheInterface
         return $res;
     }
 
-    public function delete($key, $group)
+    public function delete($key, $group): bool
     {
         if (!$this->conn) {
             return false;
@@ -95,7 +95,7 @@ class Redis extends CacheInterface
         return $res;
     }
 
-    public function flush_group($group)
+    public function flush_group($group): bool
     {
         if (!$this->conn) {
             return false;
@@ -115,7 +115,7 @@ class Redis extends CacheInterface
         }
     }
 
-    public function has_group($group)
+    public function has_group($group): bool
     {
         if (!$this->conn) {
             return false;
@@ -130,7 +130,7 @@ class Redis extends CacheInterface
         return $exist;
     }
 
-    public function flush()
+    public function flush(): bool
     {
         if (!$this->conn) {
             return false;
@@ -143,7 +143,7 @@ class Redis extends CacheInterface
         }
     }
 
-    public function replace($key, $data, $group, $expire = false)
+    public function replace($key, $data, $group, $expire = 0): bool
     {
         if (!$this->conn) {
             return false;
@@ -151,14 +151,20 @@ class Redis extends CacheInterface
 
         $key = $this->co_group($key, $group);
 
+        $options = ['XX'];
+
+        if ($expire) {
+            $options['EX'] = $expire;
+        }
+
         try {
-            return $this->conn->set($key, $data, ['XX', 'EX' => $expire]);
+            return $this->conn->set($key, $data, $options);
         } catch (\RedisException $e) {
             return false;
         }
     }
 
-    public function set($key, $value, $group, $force = false, $expire = false)
+    public function set($key, $value, $group, $force = false, $expire = 0): bool
     {
         if (!$this->conn) {
             return false;
@@ -189,7 +195,7 @@ class Redis extends CacheInterface
         return $res;
     }
 
-    public function has($key, $group)
+    public function has($key, $group): bool
     {
         if (!$this->conn) {
             return false;
@@ -206,7 +212,7 @@ class Redis extends CacheInterface
         return $exist;
     }
 
-    public function stats()
+    public function stats(): array
     {
         if (!$this->conn) {
             return parent::stats();
@@ -225,7 +231,7 @@ class Redis extends CacheInterface
         return $stats;
     }
 
-    public function close()
+    public function close(): bool
     {
         try {
             return $this->conn->close();

@@ -23,14 +23,14 @@ class PagesHandler
         add_action('admin_menu', array($this, 'add_plugin_pages'));
         add_action('admin_enqueue_scripts', array($this, 'register_assets'), 20, 0);
 
-        add_action('admin_notices', [$this, 'notice'], 10, 0);
+        //add_action('admin_notices', [$this, 'notice'], 10, 0);
     }
 
     public function notice()
     {
         global $pagenow;
 
-        $user_id = shzn('common')->utility->cu_id;
+        $user_id = shzn_utils()->cu_id;
 
         if (isset($_GET['wpopt-dismiss-notice'])) {
 
@@ -40,7 +40,8 @@ class PagesHandler
 
             ?>
             <div class="notice notice-info is-dismissible">
-                <h3>Help me to build <a href="<?php echo admin_url('admin.php?page=wp-optimizer'); ?>">WP-OPTIMIZER</a>.</h3>
+                <h3>Help me to build <a href="<?php echo admin_url('admin.php?page=wp-optimizer'); ?>">WP-OPTIMIZER</a>.
+                </h3>
                 <p><?php echo sprintf(__("Buy me a coffe <a href='%s'>here</a> or leave a review <a href='%s'>here</a>.", 'wpopt'), "https://www.paypal.com/donate?business=dev.sh1zen%40outlook.it&item_name=Thank+you+in+advanced+for+the+kind+donations.+You+will+sustain+me+developing+WP-Optimizer.&currency_code=EUR", "https://wordpress.org/support/plugin/wp-optimizer/reviews/?filter=5"); ?></p>
                 <a href="?wpopt-dismiss-notice"><?php echo __('Dismiss', 'wpopt') ?></a>
             </div>
@@ -87,13 +88,16 @@ class PagesHandler
     {
         $this->enqueue_scripts();
 
-        shzn('wpopt')->meter->lap('Modules settings pre render');
+        if (SHZN_DEBUG) {
+            shzn('wpopt')->meter->lap('Modules settings pre render');
+        }
 
         shzn('wpopt')->settings->render_modules_settings();
 
-        shzn('wpopt')->meter->lap('Modules settings rendered');
+        if (SHZN_DEBUG) {
 
-        if (WPOPT_DEBUG) {
+            shzn('wpopt')->meter->lap('Modules settings rendered');
+
             echo shzn('wpopt')->meter->get_time() . ' - ' . shzn('wpopt')->meter->get_memory();
         }
     }
@@ -108,13 +112,9 @@ class PagesHandler
     {
         $this->enqueue_scripts();
 
-        shzn('wpopt')->meter->lap('Core settings pre render');
-
         shzn('wpopt')->settings->render_core_settings();
 
-        shzn('wpopt')->meter->lap('Core settings rendered');
-
-        if (WPOPT_DEBUG) {
+        if (SHZN_DEBUG) {
             echo shzn('wpopt')->meter->get_time() . ' - ' . shzn('wpopt')->meter->get_memory();
         }
     }
@@ -133,9 +133,8 @@ class PagesHandler
 
         $object->render_admin_page();
 
-        shzn('wpopt')->meter->lap($module_slug);
-
         if (WPOPT_DEBUG) {
+            shzn('wpopt')->meter->lap($module_slug);
             echo shzn('wpopt')->meter->get_time() . ' - ' . shzn('wpopt')->meter->get_memory(true, true);
         }
     }
@@ -144,7 +143,7 @@ class PagesHandler
     {
         $assets_url = wpopt()->plugin_base_url;
 
-        $min = shzn()->utility->online ? '.min' : '';
+        $min = shzn_utils()->online ? '.min' : '';
 
         wp_register_style("wpopt_css", "{$assets_url}assets/style{$min}.css", ['vendor-shzn-css']);
 
@@ -168,11 +167,14 @@ class PagesHandler
                 <div class="shzn-faq-list">
                     <div class="shzn-faq-item">
                         <div class="shzn-faq-question-wrapper ">
-                            <div class="shzn-faq-question shzn-collapse-handler"><?php echo __('What this plugin can do and how does it work?', 'wpopt') ?>
+                            <div
+                                class="shzn-faq-question shzn-collapse-handler"><?php echo __('What this plugin can do and how does it work?', 'wpopt') ?>
                                 <icon class="shzn-collapse-icon">+</icon>
                             </div>
                             <div class="shzn-faq-answer shzn-collapse">
-                                <p><b><?php echo __('This plugin is privacy oriented: every data stay on your server, is not necessary to send data to other servers.'); ?></b></p>
+                                <p>
+                                    <b><?php echo __('This plugin is privacy oriented: every data stay on your server, is not necessary to send data to other servers.'); ?></b>
+                                </p>
                                 <span><?php echo __('WPOPT has been designed to improve the performance of your site, covering many aspects (if actived):'); ?></span>
                                 <ul class="shzn-list">
                                     <li><?php _e("Server enhancements: from basic .htaccess rules media compression (gzip, brotli)."); ?></li>
@@ -193,7 +195,8 @@ class PagesHandler
                     </div>
                     <div class="shzn-faq-item">
                         <div class="shzn-faq-question-wrapper ">
-                            <div class="shzn-faq-question shzn-collapse-handler"><?php echo __('Where can I configure optimization parameters?', 'wpopt') ?>
+                            <div
+                                class="shzn-faq-question shzn-collapse-handler"><?php echo __('Where can I configure optimization parameters?', 'wpopt') ?>
                                 <icon class="shzn-collapse-icon">+</icon>
                             </div>
                             <div class="shzn-faq-answer shzn-collapse">
@@ -203,7 +206,8 @@ class PagesHandler
                     </div>
                     <div class="shzn-faq-item">
                         <div class="shzn-faq-question-wrapper ">
-                            <div class="shzn-faq-question shzn-collapse-handler"><?php echo __('How media optimizer works?', 'wpopt') ?>
+                            <div
+                                class="shzn-faq-question shzn-collapse-handler"><?php echo __('How media optimizer works?', 'wpopt') ?>
                                 <icon class="shzn-collapse-icon">+</icon>
                             </div>
                             <div class="shzn-faq-answer shzn-collapse">
@@ -277,13 +281,19 @@ class PagesHandler
                     <h2><?php _e('WordPress performances:', 'wpopt'); ?></h2>
                     <p>
                         <?php
-                        shzn('wpopt')->meter->lap();
                         echo '<div>' . sprintf(__('Server load: %s %%', 'wpopt'), UtilEnv::get_server_load()) . '</div><br>';
                         echo '<div>' . sprintf(__('WordPress used memory: %s', 'wpopt'), shzn('wpopt')->meter->get_memory(true, true)) . '</div><br>';
-                        echo '<div>' . sprintf(__('Wordpress execution time: %s s', 'wpopt'), shzn('wpopt')->meter->get_time('wp_start', 'last', 3)) . '</div><br>';
+                        echo '<div>' . sprintf(__('Wordpress execution time: %s s', 'wpopt'), shzn('wpopt')->meter->get_time('wp_start', 'now', 3)) . '</div><br>';
                         ?>
                     </p>
                 </block>
+                <?php if (!defined('WP_PERSISTENT_CACHE')): ?>
+                    <block class="shzn">
+                        <h2><?php _e('Persistent cache:', 'wpopt'); ?></h2>
+                        <p><?php _e('WP-Optimizer supports <b>Redis</b> and <b>Memcached</b> systems.', 'wpopt'); ?></p>
+                        <p><?php _e('To activate persistent cache for your site copy this <b>define(\'WP_PERSISTENT_CACHE\', true);</b> in wp-config.php', 'wpopt'); ?></p>
+                    </block>
+                <?php endif; ?>
                 <block class="shzn">
                     <h2><?php _e('Fast actions:', 'wpopt'); ?></h2>
                     <h4><?php _e('Here is possible to run default optimizations as a separate cron job.', 'wpopt'); ?></h4>
@@ -302,25 +312,12 @@ class PagesHandler
                         <?php endif; ?>
                     </form>
                 </block>
-                <?php
-                if (!is_plugin_active('flexy-seo/flexy-seo.php')) {
-                    ?>
-                    <block class="shzn">
-                        <h2><?php _e('Tips:', 'wpopt'); ?></h2>
-                        <h3>
-                            <?php
-                            echo __('<b>For a better SEO optimization, it\'s recommended to install also <a href="https://wordpress.org/plugins/flexy-seo/">this</a> plugin.</b>', 'wpopt');
-                            ?>
-                        </h3>
-                    </block>
-                    <?php
-                }
-                ?>
             </section>
             <aside class="shzn">
                 <section class="shzn-box">
                     <div class="shzn-donation-wrap">
-                        <div class="shzn-donation-title"><?php _e('Support this project, buy me a coffee.', 'wpopt'); ?></div>
+                        <div
+                            class="shzn-donation-title"><?php _e('Support this project, buy me a coffee.', 'wpopt'); ?></div>
                         <br>
                         <a href="https://www.paypal.com/donate?business=dev.sh1zen%40outlook.it&item_name=Thank+you+in+advanced+for+the+kind+donations.+You+will+sustain+me+developing+WP-Optimizer.&currency_code=EUR"
                            target="_blank">

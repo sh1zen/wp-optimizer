@@ -6,3 +6,4 @@
  */
 
 
+require_once SHZN_FRAMEWORK . 'functions/images.php';
