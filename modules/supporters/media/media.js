@@ -11,7 +11,7 @@ jQuery(document).ready(function ($) {
     let $dirExplorer = $(".wpopt-dir-explorer");
     let $input = $dirExplorer.find('input');
 
-    $dirExplorer.append('<ul class="shzn-autocomplete" id="wpopt-dir-list" style="display: none;"></ul>');
+    $dirExplorer.append('<ul class="wps-autocomplete" id="wpopt-dir-list" style="display: none;"></ul>');
 
     let suggestions = $('#wpopt-dir-list');
 
@@ -23,19 +23,19 @@ jQuery(document).ready(function ($) {
 
     $input.on("input", function (e) {
 
-        if (shzn.semaphore.is_locked('wpopt-dir-explorer')) {
+        if (wps.semaphore.is_locked('wpopt-dir-explorer')) {
             return;
         }
 
-        shzn.semaphore.lock('wpopt-dir-explorer');
+        wps.semaphore.lock('wpopt-dir-explorer');
 
-        shzn.ajaxHandler({
+        wps.ajaxHandler({
             mod: 'media',
             mod_action: 'autoCompleteDirs',
             mod_args: $(this).val(),
             callback: function (res, status) {
 
-                shzn.semaphore.release('wpopt-dir-explorer');
+                wps.semaphore.release('wpopt-dir-explorer');
 
                 let response = res.response;
 

@@ -7,9 +7,10 @@
 
 namespace WPOptimizer\modules;
 
-use SHZN\core\Actions;
-use SHZN\core\Graphic;
-use SHZN\modules\Module;
+use WPS\core\RequestActions;
+use WPS\core\CronActions;
+use WPS\core\Graphic;
+use WPS\modules\Module;
 
 use WPOptimizer\modules\supporters\DBCache;
 use WPOptimizer\modules\supporters\ObjectCache;
@@ -57,7 +58,7 @@ class Mod_Cache extends Module
         return $new_valid;
     }
 
-    private function load_dependencies()
+    private function load_dependencies(): void
     {
         require_once WPOPT_SUPPORTERS . 'cache/cache_dispatcher.class.php';
 
@@ -67,14 +68,14 @@ class Mod_Cache extends Module
         require_once WPOPT_SUPPORTERS . 'cache/objectcache.class.php';
     }
 
-    public function flush_cache_blog($blog_id)
+    public function flush_cache_blog($blog_id): void
     {
         DBCache::flush(false, $blog_id);
         StaticCache::flush(false, $blog_id);
         QueryCache::flush(false, $blog_id);
     }
 
-    public function flush_handler($arg = null)
+    public function flush_handler($arg = null): void
     {
         $this->flush_cache();
     }
@@ -94,9 +95,9 @@ class Mod_Cache extends Module
         }
     }
 
-    public function actions()
+    public function actions(): void
     {
-        Actions::schedule($this->hash, HOUR_IN_SECONDS * 4, function () {
+        CronActions::schedule($this->hash, HOUR_IN_SECONDS * 4, function () {
 
             /**
              * check old files every 4 Hours to prevent cache space explosion,
@@ -105,7 +106,7 @@ class Mod_Cache extends Module
             $this->flush_cache(true);
         });
 
-        Actions::request($this->action_hook, function ($action) {
+        RequestActions::request($this->action_hook, function ($action) {
 
             $response = false;
 
@@ -129,7 +130,7 @@ class Mod_Cache extends Module
         });
     }
 
-    protected function init()
+    protected function init(): void
     {
         $this->load_dependencies();
 
@@ -213,14 +214,14 @@ class Mod_Cache extends Module
         ?>
         <form method="POST" autocapitalize="off" autocomplete="off">
 
-            <?php Graphic::nonce_field($this->action_hook); ?>
+            <?php RequestActions::nonce_field($this->action_hook); ?>
 
-            <block class="shzn-gridRow">
-                <row class="shzn-custom-action shzn-row">
+            <block class="wps-gridRow">
+                <row class="wps-custom-action wps-row">
                     <b style='margin-right: 1em'>
-                        <?php _e('Cache size', 'wpopt') ?> : <?php echo shzn('wpopt')->storage->get_size(self::$storage_internal) ?>
+                        <?php _e('Cache size', 'wpopt') ?> : <?php echo wps('wpopt')->storage->get_size(self::$storage_internal) ?>
                     </b>
-                    <?php echo Actions::get_action_button($this->action_hook, 'reset_cache', __('Reset Cache', 'wpopt')); ?>
+                    <?php echo RequestActions::get_action_button($this->action_hook, 'reset_cache', __('Reset Cache', 'wpopt')); ?>
                 </row>
             </block>
         </form>

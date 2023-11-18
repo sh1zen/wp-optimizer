@@ -7,8 +7,8 @@
 
 namespace WPOptimizer\core;
 
-use SHZN\core\Cron;
-use SHZN\core\UtilEnv;
+use WPS\core\CronActions;
+use WPS\core\UtilEnv;
 
 /**
  * Creates the menu page for the plugin.
@@ -30,13 +30,13 @@ class PagesHandler
     {
         global $pagenow;
 
-        $user_id = shzn_utils()->cu_id;
+        $user_id = wps_utils()->cu_id;
 
         if (isset($_GET['wpopt-dismiss-notice'])) {
 
-            shzn('wpopt')->options->add($user_id, 'dismissed', true, 'admin-notice', MONTH_IN_SECONDS);
+            wps('wpopt')->options->add($user_id, 'dismissed', true, 'admin-notice', MONTH_IN_SECONDS);
         }
-        elseif ($pagenow == 'index.php' and !shzn('wpopt')->options->get($user_id, 'dismissed', 'admin-notice', false)) {
+        elseif ($pagenow == 'index.php' and !wps('wpopt')->options->get($user_id, 'dismissed', 'admin-notice', false)) {
 
             ?>
             <div class="notice notice-info is-dismissible">
@@ -63,7 +63,7 @@ class PagesHandler
         /**
          * Modules - sub pages
          */
-        foreach (shzn('wpopt')->moduleHandler->get_modules(array('scopes' => 'admin-page')) as $module) {
+        foreach (wps('wpopt')->moduleHandler->get_modules(array('scopes' => 'admin-page')) as $module) {
 
             add_submenu_page('wp-optimizer', 'WPOPT ' . $module['name'], $module['name'], 'customize', $module['slug'], array($this, 'render_module'));
         }
@@ -88,34 +88,34 @@ class PagesHandler
     {
         $this->enqueue_scripts();
 
-        if (SHZN_DEBUG) {
-            shzn('wpopt')->meter->lap('Modules settings pre render');
+        if (WPOPT_DEBUG) {
+            wps_utils()->meter->lap('Modules settings pre render');
         }
 
-        shzn('wpopt')->settings->render_modules_settings();
+        wps('wpopt')->settings->render_modules_settings();
 
-        if (SHZN_DEBUG) {
+        if (WPOPT_DEBUG) {
 
-            shzn('wpopt')->meter->lap('Modules settings rendered');
+            wps_utils()->meter->lap('Modules settings rendered');
 
-            echo shzn('wpopt')->meter->get_time() . ' - ' . shzn('wpopt')->meter->get_memory();
+            echo wps_utils()->meter->get_time() . ' - ' . wps_utils()->meter->get_memory();
         }
     }
 
     private function enqueue_scripts()
     {
         wp_enqueue_style('wpopt_css');
-        wp_enqueue_script('vendor-shzn-js');
+        wp_enqueue_script('vendor-wps-js');
     }
 
     public function render_core_settings()
     {
         $this->enqueue_scripts();
 
-        shzn('wpopt')->settings->render_core_settings();
+        wps('wpopt')->settings->render_core_settings();
 
-        if (SHZN_DEBUG) {
-            echo shzn('wpopt')->meter->get_time() . ' - ' . shzn('wpopt')->meter->get_memory();
+        if (WPOPT_DEBUG) {
+            echo wps_utils()->meter->get_time() . ' - ' . wps_utils()->meter->get_memory();
         }
     }
 
@@ -123,7 +123,7 @@ class PagesHandler
     {
         $module_slug = sanitize_text_field($_GET['page']);
 
-        $object = shzn('wpopt')->moduleHandler->get_module_instance($module_slug);
+        $object = wps('wpopt')->moduleHandler->get_module_instance($module_slug);
 
         if (is_null($object)) {
             return;
@@ -134,8 +134,8 @@ class PagesHandler
         $object->render_admin_page();
 
         if (WPOPT_DEBUG) {
-            shzn('wpopt')->meter->lap($module_slug);
-            echo shzn('wpopt')->meter->get_time() . ' - ' . shzn('wpopt')->meter->get_memory(true, true);
+            wps_utils()->meter->lap($module_slug);
+            echo wps_utils()->meter->get_time() . ' - ' . wps_utils()->meter->get_memory(true, true);
         }
     }
 
@@ -143,11 +143,11 @@ class PagesHandler
     {
         $assets_url = wpopt()->plugin_base_url;
 
-        $min = shzn_utils()->online ? '.min' : '';
+        $min = wps_utils()->online ? '.min' : '';
 
-        wp_register_style("wpopt_css", "{$assets_url}assets/style{$min}.css", ['vendor-shzn-css']);
+        wp_register_style("wpopt_css", "{$assets_url}assets/style{$min}.css", ['vendor-wps-css']);
 
-        shzn_localize([
+        wps_localize([
             'text_na'            => __('N/A', 'wpopt'),
             'saved'              => __('Settings Saved', 'wpopt'),
             'error'              => __('Request fail', 'wpopt'),
@@ -161,22 +161,22 @@ class PagesHandler
     {
         $this->enqueue_scripts();
         ?>
-        <section class="shzn shzn-wrap">
-            <block class="shzn">
-                <section class='shzn-header'><h1>FAQ</h1></section>
-                <div class="shzn-faq-list">
-                    <div class="shzn-faq-item">
-                        <div class="shzn-faq-question-wrapper ">
+        <section class="wps wps-wrap">
+            <block class="wps">
+                <section class='wps-header'><h1>FAQ</h1></section>
+                <div class="wps-faq-list">
+                    <div class="wps-faq-item">
+                        <div class="wps-faq-question-wrapper ">
                             <div
-                                class="shzn-faq-question shzn-collapse-handler"><?php echo __('What this plugin can do and how does it work?', 'wpopt') ?>
-                                <icon class="shzn-collapse-icon">+</icon>
+                                class="wps-faq-question wps-collapse-handler"><?php echo __('What this plugin can do and how does it work?', 'wpopt') ?>
+                                <icon class="wps-collapse-icon">+</icon>
                             </div>
-                            <div class="shzn-faq-answer shzn-collapse">
+                            <div class="wps-faq-answer wps-collapse">
                                 <p>
                                     <b><?php echo __('This plugin is privacy oriented: every data stay on your server, is not necessary to send data to other servers.'); ?></b>
                                 </p>
                                 <span><?php echo __('WPOPT has been designed to improve the performance of your site, covering many aspects (if actived):'); ?></span>
-                                <ul class="shzn-list">
+                                <ul class="wps-list">
                                     <li><?php _e("Server enhancements: from basic .htaccess rules media compression (gzip, brotli)."); ?></li>
                                     <li><?php _e("Cron enhancements: can reduce the WordPres cron execution to custom intervals."); ?></li>
                                     <li><?php _e("Database enhancements: from query caching to session storage."); ?></li>
@@ -193,26 +193,26 @@ class PagesHandler
                             </div>
                         </div>
                     </div>
-                    <div class="shzn-faq-item">
-                        <div class="shzn-faq-question-wrapper ">
+                    <div class="wps-faq-item">
+                        <div class="wps-faq-question-wrapper ">
                             <div
-                                class="shzn-faq-question shzn-collapse-handler"><?php echo __('Where can I configure optimization parameters?', 'wpopt') ?>
-                                <icon class="shzn-collapse-icon">+</icon>
+                                class="wps-faq-question wps-collapse-handler"><?php echo __('Where can I configure optimization parameters?', 'wpopt') ?>
+                                <icon class="wps-collapse-icon">+</icon>
                             </div>
-                            <div class="shzn-faq-answer shzn-collapse">
+                            <div class="wps-faq-answer wps-collapse">
                                 <p><?php echo sprintf(__('Any module option is configurable in <a href="%s">Modules Options panel</a>.', 'wpopt'), admin_url('admin.php?page=wpopt-modules-settings#media')); ?></p>
                             </div>
                         </div>
                     </div>
-                    <div class="shzn-faq-item">
-                        <div class="shzn-faq-question-wrapper ">
+                    <div class="wps-faq-item">
+                        <div class="wps-faq-question-wrapper ">
                             <div
-                                class="shzn-faq-question shzn-collapse-handler"><?php echo __('How media optimizer works?', 'wpopt') ?>
-                                <icon class="shzn-collapse-icon">+</icon>
+                                class="wps-faq-question wps-collapse-handler"><?php echo __('How media optimizer works?', 'wpopt') ?>
+                                <icon class="wps-collapse-icon">+</icon>
                             </div>
-                            <div class="shzn-faq-answer shzn-collapse">
+                            <div class="wps-faq-answer wps-collapse">
                                 <p><?php echo __('Media optimizer works in two different ways:', 'wpopt'); ?></p>
-                                <ul class="shzn-list">
+                                <ul class="wps-list">
                                     <li><?php echo sprintf(__("By a scheduled event it's able to collect and optimize any media uploaded daily. <a href='%s'>Here</a> you can configure all schedule related settings.", 'wpopt'), admin_url('admin.php?page=wpopt-settings#settings-cron')); ?></li>
                                     <li><?php _e("By a specific path scanner, Media optimizer will run a background activity to optimize all images present in the input path."); ?></li>
                                     <li><?php _e("By a whole database scanner, Media optimizer will run a background activity to check all images saved in your WordPress library optimizing each image and every thumbnail associated."); ?></li>
@@ -241,20 +241,20 @@ class PagesHandler
         if (isset($_POST['wpopt-cron-run'])) {
 
             if (UtilEnv::verify_nonce('wpopt-nonce')) {
-                Cron::run_event('wpopt-cron');
+                CronActions::run_event('wpopt-cron');
             }
         }
         elseif (isset($_POST['wpopt-cron-reset'])) {
 
             if (UtilEnv::verify_nonce('wpopt-nonce')) {
-                shzn('wpopt')->cron->reset_status();
+                wps('wpopt')->cron->reset_status();
             }
         }
 
         settings_errors();
         ?>
-        <section class="shzn-wrap-flex shzn-wrap shzn-home">
-            <section class="shzn">
+        <section class="wps-wrap-flex wps-wrap wps-home">
+            <section class="wps">
                 <?php
 
                 if (!empty($data)) {
@@ -262,15 +262,15 @@ class PagesHandler
                 }
 
                 ?>
-                <block class="shzn">
-                    <block class="shzn-header">
+                <block class="wps">
+                    <block class="wps-header">
                         <h1>WP Optimizer Dashboard</h1>
                     </block>
                     <h2><?php _e('Modules:', 'wpopt'); ?></h2>
                     <p>
                         <?php
                         echo '<div><b>' . __('This plugin uses modules, so you can disable non necessary one to not weigh down WordPress.', 'wpopt') . '</b></div><br>';
-                        $modules = shzn('wpopt')->moduleHandler->get_modules(array('excepts' => array('cron', 'modules_handler', 'settings')));
+                        $modules = wps('wpopt')->moduleHandler->get_modules(array('excepts' => array('cron', 'modules_handler', 'settings')));
                         $modules = array_column($modules, 'name');
                         $modules = str_replace(' ', '_', $modules);
                         echo '<div><b>' . __('Currently active:', 'wpopt') . '</b> <code>' . implode('</code>, <code>', $modules) . '</code></div><br>';
@@ -282,30 +282,30 @@ class PagesHandler
                     <p>
                         <?php
                         echo '<div>' . sprintf(__('Server load: %s %%', 'wpopt'), UtilEnv::get_server_load()) . '</div><br>';
-                        echo '<div>' . sprintf(__('WordPress used memory: %s', 'wpopt'), shzn('wpopt')->meter->get_memory(true, true)) . '</div><br>';
-                        echo '<div>' . sprintf(__('Wordpress execution time: %s s', 'wpopt'), shzn('wpopt')->meter->get_time('wp_start', 'now', 3)) . '</div><br>';
+                        echo '<div>' . sprintf(__('WordPress used memory: %s', 'wpopt'), wps_utils()->meter->get_memory(true, true)) . '</div><br>';
+                        echo '<div>' . sprintf(__('Wordpress execution time: %s s', 'wpopt'), wps_utils()->meter->get_time('wp_start', 'now', 3)) . '</div><br>';
                         ?>
                     </p>
                 </block>
                 <?php if (!defined('WP_PERSISTENT_CACHE')): ?>
-                    <block class="shzn">
+                    <block class="wps">
                         <h2><?php _e('Persistent cache:', 'wpopt'); ?></h2>
                         <p><?php _e('WP-Optimizer supports <b>Redis</b> and <b>Memcached</b> systems.', 'wpopt'); ?></p>
                         <p><?php _e('To activate persistent cache for your site copy this <b>define(\'WP_PERSISTENT_CACHE\', true);</b> in wp-config.php', 'wpopt'); ?></p>
                     </block>
                 <?php endif; ?>
-                <block class="shzn">
+                <block class="wps">
                     <h2><?php _e('Fast actions:', 'wpopt'); ?></h2>
                     <h4><?php _e('Here is possible to run default optimizations as a separate cron job.', 'wpopt'); ?></h4>
-                    <?php if (shzn('wpopt')->settings->get('cron.running', false)): ?>
+                    <?php if (wps('wpopt')->settings->get('cron.running', false)): ?>
                         <h4><strong><?php _e('A cron job is running.', 'wpopt'); ?></strong></h4>
                     <?php endif; ?>
                     <form method="POST">
                         <?php wp_nonce_field('wpopt-nonce'); ?>
                         <input name="wpopt-cron-run" type="submit"
-                               value="<?php _e('Auto optimize now', 'wpopt') ?>" <?php echo shzn('wpopt')->settings->get('cron.running', false) ? "disabled" : "" ?>
+                               value="<?php _e('Auto optimize now', 'wpopt') ?>" <?php echo wps('wpopt')->settings->get('cron.running', false) ? "disabled" : "" ?>
                                class="button button-primary button-large">
-                        <?php if (shzn('wpopt')->settings->get('cron.running', false)): ?>
+                        <?php if (wps('wpopt')->settings->get('cron.running', false)): ?>
                             <input name="wpopt-cron-reset" type="submit"
                                    value="<?php _e('Reset cron status', 'wpopt') ?>"
                                    class="button button-primary button-large">
@@ -313,27 +313,27 @@ class PagesHandler
                     </form>
                 </block>
             </section>
-            <aside class="shzn">
-                <section class="shzn-box">
-                    <div class="shzn-donation-wrap">
+            <aside class="wps">
+                <section class="wps-box">
+                    <div class="wps-donation-wrap">
                         <div
-                            class="shzn-donation-title"><?php _e('Support this project, buy me a coffee.', 'wpopt'); ?></div>
+                            class="wps-donation-title"><?php _e('Support this project, buy me a coffee.', 'wpopt'); ?></div>
                         <br>
                         <a href="https://www.paypal.com/donate?business=dev.sh1zen%40outlook.it&item_name=Thank+you+in+advanced+for+the+kind+donations.+You+will+sustain+me+developing+WP-Optimizer.&currency_code=EUR"
                            target="_blank">
                             <img src="https://www.paypalobjects.com/en_US/IT/i/btn/btn_donateCC_LG.gif"
                                  title="PayPal - The safer, easier way to pay online!" alt="Donate with PayPal button"/>
                         </a>
-                        <div class="shzn-donation-hr"></div>
+                        <div class="wps-donation-hr"></div>
                         <div class="dn-btc">
-                            <div class="shzn-donation-name">BTC:</div>
-                            <p class="shzn-donation-value">3QE5CyfTxb5kufKxWtx4QEw4qwQyr9J5eo</p>
+                            <div class="wps-donation-name">BTC:</div>
+                            <p class="wps-donation-value">3QE5CyfTxb5kufKxWtx4QEw4qwQyr9J5eo</p>
                         </div>
                     </div>
                 </section>
-                <section class="shzn-box">
+                <section class="wps-box">
                     <h3><?php _e('Want to support in other ways?', 'wpopt'); ?></h3>
-                    <ul class="shzn">
+                    <ul class="wps">
                         <li>
                             <a href="https://translate.wordpress.org/projects/wp-plugins/wp-optimizer/"><?php _e('Help me translating', 'wpopt'); ?></a>
                         </li>
@@ -342,7 +342,7 @@ class PagesHandler
                         </li>
                     </ul>
                     <h3>WP-Optimizer:</h3>
-                    <ul class="shzn">
+                    <ul class="wps">
                         <li>
                             <a href="https://github.com/sh1zen/wp-optimizer/"><?php _e('Source code', 'wpopt'); ?></a>
                         </li>

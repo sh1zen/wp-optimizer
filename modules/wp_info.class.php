@@ -7,8 +7,8 @@
 
 namespace WPOptimizer\modules;
 
-use SHZN\core\UtilEnv;
-use SHZN\modules\Module;
+use WPS\core\UtilEnv;
+use WPS\modules\Module;
 
 class Mod_WP_Info extends Module
 {
@@ -21,12 +21,12 @@ class Mod_WP_Info extends Module
     public function render_admin_page(): void
     {
         ?>
-        <section class="shzn-wrap">
-            <section class='shzn-header'><h1>System Info</h1></section>
+        <section class="wps-wrap">
+            <section class='wps-header'><h1>System Info</h1></section>
             <?php foreach ($this->get_info() as $name => $table) : ?>
-                <block class="shzn" id="<?php echo strtolower($name); ?>">
+                <block class="wps" id="<?php echo strtolower($name); ?>">
                     <h2 class="sysinfo-title"><?php echo $name; ?></h2>
-                    <table class="widefat shzn">
+                    <table class="widefat wps">
                         <thead>
                         <tr>
                             <th><?php _e('Name', 'wpopt'); ?></th>

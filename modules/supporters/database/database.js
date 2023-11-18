@@ -12,7 +12,7 @@
 
         let database_ajax_request = function ($element, $table, callback_fn) {
 
-            shzn.ajaxHandler({
+            wps.ajaxHandler({
                 action: 'wpopt',
                 mod: 'database',
                 mod_action: $element.data('action'),
@@ -49,7 +49,7 @@
                         $.each(details, function (i, n) {
                             html += '<li>' + n + '</li>';
                         });
-                        $('.sweep-details', $row).append('<ol class="shzn-gridRow">' + html + '</ol>').toggle("slow");
+                        $('.sweep-details', $row).append('<ol class="wps-gridRow">' + html + '</ol>').toggle("slow");
                     }
                 }
 
@@ -80,7 +80,7 @@
                     $('.sweep-percentage', $row).text('0');
 
                     if (sweep.count === 0) {
-                        $this.parent('td').html(shzn.locale.get('text_na'));
+                        $this.parent('td').html(wps.locale.get('text_na'));
                     }
 
                     $('.sweep-details', $row).html('').toggle("slow");
@@ -106,7 +106,7 @@
 
                 wp.heartbeat.suspend = true;
 
-                shzn.ajaxHandler({
+                wps.ajaxHandler({
                     use_loader: $this,
                     mod: 'database',
                     mod_action: action,

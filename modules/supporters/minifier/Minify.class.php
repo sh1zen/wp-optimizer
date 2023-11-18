@@ -7,8 +7,8 @@
 
 namespace WPOptimizer\modules\supporters;
 
-use SHZN\core\StringHelper;
-use SHZN\core\UtilEnv;
+use WPS\core\StringHelper;
+use WPS\core\UtilEnv;
 
 class Minify
 {

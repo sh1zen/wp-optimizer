@@ -7,7 +7,7 @@
 
 namespace WPOptimizer\modules\supporters;
 
-use SHZN\core\UtilEnv;
+use WPS\core\UtilEnv;
 
 class Minify_CSS extends Minify
 {

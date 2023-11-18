@@ -7,9 +7,9 @@
 
 namespace WPOptimizer\modules;
 
-use SHZN\core\Disk;
-use SHZN\core\UtilEnv;
-use SHZN\modules\Module;
+use WPS\core\Disk;
+use WPS\core\UtilEnv;
+use WPS\modules\Module;
 
 class Mod_Widget extends Module
 {
@@ -25,7 +25,7 @@ class Mod_Widget extends Module
 
     protected string $context = 'wpopt';
 
-    protected function init()
+    protected function init(): void
     {
         $this->paths = array_filter($this->option('folder-size.paths', []));
 
@@ -114,7 +114,7 @@ class Mod_Widget extends Module
         ];
 
         ?>
-        <table class="widefat shzn wpopt-dash-widget">
+        <table class="widefat wps wpopt-dash-widget">
             <tbody>
             <?php
             $count = 0;
@@ -130,7 +130,7 @@ class Mod_Widget extends Module
             </tbody>
         </table>
         <br>
-        <div class="shzn-row">
+        <div class="wps-row">
             <a class="button button-primary button-large"
                href="<?php echo admin_url('admin.php?page=sysinfo') ?>"><?php _e('View all', 'wpopt') ?></a>
         </div>
@@ -164,7 +164,7 @@ class Mod_Widget extends Module
 
         $path = UtilEnv::normalize_path($path);
 
-        $this->cache = shzn('wpopt')->options->get(basename($path), 'folder_size', 'cache', []);
+        $this->cache = wps('wpopt')->options->get(basename($path), 'folder_size', 'cache', []);
 
         if (empty($this->cache) or !isset($this->cache['root_folder'])) {
             $this->cache['root_folder'] = size_format(Disk::calc_size($path));
@@ -194,7 +194,7 @@ class Mod_Widget extends Module
         <?php
 
         if ($this->update_cache) {
-            shzn('wpopt')->options->update(basename($path), 'folder_size', $this->cache, 'cache', WEEK_IN_SECONDS);
+            wps('wpopt')->options->update(basename($path), 'folder_size', $this->cache, 'cache', WEEK_IN_SECONDS);
         }
     }
 
@@ -247,7 +247,7 @@ class Mod_Widget extends Module
         if (isset($_POST['wpopt_folder_sizes'])) {
 
             foreach ($this->paths as $path) {
-                shzn('wpopt')->options->remove(basename($path), 'folder_size', 'cache');
+                wps('wpopt')->options->remove(basename($path), 'folder_size', 'cache');
             }
         }
         $name = 'wpopt_folder_sizes';

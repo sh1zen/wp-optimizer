@@ -7,9 +7,9 @@
 
 namespace WPOptimizer\modules;
 
-use SHZN\core\Rewriter;
-use SHZN\core\UtilEnv;
-use SHZN\modules\Module;
+use WPS\core\Rewriter;
+use WPS\core\UtilEnv;
+use WPS\modules\Module;
 
 /**
  * Module for updates handling
@@ -30,7 +30,7 @@ class Mod_WP_Customizer extends Module
 
             add_action('admin_init', function () {
                 if (headers_sent()) {
-                    echo '<script>window.location.replace("' . shzn_utils()->home_url . $this->option('non-admin-redirect_to', '') . '");</script>';
+                    echo '<script>window.location.replace("' . wps_utils()->home_url . $this->option('non-admin-redirect_to', '') . '");</script>';
                 }
                 else {
                     Rewriter::getInstance()->redirect($this->option('non-admin-redirect_to', '/') ?: '/', 302);
@@ -78,19 +78,18 @@ class Mod_WP_Customizer extends Module
     {
         if ($this->option('blocks-editor')) {
 
-            remove_filter('the_content', 'do_blocks');
+            // theme related things
+            remove_action('wp_enqueue_scripts', 'wp_enqueue_classic_theme_styles');
+            remove_action('plugins_loaded', '_wp_theme_json_webfonts_handler');
+            remove_action('setup_theme', 'wp_enable_block_templates', 1);
+            remove_action('wp_loaded', '_add_template_loader_filters');
+            remove_action('wp_enqueue_scripts', 'wp_common_block_scripts_and_styles');
+            remove_filter('block_editor_settings_all', 'wp_add_editor_classic_theme_styles');
 
             remove_all_filters('use_block_editor_for_post');
             remove_all_filters('use_block_editor_for_post_type');
 
-            remove_action('setup_theme', 'wp_enable_block_templates');
-
-            // Disable Gutenberg on the back end.
             add_filter('use_block_editor_for_post', '__return_false');
-
-            // Disable Gutenberg for widgets.
-            add_filter('use_widgets_blog_editor', '__return_false');
-
             add_filter('use_block_editor_for_post_type', '__return_false');
 
             add_action('wp_enqueue_scripts', function () {
@@ -100,36 +99,19 @@ class Mod_WP_Customizer extends Module
 
                 // Remove Gutenberg theme.
                 wp_dequeue_style('wp-block-library-theme');
-
-                // Remove inline global CSS on the front end.
-                wp_dequeue_style('global-styles');
-
             }, 100);
+
+            remove_filter('the_content', 'do_blocks', 9);
+            remove_filter( 'widget_block_content', 'do_blocks', 9 );
+
+            add_filter('use_widgets_block_editor', '__return_false');
         }
 
         if ($this->option('core-blocks')) {
-            remove_action('init', 'register_block_core_archives');
-            remove_action('init', 'register_block_core_block');
-            remove_action('init', 'register_block_core_calendar');
-            remove_action('init', 'register_block_core_categories');
-            remove_action('init', 'register_block_core_latest_comments');
-            remove_action('init', 'register_block_core_latest_posts');
-            remove_action('init', 'register_block_core_rss');
-            remove_action('init', 'register_block_core_search');
-            remove_action('init', 'register_block_core_shortcode');
-            remove_action('init', 'register_block_core_social_link');
-            remove_action('init', 'register_block_core_tag_cloud');
-            remove_action('init', 'register_core_block_types_from_metadata');
+            wps_remove_actions('init', 'register_block_core_');
         }
 
-        if ($this->option('theme-block-disable')) {
-
-            remove_action('wp_enqueue_scripts', 'wp_enqueue_classic_theme_styles');
-            remove_action('plugins_loaded', '_wp_theme_json_webfonts_handler');
-            remove_action('setup_theme', 'wp_enable_block_templates');
-            remove_action('wp_loaded', '_add_template_loader_filters');
-            remove_action('wp_enqueue_scripts', 'wp_common_block_scripts_and_styles');
-            remove_filter('block_editor_settings_all', 'wp_add_editor_classic_theme_styles');
+        if ($this->option('global-style-disable')) {
 
             // disable global styles
             remove_action('wp_enqueue_scripts', 'wp_enqueue_global_styles');
@@ -402,7 +384,7 @@ class Mod_WP_Customizer extends Module
             ),
             $this->group_setting_fields(
                 $this->setting_field(__('Theme', 'wpopt'), false, 'separator'),
-                $this->setting_field(__('Disable theme Blocks and Global-Style', 'wpopt'), "theme-block-disable", "checkbox"),
+                $this->setting_field(__('Disable Global-Style', 'wpopt'), "global-style-disable", "checkbox"),
                 $this->setting_field(__('Disable theme widgets', 'wpopt'), "widgets-disable", "checkbox"),
                 $this->setting_field(__('Disable custom css', 'wpopt'), "disable.custom_css_cb", "checkbox"),
             ),
@@ -434,7 +416,7 @@ class Mod_WP_Customizer extends Module
     protected function infos(): array
     {
         return [
-            'theme-block-disable'   => __('If your theme does not support blocks, this feature is safe to disable.', 'wpopt'),
+            'global-style-disable'  => __('If your theme does not support blocks, this feature is safe to disable.', 'wpopt'),
             'disable.dns-prefetch'  => __("WordPress DNS prefetch, preloads domain name system (DNS) information for external resources, reducing the time it takes to connect to them. If no external resources is used it's possible to disable it.", 'wpopt'),
             'disable.shortlink'     => __("WordPress short-link generator creates shortened URLs for posts, pages or custom post types. In most cases not necessary.", 'wpopt'),
             'disable.custom_css_cb' => __("WordPress Custom CSS is a feature that allows users to add their own custom styles to a WordPress website, without modifying the theme files.", 'wpopt'),

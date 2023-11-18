@@ -5,7 +5,7 @@
  * @license   http://www.gnu.org/licenses/gpl.html GNU/GPL
  */
 
-use SHZN\core\Cron;
+use WPS\core\CronActions;
 use WPOptimizer\core\PluginInit;
 use WPOptimizer\modules\supporters\ImagesProcessor;
 
@@ -16,13 +16,13 @@ function wpopt(): PluginInit
 
 function wpopt_optimize_image(string $path, bool $replace = true, array $settings = [])
 {
-    if (!shzn('wpopt')) {
+    if (!wps('wpopt')) {
         return false;
     }
 
     require_once WPOPT_SUPPORTERS . '/media/ImagesProcessor.class.php';
 
-    $settings = array_merge(shzn('wpopt')->settings->get('media'), $settings);
+    $settings = array_merge(wps('wpopt')->settings->get('media'), $settings);
 
     $imageProcessor = ImagesProcessor::getInstance($settings);
 
@@ -38,24 +38,24 @@ function wpopt_optimize_image(string $path, bool $replace = true, array $setting
  */
 function wpopt_optimize_media_path(string $path, array $settings = []): bool
 {
-    if (!shzn('wpopt')) {
+    if (!wps('wpopt')) {
         return false;
     }
 
     require_once WPOPT_SUPPORTERS . '/media/ImagesProcessor.class.php';
 
-    $settings = array_merge(shzn('wpopt')->settings->get('media'), $settings);
+    $settings = array_merge(wps('wpopt')->settings->get('media'), $settings);
 
-    shzn('wpopt')->options->update("status", 'optimization', 'running', "media");
+    wps('wpopt')->options->update("status", 'optimization', 'running', "media");
 
     $scan_res = ImagesProcessor::getInstance($settings)->scan_dir($path);
 
     if ($scan_res === \WPOptimizer\modules\supporters\IPC_TIME_LIMIT) {
-        Cron::schedule_function('wpopt_optimize_media_path', [$path, $settings], time() + 30);
+        CronActions::schedule_function('wpopt_optimize_media_path', 'wpopt_optimize_media_path', time() + 30, [$path, $settings]);
     }
     else {
-        Cron::unschedule_function('wpopt_optimize_media_path', [$path, $settings]);
-        shzn('wpopt')->options->update("status", 'optimization', 'paused', "media");
+        CronActions::unschedule_function('wpopt_optimize_media_path');
+        wps('wpopt')->options->update("status", 'optimization', 'paused', "media");
     }
 
     return true;

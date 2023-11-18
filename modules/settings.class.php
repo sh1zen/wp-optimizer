@@ -7,11 +7,11 @@
 
 namespace WPOptimizer\modules;
 
-use SHZN\core\Actions;
-use SHZN\core\addon\Exporter;
-use SHZN\core\Graphic;
-use SHZN\core\Rewriter;
-use SHZN\modules\Module;
+use WPS\core\RequestActions;
+use WPS\core\addon\Exporter;
+use WPS\core\Graphic;
+use WPS\core\Rewriter;
+use WPS\modules\Module;
 
 class Mod_Settings extends Module
 {
@@ -32,30 +32,30 @@ class Mod_Settings extends Module
         }
     }
 
-    public function actions(): bool
+    public function actions(): void
     {
-        Actions::request($this->action_hook, function ($action) {
+        RequestActions::request($this->action_hook, function ($action) {
 
             $response = false;
 
             switch ($action) {
 
                 case 'reset_options':
-                    $response = shzn('wpopt')->settings->reset();
+                    $response = wps('wpopt')->settings->reset();
                     Rewriter::reload();
                     break;
 
                 case 'restore_options':
-                    $response = shzn('wpopt')->moduleHandler->upgrade();
+                    $response = wps('wpopt')->moduleHandler->upgrade();
                     break;
 
                 case 'export_options':
 
-                    require_once SHZN_ADDON_PATH . 'Exporter.class.php';
+                    require_once WPS_ADDON_PATH . 'Exporter.class.php';
 
                     $exporter = new Exporter();
 
-                    $exporter->set_raw(shzn('wpopt')->settings->export());
+                    $exporter->set_raw(wps('wpopt')->settings->export());
                     $exporter->format('text');
                     $exporter->download('wpopt-export.conf');
 
@@ -64,8 +64,8 @@ class Mod_Settings extends Module
                     break;
 
                 case 'import_options':
-                    $response = shzn('wpopt')->settings->import($_REQUEST['conf_data']);
-                    $response &= shzn('wpopt')->moduleHandler->upgrade();
+                    $response = wps('wpopt')->settings->import($_REQUEST['conf_data']);
+                    $response &= wps('wpopt')->moduleHandler->upgrade();
                     break;
             }
 
@@ -76,8 +76,6 @@ class Mod_Settings extends Module
                 $this->add_notices('warning', __('Action execution failed', $this->context));
             }
         });
-
-        return false;
     }
 
     protected function print_footer(): string
@@ -86,21 +84,21 @@ class Mod_Settings extends Module
         ?>
         <form method="POST" autocapitalize="off" autocomplete="off">
 
-            <?php Graphic::nonce_field($this->action_hook); ?>
+            <?php RequestActions::nonce_field($this->action_hook); ?>
 
-            <block class="shzn-gridRow">
-                <row class="shzn-custom-action shzn-row">
+            <block class="wps-gridRow">
+                <row class="wps-custom-action wps-row">
                     <?php
 
-                    echo Actions::get_action_button($this->action_hook, 'reset_options', __('Reset Plugin options', 'wpopt'));
+                    echo RequestActions::get_action_button($this->action_hook, 'reset_options', __('Reset Plugin options', 'wpopt'));
 
-                    echo Actions::get_action_button($this->action_hook, 'restore_options', __('Restore Plugin options', 'wpopt'));
+                    echo RequestActions::get_action_button($this->action_hook, 'restore_options', __('Restore Plugin options', 'wpopt'));
 
-                    echo Actions::get_action_button($this->action_hook, 'export_options', __('Export Plugin options', 'wpopt'), 'button-primary');
+                    echo RequestActions::get_action_button($this->action_hook, 'export_options', __('Export Plugin options', 'wpopt'), 'button-primary');
 
                     ?>
                 </row>
-                <row class="shzn-custom-action shzn-row">
+                <row class="wps-custom-action wps-row">
                     <?php
 
                     Graphic::generate_field(array(
@@ -109,7 +107,7 @@ class Mod_Settings extends Module
                         'context' => 'block'
                     ));
 
-                    echo Actions::get_action_button($this->action_hook, 'import_options', __('Import Plugin options', 'wpopt'), 'button-primary');
+                    echo RequestActions::get_action_button($this->action_hook, 'import_options', __('Import Plugin options', 'wpopt'), 'button-primary');
 
                    ?>
                 </row>

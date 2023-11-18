@@ -11,10 +11,10 @@ if (!class_exists('WP_List_Table')) {
     require_once(ABSPATH . 'wp-admin/includes/class-wp-list-table.php');
 }
 
-use SHZN\core\Graphic;
-use SHZN\core\Query;
-use SHZN\core\Settings;
-use SHZN\core\UtilEnv;
+use WPS\core\RequestActions;
+use WPS\core\Query;
+use WPS\core\Settings;
+use WPS\core\UtilEnv;
 
 /**
  * Core class used to display activity logs.
@@ -27,6 +27,8 @@ class ActivityLog extends \WP_List_Table
 {
     private $settings;
 
+    private string $action_hook;
+
     public function __construct($args = array())
     {
         $this->modes = array(
@@ -34,13 +36,14 @@ class ActivityLog extends \WP_List_Table
         );
 
         $this->settings = $args['settings'];
+        $this->action_hook = $args['action_hook'] ?? '';
 
         parent::__construct(
             array(
                 'singular' => __('activity', 'wpopt'),
                 'plural'   => __('activities', 'wpopt'),
                 'ajax'     => false,
-                'screen'   => $args['screen'] ?? null,
+                'screen'   => get_current_screen(),
             )
         );
 
@@ -105,7 +108,6 @@ class ActivityLog extends \WP_List_Table
 
         echo '<div class="alignleft actions">';
 
-        $query = new Query();
 
         if (!isset($_REQUEST['filter_date'])) {
             $_REQUEST['filter_date'] = '';
@@ -127,7 +129,7 @@ class ActivityLog extends \WP_List_Table
 
         submit_button(__('Filter', 'wpopt'), 'button', 'aal-filter', false, array('id' => 'activity-query-submit'));
 
-        $actions = $query->tables(['wpopt_activity_log'])->orderby('action')->select('DISTINCT action')->query();
+        $actions = Query::getInstance()->tables(WPOPT_ACTIVITY_LOG_TABLE)->orderby('action', 'ASC', WPOPT_ACTIVITY_LOG_TABLE)->select('DISTINCT action')->query(false, true);
 
         if ($actions) {
 
@@ -138,7 +140,7 @@ class ActivityLog extends \WP_List_Table
             echo '<select name="filter_action" id="hs-filter-filter_action">';
             printf('<option value="">%s</option>', __('All Actions', 'wpopt'));
             foreach ($actions as $action) {
-                printf('<option value="%s"%s>%s</option>', $action->action, selected($_REQUEST['filter_action'], $action->action, false), $this->get_action_label($action->action));
+                printf('<option value="%s"%s>%s</option>', $action, selected($_REQUEST['filter_action'], $action, false), $this->get_action_label($action));
             }
             echo '</select>';
         }
@@ -146,7 +148,6 @@ class ActivityLog extends \WP_List_Table
         $filters = array(
             'filter_date',
             'filter_user',
-            'filter_value',
             'filter_action',
         );
 
@@ -179,10 +180,7 @@ class ActivityLog extends \WP_List_Table
                 <?php endforeach; ?>
             </select>
         </div>
-        <button class="button button-primary" type="submit" name="wpopt-activity-log" value="export">
-            <?php _e('Export Data', 'wpopt') ?>
-        </button>
-        <?php Graphic::nonce_field('wpopt-activity-log'); ?>
+        <?php echo RequestActions::get_action_button($this->action_hook, 'export', __('Export Data', 'wpopt'), 'button button-primary'); ?>
         <?php
     }
 
@@ -227,7 +225,7 @@ class ActivityLog extends \WP_List_Table
                 switch ($column_name) {
 
                     case 'user_id':
-                        $user = shzn_get_user($item->user_id ?: $item->object_id);
+                        $user = wps_get_user($item->user_id ?: $item->object_id);
                         $return = $user ? "<a href='" . $this->get_filtered_link('filter_user', $user->ID) . "'>$user->display_name</a>" : "<span>N/A</span>";
                         break;
 
@@ -262,7 +260,7 @@ class ActivityLog extends \WP_List_Table
         switch ($column_name) {
 
             case 'user_id':
-                $user = shzn_get_user($item->user_id);
+                $user = wps_get_user($item->user_id);
                 $return = $user ? "<a href='" . $this->get_filtered_link('filter_user', $user->ID) . "'>$user->display_name</a>" : "<span>N/A</span>";
                 break;
 
@@ -281,7 +279,7 @@ class ActivityLog extends \WP_List_Table
             case 'time':
                 $return = sprintf('<strong>' . __('%s ago', 'wpopt') . '</strong>', human_time_diff($item->time, time()));
 
-                $return .= '<br/><a href="' . $this->get_filtered_link('filter_date', date('d/m/Y', $item->time)) . '">' . date_i18n(get_option('date_format'), $item->time) . '</a>';
+                $return .= '<br/><a href="' . $this->get_filtered_link('filter_date', wp_date('d/m/Y', $item->time)) . '">' . date_i18n(get_option('date_format'), $item->time) . '</a>';
 
                 $return .= '<br/>' . date_i18n(get_option('time_format'), $item->time);
                 break;
@@ -299,21 +297,18 @@ class ActivityLog extends \WP_List_Table
 
     private function parse_query($request = ''): Query
     {
-        global $wpdb;
-
         if (empty($request)) {
             $request = $_REQUEST;
         }
 
-        $query = new Query();
-        $query->tables(['wpopt_activity_log']);
+        $query = Query::getInstance();
+        $query->tables(WPOPT_ACTIVITY_LOG_TABLE);
 
         if (!isset($request['orderby']) or !in_array($request['orderby'], array('time', 'ip', 'action', 'context', 'user_id', 'object_id'))) {
             $request['orderby'] = 'time';
         }
 
-        $query->orderby($request['orderby'], $request['order'] ?? 'DESC');
-
+        $query->orderby($request['orderby'], $request['order'] ?? 'DESC', WPOPT_ACTIVITY_LOG_TABLE);
 
         if (!empty($request['filter_action'])) {
 
@@ -330,19 +325,9 @@ class ActivityLog extends \WP_List_Table
             $query->where(['user_id' => sanitize_text_field($request['filter_user'])]);
         }
 
-        if (!empty($request['filter_value'])) {
-
-            $query->where(['value' => "%" . sanitize_text_field($request['filter_value']) . "%", 'compare' => 'LIKE']);
-        }
-
         if (!empty($request['filter_object_id'])) {
 
             $query->where(['object_id' => sanitize_text_field($request['filter_object_id'])]);
-        }
-
-        if (!empty($request['filter_context'])) {
-
-            $query->where(["context" => "%" . sanitize_text_field($request['filter_context']) . "%", 'compare' => 'LIKE']);
         }
 
         if (!empty($request['filter_date'])) {
@@ -361,13 +346,14 @@ class ActivityLog extends \WP_List_Table
         if (!empty($request['s'])) {
             $query->where(
                 [
-                    ['value' => '%' . $wpdb->esc_like($request['s']) . '%', 'compare' => 'LIKE'],
-                    ['user_agent' => '%' . $wpdb->esc_like($request['s']) . '%', 'compare' => 'LIKE'],
-                    ['request' => '%' . $wpdb->esc_like($request['s']) . '%', 'compare' => 'LIKE']
+                    ['value' => $request['s'], 'compare' => 'LIKE'],
+                    ['user_agent' => $request['s'], 'compare' => 'LIKE'],
+                    ['request' => $request['s'], 'compare' => 'LIKE']
                 ],
                 'OR'
             );
         }
+
         return $query;
     }
 
@@ -386,7 +372,7 @@ class ActivityLog extends \WP_List_Table
             $query->limit($items_per_page);
         }
 
-        return $query->offset($offset)->action('select')->fields('*')->compile()->query();
+        return $query->offset($offset)->action('select')->columns('*')->query();
     }
 
     public function prepare_items()
@@ -398,9 +384,9 @@ class ActivityLog extends \WP_List_Table
 
         $offset = ($this->get_pagenum() - 1) * $items_per_page;
 
-        $total_items = $query->action('select')->fields('COUNT(*)')->query(true);
+        $total_items = $query->action('select')->columns('COUNT(*)')->query(true);
 
-        $this->items = $query->limit($items_per_page)->offset($offset)->action('select')->fields('*')->compile()->query();
+        $this->items = $query->limit($items_per_page)->offset($offset)->action('select')->columns('*')->recompile()->query();
 
         $this->set_pagination_args(array(
             'total_items' => $total_items,

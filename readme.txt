@@ -1,11 +1,11 @@
 === WP Optimizer ===
 Contributors: sh1zen
-Tags: loading speed, optimization, optimize, performance, images, cache, minify, database, speed, seo, updates, activity log, optimizer
+Tags: loading speed, optimization, optimize, performance, images, cache, minify, database, speed, disable Gutenberg, updates, activity log, optimizer
 Donate link: https://www.paypal.com/donate?business=dev.sh1zen%40outlook.it&item_name=Thank+you+in+advanced+for+the+kind+donations.+You+will+sustain+me+developing+WP-Optimizer.&currency_code=EUR
 Requires at least: 5.0.0
 Tested up to: 6.4
 Requires PHP: 7.4
-Stable tag: 2.1.6
+Stable tag: 2.2.0
 License: GNU v3.0 License
 URI: https://github.com/sh1zen/wp-optimizer/blob/master/LICENSE
 
@@ -191,10 +191,11 @@ work! Otherwise, go to the new added module "Setting" and try a reset.
 
 == Changelog ==
 
-= 2.1.6 =
+= 2.2.0 =
 
 * improved media scan
 * improved core performances
+* improved Gutenberg disable
 * extended support for WordPress 6.4
 
 = 2.1.5 =
@@ -295,7 +296,7 @@ work! Otherwise, go to the new added module "Setting" and try a reset.
 * added options in media module to make media loading lazy
 * added the long asked and waited module for minify your HTML, CSS and JavaScript.
 * improved some performances issues
-* updated shzn core
+* updated wps core
 
 = 1.6.10 =
 

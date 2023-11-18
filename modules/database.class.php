@@ -7,11 +7,11 @@
 
 namespace WPOptimizer\modules;
 
-use SHZN\core\Ajax;
-use SHZN\core\Disk;
-use SHZN\core\Graphic;
-use SHZN\core\UtilEnv;
-use SHZN\modules\Module;
+use WPS\core\Ajax;
+use WPS\core\Disk;
+use WPS\core\Graphic;
+use WPS\core\UtilEnv;
+use WPS\modules\Module;
 
 use WPOptimizer\modules\supporters\DB_List_Table;
 use WPOptimizer\modules\supporters\DBSupport;
@@ -32,7 +32,7 @@ class Mod_Database extends Module
     public function cron_setting_fields(): array
     {
         return [
-            ['type' => 'checkbox', 'name' => __('Auto optimize Database', 'wpopt'), 'id' => 'database.active', 'value' => shzn($this->context)->cron->is_active($this->slug), 'depend' => 'active']
+            ['type' => 'checkbox', 'name' => __('Auto optimize Database', 'wpopt'), 'id' => 'database.active', 'value' => wps($this->context)->cron->is_active($this->slug), 'depend' => 'active']
         ];
     }
 
@@ -54,7 +54,7 @@ class Mod_Database extends Module
         }
 
         ?>
-        <form method="post" action="<?php echo shzn_module_panel_url("database", "db-tables"); ?>">
+        <form method="post" action="<?php echo wps_module_panel_url("database", "db-tables"); ?>">
             <?php $table_list_obj->search_box('Search', 'search'); ?>
             <?php $table_list_obj->display(); ?>
         </form>
@@ -72,7 +72,7 @@ class Mod_Database extends Module
         ?>
         <form class="wpopt-ajax-db" method="post" data-module="<?php echo $this->slug ?>"
               data-nonce="<?php echo wp_create_nonce('wpopt-ajax-nonce') ?>"
-              action="<?php echo shzn_module_panel_url("database", "db-runsql"); ?>">
+              action="<?php echo wps_module_panel_url("database", "db-runsql"); ?>">
             <div>
                 <strong><?php _e('Separate multiple queries with "<u>; (semicolon)</u>"', 'wpopt'); ?></strong><br/>
                 <p style="color: green;"><?php _e('Use only INSERT, UPDATE, REPLACE, DELETE, CREATE and ALTER statements.', 'wpopt'); ?></p>
@@ -85,7 +85,7 @@ class Mod_Database extends Module
                         </label>
                     </td>
                 </tr>
-                <tr class="shzn-centered">
+                <tr class="wps-centered">
                     <td>
                         <input type="submit" name="button" value="<?php _e('Run', 'wpopt'); ?>" class="button"
                                data-action="exec-sql"/>
@@ -125,19 +125,19 @@ class Mod_Database extends Module
             }
             else {
                 echo '<span style="color: red;">' . __("FAIL", 'wpopt') . '</span>';
-                echo '<div class="shzn-notice shzn-notice--error">' . sprintf(__('Backup folder does NOT exist or is NOT WRITABLE. Please create it and set permissions to \'774\' or change the location of the backup folder in settings.', 'wpopt'), WP_CONTENT_DIR) . '</div>';
+                echo '<div class="wps-notice wps-notice--error">' . sprintf(__('Backup folder does NOT exist or is NOT WRITABLE. Please create it and set permissions to \'774\' or change the location of the backup folder in settings.', 'wpopt'), WP_CONTENT_DIR) . '</div>';
             }
             ?>
         </section>
         <section>
             <form class="wpopt-ajax-db" method="post" data-module="<?php echo $this->slug ?>"
                   data-nonce="<?php echo wp_create_nonce('wpopt-ajax-nonce') ?>"
-                  action="<?php echo shzn_module_panel_url('database', 'db-backup'); ?>">
+                  action="<?php echo wps_module_panel_url('database', 'db-backup'); ?>">
                 <?php wp_nonce_field('wpopt-db-backup-manage'); ?>
                 <input type="hidden" name="wpopt-db-do" value="db-manage-backup">
 
                 <h3><?php _e('Manage Backups', 'wpopt'); ?></h3>
-                <table class="widefat shzn">
+                <table class="widefat wps">
                     <thead>
                     <tr>
                         <th><?php _e('No.', 'wpopt'); ?></th>
@@ -157,7 +157,7 @@ class Mod_Database extends Module
                         $database_files = glob(self::BACKUP_PATH . "*.{sql,gz}", GLOB_BRACE);
 
                         if (empty($database_files)) {
-                            echo '<tr><td class="shzn-centered" colspan="6">' . __('There Are No Database Backup Files Available.', 'wpopt') . '</td></tr>';
+                            echo '<tr><td class="wps-centered" colspan="6">' . __('There Are No Database Backup Files Available.', 'wpopt') . '</td></tr>';
                         }
                         else {
                             usort($database_files, function ($a, $b) {
@@ -195,16 +195,16 @@ class Mod_Database extends Module
                             Disk::make_path(self::BACKUP_PATH, true);
                         }
 
-                        echo '<tr><td class="shzn-centered" colspan="6">' . __('There Are No Database Backup Files Available.', 'wpopt') . '</td></tr>';
+                        echo '<tr><td class="wps-centered" colspan="6">' . __('There Are No Database Backup Files Available.', 'wpopt') . '</td></tr>';
                     }
 
                     ?>
-                    <tr class="shzn-footer">
+                    <tr class="wps-footer">
                         <th colspan="4"><?php printf(_n('%s Backup found', '%s Backups found', $no, 'wpopt'), number_format_i18n($no)); ?></th>
                         <th colspan="2"><?php echo size_format($totalsize, 2); ?></th>
                     </tr>
                     <tr>
-                        <td colspan="6" class="shzn-centered shzn-actions">
+                        <td colspan="6" class="wps-centered wps-actions">
                             <input type="submit" name="action" value="<?php _e('Download', 'wpopt'); ?>"
                                    class="button" data-action="download"/>
                             <input type="submit" name="action" value="<?php _e('Restore', 'wpopt'); ?>"
@@ -219,9 +219,9 @@ class Mod_Database extends Module
             </form>
             <form class="wpopt-ajax-db" method="post" data-module="<?php echo $this->slug ?>"
                   data-nonce="<?php echo wp_create_nonce('wpopt-ajax-nonce') ?>"
-                  action="<?php echo shzn_module_panel_url('database', 'db-backup'); ?>">
+                  action="<?php echo wps_module_panel_url('database', 'db-backup'); ?>">
                 <h3><?php _e('Backup Database', 'wpopt'); ?></h3>
-                <table class="widefat shzn">
+                <table class="widefat wps">
                     <thead>
                     <tr>
                         <th><?php _e('Option', 'wpopt'); ?></th>
@@ -260,12 +260,12 @@ class Mod_Database extends Module
                         </td>
                     </tr>
                     <tr>
-                        <td colspan="2" class="shzn-centered shzn-actions">
+                        <td colspan="2" class="wps-centered wps-actions">
                             <input data-action="backup" type="submit" name="action"
                                    value="<?php _e('Backup now', 'wpopt'); ?>"
                                    class="button"/>
                             <a class="button"
-                               href="<?php echo shzn_module_setting_url('wpopt', 'database') ?>">Settings</a>
+                               href="<?php echo wps_module_setting_url('wpopt', 'database') ?>">Settings</a>
                         </td>
                     </tr>
                 </table>
@@ -275,7 +275,7 @@ class Mod_Database extends Module
         return ob_get_clean();
     }
 
-    public function ajax_handler($args = array())
+    public function ajax_handler($args = array()): void
     {
         $response = false;
 
@@ -294,7 +294,7 @@ class Mod_Database extends Module
             case 'download':
             case 'restore':
             case 'backup':
-                $response = $this->handle_database_actions($args['action'], array('file' => $form_data['file']));
+                $response = $this->handle_database_actions($args['action'], array('file' => $form_data['file'] ?? ''));
                 break;
 
             case 'sweep_details':
@@ -480,17 +480,17 @@ class Mod_Database extends Module
     public function enqueue_scripts(): void
     {
         parent::enqueue_scripts();
-        wp_enqueue_script('wpopt-db-sweep', UtilEnv::path_to_url(WPOPT_ABSPATH) . 'modules/supporters/database/database.js', array('vendor-shzn-js'), WPOPT_VERSION);
+        wp_enqueue_script('wpopt-db-sweep', UtilEnv::path_to_url(WPOPT_ABSPATH) . 'modules/supporters/database/database.js', array('vendor-wps-js'), WPOPT_VERSION);
     }
 
-    public function render_admin_page(): void
+    public function render_sub_modules(): void
     {
         UtilEnv::rise_time_limit(WPOPT_DEBUG ? 120 : 60);
         ?>
-        <section class="shzn-wrap">
-            <div id="wpopt-ajax-message" class="shzn-notice"></div>
-            <block class="shzn">
-                <section class='shzn-header'><h1>Database Manager</h1></section>
+        <section class="wps-wrap">
+            <div id="wpopt-ajax-message" class="wps-notice"></div>
+            <block class="wps">
+                <section class='wps-header'><h1>Database Manager</h1></section>
                 <?php
                 echo Graphic::generateHTML_tabs_panels(array(
 
@@ -706,7 +706,7 @@ class Mod_Database extends Module
         }
     }
 
-    protected function init()
+    protected function init(): void
     {
         require_once WPOPT_SUPPORTERS . '/database/DBSupport.class.php';
     }

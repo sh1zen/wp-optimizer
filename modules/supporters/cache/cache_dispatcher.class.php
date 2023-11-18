@@ -7,7 +7,7 @@
 
 namespace WPOptimizer\modules\supporters;
 
-use SHZN\core\Cache;
+use WPS\core\Cache;
 
 class Cache_Dispatcher
 {
@@ -39,7 +39,7 @@ class Cache_Dispatcher
 
     private static function parse_lifetime($lifetime)
     {
-        return is_numeric($lifetime) ? $lifetime : shzn_timestr2seconds($lifetime);
+        return is_numeric($lifetime) ? $lifetime : wps_timestr2seconds($lifetime);
     }
 
     protected function reset()
@@ -73,16 +73,16 @@ class Cache_Dispatcher
     public static function flush($lifetime = false, $blog_id = 0)
     {
         if ($lifetime) {
-            shzn('wpopt')->storage->delete_old(static::get_cache_group(), self::parse_lifetime($lifetime), $blog_id);
+            wps('wpopt')->storage->delete_old(static::get_cache_group(), self::parse_lifetime($lifetime), $blog_id);
         }
         else {
-            shzn('wpopt')->storage->delete(static::get_cache_group(), '', $blog_id);
+            wps('wpopt')->storage->delete(static::get_cache_group(), '', $blog_id);
         }
     }
 
     protected static function get_cache_group(): string
     {
-        return "cache/" . shzn('wpopt')->moduleHandler->module_slug(get_called_class(), true);
+        return "cache/" . wps('wpopt')->moduleHandler->module_slug(get_called_class(), true);
     }
 
     protected function generate_key($query, $context = ''): string
@@ -114,7 +114,7 @@ class Cache_Dispatcher
      */
     protected function cache_get(string $key)
     {
-        return shzn('wpopt')->storage->get($key, static::get_cache_group());
+        return wps('wpopt')->storage->get($key, static::get_cache_group());
     }
 
     /**
@@ -128,6 +128,6 @@ class Cache_Dispatcher
 
         $expires = $expires ?: $this->lifetime;
 
-        shzn('wpopt')->storage->set($value, $key, static::get_cache_group(), $expires, true);
+        wps('wpopt')->storage->set($value, $key, static::get_cache_group(), $expires, true);
     }
 }

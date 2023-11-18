@@ -7,7 +7,7 @@
 
 namespace WPOptimizer\core;
 
-use SHZN\core\UtilEnv;
+use WPS\core\UtilEnv;
 
 /**
  * Main class, used to set up the plugin
@@ -71,14 +71,16 @@ class PluginInit
 
     private function maybe_upgrade()
     {
-        $version = shzn('wpopt')->settings->get('ver', false);
+        $version = wps('wpopt')->settings->get('ver', false);
 
         // need upgrade
         if (!$version or version_compare($version, WPOPT_VERSION, '<')) {
 
-            require_once __DIR__ . '/upgrader.php';
+            wps_run_upgrade('wpopt', WPOPT_VERSION, WPOPT_ADMIN . "upgrades/");
 
-            shzn('wpopt')->moduleHandler->upgrade();
+            wps_utils()->is_upgrading(true);
+
+            wps('wpopt')->moduleHandler->upgrade();
         }
     }
 
@@ -104,14 +106,14 @@ class PluginInit
             /**
              * Instancing all modules that need to interact in the Ajax process
              */
-            shzn('wpopt')->moduleHandler->setup_modules('ajax');
+            wps('wpopt')->moduleHandler->setup_modules('ajax');
         }
         elseif (wp_doing_cron()) {
 
             /**
              * Instancing all modules that need to interact in the cron process
              */
-            shzn('wpopt')->moduleHandler->setup_modules('cron');
+            wps('wpopt')->moduleHandler->setup_modules('cron');
         }
         elseif (is_admin()) {
 
@@ -125,20 +127,20 @@ class PluginInit
             /**
              * Instancing all modules that need to interact in admin area
              */
-            shzn('wpopt')->moduleHandler->setup_modules('admin');
+            wps('wpopt')->moduleHandler->setup_modules('admin');
         }
         else {
 
             /**
              * Instancing all modules that need to interact only on the web-view
              */
-            shzn('wpopt')->moduleHandler->setup_modules('web-view');
+            wps('wpopt')->moduleHandler->setup_modules('web-view');
         }
 
         /**
          * Instancing all modules that need to be always loaded
          */
-        shzn('wpopt')->moduleHandler->setup_modules('autoload');
+        wps('wpopt')->moduleHandler->setup_modules('autoload');
 
         return self::$_instance;
     }
@@ -167,9 +169,9 @@ class PluginInit
 
     private function activate()
     {
-        shzn('wpopt')->settings->activate();
+        wps('wpopt')->settings->activate();
 
-        shzn('wpopt')->cron->activate();
+        wps('wpopt')->cron->activate();
 
         /**
          * Hook for the plugin activation
@@ -202,7 +204,7 @@ class PluginInit
 
     private function deactivate()
     {
-        shzn('wpopt')->cron->deactivate();
+        wps('wpopt')->cron->deactivate();
 
         /**
          * Hook for the plugin deactivation

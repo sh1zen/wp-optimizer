@@ -9,8 +9,8 @@ global $wpdb;
 
 $wpdb->query("DROP TABLE IF EXISTS {$wpdb->prefix}wpopt_core");
 
-SHZN\core\UtilEnv::db_create(
-    shzn('wpopt')->options->table_name(),
+WPS\core\UtilEnv::db_create(
+    wps('wpopt')->options->table_name(),
     [
         "fields"      => [
             "id"         => "bigint NOT NULL AUTO_INCREMENT",
@@ -25,4 +25,4 @@ SHZN\core\UtilEnv::db_create(
     true
 );
 
-$wpdb->query("ALTER TABLE " . shzn('wpopt')->options->table_name() . " ADD UNIQUE speeder (context, item, obj_id) USING BTREE;");
+$wpdb->query("ALTER TABLE " . wps('wpopt')->options->table_name() . " ADD UNIQUE speeder (context, item, obj_id) USING BTREE;");

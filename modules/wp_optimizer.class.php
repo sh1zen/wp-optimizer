@@ -7,8 +7,8 @@
 
 namespace WPOptimizer\modules;
 
-use SHZN\core\Settings;
-use SHZN\modules\Module;
+use WPS\core\Settings;
+use WPS\modules\Module;
 use WPOptimizer\modules\supporters\WP_Htaccess;
 
 /**
@@ -17,7 +17,9 @@ use WPOptimizer\modules\supporters\WP_Htaccess;
 class Mod_WP_Optimizer extends Module
 {
     public array $scopes = array('settings', 'autoload');
+
     protected string $context = 'wpopt';
+
     private array $server_conf_hooks = array(
         'srv_enhancements'  => array(
             'active' => false,
@@ -63,7 +65,7 @@ class Mod_WP_Optimizer extends Module
         return false;
     }
 
-    protected function init()
+    protected function init(): void
     {
         if (is_admin()) {
             if (!is_writable(ABSPATH . '.htaccess')) {
@@ -84,11 +86,11 @@ class Mod_WP_Optimizer extends Module
 
             remove_action('init', 'wp_cron');
 
-            if (time() > $this->option('cron.timenext', 300) + shzn('wpopt')->options->get('last_cron_event', 'cron', 'wp_optimizer', 0)) {
+            if (time() > $this->option('cron.timenext', 300) + wps('wpopt')->options->get('last_cron_event', 'cron', 'wp_optimizer', 0)) {
 
                 spawn_cron();
 
-                shzn('wpopt')->options->update('last_cron_event', 'cron', time(), 'wp_optimizer');
+                wps('wpopt')->options->update('last_cron_event', 'cron', time(), 'wp_optimizer');
             }
         }
     }

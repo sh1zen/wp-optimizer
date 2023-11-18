@@ -7,9 +7,9 @@
 
 namespace WPOptimizer\modules\supporters;
 
-use SHZN\core\Settings;
-use SHZN\core\UtilEnv;
-use SHZN\core\RuleUtil;
+use WPS\core\Settings;
+use WPS\core\UtilEnv;
+use WPS\core\RuleUtil;
 
 /**
  * Class to handle Security and Optimization requests
@@ -58,7 +58,7 @@ class WP_Htaccess
         return RuleUtil::has_rule($this->rules, $start_marker, $end_marker);
     }
 
-    public function add_rule($name)
+    public function add_rule($name): void
     {
         $start_marker = '# WPOPT_MARKER_BEGIN_' . strtoupper($name);
         $end_marker = '# WPOPT_MARKER_END_' . strtoupper($name);
@@ -74,7 +74,7 @@ class WP_Htaccess
         $this->edited = ($this->edited or $res);
     }
 
-    private static function generate_rules($item, $start_marker, $end_marker, $settings = array())
+    private static function generate_rules($item, $start_marker, $end_marker, $settings = array()): string
     {
         $rules = "\n$start_marker\n";
 
@@ -104,7 +104,7 @@ class WP_Htaccess
         return $rules;
     }
 
-    private static function generate_rules_mime_types()
+    private static function generate_rules_mime_types(): string
     {
         $ext_types = self::get_ext_types(array('image', 'fonts', 'audio', 'document', 'spreadsheet', 'text', 'code'));
         $mime_types = self::get_mime_types($ext_types);
@@ -126,7 +126,7 @@ class WP_Htaccess
         return $rules;
     }
 
-    private static function get_ext_types($filter = array(), $key_value = false)
+    private static function get_ext_types($filter = array(), $key_value = false): array
     {
         $types = array(
             'image'       => array('jpg', 'jpeg', 'jpe', 'webp', 'gif', 'png', 'bmp', 'tif', 'tiff', 'ico', 'heic'),
@@ -303,7 +303,7 @@ class WP_Htaccess
         return $matched_types;
     }
 
-    private static function get_cache_policy($type)
+    private static function get_cache_policy($type): array
     {
         switch ($type) {
 
@@ -345,7 +345,7 @@ class WP_Htaccess
         return $cache_policy;
     }
 
-    private static function generate_rules_browser_cache($settings)
+    private static function generate_rules_browser_cache($settings): string
     {
         $default_lifetime = Settings::get_option($settings, "srv_browser_cache.lifetime_default", WEEK_IN_SECONDS);
 
@@ -457,7 +457,7 @@ class WP_Htaccess
         return $rules . $cache_control_rules;
     }
 
-    private static function generate_rules_compression($settings)
+    private static function generate_rules_compression($settings): string
     {
         $ext_types = self::get_ext_types(array('image', 'document', 'spreadsheet', 'text', 'code'));
 
@@ -528,7 +528,7 @@ class WP_Htaccess
         return $rules;
     }
 
-    private static function generate_rules_security($settings)
+    private static function generate_rules_security($settings): string
     {
         $rules = '';
 
@@ -589,7 +589,7 @@ class WP_Htaccess
         return $rules;
     }
 
-    private static function generate_rules_enhancements($settings)
+    private static function generate_rules_enhancements($settings): string
     {
         $rules = '';
 
@@ -651,7 +651,7 @@ class WP_Htaccess
         return $this->edited and RuleUtil::write_rules($this->rules);
     }
 
-    public function edited()
+    public function edited(): bool
     {
         return $this->edited;
     }
@@ -661,7 +661,7 @@ class WP_Htaccess
         $activate ? $this->add_rule($server_hooks) : $this->remove_rule($server_hooks);
     }
 
-    public function remove_rule($name)
+    public function remove_rule($name): void
     {
         $start_marker = '# WPOPT_MARKER_BEGIN_' . strtoupper($name);
         $end_marker = '# WPOPT_MARKER_END_' . strtoupper($name);

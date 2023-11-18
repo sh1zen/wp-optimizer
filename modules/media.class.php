@@ -7,12 +7,12 @@
 
 namespace WPOptimizer\modules;
 
-use SHZN\core\Ajax;
-use SHZN\core\Cron;
-use SHZN\core\Graphic;
-use SHZN\core\StringHelper;
-use SHZN\core\UtilEnv;
-use SHZN\modules\Module;
+use WPS\core\Ajax;
+use WPS\core\CronActions;
+use WPS\core\Graphic;
+use WPS\core\StringHelper;
+use WPS\core\UtilEnv;
+use WPS\modules\Module;
 
 use WPOptimizer\modules\supporters\Media_Table;
 use WPOptimizer\modules\supporters\ImagesProcessor;
@@ -22,6 +22,8 @@ use WPOptimizer\modules\supporters\ImagesProcessor;
  */
 class Mod_Media extends Module
 {
+    public static $name = "Media Optimizer";
+
     public array $scopes = array('autoload', 'cron', 'admin-page', 'settings');
 
     protected string $context = 'wpopt';
@@ -39,7 +41,6 @@ class Mod_Media extends Module
         );
 
         $loadingGIF = UtilEnv::path_to_url(__DIR__) . 'supporters/media/loading.gif';
-        // todo move this to default loading=lazy browsers support
         return preg_replace(
             "/<img(?! (data-img-src|data-orig))([^']*?) src=\"([^']*?)\"([^']*?)>/",
             "<img$2$1 data-src='$3' src='{$loadingGIF}' $4 loading='lazy'>",
@@ -50,23 +51,23 @@ class Mod_Media extends Module
     public function cron_setting_fields(): array
     {
         return [
-            ['type' => 'checkbox', 'name' => __('Auto optimize images', 'wpopt'), 'id' => 'media.active', 'value' => shzn($this->context)->cron->is_active($this->slug), 'depend' => 'active']
+            ['type' => 'checkbox', 'name' => __('Auto optimize images', 'wpopt'), 'id' => 'media.active', 'value' => wps($this->context)->cron->is_active($this->slug), 'depend' => 'active']
         ];
     }
 
-    public function ajax_handler($args = array())
+    public function ajax_handler($args = array()): void
     {
         $response = array();
 
         switch ($args['action']) {
 
             case 'reset-stats':
-                shzn('wpopt')->options->remove_all('media', 'stats');
+                wps('wpopt')->options->remove_all('media', 'stats');
                 $response = __('Media optimization statistics has been successfully reset.', 'wpopt');
                 break;
 
             case 'scan-orphaned-media':
-                if (Cron::schedule_function(array($this, 'orphaned_media_scanner_cron_handler'), [], time())) {
+                if (CronActions::schedule_function('orphaned_media_scanner_cron_handler', array($this, 'orphaned_media_scanner_cron_handler'), time(), [])) {
                     $response = __('Orphaned media scanner is successfully started.', 'wpopt');
                 }
                 else {
@@ -80,7 +81,7 @@ class Mod_Media extends Module
                 break;
 
             case 'reset-orphaned-media':
-                shzn('wpopt')->options->remove_all('media', 'orphaned_media');
+                wps('wpopt')->options->remove_all('media', 'orphaned_media');
                 $this->status('orphan-media-scanner', 'paused');
                 $response = __('Orphaned media scanner has been successfully reset.', 'wpopt');
                 break;
@@ -91,7 +92,7 @@ class Mod_Media extends Module
                 break;
 
             case 'start-ipc-posts':
-                if (Cron::schedule_function(array($this, 'ipc_scanner_cron_handler'), [], time())) {
+                if (CronActions::schedule_function('ipc_scanner_cron_handler', array($this, 'ipc_scanner_cron_handler'), time())) {
                     $response = __('Media optimization scan is successfully started.', 'wpopt');
                 }
                 else {
@@ -100,7 +101,7 @@ class Mod_Media extends Module
                 break;
 
             case 'reset-ipc-posts':
-                shzn('wpopt')->options->remove_all('media', 'scan_media');
+                wps('wpopt')->options->remove_all('media', 'scan_media');
                 $this->status('optimization', 'paused');
                 $response = __('Media posts optimization has been successfully reset.', 'wpopt');
                 break;
@@ -114,26 +115,26 @@ class Mod_Media extends Module
         }
     }
 
-    private function status($context, $value = false)
+    public function status($context, $value = false)
     {
         if ($value) {
-            return shzn('wpopt')->options->update("status", $context, $value, "media");
+            return wps('wpopt')->options->update("status", $context, $value, "media");
         }
 
-        return shzn('wpopt')->options->get("status", $context, "media", '');
+        return wps('wpopt')->options->get("status", $context, "media", '');
     }
 
-    public function orphaned_media_scanner_cron_handler()
+    public function orphaned_media_scanner_cron_handler(): void
     {
         $ImagesPerformer = ImagesProcessor::getInstance($this->option());
 
         $this->status('orphan-media-scanner', 'running');
 
         if ($ImagesPerformer->find_orphaned_media() === \WPOptimizer\modules\supporters\IPC_TIME_LIMIT) {
-            Cron::schedule_function(array($this, 'orphaned_media_scanner_cron_handler'), [], time() + 30);
+            CronActions::schedule_function('orphaned_media_scanner_cron_handler', array($this, 'orphaned_media_scanner_cron_handler'), time() + 30);
         }
         else {
-            Cron::unschedule_function(array($this, 'orphaned_media_scanner_cron_handler'), []);
+            CronActions::unschedule_function('orphaned_media_scanner_cron_handler');
             $this->status('orphan-media-scanner', 'paused');
         }
     }
@@ -141,7 +142,7 @@ class Mod_Media extends Module
     public function enqueue_scripts(): void
     {
         parent::enqueue_scripts();
-        wp_enqueue_script('wpopt-media-page', UtilEnv::path_to_url(WPOPT_ABSPATH) . 'modules/supporters/media/media.js', array('vendor-shzn-js'), WPOPT_VERSION);
+        wp_enqueue_script('wpopt-media-page', UtilEnv::path_to_url(WPOPT_ABSPATH) . 'modules/supporters/media/media.js', array('vendor-wps-js'), WPOPT_VERSION);
     }
 
     public function render_mediaCleaner_Panel()
@@ -152,7 +153,7 @@ class Mod_Media extends Module
 
         $nonce = wp_create_nonce('wpopt-ajax-nonce');
 
-        $media2Clean = shzn('wpopt')->options->get_all('orphaned_media', 'media', [], 1000);
+        $media2Clean = wps('wpopt')->options->get_all('orphaned_media', 'media', [], 1000);
 
         ob_start();
         ?>
@@ -163,20 +164,20 @@ class Mod_Media extends Module
             <block style="padding-right: 20px">
                 <button class="button button-primary button-large"
                     <?php echo $this->status('orphan-media-scanner') === 'running' ? 'disabled' : '' ?>
-                        data-shzn="ajax-action" data-mod="media" data-action="scan-orphaned-media"
+                        data-wps="ajax-action" data-mod="media" data-action="scan-orphaned-media"
                         data-nonce="<?php echo $nonce ?>">
                     <?php echo __('Scan now', 'wpopt') ?>
                 </button>
                 <button class="button button-primary button-large"
                     <?php echo $this->status('orphan-media-scanner') === 'running' ? '' : 'disabled' ?>
-                        data-shzn="ajax-action" data-mod="media" data-action="pause-orphaned-media"
+                        data-wps="ajax-action" data-mod="media" data-action="pause-orphaned-media"
                         data-nonce="<?php echo $nonce ?>">
                     <?php echo __('Pause', 'wpopt') ?>
                 </button>
             </block>
             <button class="button button-primary button-large"
                 <?php echo $this->status('orphan-media-scanner') === 'running' ? 'disabled' : '' ?>
-                    data-shzn="ajax-action" data-mod="media" data-action="reset-orphaned-media"
+                    data-wps="ajax-action" data-mod="media" data-action="reset-orphaned-media"
                     data-nonce="<?php echo $nonce ?>">
                 <?php echo __('Reset', 'wpopt') ?>
             </button>
@@ -194,7 +195,7 @@ class Mod_Media extends Module
             $table->prepare_items();
 
             ?>
-            <form method="post" action="<?php echo shzn_module_panel_url($this->slug, "media-cleaner"); ?>">
+            <form method="post" action="<?php echo wps_module_panel_url($this->slug, "media-cleaner"); ?>">
                 <?php $table->display(); ?>
             </form>
             <?php
@@ -208,10 +209,10 @@ class Mod_Media extends Module
         $nonce = wp_create_nonce('wpopt-ajax-nonce');
         ob_start();
         ?>
-        <section class='shzn'>
-            <notice class="shzn">
+        <section class='wps'>
+            <notice class="wps">
                 <h3><?php echo __('Before start optimizing makes sure you did:', 'wpopt') ?></h3>
-                <ul class="shzn-list">
+                <ul class="wps-list">
                     <li>
                         <strong><?php echo sprintf(__('Read related <a href="%s">FAQ</a>.', 'wpopt'), admin_url('admin.php?page=wpopt-faqs')) ?></strong>
                     </li>
@@ -234,26 +235,26 @@ class Mod_Media extends Module
                 }
                 ?>
             </notice>
-            <notice class="shzn">
+            <notice class="wps">
                 <h2><?php _e('Optimize all media library.', 'wpopt'); ?></h2>
                 <pre><?php echo sprintf(__('Optimization will run silently in background (<a href="%s">Cron</a> must be active).', 'wpopt'), admin_url('admin.php?page=wpopt-settings#settings-cron')); ?></pre>
                 <block style="padding-right: 30px">
                     <button class="button button-primary button-large"
                         <?php echo $this->status('optimization') === 'running' ? 'disabled' : '' ?>
-                            data-shzn="ajax-action" data-mod="media" data-action="start-ipc-posts"
+                            data-wps="ajax-action" data-mod="media" data-action="start-ipc-posts"
                             data-nonce="<?php echo $nonce; ?>">
                         <?php echo __('Start', 'wpopt') ?>
                     </button>
                     <button class="button button-primary button-large"
                         <?php echo $this->status('optimization') === 'running' ? '' : 'disabled' ?>
-                            data-shzn="ajax-action" data-mod="media" data-action="pause-ipc-posts"
+                            data-wps="ajax-action" data-mod="media" data-action="pause-ipc-posts"
                             data-nonce="<?php echo $nonce; ?>">
                         <?php echo __('Pause', 'wpopt') ?>
                     </button>
                 </block>
                 <button class="button button-primary button-large"
                     <?php echo $this->status('optimization') === 'running' ? 'disabled' : '' ?>
-                        data-shzn="ajax-action" data-mod="media" data-action="reset-ipc-posts"
+                        data-wps="ajax-action" data-mod="media" data-action="reset-ipc-posts"
                         data-nonce="<?php echo $nonce; ?>">
                     <?php echo __('Reset', 'wpopt') ?>
                 </button>
@@ -263,20 +264,18 @@ class Mod_Media extends Module
         return ob_get_clean();
     }
 
-    public function render_admin_page(): void
+    public function render_sub_modules(): void
     {
         ?>
-        <section class="shzn-wrap">
-            <block class="shzn">
-                <section class="shzn-header"><h1>Media Optimizer</h1></section>
+        <section class="wps-wrap">
+            <block class="wps">
+                <section class="wps-header"><h1>Media Optimizer</h1></section>
                 <?php
                 echo Graphic::generateHTML_tabs_panels(array(
-
                         array(
                             'id'          => 'images-optimizer',
                             'panel-title' => __('Images optimizer', 'wpopt'),
                             'callback'    => array($this, 'render_imagesOptimizer_Panel')
-
                         ),
                         array(
                             'id'          => 'media-cleaner',
@@ -305,7 +304,7 @@ class Mod_Media extends Module
      * Image Cleaner Processor Cron Job handler
      * @return void
      */
-    public function ipc_scanner_cron_handler($args = [])
+    public function ipc_scanner_cron_handler(): void
     {
         $ImagesPerformer = ImagesProcessor::getInstance($this->option());
 
@@ -314,10 +313,10 @@ class Mod_Media extends Module
         $res = $ImagesPerformer->scan_media();
 
         if ($res === \WPOptimizer\modules\supporters\IPC_TIME_LIMIT) {
-            Cron::schedule_function(array($this, 'ipc_scanner_cron_handler'), [], time() + 30);
+            CronActions::schedule_function('ipc_scanner_cron_handler', array($this, 'ipc_scanner_cron_handler'), time() + 30);
         }
         else {
-            Cron::unschedule_function(array($this, 'ipc_scanner_cron_handler'), []);
+            CronActions::unschedule_function('ipc_scanner_cron_handler');
             $this->status('optimization', 'paused');
         }
     }
@@ -326,14 +325,14 @@ class Mod_Media extends Module
     {
         global $wpdb;
 
-        $scannedID = shzn('wpopt')->options->get('last_scanned_postID', 'scan_media', 'media', 0);
+        $scannedID = wps('wpopt')->options->get('last_scanned_postID', 'scan_media', 'media', 0);
 
         $optimized_images_count = $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->posts} WHERE ID <= {$scannedID} AND post_type = 'attachment' AND post_mime_type LIKE '%image%'");
         $all_media_count = $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->posts} WHERE post_type = 'attachment' AND post_mime_type LIKE '%image%'");
 
-        list($size, $prev_size, $media_optimized_id) = shzn('wpopt')->options->get('size_prevsize', 'stats', 'media', [0, 0, 0]);
+        list($size, $prev_size, $media_optimized_id) = wps('wpopt')->options->get('size_prevsize', 'stats', 'media', [0, 0, 0]);
 
-        while (!empty($optimized_images = $wpdb->get_results("SELECT id, value FROM " . shzn('wpopt')->options->table_name() . " WHERE item = 'optimized_images' AND context = 'media' AND id > '{$media_optimized_id}' ORDER BY id LIMIT 10000", ARRAY_A))) {
+        while (!empty($optimized_images = $wpdb->get_results("SELECT id, value FROM " . wps('wpopt')->options->table_name() . " WHERE item = 'optimized_images' AND context = 'media' AND id > '{$media_optimized_id}' ORDER BY id LIMIT 10000", ARRAY_A))) {
 
             $wpdb->flush();
 
@@ -355,9 +354,9 @@ class Mod_Media extends Module
         }
 
         // clear last path related media optimization data
-        shzn('wpopt')->options->remove_all('media', 'optimized_images');
+        wps('wpopt')->options->remove_all('media', 'optimized_images');
 
-        shzn('wpopt')->options->add('size_prevsize', 'stats', [$size, $prev_size, $media_optimized_id], 'media');
+        wps('wpopt')->options->add('size_prevsize', 'stats', [$size, $prev_size, $media_optimized_id], 'media');
 
         $saved_space = $prev_size ? min(round(($prev_size - $size) / $prev_size * 100, 2), 100) : 0;
 
@@ -366,29 +365,29 @@ class Mod_Media extends Module
 
         ob_start();
         ?>
-        <section class="shzn">
-            <notice class="shzn">
+        <section class="wps">
+            <notice class="wps">
                 <h3><?php echo sprintf(__('Media optimized: %d', 'wpopt'), $optimized_images_count); ?> | <?php echo sprintf(__('Left: %d.', 'wpopt'), $all_media_count - $optimized_images_count); ?></h3>
                 <br>
-                <block class="shzn-card__wrapper">
-                    <block class="shzn-card">
+                <block class="wps-card__wrapper">
+                    <block class="wps-card">
                         <h3><?php echo sprintf(__('Processed media library:', 'wpopt'), $processed_percentile) ?></h3>
-                        <div class='shzn-progressbarCircle' data-percent='<?php echo $processed_percentile; ?>'
+                        <div class='wps-progressbarCircle' data-percent='<?php echo $processed_percentile; ?>'
                              data-stroke='2'
                              data-size='155' data-color='<?php echo $color_media_library ?>'></div>
                     </block>
-                    <block class="shzn-card">
+                    <block class="wps-card">
                         <h3><?php echo sprintf(__('Space freed up: %s:', 'wpopt'), size_format($prev_size - $size, 2)) ?></h3>
-                        <div class='shzn-progressbarCircle' data-percent='<?php echo $saved_space; ?>'
+                        <div class='wps-progressbarCircle' data-percent='<?php echo $saved_space; ?>'
                              data-stroke='2'
                              data-size='155' data-color='#343434'></div>
                     </block>
                 </block>
             </notice>
-            <block class="shzn-row">
+            <block class="wps-row">
                 <button class="button button-primary button-large"
                     <?php echo $this->status('optimization') === 'running' ? 'disabled' : '' ?>
-                        data-shzn="ajax-action" data-mod="media" data-action="reset-stats"
+                        data-wps="ajax-action" data-mod="media" data-action="reset-stats"
                         data-nonce="<?php echo wp_create_nonce('wpopt-ajax-nonce'); ?>">
                     <?php echo __('Reset', 'wpopt') ?>
                 </button>
@@ -413,8 +412,10 @@ class Mod_Media extends Module
         }
     }
 
-    protected function init()
+    protected function init(): void
     {
+        $this->path = __DIR__;
+
         if (is_admin() or wp_doing_cron()) {
 
             require_once WPOPT_SUPPORTERS . '/media/ImagesProcessor.class.php';

@@ -7,9 +7,9 @@
 
 namespace WPOptimizer\modules;
 
-use SHZN\core\Disk;
-use SHZN\core\UtilEnv;
-use SHZN\modules\Module;
+use WPS\core\Disk;
+use WPS\core\UtilEnv;
+use WPS\modules\Module;
 use WPOptimizer\modules\supporters\Minify_CSS;
 use WPOptimizer\modules\supporters\Minify_HTML;
 use WPOptimizer\modules\supporters\Minify_JS;
@@ -44,7 +44,7 @@ class Mod_Minify extends Module
 
                 list($script, $original_url) = $matches;
 
-                if (!str_contains($original_url, 'min') and str_starts_with($original_url, shzn_utils()->home_url)) {
+                if (!str_contains($original_url, 'min') and str_starts_with($original_url, wps_utils()->home_url)) {
 
                     $file_path = WPOPT_STORAGE . "minify/js/" . md5($original_url) . ".js";
 
@@ -78,7 +78,7 @@ class Mod_Minify extends Module
 
                 list($script, $original_url) = $matches;
 
-                if (!str_contains($original_url, 'min') and str_starts_with($original_url, shzn_utils()->home_url) and str_contains($script, 'stylesheet')) {
+                if (!str_contains($original_url, 'min') and str_starts_with($original_url, wps_utils()->home_url) and str_contains($script, 'stylesheet')) {
 
                     $file_path = WPOPT_STORAGE . "minify/css/" . md5($original_url) . ".css";
 
@@ -189,7 +189,7 @@ class Mod_Minify extends Module
         return false;
     }
 
-    protected function init()
+    protected function init(): void
     {
         require_once WPOPT_SUPPORTERS . '/minifier/Minify.class.php';
         require_once WPOPT_SUPPORTERS . '/minifier/Minify_HTML.class.php';
@@ -224,7 +224,7 @@ class Mod_Minify extends Module
     {
         ob_start();
         ?>
-        <block class="shzn">
+        <block class="wps">
             <h2><?php _e('Beta version.', 'wpopt'); ?></h2>
             <p>
                 <?php echo __('This module is under developing.'); ?><br>

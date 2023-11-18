@@ -7,7 +7,7 @@
 
 namespace WPOptimizer\modules;
 
-use SHZN\modules\Module;
+use WPS\modules\Module;
 
 class Mod_Cron extends Module
 {
@@ -17,7 +17,7 @@ class Mod_Cron extends Module
 
     public function validate_settings($input, $filtering = false): array
     {
-        return shzn('wpopt')->cron->cron_setting_validator($input, $filtering);
+        return wps('wpopt')->cron->cron_setting_validator($input, $filtering);
     }
 
     public function restricted_access($context = ''): bool
@@ -32,12 +32,12 @@ class Mod_Cron extends Module
         }
     }
 
-    protected function init()
+    protected function init(): void
     {
         /**
          * we need to load all modules with cron scope
          */
-        shzn('wpopt')->moduleHandler->setup_modules('cron');
+        wps('wpopt')->moduleHandler->setup_modules('cron');
     }
 
     protected function setting_fields($filter = ''): array
@@ -45,7 +45,7 @@ class Mod_Cron extends Module
         /**
          * Load here all module cron settings
          */
-        return shzn('wpopt')->cron->cron_setting_fields();
+        return wps('wpopt')->cron->cron_setting_fields();
     }
 }
 

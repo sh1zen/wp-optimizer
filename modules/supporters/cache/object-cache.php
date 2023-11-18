@@ -5,21 +5,21 @@
  * @license   http://www.gnu.org/licenses/gpl.html GNU/GPL
  */
 
-// shzn-framework commons
-if (!defined('SHZN_FRAMEWORK')) {
+// wps-framework commons
+if (!defined('WPS_FRAMEWORK')) {
 
-    if (file_exists(dirname(__FILE__, 4) . '/vendors/shzn-framework/loader.php')) {
-        require_once dirname(__FILE__, 4) . '/vendors/shzn-framework/loader.php';
+    if (file_exists(dirname(__FILE__, 4) . '/vendors/wps-framework/loader.php')) {
+        require_once dirname(__FILE__, 4) . '/vendors/wps-framework/loader.php';
     }
     else {
-        require_once dirname(__FILE__, 5) . '/flexy-seo/vendors/shzn-framework/loader.php';
+        require_once dirname(__FILE__, 5) . '/flexy-seo/vendors/wps-framework/loader.php';
     }
 }
 
 function wp_cache_report()
 {
     global $wp_object_cache;
-    shzn_var_dump($wp_object_cache->report());
+    wps_var_dump($wp_object_cache->report());
 }
 
 function wp_cache_dump($group = '', $memcache = false, $echo = false)
@@ -29,7 +29,7 @@ function wp_cache_dump($group = '', $memcache = false, $echo = false)
     $dump = $wp_object_cache->dump($group, $memcache);
 
     if ($echo) {
-        shzn_var_dump($dump);
+        wps_var_dump($dump);
     }
 
     return $dump;
@@ -39,7 +39,7 @@ function wp_cache_init()
 {
     global $wp_object_cache;
 
-    $wp_object_cache = new \SHZN\core\Cache(true);
+    $wp_object_cache = new \WPS\core\Cache(true);
 }
 
 function wp_cache_flush()

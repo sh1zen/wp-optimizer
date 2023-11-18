@@ -7,8 +7,8 @@
 
 namespace WPOptimizer\modules\supporters;
 
-use SHZN\core\Rewriter;
-use SHZN\core\Settings;
+use WPS\core\Rewriter;
+use WPS\core\Settings;
 
 class StaticCache extends Cache_Dispatcher
 {

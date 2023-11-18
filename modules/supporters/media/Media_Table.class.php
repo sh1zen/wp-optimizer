@@ -11,7 +11,7 @@ if (!class_exists('WP_List_Table')) {
     require_once(ABSPATH . 'wp-admin/includes/class-wp-list-table.php');
 }
 
-use SHZN\core\UtilEnv;
+use WPS\core\UtilEnv;
 
 /**
  * Core class used to display media items in a list table.
@@ -166,7 +166,7 @@ class Media_Table extends \WP_List_Table
             case 'size':
                 return size_format(absint($item['value'][$column_name]));
             case 'cdate':
-                return date("Y-m-d H:i:s", $item['value']['time']);
+                return wp_date("Y-m-d H:i:s", $item['value']['time']);
             default:
                 return print_r($item, true);
         }

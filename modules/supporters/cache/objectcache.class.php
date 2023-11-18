@@ -7,7 +7,7 @@
 
 namespace WPOptimizer\modules\supporters;
 
-use SHZN\core\Disk;
+use WPS\core\Disk;
 
 class ObjectCache extends Cache_Dispatcher
 {

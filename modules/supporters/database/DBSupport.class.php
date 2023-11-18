@@ -8,7 +8,7 @@
 namespace WPOptimizer\modules\supporters;
 
 use WPOptimizer\core\Report;
-use SHZN\core\UtilEnv;
+use WPS\core\UtilEnv;
 
 class DBSupport
 {

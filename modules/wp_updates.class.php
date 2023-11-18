@@ -7,7 +7,7 @@
 
 namespace WPOptimizer\modules;
 
-use SHZN\modules\Module;
+use WPS\modules\Module;
 
 /**
  * Module for updates handling
@@ -26,7 +26,7 @@ class Mod_WP_Updates extends Module
         return false;
     }
 
-    protected function init()
+    protected function init(): void
     {
         $this->disable_updates();
     }

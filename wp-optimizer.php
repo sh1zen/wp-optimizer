@@ -7,10 +7,10 @@
  * Author URI: https://sh1zen.github.io/
  * Text Domain: wpopt
  * Domain Path: /languages
- * Version: 2.1.6
+ * Version: 2.2.0
  */
 
-const WPOPT_VERSION = '2.1.6';
+const WPOPT_VERSION = '2.2.0';
 
 const WPOPT_FILE = __FILE__;
 
@@ -19,7 +19,6 @@ const WPOPT_INCPATH = WPOPT_ABSPATH . 'inc/';
 const WPOPT_MODULES = WPOPT_ABSPATH . 'modules/';
 const WPOPT_ADMIN = WPOPT_ABSPATH . 'admin/';
 const WPOPT_SUPPORTERS = WPOPT_MODULES . 'supporters/';
-const WPOPT_VENDORS = WPOPT_ABSPATH . 'vendors/';
 
 // setup constants
 require_once WPOPT_INCPATH . 'constants.php';
@@ -29,22 +28,26 @@ require_once WPOPT_INCPATH . 'functions.php';
 require_once WPOPT_INCPATH . 'Report.class.php';
 
 
-// shzn-framework commons
-if (!defined('SHZN_FRAMEWORK')) {
-    if (!file_exists(WPOPT_VENDORS . 'shzn-framework/loader.php')) {
-        return;
+// wps-framework commons
+if (!defined('WPS_FRAMEWORK')) {
+    if (defined('WPS_FRAMEWORK_SOURCE') and file_exists(WPS_FRAMEWORK_SOURCE . 'loader.php')) {
+        require_once WPS_FRAMEWORK_SOURCE . 'loader.php';
     }
-    require_once WPOPT_VENDORS . 'shzn-framework/loader.php';
+    else {
+        if (!file_exists( WPOPT_ABSPATH . 'vendors/wps-framework/loader.php')) {
+            return;
+        }
+        require_once  WPOPT_ABSPATH . 'vendors/wps-framework/loader.php';
+    }
 }
 
-shzn(
+wps(
     'wpopt',
     [
-        'path'         => WPOPT_MODULES,
-        'table_name'   => "wpopt",
+        'modules_path' => WPOPT_MODULES,
+        'table_name'   => "wp_wpopt",
     ],
     [
-        'meter'         => true,
         'cache'         => true,
         'storage'       => true,
         'settings'      => true,
@@ -63,4 +66,4 @@ require_once WPOPT_ADMIN . 'PluginInit.class.php';
  */
 WPOptimizer\core\PluginInit::Initialize();
 
-shzn('wpopt')->meter->lap('wpopt-loaded');
+wps_utils()->meter->lap('wpopt-loaded');

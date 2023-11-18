@@ -7,7 +7,7 @@
 
 global $wpdb;
 
-SHZN\core\UtilEnv::db_create(
+WPS\core\UtilEnv::db_create(
     'wpopt_activity_log',
     [
         "fields"      => [

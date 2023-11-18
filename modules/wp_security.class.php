@@ -7,9 +7,9 @@
 
 namespace WPOptimizer\modules;
 
-use SHZN\core\Rewriter;
-use SHZN\modules\Module;
-use SHZN\core\Settings;
+use WPS\core\Rewriter;
+use WPS\modules\Module;
+use WPS\core\Settings;
 use WPOptimizer\modules\supporters\WP_Htaccess;
 
 /**
@@ -34,7 +34,7 @@ class Mod_WP_Security extends Module
             $rewriter->remove_query_arg('ver');
         }
         else {
-            $rewriter->set_query_arg('ver', md5(SHZN_SALT . $rewriter->get_query_var('ver', $rewriter->remove_query_arg('version'))));
+            $rewriter->set_query_arg('ver', md5(WPS_SALT . $rewriter->get_query_var('ver', $rewriter->remove_query_arg('version'))));
         }
 
         return $rewriter->get_uri(false);

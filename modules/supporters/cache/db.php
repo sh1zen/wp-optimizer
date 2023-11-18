@@ -5,7 +5,7 @@
  * @license   http://www.gnu.org/licenses/gpl.html GNU/GPL
  */
 
-use SHZN\core\Cache;
+use WPS\core\Cache;
 
 define('WPOPT_DB_ABSPATH', dirname(__FILE__, 4) . '/');
 
@@ -23,18 +23,18 @@ if (!((defined('WP_INSTALLING') and WP_INSTALLING) or is_admin())) {
     $GLOBALS['wpdb'] = new WPOPT_DB(DB_USER, DB_PASSWORD, DB_NAME, DB_HOST);
 }
 
-// shzn-framework commons
-if (!defined('SHZN_FRAMEWORK')) {
+// wps-framework commons
+if (!defined('WPS_FRAMEWORK')) {
 
-    if (file_exists(WPOPT_DB_ABSPATH . 'vendors/shzn-framework/loader.php')) {
-        require_once WPOPT_DB_ABSPATH . 'vendors/shzn-framework/loader.php';
+    if (file_exists(WPOPT_DB_ABSPATH . 'vendors/wps-framework/loader.php')) {
+        require_once WPOPT_DB_ABSPATH . 'vendors/wps-framework/loader.php';
     }
     else {
-        require_once dirname(__FILE__, 5) . '/flexy-seo/vendors/shzn-framework/loader.php';
+        require_once dirname(__FILE__, 5) . '/flexy-seo/vendors/wps-framework/loader.php';
     }
 }
 
-shzn(
+wps(
     'wpopt',
     null,
     [
@@ -63,7 +63,7 @@ class WPOPT_DB extends wpdb
 
         $key = $this->generate_key($query, $x, $y);
 
-        $result = shzn('wpopt')->storage->get($key, self::get_cache_group());
+        $result = wps('wpopt')->storage->get($key, self::get_cache_group());
 
         if (!$result) {
 
@@ -72,7 +72,7 @@ class WPOPT_DB extends wpdb
             $result = parent::get_var($query, $x, $y);
 
             if ($this->timer_stop() > WPOPT_CACHE_DB_THRESHOLD_STORE) {
-                shzn('wpopt')->storage->set($result, $key, self::get_cache_group(), WPOPT_CACHE_DB_LIFETIME);
+                wps('wpopt')->storage->set($result, $key, self::get_cache_group(), WPOPT_CACHE_DB_LIFETIME);
             }
         }
 
@@ -104,7 +104,7 @@ class WPOPT_DB extends wpdb
 
         $key = $this->generate_key($query);
 
-        $result = shzn('wpopt')->storage->get($key, self::get_cache_group());
+        $result = wps('wpopt')->storage->get($key, self::get_cache_group());
 
         if (!$result) {
             $this->timer_start();
@@ -112,7 +112,7 @@ class WPOPT_DB extends wpdb
             $result = parent::get_results($query, $output);
 
             if ($this->timer_stop() > WPOPT_CACHE_DB_THRESHOLD_STORE) {
-                shzn('wpopt')->storage->set($result, $key, self::get_cache_group(), WPOPT_CACHE_DB_LIFETIME);
+                wps('wpopt')->storage->set($result, $key, self::get_cache_group(), WPOPT_CACHE_DB_LIFETIME);
             }
         }
 
@@ -127,7 +127,7 @@ class WPOPT_DB extends wpdb
 
         $key = $this->generate_key($query, $x);
 
-        $result = shzn('wpopt')->storage->get($key, self::get_cache_group());
+        $result = wps('wpopt')->storage->get($key, self::get_cache_group());
 
         if (!$result) {
             $this->timer_start();
@@ -135,7 +135,7 @@ class WPOPT_DB extends wpdb
             $result = parent::get_col($query, $x);
 
             if ($this->timer_stop() > WPOPT_CACHE_DB_THRESHOLD_STORE) {
-                shzn('wpopt')->storage->set($result, $key, self::get_cache_group(), WPOPT_CACHE_DB_LIFETIME);
+                wps('wpopt')->storage->set($result, $key, self::get_cache_group(), WPOPT_CACHE_DB_LIFETIME);
             }
         }
 
@@ -150,7 +150,7 @@ class WPOPT_DB extends wpdb
 
         $key = $this->generate_key($query, $y);
 
-        $result = shzn('wpopt')->storage->get($key, self::get_cache_group());
+        $result = wps('wpopt')->storage->get($key, self::get_cache_group());
 
         if (!$result) {
             $this->timer_start();
@@ -158,7 +158,7 @@ class WPOPT_DB extends wpdb
             $result = parent::get_row($query, $output, $y);
 
             if ($this->timer_stop() > WPOPT_CACHE_DB_THRESHOLD_STORE) {
-                shzn('wpopt')->storage->set($result, $key, self::get_cache_group(), WPOPT_CACHE_DB_LIFETIME);
+                wps('wpopt')->storage->set($result, $key, self::get_cache_group(), WPOPT_CACHE_DB_LIFETIME);
             }
         }
 

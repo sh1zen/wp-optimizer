@@ -7,13 +7,18 @@
 
 namespace WPOptimizer\modules;
 
-use SHZN\core\Actions;
-use SHZN\core\addon\Exporter;
-use SHZN\core\Query;
-use SHZN\core\Rewriter;
-use SHZN\core\UtilEnv;
-use SHZN\modules\Module;
+use WPS\core\RequestActions;
+use WPS\core\addon\Exporter;
+use WPS\core\CronActions;
+use WPS\core\Query;
+use WPS\core\Rewriter;
+use WPS\modules\Module;
+
 use WPOptimizer\modules\supporters\ActivityLog;
+
+global $wpdb;
+
+define('WPOPT_ACTIVITY_LOG_TABLE', "{$wpdb->prefix}wpopt_activity_log");
 
 /**
  *  Module for images optimization handling
@@ -29,15 +34,14 @@ class Mod_ActivityLog extends Module
     public function actions(): void
     {
         if ($this->option('auto_clear')) {
-            Actions::schedule($this->hash, HOUR_IN_SECONDS * 4, function () {
-                $query = new Query();
-                $query->delete('wpopt_activity_log', ['time' => strtotime("- " . $this->option('lifetime') . " days", current_time('timestamp')), 'compare' => '<=']);
-            });
+            CronActions::schedule("WPOPT-ActivityLog", DAY_IN_SECONDS, function () {
+                Query::getInstance()->delete(['time' => time() - ($this->option('lifetime') * DAY_IN_SECONDS), 'compare' => '<'], WPOPT_ACTIVITY_LOG_TABLE)->query();
+            }, '08:00');
         }
 
-        Actions::request('wpopt-activity-log', function ($action) {
+        RequestActions::request($this->action_hook, function ($action) {
 
-            require_once SHZN_ADDON_PATH . 'Exporter.class.php';
+            require_once WPS_ADDON_PATH . 'Exporter.class.php';
 
             switch ($action) {
 
@@ -47,7 +51,7 @@ class Mod_ActivityLog extends Module
 
                     $format = $_REQUEST['export-format'] ?? 'csv';
 
-                    $table = new ActivityLog(['screen' => get_current_screen(), 'settings' => $this->option()]);
+                    $table = new ActivityLog(['action_hook' => $this->action_hook, 'settings' => $this->option()]);
 
                     $exporter = new Exporter();
 
@@ -56,7 +60,7 @@ class Mod_ActivityLog extends Module
 
                 case 'reset':
 
-                    Query::getInstance()->tables(['wpopt_activity_log'])->action('TRUNCATE')->query();
+                    Query::getInstance()->tables(WPOPT_ACTIVITY_LOG_TABLE)->action('TRUNCATE')->query();
 
                     Rewriter::getInstance(admin_url('admin.php'))->add_query_args(array(
                         'page'    => 'activitylog',
@@ -67,28 +71,29 @@ class Mod_ActivityLog extends Module
         });
     }
 
-    public function render_admin_page(): void
+    public function render_sub_modules(): void
     {
         require_once WPOPT_SUPPORTERS . '/activity-log/ActivityLog_Table.class.php';
 
-        $table = new ActivityLog(['screen' => get_current_screen(), 'settings' => $this->option()]);
+        $table = new ActivityLog(['action_hook' => $this->action_hook, 'settings' => $this->option()]);
 
         $table->prepare_items();
         ?>
-        <section class="shzn-wrap">
-            <block class="shzn">
-                <section class="shzn-header"><h1>Activity Log</h1></section>
-                <section class='shzn'>
-                    <form id="activity-filter" method="GET">
+        <section class="wps-wrap">
+            <block class="wps">
+                <section class="wps-header"><h1>Activity Log</h1></section>
+                <section class='wps'>
+                    <form method="GET" autocapitalize="off" autocomplete="off">
                         <input type="hidden" name="page" value="<?php echo esc_attr($_REQUEST['page']); ?>"/>
                         <?php $table->display(); ?>
+                        <?php RequestActions::nonce_field($this->action_hook); ?>
                     </form>
                 </section>
             </block>
-            <block class="shzn">
-                <row class="shzn-inline">
+            <block class="wps">
+                <row class="wps-inline">
                     <strong>Actions:</strong>
-                    <a href="<?php Actions::get_ajax_url('wpopt-activity-log', 'reset', true); ?>"
+                    <a href="<?php RequestActions::get_url($this->action_hook, 'reset', false, true); ?>"
                        class="button button-primary">
                         <?php _e('Reset Log', 'wpopt') ?>
                     </a>
@@ -165,9 +170,9 @@ class Mod_ActivityLog extends Module
                 'action'     => $action,
                 'context'    => $subject,
                 'value'      => '',
-                'user_id'    => shzn_utils()->cu_id,
+                'user_id'    => wps_utils()->cu_id,
                 'object_id'  => false,
-                'ip'         => $this->option('log.ip') ? UtilEnv::get_ip() : '',
+                'ip'         => $this->option('log.ip') ? $this->get_ip() : '',
                 'user_agent' => $this->option('log.user_agent') ? $_SERVER['HTTP_USER_AGENT'] : '',
                 'request'    => $this->option('log.requests') ? maybe_serialize($_REQUEST) : '',
                 'time'       => time()
@@ -181,7 +186,30 @@ class Mod_ActivityLog extends Module
 
         $fields['value'] = maybe_serialize($fields['value']);
 
-        $wpdb->insert("wp_wpopt_activity_log", $fields);
+        $wpdb->insert(WPOPT_ACTIVITY_LOG_TABLE, $fields);
+    }
+
+    private function get_ip(): string
+    {
+        $server_ip_keys = array(
+            'HTTP_CF_CONNECTING_IP', // CloudFlare
+            'HTTP_TRUE_CLIENT_IP', // CloudFlare Enterprise header
+            'HTTP_CLIENT_IP',
+            'HTTP_X_FORWARDED_FOR',
+            'HTTP_X_FORWARDED',
+            'HTTP_X_CLUSTER_CLIENT_IP',
+            'HTTP_FORWARDED_FOR',
+            'HTTP_FORWARDED',
+            'REMOTE_ADDR',
+        );
+
+        foreach ($server_ip_keys as $key) {
+            if (isset($_SERVER[$key]) and filter_var($_SERVER[$key], FILTER_VALIDATE_IP)) {
+                return $_SERVER[$key];
+            }
+        }
+
+        return '127.0.0.1';
     }
 
     public function log_bad_queries(): void
@@ -195,7 +223,7 @@ class Mod_ActivityLog extends Module
                 'value'     => Rewriter::getInstance()->raw_url
             ]);
         }
-        elseif ($this->option('bad_query.sql') and $rewriter->match("(?:\b(?:UNION\s+(?:ALL\s+)?(?:SELECT|VALUES)|SELECT\s+.*?\s+FROM|INSERT\s+INTO|UPDATE\s+.*?\s+SET|DELETE\s+FROM)\b|\b(?:EXEC(?:UTE)?\s*\(.*?\)|ALTER\s+PROC(?:EDURE)?|CREATE\s+PROC(?:EDURE)?|DROP\s+(?:PROC(?:EDURE)?|TABLE)|TRUNCATE\s+TABLE)\b|\b(?:AND|OR|\b(?:'|\"))\b)", false)) {
+        elseif ($this->option('bad_query.sql') and $rewriter->match("\b(UNION|SELECT|FROM|INSERT|UPDATE|SET|DELETE|EXEC|CREATE|PROC|CAST|TABLE|'|\"|VARCHAR|DECLARE)\b", false)) {
 
             $this->log('maybe-sql-injection', 'bad_query', [
                 'object_id' => 0,
@@ -262,7 +290,7 @@ class Mod_ActivityLog extends Module
 
                 $this->log('updated-profile', 'user', [
                     'object_id' => $user_id,
-                    'value'     => shzn_get_user($user_id)->display_name ?? ''
+                    'value'     => wps_get_user($user_id)->display_name ?? ''
                 ]);
 
             }, 10, 1);
@@ -271,7 +299,7 @@ class Mod_ActivityLog extends Module
 
                 $this->log('registered', 'user', [
                     'object_id' => $user_id,
-                    'value'     => shzn_get_user($user_id)->display_name ?? ''
+                    'value'     => wps_get_user($user_id)->display_name ?? ''
                 ]);
             }, 10, 1);
 
@@ -289,7 +317,7 @@ class Mod_ActivityLog extends Module
         if ($this->option('attachments')) {
 
             add_action('add_attachment', function ($attachment_id) {
-                $post = shzn_get_post($attachment_id);
+                $post = wps_get_post($attachment_id);
                 $this->log('insert', 'attachment', [
                     'object_id' => $attachment_id,
                     'value'     => esc_html($post->post_name)
@@ -297,7 +325,7 @@ class Mod_ActivityLog extends Module
             }, 10, 1);
 
             add_action('edit_attachment', function ($attachment_id) {
-                $post = shzn_get_post($attachment_id);
+                $post = wps_get_post($attachment_id);
                 $this->log('edit', 'attachment', [
                     'object_id' => $attachment_id,
                     'value'     => esc_html($post->post_name)
@@ -305,7 +333,7 @@ class Mod_ActivityLog extends Module
             }, 10, 1);
 
             add_action('delete_attachment', function ($attachment_id) {
-                $post = shzn_get_post($attachment_id);
+                $post = wps_get_post($attachment_id);
                 $this->log('delete', 'attachment', [
                     'object_id' => $attachment_id,
                     'value'     => esc_html($post->post_name)
@@ -364,7 +392,7 @@ class Mod_ActivityLog extends Module
 
             add_action('created_term', function ($term_id, $tt_id, $taxonomy) {
 
-                $term = shzn_get_term($term_id);
+                $term = wps_get_term($term_id);
 
                 $this->log('insert', 'term', [
                     'object_id' => $term_id,
@@ -377,7 +405,7 @@ class Mod_ActivityLog extends Module
 
             add_action('edited_term', function ($term_id, $tt_id, $taxonomy) {
 
-                $term = shzn_get_term($term_id);
+                $term = wps_get_term($term_id);
 
                 $this->log('update', 'term', [
                     'object_id' => $term_id,

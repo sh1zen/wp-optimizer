@@ -7,7 +7,7 @@
 
 namespace WPOptimizer\modules\supporters;
 
-use SHZN\core\UtilEnv;
+use WPS\core\UtilEnv;
 
 class DB_List_Table extends \WP_List_Table
 {
@@ -181,7 +181,7 @@ class DB_List_Table extends \WP_List_Table
             wp_die('Security check failed!');
         }
 
-        shzn('wpopt')->options->remove_all('cache', "get_tables_data");
+        wps('wpopt')->options->remove_all('cache', "get_tables_data");
 
         if (empty($_POST['bulk-tables'])) {
             $tables = $wpdb->get_col('SHOW TABLES');
@@ -236,7 +236,7 @@ class DB_List_Table extends \WP_List_Table
     {
         global $wpdb;
 
-        if ($data = shzn('wpopt')->options->get("{$per_page}.{$current_page}", "get_tables_data", "cache", false)) {
+        if ($data = wps('wpopt')->options->get("{$per_page}.{$current_page}", "get_tables_data", "cache", false)) {
             return $data;
         }
 
@@ -299,7 +299,7 @@ class DB_List_Table extends \WP_List_Table
             );
         }
 
-        shzn('wpopt')->options->update("{$per_page}.{$current_page}", "get_tables_data", $items_to_display, 'cache', DAY_IN_SECONDS);
+        wps('wpopt')->options->update("{$per_page}.{$current_page}", "get_tables_data", $items_to_display, 'cache', DAY_IN_SECONDS);
 
         return $items_to_display;
     }

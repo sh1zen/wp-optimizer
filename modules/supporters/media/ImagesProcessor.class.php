@@ -18,8 +18,8 @@ const IPC_NOT_WRITABLE = 6;
 require_once WPOPT_SUPPORTERS . '/media/GD.class.php';
 
 use FilesystemIterator;
-use SHZN\core\Settings;
-use SHZN\core\UtilEnv;
+use WPS\core\Settings;
+use WPS\core\UtilEnv;
 
 class ImagesProcessor
 {
@@ -57,13 +57,13 @@ class ImagesProcessor
 
     public static function remove($media_id, bool $unlink): void
     {
-        $media = shzn('wpopt')->options->get_by_id($media_id);
+        $media = wps('wpopt')->options->get_by_id($media_id);
 
         if ($unlink and $media) {
             @unlink($media['obj_id']);
         }
 
-        shzn('wpopt')->options->remove_by_id($media_id);
+        wps('wpopt')->options->remove_by_id($media_id);
     }
 
     public function find_orphaned_media()
@@ -74,9 +74,9 @@ class ImagesProcessor
             return IPC_FAIL;
         }
 
-        $restore_path = shzn('wpopt')->options->get('path', 'orphaned_media_progress', 'media');
+        $restore_path = wps('wpopt')->options->get('path', 'orphaned_media_progress', 'media');
         // todo check if file still exist
-        $restore_file = shzn('wpopt')->options->get('file', 'orphaned_media_progress', 'media');
+        $restore_file = wps('wpopt')->options->get('file', 'orphaned_media_progress', 'media');
 
         $root = trailingslashit($restore_path ?: $uploadDir);
 
@@ -95,14 +95,14 @@ class ImagesProcessor
             if (UtilEnv::safe_time_limit(3, 60) === false or $this->do_pause("orphan-media-scanner")) {
 
                 //saving progress
-                shzn('wpopt')->options->update(
+                wps('wpopt')->options->update(
                     'path',
                     'orphaned_media_progress',
                     $fileInfo->getPath(),
                     'media'
                 );
 
-                shzn('wpopt')->options->update(
+                wps('wpopt')->options->update(
                     'file',
                     'orphaned_media_progress',
                     $fileInfo->getBasename(),
@@ -128,7 +128,7 @@ class ImagesProcessor
                 $res = wps_attachment_path_to_postid($fileInfo->getRealPath());
 
                 if (!$res) {
-                    shzn('wpopt')->options->add(
+                    wps('wpopt')->options->add(
                         $fileInfo->getPathname(),
                         'orphaned_media',
                         [
@@ -148,14 +148,14 @@ class ImagesProcessor
 
     public function do_pause($context): bool
     {
-        return shzn('wpopt')->options->get("status", $context, "media", '', false) === 'paused';
+        return wps('wpopt')->options->get("status", $context, "media", '', false) === 'paused';
     }
 
     public function scan_media()
     {
         global $wpdb;
 
-        $scannedID = shzn('wpopt')->options->get('last_scanned_postID', 'scan_media', 'media', 0);
+        $scannedID = wps('wpopt')->options->get('last_scanned_postID', 'scan_media', 'media', 0);
 
         $return = IPC_SUCCESS;
 
@@ -183,10 +183,10 @@ class ImagesProcessor
                 do_action('wpopt_delete_options_cache', $post_id);
             }
 
-            shzn('wpopt')->options->update('last_scanned_postID', 'scan_media', $scannedID, 'media');
+            wps('wpopt')->options->update('last_scanned_postID', 'scan_media', $scannedID, 'media');
         }
 
-        shzn('wpopt')->options->update('last_scanned_postID', 'scan_media', $scannedID, 'media');
+        wps('wpopt')->options->update('last_scanned_postID', 'scan_media', $scannedID, 'media');
 
         return $return;
     }
@@ -311,7 +311,7 @@ class ImagesProcessor
         }
 
         if ($save_processed) {
-            shzn('wpopt')->options->add($metadata['file'], 'optimized_images', $metadata['wpopt'], 'media');
+            wps('wpopt')->options->add($metadata['file'], 'optimized_images', $metadata['wpopt'], 'media');
         }
 
         unset($metadata['wpopt']);
@@ -326,7 +326,7 @@ class ImagesProcessor
 
     private function allow_optimization($image_path)
     {
-        if (shzn('wpopt')->options->get($image_path, 'optimized_images', 'media', null) !== null) {
+        if (wps('wpopt')->options->get($image_path, 'optimized_images', 'media', null) !== null) {
             return false;
         }
 
