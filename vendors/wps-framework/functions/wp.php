@@ -261,27 +261,56 @@ function wps_var_dump(...$vars): void
     echo '</br></br>';
 }
 
-function wps_debug_backtrace($level = 2): string
+function wps_debug_log($message, $level = 0): void
 {
-    $caller = debug_backtrace(DEBUG_BACKTRACE_PROVIDE_OBJECT, $level + 1);
-
-    if (isset($caller[$level])) {
-
-        $caller = $caller[$level];
-        $r = $caller['function'] . '()';
-        if (isset($caller['class'])) {
-            $r .= ' in ' . $caller['class'];
-        }
-        if (isset($caller['object'])) {
-            $r .= ' (' . get_class($caller['object']) . ')';
-        }
-
-        return $r;
+    if (!wps_utils()->debug) {
+        return;
     }
 
-    return var_export($caller, true);
+    //exclude this function with $level + 1
+    wps_log($message, 'debug.log', $level + 1);
 }
 
+function wps_debug_backtrace($level = 0, $full = false): string
+{
+    //exclude this function
+    $level++;
+
+    $trace = debug_backtrace(DEBUG_BACKTRACE_PROVIDE_OBJECT, $level + 1);
+
+    if (!isset($trace[$level])) {
+        return '';
+    }
+
+    $caller = $trace[$level];
+
+    $r = (isset($caller['class']) ? "{$caller['class']}{$caller['type']}" : '') . $caller['function'];
+
+    if ($full) {
+
+        $r .= "(" . wps_stringify_arguments($caller['args']) . ")";
+        $r .= " " . str_replace(UtilEnv::normalize_path(ABSPATH), '', UtilEnv::normalize_path($caller['file'])) . ":{$caller['line']}";
+    }
+
+    return $r;
+}
+
+function wps_stringify_arguments(...$args): string
+{
+    $argumentStrings = array_map(function ($arg) {
+        if (is_array($arg)) {
+            return 'array(...)';
+        }
+        elseif (is_object($arg)) {
+            return 'object';
+        }
+        else {
+            return "'$arg'";
+        }
+    }, ...$args);
+
+    return implode(', ', $argumentStrings);
+}
 
 function wps_timestr2seconds($time = '')
 {
@@ -289,25 +318,6 @@ function wps_timestr2seconds($time = '')
         return 0;
 
     return $matches[1] * HOUR_IN_SECONDS + $matches[2] * MINUTE_IN_SECONDS;
-}
-
-function wps_doing_it_wrong($function_name, $message, $debug = false)
-{
-    if ($debug) {
-        $trace = debug_backtrace();
-    }
-
-    $caller = isset($trace[2]) ? "Called by {$trace[2]['function']} in {$trace[2]['file']} {$trace[2]['line']} URL({$_SERVER['REQUEST_URI']})" : $_SERVER['REQUEST_URI'];
-
-    trigger_error(
-        sprintf(
-            'Function %1$s was called incorrectly. %2$s >> %3$s',
-            $function_name,
-            $message,
-            $caller
-        ),
-        E_USER_NOTICE
-    );
 }
 
 function wps_multi_mail($to, $subject, $message, $headers, $attachments)
@@ -335,6 +345,10 @@ function wps_string_mather($haystack, $needle, $regex)
     return str_starts_with($haystack, $needle);
 }
 
+/**
+ * if we want to remove also array actions like [object, method]
+ * action argument must be: object::method or ::method or object::
+ */
 function wps_remove_actions($hook, $action, $regex = false): int
 {
     global $wp_filter;
@@ -345,21 +359,37 @@ function wps_remove_actions($hook, $action, $regex = false): int
     if ($hook) {
 
         // Get callbacks for the hook
-        $filters = isset($wp_filter[$hook]) ? [$wp_filter[$hook]] : [];
+        $filters = isset($wp_filter[$hook]) ? [$hook => $wp_filter[$hook]] : [];
     }
     else {
         $filters = $wp_filter;
     }
 
-    foreach ($filters as $filter) {
+    $check_array = str_contains($action, '::');
+
+    foreach ($filters as $hook => $filter) {
+
         // Loop through each callback for the hook
-        foreach ($filter as $priority => $callbacks) {
+        foreach ($filter->callbacks as $priority => $callbacks) {
+
             // Loop through each callback function
             foreach ($callbacks as $callback) {
 
-                if (is_string($callback['function']) and wps_string_mather($callback['function'], $action, $regex)) {
+                if (is_string($callback['function'])) {
+                    $haystack = $callback['function'];
+                }
+                elseif ($check_array and is_array($callback['function'])) {
+                    $haystack = (is_object($callback['function'][0]) ? get_class($callback['function'][0]) : $callback['function'][0]) . '::' . $callback['function'][1];
+                }
+                else {
+                    //closures can't be handled
+                    $haystack = false;
+                }
+
+                if ($haystack and wps_string_mather($haystack, $action, $regex)) {
+
                     // Remove the callback from the hook
-                    remove_action('init', $callback['function'], $priority);
+                    remove_action($hook, $callback['function'], $priority);
                     $items++;
                 }
             }
@@ -369,42 +399,53 @@ function wps_remove_actions($hook, $action, $regex = false): int
     return $items;
 }
 
-function wps_log($_data, $file_name = 'wps-debug.log', $mode = FILE_APPEND): void
+function wps_user_has_role($role, $user): bool
 {
-    $trace = debug_backtrace(false);
-    $skip_frames = 1;
-    $caller = array();
+    $user = wps_get_user($user);
 
-    $truncate_paths = array(
-        UtilEnv::normalize_path(WP_CONTENT_DIR),
-        UtilEnv::normalize_path(ABSPATH),
-    );
+    $roles = ($user instanceof WP_User) ? $user->roles : [];
 
-    foreach ($trace as $call) {
-        if ($skip_frames > 0) {
-            $skip_frames--;
+    return !empty(array_intersect(array($role), $roles));
+}
+
+function wps_log($message, $file_name = 'wps-debug.log', $skip_frames = 1, $mode = FILE_APPEND): void
+{
+    $trace = debug_backtrace();
+    $callers = array();
+
+    //exclude this function
+    $skip_frames++;
+
+    foreach ($trace as $index => $caller) {
+
+        if ($skip_frames > $index) {
+            continue;
         }
-        elseif (isset($call['class'])) {
-            $caller[] = "{$call['class']}{$call['type']}{$call['function']}";
+        elseif (isset($caller['class'])) {
+            $callers[] = "{$caller['class']}{$caller['type']}{$caller['function']}(" . wps_stringify_arguments($caller['args']) . ")";
         }
         else {
-            if (in_array($call['function'], array('do_action', 'apply_filters', 'do_action_ref_array', 'apply_filters_ref_array'), true)) {
-                $caller[] = "{$call['function']}('{$call['args'][0]}')";
+            if (in_array($caller['function'], array('do_action', 'apply_filters', 'do_action_ref_array', 'apply_filters_ref_array'), true)) {
+                $callers[] = "{$caller['function']}('{$caller['args'][0]}')";
             }
-            elseif (in_array($call['function'], array('include', 'include_once', 'require', 'require_once'), true)) {
-                $filename = $call['args'][0] ?? '';
-                $caller[] = $call['function'] . "('" . str_replace($truncate_paths, '', UtilEnv::normalize_path($filename)) . "')";
+            elseif (in_array($caller['function'], array('include', 'include_once', 'require', 'require_once'), true)) {
+                $filename = $caller['args'][0] ?? '';
+                $callers[] = $caller['function'] . "('" . str_replace(UtilEnv::normalize_path(ABSPATH), '', UtilEnv::normalize_path($filename)) . "')";
             }
             else {
-                $caller[] = $call['function'];
+                $callers[] = "{$caller['function']}(" . wps_stringify_arguments($caller['args']) . ")";
             }
         }
     }
 
-    $data = '======================================================================================================' . PHP_EOL;
-    $data .= wps_time("Y-m-d H:i:s") . PHP_EOL;
-    $data .= print_r($_data, true) . PHP_EOL;
-    $data .= join(', ', array_reverse($caller)) . PHP_EOL;
+    $data = '[' . wps_time("d-M-Y H:i:s") . ']' . PHP_EOL . print_r($message, true) . PHP_EOL;
+
+    foreach ($callers as $index => $caller) {
+        $data .= "#$index $caller" . PHP_EOL;
+    }
+
+    $data .= "#URL " . $_SERVER['REQUEST_URI'] . PHP_EOL;
+    $data .= "#FILE " . str_replace(UtilEnv::normalize_path(ABSPATH), '', UtilEnv::normalize_path($trace[$skip_frames]['file'])) . ":{$trace[$skip_frames]['line']}" . PHP_EOL;
 
     file_put_contents(WP_CONTENT_DIR . DIRECTORY_SEPARATOR . $file_name, $data, $mode);
 }

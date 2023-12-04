@@ -10,6 +10,7 @@ namespace WPS\core;
 class Utility
 {
     private static Utility $_Instance;
+    private static int $_UID = 0;
 
     public bool $online;
 
@@ -64,5 +65,10 @@ class Utility
         }
 
         return self::$_Instance;
+    }
+
+    public function uid(): int
+    {
+        return self::$_UID++;
     }
 }

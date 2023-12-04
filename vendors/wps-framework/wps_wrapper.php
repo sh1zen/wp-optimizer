@@ -102,7 +102,6 @@ class wps_wrapper
 
     public function __get($name)
     {
-        $fn = wps_debug_backtrace(2);
-        trigger_error("WPS Framework >> object $name not defined in $fn.", E_USER_WARNING);
+        wps_debug_log("WPS Framework >> object $name not defined");
     }
 }

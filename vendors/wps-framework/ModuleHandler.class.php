@@ -212,6 +212,12 @@ class ModuleHandler
      */
     public function module_has_scope($module, $scope, $compare = 'AND'): bool
     {
+        $cache_Key = maybe_serialize($module) . maybe_serialize($scope) . $compare;
+
+        if (!is_null($found = wps($this->context)->cache->get($cache_Key, 'module_has_scope', null))) {
+            return $found;
+        }
+
         if (is_null($module) or empty($scope)) {
             return false;
         }
@@ -226,7 +232,11 @@ class ModuleHandler
 
         $found = array_intersect($scope, get_class_vars($class)['scopes']);
 
-        return ($compare === 'AND') ? (count($found) === count($scope)) : !empty($found);
+        $res = ($compare === 'AND') ? (count($found) === count($scope)) : !empty($found);
+
+        wps($this->context)->cache->set($cache_Key, $res, 'module_has_scope', true, DAY_IN_SECONDS);
+
+        return $res;
     }
 
     /**

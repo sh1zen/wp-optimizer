@@ -9,7 +9,6 @@ namespace WPOptimizer\modules;
 
 use WPS\core\RequestActions;
 use WPS\core\CronActions;
-use WPS\core\Graphic;
 use WPS\modules\Module;
 
 use WPOptimizer\modules\supporters\DBCache;
@@ -97,14 +96,14 @@ class Mod_Cache extends Module
 
     public function actions(): void
     {
-        CronActions::schedule($this->hash, HOUR_IN_SECONDS * 4, function () {
+        CronActions::schedule("WPOPT-ClearCache", HOUR_IN_SECONDS * 4, function () {
 
             /**
              * check old files every 4 Hours to prevent cache space explosion,
              * especially with static-cache
              */
             $this->flush_cache(true);
-        });
+        }, '06:00');
 
         RequestActions::request($this->action_hook, function ($action) {
 

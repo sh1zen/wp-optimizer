@@ -47,12 +47,12 @@ class Module
     /**
      * Module name without prefix Mod_
      */
-    public $slug;
+    public string $slug;
 
     /**
      * Current module unique identifier
      */
-    protected string $hash;
+    protected string $module_id;
 
     protected string $context = '';
 
@@ -82,7 +82,7 @@ class Module
             return;
         }
 
-        $this->hash = md5($this->context . $this->slug);
+        $this->module_id = wps_utils()->uid();
 
         $this->settings = wps($this->context)->settings->get($this->slug);
 
@@ -146,7 +146,7 @@ class Module
      * @param $status -> wrong, success, error, info
      * @param $message
      */
-    protected function add_notices($status, $message)
+    protected function add_notices($status, $message): void
     {
         $this->notices[] = array('status' => $status, 'message' => $message);
     }
@@ -321,7 +321,7 @@ class Module
         return false;
     }
 
-    private function render_disabled()
+    private function render_disabled(): void
     {
         ?>
         <block><h2><?php _e('This Module is disabled for you or for your settings.', $this->context); ?></h2></block>
@@ -461,37 +461,9 @@ class Module
 
     protected function setting_field($name, $id = false, $type = 'text', $args = []): array
     {
-        $args = array_merge([
-            'value'         => null,
-            'default_value' => '',
-            'allow_empty'   => true,
-            'parent'        => false,
-            'depend'        => false,
-            'placeholder'   => '',
-            'list'          => ''
-        ], $args);
+        $args['default_value'] = $this->option($id, $args['default_value'] ?? '');
 
-        if ($id or $type === 'link') {
-            $value = is_null($args['value']) ? $this->option($id, $args['default_value']) : $args['value'];
-        }
-        else {
-            $value = '';
-        }
-
-        if (empty($value) and !$args['allow_empty']) {
-            $value = $args['default_value'];
-        }
-
-        return [
-            'type'        => $type,
-            'name'        => $name,
-            'id'          => $id,
-            'value'       => $value,
-            'parent'      => $args['parent'],
-            'depend'      => $args['depend'],
-            'placeholder' => $args['placeholder'],
-            'list'        => $args['list']
-        ];
+        return Graphic::newField($name, $id, $type, $args);
     }
 
     public function option($path_name = '', $default = false)

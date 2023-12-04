@@ -148,18 +148,9 @@ class Storage
             return false;
         }
 
-        $data = file_get_contents($path);
+        $data = unserialize(file_get_contents($path) ?: '');
 
-        if (!$data) {
-            return false;
-        }
-
-        if (!($data = unserialize($data))) {
-            @unlink($path);
-            return false;
-        }
-
-        if (boolval($data['expire']) and $data['expire'] < time()) {
+        if (empty($data) or ($data['expire'] and $data['expire'] < time())) {
             @unlink($path);
             return false;
         }
@@ -185,10 +176,8 @@ class Storage
             return false;
         }
 
-        // todo check
-        if ($expire < YEAR_IN_SECONDS) {
-            $expire += time();
-        }
+        // convert duration time into timestamp from now
+        $expire += time();
 
         $args = array(
             'expire' => $expire,
@@ -217,7 +206,7 @@ class Storage
         return true;
     }
 
-    public function get_size($contexts = '', $blog_id = 0)
+    public function get_size($contexts = '', $blog_id = 0): string
     {
         $size = 0;
         foreach ((array)$contexts as $context) {
@@ -233,7 +222,12 @@ class Storage
             $size += Disk::calc_size($path);
         }
 
-        return size_format($size);
+        return (string)size_format($size);
+    }
+
+    public function status(): bool
+    {
+        return $this->active and is_writeable($this->generate_path(''));
     }
 }
 

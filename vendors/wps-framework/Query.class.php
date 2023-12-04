@@ -331,6 +331,8 @@ class Query
      * ['key' => '', 'value' => '', 'compare' => ''],
      * ['key' => 'value', 'compare' => ''],
      * ['key' => 'value']
+     *
+     * (column => [table2 => column], table1)
      */
     public function parse_fields($fields, $escape = true, $prefix = '', $unquoted = false): array
     {
@@ -349,6 +351,8 @@ class Query
                 continue;
             }
 
+            $iter_unquoted = $unquoted;
+
             $compare = $field['compare'] ?? false;
             $key = $maybe_table;
 
@@ -360,18 +364,26 @@ class Query
                     continue;
                 }
 
-                unset($field['compare']);
+                if ($prx = $this->get_table_alias(key($field))) {
 
-                if (isset($field['key'], $field['value'])) {
-                    $key = $field['key'];
-                    $field = $field['value'];
+                    // handles ([column => [table2 => column]], table1, ...)
+                    $field = "$prx." . $field[key($field)];
+                    $iter_unquoted = true;
                 }
-                elseif (is_numeric($key)) {
-                    // handles 1 => [key => value, 'compare'? => '=']
-                    $key = key($field);
-                    $field = $field[$key];
+                else {
+                    unset($field['compare']);
+
+                    if (isset($field['key'], $field['value'])) {
+                        $key = $field['key'];
+                        $field = $field['value'];
+                    }
+                    elseif (is_numeric($key)) {
+                        // handles 1 => [key => value, 'compare'? => '=']
+                        $key = key($field);
+                        $field = $field[$key];
+                    }
+                    // handles one level array [key => value]
                 }
-                // handles one level array [key => value]
             }
 
             if (!$compare) {
@@ -413,7 +425,7 @@ class Query
                     $field = $compare === 'LIKE' ? "%" . trim($field, "' %") . "%" : $field;
                 }
 
-                if (!$unquoted) {
+                if (!$iter_unquoted) {
                     $field = "'$field'";
                 }
             }
@@ -472,9 +484,14 @@ class Query
                 }
             }
 
-            $as_table = $reference_ALL ?: (is_numeric($reference) ? "T$reference" : $this->get_table_alias($reference));
-
             $field = trim($field);
+
+            if ($field != '*') {
+                $as_table = $reference_ALL ?: (is_numeric($reference) ? "T$reference" : $this->get_table_alias($reference));
+            }
+            else {
+                $as_table = '';
+            }
 
             preg_match("#^(([^(]+)\((.+)\)([^()]+)?|^(^\S+)\s+(.*))(\s+AS\s+(\w+))?$#iU", $field, $matches);
 
@@ -586,7 +603,7 @@ class Query
 
     public function limit($limit): Query
     {
-        if (is_numeric($limit) and $limit != 0) {
+        if (is_numeric($limit)) {
             $this->limit = absint($limit);
         }
 
@@ -595,7 +612,7 @@ class Query
 
     public function offset($offset): Query
     {
-        if (is_numeric($offset) and $offset != 0) {
+        if (is_numeric($offset)) {
             $this->offset = absint($offset);
         }
 

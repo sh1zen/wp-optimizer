@@ -4,7 +4,7 @@ msgstr ""
 "Project-Id-Version: wpopt-translation\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/wp-"
 "optimizer/\n"
-"POT-Creation-Date: 2023-11-28 15:30+0100\n"
+"POT-Creation-Date: 2023-12-03 13:08+0100\n"
 "PO-Revision-Date: 2020-05-13 02:34+0200\n"
 "Last-Translator: sh1zen\n"
 "Language-Team: sh1zen\n"
@@ -325,83 +325,83 @@ msgstr ""
 msgid "Errors:"
 msgstr ""
 
-#: modules/activitylog.class.php:99
+#: modules/activitylog.class.php:98
 msgid "Reset Log"
 msgstr ""
 
-#: modules/activitylog.class.php:264
+#: modules/activitylog.class.php:263
 msgid "All activities have been successfully deleted."
 msgstr ""
 
-#: modules/activitylog.class.php:453
+#: modules/activitylog.class.php:452
 msgid "Log IP addresses"
 msgstr ""
 
-#: modules/activitylog.class.php:454
+#: modules/activitylog.class.php:453
 msgid "Log User Agent"
 msgstr ""
 
-#: modules/activitylog.class.php:455
+#: modules/activitylog.class.php:454
 msgid "Log REQUEST arguments"
 msgstr ""
 
-#: modules/activitylog.class.php:460
+#: modules/activitylog.class.php:459
 msgid "Auto clear logs"
 msgstr ""
 
-#: modules/activitylog.class.php:461
+#: modules/activitylog.class.php:460
 msgid "Keeps log for (days)"
 msgstr ""
 
-#: modules/activitylog.class.php:465
+#: modules/activitylog.class.php:464
 msgid "User activity log (login, registration, deletion)"
 msgstr ""
 
-#: modules/activitylog.class.php:466
+#: modules/activitylog.class.php:465
 msgid "Posts activity log"
 msgstr ""
 
-#: modules/activitylog.class.php:467
+#: modules/activitylog.class.php:466
 msgid "Terms activity log"
 msgstr ""
 
-#: modules/activitylog.class.php:468
+#: modules/activitylog.class.php:467
 msgid "Attachments activity log"
 msgstr ""
 
-#: modules/activitylog.class.php:473
+#: modules/activitylog.class.php:472
 msgid "Options update log"
 msgstr ""
 
-#: modules/activitylog.class.php:474
+#: modules/activitylog.class.php:473
 msgid "Plugin upgrades/installs log"
 msgstr ""
 
-#: modules/activitylog.class.php:478
+#: modules/activitylog.class.php:477
 msgid "404 log"
 msgstr ""
 
-#: modules/activitylog.class.php:479
+#: modules/activitylog.class.php:478
 msgid "Bad query (maybe info gathering) activity log"
 msgstr ""
 
-#: modules/activitylog.class.php:480
+#: modules/activitylog.class.php:479
 msgid "Try to match xss attempts"
 msgstr ""
 
-#: modules/activitylog.class.php:481
+#: modules/activitylog.class.php:480
 msgid "Try to match sql injections attempts"
 msgstr ""
 
-#: modules/activitylog.class.php:482
+#: modules/activitylog.class.php:481
 msgid "Try to match access to inconsistent data"
 msgstr ""
 
-#: modules/activitylog.class.php:483
+#: modules/activitylog.class.php:482
 msgid "Custom rules (one per line)"
 msgstr ""
 
-#: modules/activitylog.class.php:491
+#: modules/activitylog.class.php:490
 msgid ""
 "Provide a list of custom regexes that you want to use to monitor bad "
 "url."

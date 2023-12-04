@@ -9,7 +9,7 @@ namespace WPS\core;
 
 class StringHelper
 {
-    const REPLACER_HASH = 'e8c6d78284cffb10afdfeea37929bd75';
+    private static string $REPLACER_HASH = 'e8c6d78284cffb10afdfeea37929bd75';
 
     /**
      * Internal helper function to escape a string before usage
@@ -203,7 +203,7 @@ class StringHelper
     public static function build_marker(string $name, string $data, string $hash = null): string
     {
         // Start the marker, add the data.
-        $marker = '%%' . $name . self::REPLACER_HASH . '%%' . base64_encode($data);
+        $marker = '%%' . $name . self::$REPLACER_HASH . '%%' . base64_encode($data);
 
         // Add the hash if provided.
         if (null !== $hash) {
@@ -226,7 +226,7 @@ class StringHelper
     {
         if (str_contains($content, $marker)) {
             $content = preg_replace_callback(
-                '#%%' . $marker . self::REPLACER_HASH . '%%(.*?)%%' . $marker . '%%#is',
+                '#%%' . $marker . self::$REPLACER_HASH . '%%(.*?)%%' . $marker . '%%#is',
                 function ($matches) {
                     return base64_decode($matches[1]);
                 },

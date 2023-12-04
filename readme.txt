@@ -196,6 +196,7 @@ work! Otherwise, go to the new added module "Setting" and try a reset.
 * improved media scan
 * improved core performances
 * improved Gutenberg disable
+* improved ActivityLog
 * extended support for WordPress 6.4
 
 = 2.1.5 =

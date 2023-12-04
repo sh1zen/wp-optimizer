@@ -13,31 +13,30 @@ namespace WPS\core;
  */
 class PerformanceMeter
 {
-    private array $laps = array();
-    private int $lap_n = 0;
+    private array $laps = [];
 
-    private $previuos = 0;
+    private array $cc_times = [];
+
+    private string $previous = 'start';
 
     public function __construct($data = null)
     {
         $this->reset($data);
     }
 
-    public function reset($data = null)
+    public function reset($data = null): void
     {
-        $this->lap_n = 0;
         $this->laps = array();
-        $this->previuos = 0;
+        $this->previous = 'start';
         $this->laps['start'] = $this->collect($data);
     }
 
     private function collect($data = null): array
     {
         if (is_null($data)) {
-            $data = $this->get_calling_function(3);
+            $data = wps_debug_backtrace(2, false);
         }
 
-        $this->lap_n++;
         return array(
             'time'   => microtime(true),
             'memory' => memory_get_usage(),
@@ -45,29 +44,11 @@ class PerformanceMeter
         );
     }
 
-    private function get_calling_function($level = 2)
-    {
-        $caller = debug_backtrace();
-        $caller = $caller[$level];
-        $r = $caller['function'] . '()';
-        if (isset($caller['class'])) {
-            $r .= ' in ' . $caller['class'];
-        }
-        if (isset($caller['object'])) {
-            $r .= ' (' . get_class($caller['object']) . ')';
-        }
-        return $r;
-    }
-
-    public function lap($name = null, $data = null)
+    public function lap(string $name, $data = null)
     {
         $lap = $this->collect($data);
 
-        if (empty($name)) {
-            $name = $this->lap_n;
-        }
-
-        $this->previuos = $name;
+        $this->previous = $name;
 
         $this->laps[$name] = $lap;
     }
@@ -126,15 +107,19 @@ class PerformanceMeter
 
     public function get_lap($name = 'start', $property = false)
     {
-        if ($name === 'last')
+        if ($name === 'last') {
             $lap = end($this->laps);
-        elseif ($name === 'previous')
-            $lap = $this->laps[$this->previuos] ?? end($this->laps);
-        else
+        }
+        elseif ($name === 'previous') {
+            $lap = $this->laps[$this->previous] ?? end($this->laps);
+        }
+        else {
             $lap = $this->laps[$name] ?? $this->laps['start'];
+        }
 
-        if ($property)
+        if ($property) {
             return $lap[$property];
+        }
 
         return $lap;
     }
@@ -157,5 +142,27 @@ class PerformanceMeter
     public function print_time($first = 'start', $last = 'last', $format = false): void
     {
         print_r($this->get_time($first, $last, $format));
+    }
+
+    public function incremental_time(string $name, $format = false)
+    {
+        if (!$this->lap_exist($name)) {
+            return 0;
+        }
+
+        $time = $this->cc_times[$name] = ($this->cc_times[$name] ?? 0) + $this->get_time($name, 'now');
+
+        if ($format) {
+            $time = number_format($time, absint($format));
+        }
+
+        //unset($this->laps[$name]);
+
+        return $time;
+    }
+
+    public function lap_exist(string $name): bool
+    {
+        return isset($this->laps[$name]);
     }
 }

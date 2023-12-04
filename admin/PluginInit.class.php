@@ -66,7 +66,7 @@ class PluginInit
             return;
         }
 
-        load_textdomain('wpopt', UtilEnv::normalize_path(WPOPT_ABSPATH . 'languages/') . $mo_file);
+        load_textdomain('wpopt', UtilEnv::normalize_path(WPOPT_ABSPATH . 'languages/', true) . $mo_file);
     }
 
     private function maybe_upgrade()

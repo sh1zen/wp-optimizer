@@ -214,7 +214,7 @@ class Disk
                 }
 
                 if ($lifetime) {
-                    if (filemtime($file_path) < $time - $lifetime) {
+                    if (@filemtime($file_path) < $time - $lifetime) {
                         @unlink($file_path);
                         $deleted++;
                     }

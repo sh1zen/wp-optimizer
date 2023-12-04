@@ -281,7 +281,7 @@ class PagesHandler
                     <h2><?php _e('WordPress performances:', 'wpopt'); ?></h2>
                     <p>
                         <?php
-                        echo '<div>' . sprintf(__('Server load: %s %%', 'wpopt'), UtilEnv::get_server_load()) . '</div><br>';
+                        echo '<div>' . sprintf(__('Server load: %s %%', 'wpopt'), UtilEnv::get_server_load(false)) . '</div><br>';
                         echo '<div>' . sprintf(__('WordPress used memory: %s', 'wpopt'), wps_utils()->meter->get_memory(true, true)) . '</div><br>';
                         echo '<div>' . sprintf(__('Wordpress execution time: %s s', 'wpopt'), wps_utils()->meter->get_time('wp_start', 'now', 3)) . '</div><br>';
                         ?>
