@@ -1,7 +1,7 @@
 <?php
 /**
  * @author    sh1zen
- * @copyright Copyright (C) 2023.
+ * @copyright Copyright (C) 2024.
  * @license   http://www.gnu.org/licenses/gpl.html GNU/GPL
  */
 
@@ -766,7 +766,7 @@ class UtilEnv
 
         // Also honor PageSpeed=off parameter as used by mod_pagespeed, in use by some pagebuilders,
         // see https://www.modpagespeed.com/doc/experiment#ModPagespeed for info on that.
-        if (false === $noOptimize and \array_key_exists('PageSpeed', $_GET) and 'off' === $_GET['PageSpeed']) {
+        if (false === $noOptimize and isset($_GET['PageSpeed']) and 'off' === $_GET['PageSpeed']) {
             $noOptimize = true;
         }
 
@@ -843,5 +843,58 @@ class UtilEnv
     public static function is_https(): bool
     {
         return isset($_SERVER['HTTPS']) and self::to_boolean($_SERVER['HTTPS']) or (isset($_SERVER['SERVER_PORT']) and (int)$_SERVER['SERVER_PORT'] == 443) or (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) and $_SERVER['HTTP_X_FORWARDED_PROTO'] == 'https');
+    }
+
+    public static function normalize_url(string $url): string
+    {
+        // Parse the URL into its components
+        $urlComponents = parse_url($url);
+
+        // Make sure the scheme and host are in lowercase
+        $urlComponents['scheme'] = strtolower($urlComponents['scheme']);
+        $urlComponents['host'] = strtolower($urlComponents['host']);
+
+        // Remove default ports (e.g., :80 for HTTP, :443 for HTTPS)
+        if (isset($urlComponents['port'])) {
+            $defaultPorts = [
+                'http' => 80,
+                'https' => 443,
+                // Add other default ports if necessary
+            ];
+
+            if (isset($defaultPorts[$urlComponents['scheme']]) && $urlComponents['port'] == $defaultPorts[$urlComponents['scheme']]) {
+                unset($urlComponents['port']);
+            }
+        }
+
+        // Remove consecutive double slashes in the path
+        if (isset($urlComponents['path'])) {
+            $urlComponents['path'] = preg_replace('#/+#', '/', $urlComponents['path']);
+        }
+
+        // Reassemble the normalized URL
+        $normalizedUrl = $urlComponents['scheme'] . '://';
+        if (isset($urlComponents['user'])) {
+            $normalizedUrl .= $urlComponents['user'];
+            if (isset($urlComponents['pass'])) {
+                $normalizedUrl .= ':' . $urlComponents['pass'];
+            }
+            $normalizedUrl .= '@';
+        }
+        $normalizedUrl .= $urlComponents['host'];
+        if (isset($urlComponents['port'])) {
+            $normalizedUrl .= ':' . $urlComponents['port'];
+        }
+        if (isset($urlComponents['path'])) {
+            $normalizedUrl .= $urlComponents['path'];
+        }
+        if (isset($urlComponents['query'])) {
+            $normalizedUrl .= '?' . $urlComponents['query'];
+        }
+        if (isset($urlComponents['fragment'])) {
+            $normalizedUrl .= '#' . $urlComponents['fragment'];
+        }
+
+        return $normalizedUrl;
     }
 }

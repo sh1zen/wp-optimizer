@@ -1,7 +1,7 @@
 <?php
 /**
  * @author    sh1zen
- * @copyright Copyright (C) 2023.
+ * @copyright Copyright (C) 2024.
  * @license   http://www.gnu.org/licenses/gpl.html GNU/GPL
  */
 
@@ -91,15 +91,15 @@ class PerformanceMeter
         die();
     }
 
-    public function get_time($first = 'start', $last = 'last', $format = false)
+    public function get_time($first = 'start', $last = 'last', $precision = false)
     {
         $start_lap = $first === 'wp_start' ? WP_START_TIMESTAMP : $this->get_lap($first, 'time');
         $end_lap = $last === 'now' ? microtime(true) : $this->get_lap($last, 'time');
 
         $time = $end_lap - $start_lap;
 
-        if ($format) {
-            $time = number_format($time, absint($format));
+        if ($precision) {
+            $time = number_format($time, absint($precision));
         }
 
         return $time;

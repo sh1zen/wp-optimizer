@@ -1,7 +1,7 @@
 <?php
 /**
  * @author    sh1zen
- * @copyright Copyright (C) 2023.
+ * @copyright Copyright (C) 2024.
  * @license   http://www.gnu.org/licenses/gpl.html GNU/GPL
  */
 
@@ -170,7 +170,7 @@ class Mod_ActivityLog extends Module
                 'action'     => $action,
                 'context'    => $subject,
                 'value'      => '',
-                'user_id'    => wps_utils()->cu_id,
+                'user_id'    => wps_utils()->get_cuID(),
                 'object_id'  => false,
                 'ip'         => $this->option('log.ip') ? $this->get_ip() : '',
                 'user_agent' => $this->option('log.user_agent') ? $_SERVER['HTTP_USER_AGENT'] : '',

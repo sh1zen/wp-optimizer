@@ -1,7 +1,7 @@
 <?php
 /**
  * @author    sh1zen
- * @copyright Copyright (C) 2023.
+ * @copyright Copyright (C) 2024.
  * @license   http://www.gnu.org/licenses/gpl.html GNU/GPL
  */
 
@@ -102,7 +102,7 @@ class Mod_WP_Customizer extends Module
             }, 100);
 
             remove_filter('the_content', 'do_blocks', 9);
-            remove_filter( 'widget_block_content', 'do_blocks', 9 );
+            remove_filter('widget_block_content', 'do_blocks', 9);
 
             add_filter('use_widgets_block_editor', '__return_false');
         }
@@ -321,15 +321,10 @@ class Mod_WP_Customizer extends Module
             remove_action('wp_head', 'rest_output_link_wp_head', 10);
             remove_action('wp_head', 'wp_oembed_add_discovery_links', 10);
 
-            // Filters for WP-API version 1.x
-            add_filter('json_enabled', '__return_false');
-            add_filter('json_jsonp_enabled', '__return_false');
-
-            // Filters for WP-API version 2.x
-            add_filter('rest_enabled', '__return_false');
-            add_filter('rest_jsonp_enabled', '__return_false');
-
-            // Remove the REST API endpoint.
+            //  remove_action('init', 'rest_api_init');
+            remove_action('rest_api_init', 'rest_api_default_filters', 10);
+            remove_action('rest_api_init', 'register_initial_settings', 10);
+            remove_action('rest_api_init', 'create_initial_rest_routes', 99);
             remove_action('rest_api_init', 'wp_oembed_register_route');
 
             // Turn off oEmbed auto discovery.

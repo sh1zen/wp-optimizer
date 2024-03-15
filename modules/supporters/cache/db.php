@@ -1,13 +1,11 @@
 <?php
 /**
  * @author    sh1zen
- * @copyright Copyright (C) 2023.
+ * @copyright Copyright (C) 2024.
  * @license   http://www.gnu.org/licenses/gpl.html GNU/GPL
  */
 
 use WPS\core\Cache;
-
-define('WPOPT_DB_ABSPATH', dirname(__FILE__, 4) . '/');
 
 if (file_exists(ABSPATH . WPINC . '/class-wpdb.php')) {
     require_once ABSPATH . WPINC . '/class-wpdb.php';
@@ -16,32 +14,12 @@ else {
     require_once ABSPATH . WPINC . '/wp-db.php';
 }
 
-require_once WPOPT_DB_ABSPATH . 'inc/constants.php';
+require_once dirname(__FILE__, 4) . '/inc/constants.php';
 
 // no caching during activation or if is admin
 if (!((defined('WP_INSTALLING') and WP_INSTALLING) or is_admin())) {
     $GLOBALS['wpdb'] = new WPOPT_DB(DB_USER, DB_PASSWORD, DB_NAME, DB_HOST);
 }
-
-// wps-framework commons
-if (!defined('WPS_FRAMEWORK')) {
-
-    if (file_exists(WPOPT_DB_ABSPATH . 'vendors/wps-framework/loader.php')) {
-        require_once WPOPT_DB_ABSPATH . 'vendors/wps-framework/loader.php';
-    }
-    else {
-        require_once dirname(__FILE__, 5) . '/flexy-seo/vendors/wps-framework/loader.php';
-    }
-}
-
-wps(
-    'wpopt',
-    null,
-    [
-        'cache'   => true,
-        'storage' => true,
-    ]
-);
 
 class WPOPT_DB extends wpdb
 {
@@ -87,7 +65,7 @@ class WPOPT_DB extends wpdb
             $disabled = is_admin() or wp_doing_cron() or wp_doing_ajax();
         }
 
-        return $disabled or !$query or (!WPOPT_CACHE_DB_OPTIONS and str_contains($query, $this->options));
+        return $disabled or !defined('WPOPT_ABSPATH') or !$query or (!WPOPT_CACHE_DB_OPTIONS and str_contains($query, $this->options));
     }
 
     private function generate_key($query, ...$args): string

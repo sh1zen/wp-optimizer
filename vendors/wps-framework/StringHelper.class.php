@@ -1,7 +1,7 @@
 <?php
 /**
  * @author    sh1zen
- * @copyright Copyright (C) 2023.
+ * @copyright Copyright (C) 2024.
  * @license   http://www.gnu.org/licenses/gpl.html GNU/GPL
  */
 
@@ -473,6 +473,23 @@ class StringHelper
     }
 
     /**
+     * Truncates a given string.
+     */
+    public static function truncateWords($string, int $numWords, $ellipsis = ''): string
+    {
+        $words = str_word_count($string, 2); // Get an array of words
+
+        if (count($words) <= $numWords) {
+            return $string;
+        }
+
+        $truncatedWords = array_slice($words, 0, $numWords);
+        $truncatedText = implode(' ', $truncatedWords);
+
+        return $truncatedText. $ellipsis;
+     }
+
+    /**
      * Check if a string is JSON encoded or not.
      */
     public static function isJson(string $string): bool
@@ -506,7 +523,7 @@ class StringHelper
 
     private static function pre_kses_less_than_callback($matches)
     {
-        if (false === strpos($matches[0], '>')) {
+        if (!str_contains($matches[0], '>')) {
             return htmlspecialchars($matches[0], ENT_QUOTES, self::get_charset());
         }
         return $matches[0];

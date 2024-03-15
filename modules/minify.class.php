@@ -1,7 +1,7 @@
 <?php
 /**
  * @author    sh1zen
- * @copyright Copyright (C) 2023.
+ * @copyright Copyright (C) 2024.
  * @license   http://www.gnu.org/licenses/gpl.html GNU/GPL
  */
 
@@ -113,12 +113,8 @@ class Mod_Minify extends Module
 
     /**
      * Returns true if given markup is considered valid/processable/optimizable.
-     *
-     * @param string $content Markup.
-     *
-     * @return bool
      */
-    private function is_valid_buffer($content)
+    private function is_valid_buffer($content): bool
     {
         // Defaults to true.
         $valid = true;
@@ -189,7 +185,7 @@ class Mod_Minify extends Module
         return false;
     }
 
-    protected function init(): void
+    public function init(): void
     {
         require_once WPOPT_SUPPORTERS . '/minifier/Minify.class.php';
         require_once WPOPT_SUPPORTERS . '/minifier/Minify_HTML.class.php';

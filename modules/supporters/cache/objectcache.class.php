@@ -1,7 +1,7 @@
 <?php
 /**
  * @author    sh1zen
- * @copyright Copyright (C) 2023.
+ * @copyright Copyright (C) 2024.
  * @license   http://www.gnu.org/licenses/gpl.html GNU/GPL
  */
 
@@ -20,7 +20,7 @@ class ObjectCache extends Cache_Dispatcher
         );
     }
 
-    public static function deactivate()
+    public static function deactivate(): void
     {
         wp_cache_flush();
         wp_cache_close();
@@ -28,14 +28,14 @@ class ObjectCache extends Cache_Dispatcher
         Disk::delete(WP_CONTENT_DIR . DIRECTORY_SEPARATOR . "object-cache.php");
     }
 
-    public static function flush($lifetime = false, $context = '')
+    public static function flush($lifetime = false, $blog_id = ''): void
     {
         if ($lifetime) {
             return;
         }
 
-        if ($context) {
-            wp_cache_flush_group($context);
+        if ($blog_id) {
+            wp_cache_flush_group($blog_id);
         }
 
         wp_cache_flush();

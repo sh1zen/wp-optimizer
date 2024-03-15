@@ -1,7 +1,7 @@
 <?php
 /**
  * @author    sh1zen
- * @copyright Copyright (C) 2023.
+ * @copyright Copyright (C) 2024.
  * @license   http://www.gnu.org/licenses/gpl.html GNU/GPL
  */
 
@@ -510,7 +510,7 @@ class DBSupport
     public static function getInstance(): DBSupport
     {
         if (!isset(self::$_Instance)) {
-            self::$_Instance = new self();
+            self::$_Instance = new static();
         }
 
         return self::$_Instance;

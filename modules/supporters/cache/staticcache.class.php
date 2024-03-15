@@ -1,7 +1,7 @@
 <?php
 /**
  * @author    sh1zen
- * @copyright Copyright (C) 2023.
+ * @copyright Copyright (C) 2024.
  * @license   http://www.gnu.org/licenses/gpl.html GNU/GPL
  */
 
@@ -12,6 +12,14 @@ use WPS\core\Settings;
 
 class StaticCache extends Cache_Dispatcher
 {
+    // fix child invoking
+    protected static ?Cache_Dispatcher $_Instance;
+
+    protected static function get_cache_group(): string
+    {
+        return "cache/static";
+    }
+
     public function cache_handler(\WP_Query $wp_query)
     {
         if (!$wp_query->is_main_query()) {

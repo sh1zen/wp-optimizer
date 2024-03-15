@@ -1,7 +1,7 @@
 <?php
 /**
  * @author    sh1zen
- * @copyright Copyright (C) 2023.
+ * @copyright Copyright (C) 2024.
  * @license   http://www.gnu.org/licenses/gpl.html GNU/GPL
  */
 
@@ -28,22 +28,15 @@ class Mod_Media extends Module
 
     protected string $context = 'wpopt';
 
-    public function lazy_maker($buffer)
+    public function media_lazyload_maker($buffer)
     {
         if (!UtilEnv::is_safe_buffering()) {
             return $buffer;
         }
 
-        $buffer = StringHelper::inject_in_html(
-            $buffer,
-            '<script>jQuery(document).ready(function(){jQuery("img[data-src]").lazy({chainable:!1,threshold:100,visibleOnly:!0,defaultImage:"",scrollDirection:"vertical"})});</script>',
-            array('</body>', 'before')
-        );
-
-        $loadingGIF = UtilEnv::path_to_url(__DIR__) . 'supporters/media/loading.gif';
         return preg_replace(
-            "/<img(?! (data-img-src|data-orig))([^']*?) src=\"([^']*?)\"([^']*?)>/",
-            "<img$2$1 data-src='$3' src='{$loadingGIF}' $4 loading='lazy'>",
+            "#<img(?!.*?\bloading\b)([^']*?) src=['\"]([^'\"]*?)['\"]([^>]*?)>#",
+            "<img$1 src='$2' loading='lazy'$3>",
             $buffer
         );
     }
@@ -412,10 +405,8 @@ class Mod_Media extends Module
         }
     }
 
-    protected function init(): void
+    public function init(): void
     {
-        $this->path = __DIR__;
-
         if (is_admin() or wp_doing_cron()) {
 
             require_once WPOPT_SUPPORTERS . '/media/ImagesProcessor.class.php';
@@ -423,13 +414,7 @@ class Mod_Media extends Module
 
         if ($this->option('loading_lazy', false)) {
 
-            wp_register_script('wpopt-lazy-loading', UtilEnv::path_to_url(__DIR__) . 'supporters/media/jquery.lazy.min.js', ['jquery'], false);
-
-            add_action('wp_enqueue_scripts', function () {
-                wp_enqueue_script('wpopt-lazy-loading');
-            });
-
-            ob_start([$this, "lazy_maker"]);
+            ob_start([$this, "media_lazyload_maker"]);
         }
     }
 
@@ -438,7 +423,7 @@ class Mod_Media extends Module
         return $this->group_setting_fields(
 
             $this->group_setting_fields(
-                $this->setting_field(__('Try to make media loading lazy', 'wpopt'), "loading_lazy", "checkbox"),
+                $this->setting_field(__('Force images to use browser built-in loading lazy advantages', 'wpopt'), "loading_lazy", "checkbox"),
             ),
 
             $this->group_setting_fields(

@@ -1,7 +1,7 @@
 <?php
 /**
  * @author    sh1zen
- * @copyright Copyright (C) 2023.
+ * @copyright Copyright (C) 2024.
  * @license   http://www.gnu.org/licenses/gpl.html GNU/GPL
  */
 
@@ -184,56 +184,44 @@ function wps_is_assoc(array $arr): bool
     return array_keys($arr) !== range(0, count($arr) - 1);
 }
 
-
 /**
  * generate slug and sanitize url
  * @param $raw_text
  * @param string $substitute
- * @param bool $tolower
  * @param string $excepts
  * @return string|string[]|null
  */
-function wps_generate_slug($raw_text, string $substitute = '-', bool $tolower = true, string $excepts = '')
+function wps_generate_slug($raw_text, string $substitute = '-', string $excepts = '')
 {
     if (empty($raw_text)) {
-        return $raw_text;
+        return '';
     }
 
     if (is_array($raw_text)) {
 
         foreach ($raw_text as $key => $value) {
-            $raw_text[$key] = wps_generate_slug($value, $substitute, $tolower);
+            $raw_text[$key] = wps_generate_slug($value, $substitute, $excepts);
         }
 
         return $raw_text;
     }
 
-    $raw_text = str_replace(["'", '"', '`'], $substitute, $raw_text);
-
-    $text = iconv('UTF-8', 'ASCII//TRANSLIT', $raw_text);
-
-    // substitute accents
-    $text = $text ? str_replace("`", "", $text) : remove_accents($raw_text);
-
-    if (is_array($excepts)) {
-        $excepts = implode('', $excepts);
+    if (!empty($excepts)) {
+        // prepare excepts
+        $excepts = preg_quote($excepts . $substitute, '#');
     }
-    $excepts = preg_quote($excepts . $substitute, '#');
 
     // replace non letter or digits by $substitute
-    $text = preg_replace("#[^$excepts\w]+#", $substitute, $text);
+    $text = preg_replace("#[^$excepts\w]#ui", $substitute, $raw_text);
+
+    // substitute accents
+    $text = remove_accents($text);
 
     // remove duplicate $substitute
     $substitute_regex = preg_quote($substitute, "#");
-    $text = preg_replace("#$substitute_regex+#", $substitute, $text);
+    $text = preg_replace("#$substitute_regex+#", $substitute, strtolower($text));
 
-    $text = trim($text, $substitute);
-
-    if ($tolower) {
-        return strtolower($text);
-    }
-
-    return $text;
+    return trim($text, $substitute);
 }
 
 
@@ -445,7 +433,7 @@ function wps_log($message, $file_name = 'wps-debug.log', $skip_frames = 1, $mode
     }
 
     $data .= "#URL " . $_SERVER['REQUEST_URI'] . PHP_EOL;
-    $data .= "#FILE " . str_replace(UtilEnv::normalize_path(ABSPATH), '', UtilEnv::normalize_path($trace[$skip_frames]['file'])) . ":{$trace[$skip_frames]['line']}" . PHP_EOL;
+    $data .= "#FILE " . str_replace(UtilEnv::normalize_path(ABSPATH), '', UtilEnv::normalize_path($trace[$skip_frames]['file'] ?? '')) . ":" . ($trace[$skip_frames]['line'] ?? '') . PHP_EOL;
 
     file_put_contents(WP_CONTENT_DIR . DIRECTORY_SEPARATOR . $file_name, $data, $mode);
 }

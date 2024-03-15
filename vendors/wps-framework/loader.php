@@ -1,7 +1,7 @@
 <?php
 /**
  * @author    sh1zen
- * @copyright Copyright (C) 2023.
+ * @copyright Copyright (C) 2024.
  * @license   http://www.gnu.org/licenses/gpl.html GNU/GPL
  */
 
@@ -70,6 +70,16 @@ function wps_admin_enqueue_scripts(): void
     ]);
 }
 
+function wps_loaded(string $context = 'common'): bool
+{
+    $debug = wps_utils()->debug;
+    wps_utils()->debug = false;
+    $loaded = wps($context);
+    wps_utils()->debug = $debug;
+
+    return $loaded != false;
+}
+
 function wps(string $context = 'common', $args = false, $components = [])
 {
     static $cached = [];
@@ -85,7 +95,7 @@ function wps(string $context = 'common', $args = false, $components = [])
         }
     }
     elseif (!isset($cached[$context])) {
-        wps_debug_log("WPS Framework >> object $context not defined");
+        wps_debug_log("WPS Framework >> object '$context' not defined");
         return false;
     }
 

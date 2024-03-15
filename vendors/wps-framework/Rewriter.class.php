@@ -1,7 +1,7 @@
 <?php
 /**
  * @author    sh1zen
- * @copyright Copyright (C) 2023.
+ * @copyright Copyright (C) 2024.
  * @license   http://www.gnu.org/licenses/gpl.html GNU/GPL
  */
 
@@ -57,7 +57,7 @@ class Rewriter
         return trim(str_starts_with($req_uri, $prefix) ? substr($req_uri, strlen($prefix)) : $req_uri, '/');
     }
 
-    public function reset()
+    public function reset(): void
     {
         $this->matched_query_vars = [];
         $this->matches = [];
@@ -109,7 +109,7 @@ class Rewriter
         exit();
     }
 
-    public function get_requesteduri()
+    public function get_requestedUri(): string
     {
         return $this->base_url . $this->request_path;
     }
@@ -170,7 +170,7 @@ class Rewriter
         return $matched_rule;
     }
 
-    private function populate_query_vars()
+    private function populate_query_vars(): void
     {
         // Trim the query of everything up to the '?'.
         $query = preg_replace('#^.+\?#', '', $this->matched_query);

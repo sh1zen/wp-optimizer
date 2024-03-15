@@ -1,7 +1,7 @@
 <?php
 /**
  * @author    sh1zen
- * @copyright Copyright (C) 2023.
+ * @copyright Copyright (C) 2024.
  * @license   http://www.gnu.org/licenses/gpl.html GNU/GPL
  */
 
@@ -138,7 +138,7 @@ class Mod_Cache extends Module
         $this->loader();
     }
 
-    private function cache_flush_hooks()
+    private function cache_flush_hooks(): void
     {
         if ($this->option('wp_query.active') or $this->option('wp_db.active') or $this->option('static_pages.active')) {
 
@@ -158,10 +158,10 @@ class Mod_Cache extends Module
         }
     }
 
-    private function loader()
+    private function loader(): void
     {
         if ($this->option('wp_query.active')) {
-            QueryCache::getInstance($this->option('wp_query.lifespan', '04:00:00'), $this->option());
+            QueryCache::getInstance($this->option('wp_query.lifespan', '04:00:00'), $this->option('wp_query'));
         }
 
         if ($this->option('static_pages.active')) {

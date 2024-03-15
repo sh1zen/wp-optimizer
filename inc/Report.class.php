@@ -1,7 +1,7 @@
 <?php
 /**
  * @author    sh1zen
- * @copyright Copyright (C) 2023.
+ * @copyright Copyright (C) 2024.
  * @license   http://www.gnu.org/licenses/gpl.html GNU/GPL
  */
 
@@ -75,7 +75,7 @@ class Report
     public static function getInstance(): Report
     {
         if (!isset(self::$_instance)) {
-            self::$_instance = new self();
+            self::$_instance = new static();
         }
 
         return self::$_instance;

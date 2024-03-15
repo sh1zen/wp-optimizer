@@ -1,22 +1,25 @@
 <?php
 /**
  * @author    sh1zen
- * @copyright Copyright (C) 2023.
+ * @copyright Copyright (C) 2024.
  * @license   http://www.gnu.org/licenses/gpl.html GNU/GPL
  */
 
 // wps-framework commons
 if (!defined('WPS_FRAMEWORK')) {
 
-    if (file_exists(dirname(__FILE__, 4) . '/vendors/wps-framework/loader.php')) {
-        require_once dirname(__FILE__, 4) . '/vendors/wps-framework/loader.php';
+    if (defined('WPS_FRAMEWORK_SOURCE') and file_exists(WPS_FRAMEWORK_SOURCE . 'loader.php')) {
+        require_once WPS_FRAMEWORK_SOURCE . 'loader.php';
     }
     else {
-        require_once dirname(__FILE__, 5) . '/flexy-seo/vendors/wps-framework/loader.php';
+        if (!file_exists( WPOPT_DB_ABSPATH . 'vendors/wps-framework/loader.php')) {
+            return;
+        }
+        require_once  WPOPT_DB_ABSPATH . 'vendors/wps-framework/loader.php';
     }
 }
 
-function wp_cache_report()
+function wp_cache_report(): void
 {
     global $wp_object_cache;
     wps_var_dump($wp_object_cache->report());
@@ -35,7 +38,7 @@ function wp_cache_dump($group = '', $memcache = false, $echo = false)
     return $dump;
 }
 
-function wp_cache_init()
+function wp_cache_init(): void
 {
     global $wp_object_cache;
 

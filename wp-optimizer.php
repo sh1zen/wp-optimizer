@@ -1,5 +1,11 @@
 <?php
 /**
+ * @author    sh1zen
+ * @copyright Copyright (C) 2024.
+ * @license   http://www.gnu.org/licenses/gpl.html GNU/GPL
+ */
+
+/**
  * Plugin Name: WP Optimizer
  * Plugin URI: https://github.com/sh1zen/wp-optimizer
  * Description: Search Engine (SEO) & Performance Optimization plugin, support automatic image compression, integrated caching, database and server enhancements.
@@ -7,10 +13,10 @@
  * Author URI: https://sh1zen.github.io/
  * Text Domain: wpopt
  * Domain Path: /languages
- * Version: 2.2.0
+ * Version: 2.2.4
  */
 
-const WPOPT_VERSION = '2.2.0';
+const WPOPT_VERSION = '2.2.4';
 
 const WPOPT_FILE = __FILE__;
 

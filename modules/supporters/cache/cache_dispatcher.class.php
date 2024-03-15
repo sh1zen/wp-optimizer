@@ -1,7 +1,7 @@
 <?php
 /**
  * @author    sh1zen
- * @copyright Copyright (C) 2023.
+ * @copyright Copyright (C) 2024.
  * @license   http://www.gnu.org/licenses/gpl.html GNU/GPL
  */
 
@@ -17,12 +17,12 @@ class Cache_Dispatcher
 
     protected int $lifetime = 0;
 
-    protected $options = array();
+    protected array $options = array();
 
     protected bool $is_cacheable;
     protected bool $is_cached_content = false;
 
-    protected function __construct($lifetime, $options = [])
+    protected function __construct($lifetime, array $options = [])
     {
         $this->options = $options;
 
@@ -42,7 +42,7 @@ class Cache_Dispatcher
         return is_numeric($lifetime) ? $lifetime : wps_timestr2seconds($lifetime);
     }
 
-    protected function reset()
+    protected function reset(): void
     {
         $this->cache_key = '';
         $this->is_cached_content = false;
@@ -65,12 +65,12 @@ class Cache_Dispatcher
     {
     }
 
-    public static function deactivate()
+    public static function deactivate(): void
     {
         static::flush();
     }
 
-    public static function flush($lifetime = false, $blog_id = 0)
+    public static function flush($lifetime = false, $blog_id = 0): void
     {
         if ($lifetime) {
             wps('wpopt')->storage->delete_old(static::get_cache_group(), self::parse_lifetime($lifetime), $blog_id);

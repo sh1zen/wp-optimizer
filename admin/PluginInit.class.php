@@ -1,7 +1,7 @@
 <?php
 /**
  * @author    sh1zen
- * @copyright Copyright (C) 2023.
+ * @copyright Copyright (C) 2024.
  * @license   http://www.gnu.org/licenses/gpl.html GNU/GPL
  */
 
@@ -95,7 +95,7 @@ class PluginInit
 
     public static function Initialize(): PluginInit
     {
-        self::$_instance = new self();
+        self::$_instance = new static();
 
         /**
          * Keep Ajax requests fast:

@@ -1,7 +1,7 @@
 <?php
 /**
  * @author    sh1zen
- * @copyright Copyright (C) 2023.
+ * @copyright Copyright (C) 2024.
  * @license   http://www.gnu.org/licenses/gpl.html GNU/GPL
  */
 
@@ -60,7 +60,6 @@ class Module
 
     protected string $action_hook_page;
 
-    protected string $path;
     /**
      * Module settings
      */
@@ -73,18 +72,19 @@ class Module
     public function __construct()
     {
         if (empty($this->context)) {
-            die(__('A context must be set', 'wpopt'));
+            die(__('A context must be set', 'wps'));
         }
 
         $this->slug = ModuleHandler::module_slug(get_class($this), true);
+
+        // before activation to fix error while upgrading
+        $this->settings = wps($this->context)->settings->get($this->slug);
 
         if (!wps($this->context)->moduleHandler->module_is_active($this->slug)) {
             return;
         }
 
         $this->module_id = wps_utils()->uid();
-
-        $this->settings = wps($this->context)->settings->get($this->slug);
 
         $this->action_hook = "$this->context-$this->slug-action";
         $this->action_hook_page = "$this->action_hook-page";
@@ -132,8 +132,6 @@ class Module
 
     protected function init(): void
     {
-        $reflection = new \ReflectionClass($this);
-        $this->path = dirname($reflection->getFileName());
     }
 
     public function enqueue_scripts(): void
@@ -359,33 +357,12 @@ class Module
         }
     }
 
-    protected function remove_browser_query_args($items = null): void
-    {
-        $items = is_array($items) ? array_filter($items) : [
-            'wps-notice',
-            'wps-status',
-            'wps-action',
-            $this->action_hook
-        ];
-        ?>
-        <script>
-            jQuery(document).ready(function () {
-                <?php
-                foreach ($items as $item) {
-                    echo "wps().remove_query_arg('" . esc_js($item) . "');";
-                }
-                ?>
-            });
-        </script>
-        <?php
-    }
-
     protected function render_sub_modules(): void
     {
         $subModules = [];
 
         try {
-            $iterator = new \DirectoryIterator($this->path . '/sub-modules/' . $this->slug);
+            $iterator = new \DirectoryIterator($this->get_modulePath() . '/sub-modules/' . $this->slug);
 
             foreach ($iterator as $fileInfo) {
                 if ($fileInfo->isFile()) {
@@ -415,6 +392,12 @@ class Module
         }
     }
 
+    protected function get_modulePath(): string
+    {
+        $reflection = new \ReflectionClass($this);
+        return dirname($reflection->getFileName());
+    }
+
     public function filter_settings(): void
     {
         // use the new settings available after import
@@ -429,6 +412,27 @@ class Module
     public function validate_settings($input, $filtering = false): array
     {
         return $this->settings_validator(UtilEnv::array_flatter_one_level($this->setting_fields()), $input, $filtering);
+    }
+
+    protected function remove_browser_query_args($items = null): void
+    {
+        $items = is_array($items) ? array_filter($items) : [
+            'wps-notice',
+            'wps-status',
+            'wps-action',
+            $this->action_hook
+        ];
+        ?>
+        <script>
+            jQuery(document).ready(function () {
+                <?php
+                foreach ($items as $item) {
+                    echo "wps().remove_query_arg('" . esc_js($item) . "');";
+                }
+                ?>
+            });
+        </script>
+        <?php
     }
 
     protected function group_setting_fields(...$args): array
@@ -473,11 +477,11 @@ class Module
 
     protected function activating($setting_field, $new_settings): bool
     {
-        return !$this->option($setting_field) and isset($new_settings[$setting_field]);
+        return !$this->option($setting_field) and Settings::get_option($new_settings, $setting_field, false);
     }
 
     protected function deactivating($setting_field, $new_settings): bool
     {
-        return $this->option($setting_field) and !isset($new_settings[$setting_field]);
+        return $this->option($setting_field) and !Settings::get_option($new_settings, $setting_field, false);
     }
 }

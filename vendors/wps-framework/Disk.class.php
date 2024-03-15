@@ -1,7 +1,7 @@
 <?php
 /**
  * @author    sh1zen
- * @copyright Copyright (C) 2023.
+ * @copyright Copyright (C) 2024.
  * @license   http://www.gnu.org/licenses/gpl.html GNU/GPL
  */
 
@@ -60,7 +60,7 @@ class Disk
         return file_exists($dir . md5($dir) . '.lock');
     }
 
-    public static function update_path($target, $private = false, $dir_perms = false)
+    public static function update_path($target, $private = false, $dir_perms = false): bool
     {
         global $is_IIS;
 
@@ -172,9 +172,9 @@ class Disk
     /**
      * Expects that $dir is real and normalized
      */
-    private static function suspend_write($dir): bool
+    private static function suspend_write($dir): void
     {
-        return (bool)@file_put_contents($dir . md5($dir) . '.lock', time(), 0);
+        (bool)@file_put_contents($dir . md5($dir) . '.lock', time(), 0);
     }
 
     private static function deleter(string $path, $lifetime = 0, $recursive = false, $identifier = false): int

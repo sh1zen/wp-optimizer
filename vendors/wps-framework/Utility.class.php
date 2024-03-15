@@ -1,7 +1,7 @@
 <?php
 /**
  * @author    sh1zen
- * @copyright Copyright (C) 2023.
+ * @copyright Copyright (C) 2024.
  * @license   http://www.gnu.org/licenses/gpl.html GNU/GPL
  */
 
@@ -16,9 +16,7 @@ class Utility
 
     public string $home_url;
 
-    public int $cu_id;
-
-    public ?\WP_User $cu;
+    public ?\WP_User $cu = null;
 
     public Rewriter $rewriter;
 
@@ -41,21 +39,9 @@ class Utility
             require_once ABSPATH . '/wp-includes/pluggable.php';
         }
 
-        $this->cu = \wp_get_current_user() ?: null;
-
-        $this->cu_id = $this->cu->ID ?? 0;
-
         $this->rewriter = Rewriter::getInstance();
 
         $this->home_url = $this->rewriter->home_url('', true);
-    }
-
-    public function is_upgrading($value = null): bool
-    {
-        if (!is_null($value)) {
-            $this->upgrading = (bool)$value;
-        }
-        return $this->upgrading;
     }
 
     public static function getInstance(): Utility
@@ -65,6 +51,28 @@ class Utility
         }
 
         return self::$_Instance;
+    }
+
+    public function get_cuID(): int
+    {
+        return $this->get_current_user()->ID ?? 0;
+    }
+
+    public function get_current_user(): ?\WP_User
+    {
+        if (is_null($this->cu)) {
+            $this->cu = \wp_get_current_user() ?: null;
+        }
+
+        return $this->cu;
+    }
+
+    public function is_upgrading($value = null): bool
+    {
+        if (!is_null($value)) {
+            $this->upgrading = (bool)$value;
+        }
+        return $this->upgrading;
     }
 
     public function uid(): int

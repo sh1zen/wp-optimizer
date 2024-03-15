@@ -1,7 +1,7 @@
 <?php
 /**
  * @author    sh1zen
- * @copyright Copyright (C) 2023.
+ * @copyright Copyright (C) 2024.
  * @license   http://www.gnu.org/licenses/gpl.html GNU/GPL
  */
 
@@ -52,7 +52,7 @@ class ImagesProcessor
 
     public static function getInstance(array $settings = array()): ImagesProcessor
     {
-        return new self($settings);
+        return new static($settings);
     }
 
     public static function remove($media_id, bool $unlink): void

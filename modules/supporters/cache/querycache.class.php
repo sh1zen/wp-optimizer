@@ -1,7 +1,7 @@
 <?php
 /**
  * @author    sh1zen
- * @copyright Copyright (C) 2023.
+ * @copyright Copyright (C) 2024.
  * @license   http://www.gnu.org/licenses/gpl.html GNU/GPL
  */
 
@@ -9,6 +9,9 @@ namespace WPOptimizer\modules\supporters;
 
 class QueryCache extends Cache_Dispatcher
 {
+    // fix child invoking
+    protected static ?Cache_Dispatcher $_Instance;
+
     private array $data = [];
 
     public function action_found_posts($found_posts, \WP_Query $wp_query)

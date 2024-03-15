@@ -5,7 +5,7 @@ Donate link: https://www.paypal.com/donate?business=dev.sh1zen%40outlook.it&item
 Requires at least: 5.0.0
 Tested up to: 6.4
 Requires PHP: 7.4
-Stable tag: 2.2.0
+Stable tag: 2.2.4
 License: GNU v3.0 License
 URI: https://github.com/sh1zen/wp-optimizer/blob/master/LICENSE
 
@@ -186,12 +186,17 @@ Speed it's a game changer in visibility, and some consequences of poor performan
 
 = What to do if I run in some issues after upgrade? =
 
-Deactivate the plugin and reactivate it, if this doesn't work try to uninstall and reinstall it. That should
-work! Otherwise, go to the new added module "Setting" and try a reset.
+Deactivate the plugin and reactivate it, if this doesn't work try to uninstall and reinstall it.
+That should work! Otherwise, go to the new added module "Setting" and try a reset.
 
 == Changelog ==
 
-= 2.2.0 =
+= 2.2.4 =
+
+* improved performances
+* updated translations
+
+= 2.2.2 =
 
 * improved media scan
 * improved core performances

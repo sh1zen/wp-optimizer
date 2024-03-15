@@ -1,7 +1,7 @@
 <?php
 /**
  * @author    sh1zen
- * @copyright Copyright (C) 2023.
+ * @copyright Copyright (C) 2024.
  * @license   http://www.gnu.org/licenses/gpl.html GNU/GPL
  */
 
@@ -30,7 +30,7 @@ class PagesHandler
     {
         global $pagenow;
 
-        $user_id = wps_utils()->cu_id;
+        $user_id = wps_utils()->get_cuID();
 
         if (isset($_GET['wpopt-dismiss-notice'])) {
 

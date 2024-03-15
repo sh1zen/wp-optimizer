@@ -1,7 +1,7 @@
 <?php
 /**
  * @author    sh1zen
- * @copyright Copyright (C) 2023.
+ * @copyright Copyright (C) 2024.
  * @license   http://www.gnu.org/licenses/gpl.html GNU/GPL
  */
 
@@ -135,11 +135,15 @@ class TextReplacer
 
         $replacer = wps('wpfs')->cache->get("$rule-$type", "Replacer");
 
+        if (empty($replacer)) {
+            $replacer = wps('wpfs')->cache->get($rule, "Replacer");
+        }
+
         if ($replacer) {
             if (is_callable($replacer)) {
                 $res = call_user_func($replacer, $object);
 
-                // update the callable with its result to get more efficiency
+                // update the callable with its result
                 wps('wpfs')->cache->set("$rule-$type", $res, "Replacer", true);
             }
             else {
@@ -192,7 +196,7 @@ class TextReplacer
                 break;
 
             case 'title':
-                $res = wpfs_document_title(wps('wpfs')->settings->get('seo.title.separator', '-'));
+                $res = wp_get_document_title();
                 break;
 
             case 'userdisplayname':
@@ -252,17 +256,10 @@ class TextReplacer
      *
      * @param string $rule The rule ex. `%%custom_replace%%`
      * @param String|callable $replacement
-     * @param string|string[] $type
+     * @param string $type
      */
-    public static function add_replacer(string $rule, $replacement, $type = ''): void
+    public static function add_replacer(string $rule, $replacement, string $type = ''): void
     {
-        if (is_array($type)) {
-            foreach ($type as $_type) {
-                self::add_replacer($rule, $replacement, $_type);
-            }
-            return;
-        }
-
-        wps('wpfs')->cache->set("$rule-$type", $replacement, "Replacer");
+        wps('wpfs')->cache->set((empty($type) ? $rule : "$rule-$type"), $replacement, "Replacer");
     }
 }
