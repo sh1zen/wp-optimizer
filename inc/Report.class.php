@@ -28,7 +28,7 @@ class Report
             return $report_data;
         }
 
-        $report = sprintf(__("Report %s : [ %s s : %s ]\n\n", 'wpopt'), wp_date('Y-m-d H:i:s'), round(wps_utils()->meter->get_time('start', 'now'), 3), wps_utils()->meter->get_memory());
+        $report = sprintf(__("Report %s : [ %s s : %s ]\n\n", 'wpopt'), wp_date('Y-m-d H:i:s'), round(wps_core()->meter->get_time('start', 'now'), 3), wps_core()->meter->get_memory());
 
         foreach ($report_data as $scope => $table_report) {
 

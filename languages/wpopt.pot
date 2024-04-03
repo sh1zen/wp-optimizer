@@ -4,7 +4,7 @@ msgstr ""
 "Project-Id-Version: wpopt-translation\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/wp-"
 "optimizer/\n"
-"POT-Creation-Date: 2024-03-15 12:46+0100\n"
+"POT-Creation-Date: 2024-04-03 02:21+0200\n"
 "PO-Revision-Date: 2020-05-13 02:34+0200\n"
 "Last-Translator: sh1zen\n"
 "Language-Team: sh1zen\n"
@@ -785,7 +785,7 @@ msgstr ""
 msgid "Oembed Postmeta"
 msgstr ""
 
-#: modules/database.class.php:549 modules/wp_customizer.class.php:387
+#: modules/database.class.php:549 modules/wp_customizer.class.php:405
 msgid "Comments"
 msgstr ""
 
@@ -912,86 +912,86 @@ msgstr ""
 msgid "Excluded Tables (one per line)"
 msgstr ""
 
-#: modules/media.class.php:47
+#: modules/media.class.php:46
 msgid "Auto optimize images"
 msgstr ""
 
-#: modules/media.class.php:59
+#: modules/media.class.php:58
 msgid "Media optimization statistics has been successfully reset."
 msgstr ""
 
-#: modules/media.class.php:64
+#: modules/media.class.php:63
 msgid "Orphaned media scanner is successfully started."
 msgstr ""
 
-#: modules/media.class.php:67
+#: modules/media.class.php:66
 msgid "An error occurred while starting orphaned media scanner."
 msgstr ""
 
-#: modules/media.class.php:73
+#: modules/media.class.php:72
 msgid "Orphaned media scanner is shutting down."
 msgstr ""
 
-#: modules/media.class.php:79
+#: modules/media.class.php:78
 msgid "Orphaned media scanner has been successfully reset."
 msgstr ""
 
-#: modules/media.class.php:84
+#: modules/media.class.php:83
 msgid "Media optimization scan is shutting down."
 msgstr ""
 
-#: modules/media.class.php:89
+#: modules/media.class.php:88
 msgid "Media optimization scan is successfully started."
 msgstr ""
 
-#: modules/media.class.php:92
+#: modules/media.class.php:91
 msgid "An error occurred while starting optimization scan."
 msgstr ""
 
-#: modules/media.class.php:99
+#: modules/media.class.php:98
 msgid "Media posts optimization has been successfully reset."
 msgstr ""
 
-#: modules/media.class.php:104
+#: modules/media.class.php:103
 msgid "Action not supported"
 msgstr ""
 
-#: modules/media.class.php:155
+#: modules/media.class.php:154
 msgid "Orphaned media scan is running."
 msgstr ""
 
-#: modules/media.class.php:162
+#: modules/media.class.php:161
 msgid "Scan now"
 msgstr ""
 
-#: modules/media.class.php:168 modules/media.class.php:245
+#: modules/media.class.php:167 modules/media.class.php:244
 msgid "Pause"
 msgstr ""
 
-#: modules/media.class.php:175 modules/media.class.php:252
-#: modules/media.class.php:385
+#: modules/media.class.php:174 modules/media.class.php:251
+#: modules/media.class.php:384
 msgid "Reset"
 msgstr ""
 
-#: modules/media.class.php:181
+#: modules/media.class.php:180
 msgid "No orphaned media found."
 msgstr ""
 
-#: modules/media.class.php:207
+#: modules/media.class.php:206
 msgid "Before start optimizing makes sure you did:"
 msgstr ""
 
-#: modules/media.class.php:210
+#: modules/media.class.php:209
 #, php-format
 msgid "Read related <a href=\"%s\">FAQ</a>."
 msgstr ""
 
-#: modules/media.class.php:213
+#: modules/media.class.php:212
 #, php-format
 msgid "Set up your optimization parameters <a href=\"%s\">here</a>."
 msgstr ""
 
-#: modules/media.class.php:216
+#: modules/media.class.php:215
 #, php-format
 msgid ""
 "Note that optimization will run in background and time required "
@@ -999,147 +999,147 @@ msgid ""
 "active."
 msgstr ""
 
-#: modules/media.class.php:223
+#: modules/media.class.php:222
 #, php-format
 msgid ""
 "To proceed with image optimization you need to install <a "
 "href=\"%s\">imagick</a> or <a href=\"%s\">GD</a> on your server."
 msgstr ""
 
-#: modules/media.class.php:226
+#: modules/media.class.php:225
 #, php-format
 msgid ""
 "To guarantee a complete image optimization support, install <a "
 "href=\"%s\">imagick</a> on your server."
 msgstr ""
 
-#: modules/media.class.php:232
+#: modules/media.class.php:231
 msgid "Optimize all media library."
 msgstr ""
 
-#: modules/media.class.php:233
+#: modules/media.class.php:232
 #, php-format
 msgid ""
 "Optimization will run silently in background (<a href=\"%s\">Cron</a> "
 "must be active)."
 msgstr ""
 
-#: modules/media.class.php:239
+#: modules/media.class.php:238
 msgid "Start"
 msgstr ""
 
-#: modules/media.class.php:270
+#: modules/media.class.php:269
 msgid "Images optimizer"
 msgstr ""
 
-#: modules/media.class.php:275
+#: modules/media.class.php:274
 msgid "Media cleaner"
 msgstr ""
 
-#: modules/media.class.php:280
+#: modules/media.class.php:279
 msgid "Stats"
 msgstr ""
 
-#: modules/media.class.php:363
+#: modules/media.class.php:362
 #, php-format
 msgid "Media optimized: %d"
 msgstr ""
 
-#: modules/media.class.php:363
+#: modules/media.class.php:362
 #, php-format
 msgid "Left: %d."
 msgstr ""
 
-#: modules/media.class.php:367
+#: modules/media.class.php:366
 msgid "Processed media library:"
 msgstr ""
 
-#: modules/media.class.php:373
+#: modules/media.class.php:372
 #, php-format
 msgid "Space freed up: %s:"
 msgstr ""
 
-#: modules/media.class.php:426
+#: modules/media.class.php:425
 msgid "Force images to use browser built-in loading lazy advantages"
 msgstr ""
 
-#: modules/media.class.php:430
+#: modules/media.class.php:429
 msgid "Images optimization preferences"
 msgstr ""
 
-#: modules/media.class.php:431
+#: modules/media.class.php:430
 msgid "Auto optimize uploads"
 msgstr ""
 
-#: modules/media.class.php:431
+#: modules/media.class.php:430
 msgid "set it here"
 msgstr ""
 
-#: modules/media.class.php:432
+#: modules/media.class.php:431
 msgid "Use Imagick (if installed)"
 msgstr ""
 
-#: modules/media.class.php:433
+#: modules/media.class.php:432
 msgid "Optimization quality"
 msgstr ""
 
-#: modules/media.class.php:434
+#: modules/media.class.php:433
 msgid "Keep all the EXIF data of your images"
 msgstr ""
 
-#: modules/media.class.php:435
+#: modules/media.class.php:434
 msgid "Resize larger images"
 msgstr ""
 
-#: modules/media.class.php:436
+#: modules/media.class.php:435
 msgid "max with (px)"
 msgstr ""
 
-#: modules/media.class.php:437
+#: modules/media.class.php:436
 msgid "max height (px)"
 msgstr ""
 
-#: modules/media.class.php:441
+#: modules/media.class.php:440
 msgid "Formats"
 msgstr ""
 
-#: modules/media.class.php:442
+#: modules/media.class.php:441
 msgid "Convert all images to new webp format"
 msgstr ""
 
-#: modules/media.class.php:443
+#: modules/media.class.php:442
 msgid "Optimize JPG/JPEG"
 msgstr ""
 
-#: modules/media.class.php:444
+#: modules/media.class.php:443
 msgid "Optimize PNG"
 msgstr ""
 
-#: modules/media.class.php:445
+#: modules/media.class.php:444
 msgid "Optimize GIF"
 msgstr ""
 
-#: modules/media.class.php:446
+#: modules/media.class.php:445
 msgid "Optimize WEBP"
 msgstr ""
 
-#: modules/media.class.php:447
+#: modules/media.class.php:446
 msgid "Optimize other formats (tiff, heic, bmp)"
 msgstr ""
 
-#: modules/media.class.php:455
+#: modules/media.class.php:454
 msgid ""
 "Automatically compresses and resizes images for faster loading, "
 "improving website performance."
 msgstr ""
 
-#: modules/media.class.php:456
+#: modules/media.class.php:455
 msgid ""
 "A PHP extension for creating, modifying and manipulating images, it "
 "makes optimization faster."
 msgstr ""
 
-#: modules/media.class.php:457
+#: modules/media.class.php:456
 msgid ""
 "WebP is a modern image format with superior compression efficiency, "
 "reducing file size and improving website performance."
@@ -1505,181 +1505,185 @@ msgstr ""
 msgid "Server info"
 msgstr ""
 
-#: modules/wp_customizer.class.php:137
+#: modules/wp_customizer.class.php:154
 #, php-format
 msgid "Filter %s"
 msgstr ""
 
-#: modules/wp_customizer.class.php:317
+#: modules/wp_customizer.class.php:334
 msgid "The REST API has been disabled on this site."
 msgstr ""
 
-#: modules/wp_customizer.class.php:359
+#: modules/wp_customizer.class.php:376
 msgid "Dashboard"
 msgstr ""
 
-#: modules/wp_customizer.class.php:360
+#: modules/wp_customizer.class.php:377
 msgid "Disable Dashboard Welcome Panel"
 msgstr ""
 
-#: modules/wp_customizer.class.php:361
+#: modules/wp_customizer.class.php:378
 msgid "Disable Dashboard WordPress Blog"
 msgstr ""
 
-#: modules/wp_customizer.class.php:362
+#: modules/wp_customizer.class.php:379
 msgid "Disable Dashboard WordPress Quick Press"
 msgstr ""
 
-#: modules/wp_customizer.class.php:365
+#: modules/wp_customizer.class.php:382
 msgid "Admin"
 msgstr ""
 
-#: modules/wp_customizer.class.php:366
+#: modules/wp_customizer.class.php:383
 msgid "Hide Admin Bar"
 msgstr ""
 
-#: modules/wp_customizer.class.php:367
+#: modules/wp_customizer.class.php:384
 msgid "Hide Admin Bar for non admins"
 msgstr ""
 
-#: modules/wp_customizer.class.php:368
+#: modules/wp_customizer.class.php:385
 msgid "Prevent access to admin dashboard for non admins"
 msgstr ""
 
-#: modules/wp_customizer.class.php:369
+#: modules/wp_customizer.class.php:386
 msgid "Redirect to"
 msgstr ""
 
-#: modules/wp_customizer.class.php:370
+#: modules/wp_customizer.class.php:387
 msgid "Remove WP logo"
 msgstr ""
 
-#: modules/wp_customizer.class.php:371
+#: modules/wp_customizer.class.php:388
 msgid "Remove updates shortcut"
 msgstr ""
 
-#: modules/wp_customizer.class.php:374
+#: modules/wp_customizer.class.php:391
 msgid "Page Editor"
 msgstr ""
 
-#: modules/wp_customizer.class.php:375
+#: modules/wp_customizer.class.php:392
 msgid "Add a selection filter in category list"
 msgstr ""
 
-#: modules/wp_customizer.class.php:376
+#: modules/wp_customizer.class.php:393
 msgid "Disable Block Editor (Gutenberg)"
 msgstr ""
 
-#: modules/wp_customizer.class.php:377
+#: modules/wp_customizer.class.php:394
 msgid "Disable Core Blocks"
 msgstr ""
 
-#: modules/wp_customizer.class.php:378
-msgid "Disable Auto Paragraph"
-msgstr ""
-
-#: modules/wp_customizer.class.php:381
-msgid "Theme"
-msgstr ""
-
-#: modules/wp_customizer.class.php:382
-msgid "Disable Global-Style"
-msgstr ""
-
-#: modules/wp_customizer.class.php:383
-msgid "Disable theme widgets"
-msgstr ""
-
-#: modules/wp_customizer.class.php:384
-msgid "Disable custom css"
-msgstr ""
-
-#: modules/wp_customizer.class.php:388
-msgid "Disable comments"
-msgstr ""
-
-#: modules/wp_customizer.class.php:389
-msgid "Hide comments shortcuts from admin pages"
-msgstr ""
-
-#: modules/wp_customizer.class.php:392
-msgid "Link Tags Feed WP-JSON"
-msgstr ""
-
-#: modules/wp_customizer.class.php:393
-msgid "Disable DNS prefetch"
-msgstr ""
-
-#: modules/wp_customizer.class.php:394
-msgid "Disable short-link generator"
-msgstr ""
-
 #: modules/wp_customizer.class.php:395
-msgid "Disable Feed links"
+msgid "Disable Fonts Management"
 msgstr ""
 
 #: modules/wp_customizer.class.php:396
-msgid "Disable WP-JSON API and oembed"
+msgid "Disable Auto Paragraph"
 msgstr ""
 
-#: modules/wp_customizer.class.php:397
-msgid "Disable Post Relational Links"
+#: modules/wp_customizer.class.php:399
+msgid "Theme"
 msgstr ""
 
-#: modules/wp_customizer.class.php:398
-msgid "Disable XML-RPC"
+#: modules/wp_customizer.class.php:400
+msgid "Disable Global-Style"
 msgstr ""
 
 #: modules/wp_customizer.class.php:401
-msgid "Miscellanea"
+msgid "Disable theme widgets"
 msgstr ""
 
 #: modules/wp_customizer.class.php:402
-msgid "Disable WordPress sitemap"
-msgstr ""
-
-#: modules/wp_customizer.class.php:403
-msgid "Disable pings"
-msgstr ""
-
-#: modules/wp_customizer.class.php:404
-msgid "Disable Self ping"
-msgstr ""
-
-#: modules/wp_customizer.class.php:405
-msgid "Disable WordPress Emoji support"
+msgid "Disable custom css"
 msgstr ""
 
 #: modules/wp_customizer.class.php:406
-msgid "Disable jQuery Migrate"
+msgid "Disable comments"
+msgstr ""
+
+#: modules/wp_customizer.class.php:407
+msgid "Hide comments shortcuts from admin pages"
+msgstr ""
+
+#: modules/wp_customizer.class.php:410
+msgid "Link Tags Feed WP-JSON"
+msgstr ""
+
+#: modules/wp_customizer.class.php:411
+msgid "Disable DNS prefetch"
+msgstr ""
+
+#: modules/wp_customizer.class.php:412
+msgid "Disable short-link generator"
+msgstr ""
+
+#: modules/wp_customizer.class.php:413
+msgid "Disable Feed links"
 msgstr ""
 
 #: modules/wp_customizer.class.php:414
+msgid "Disable WP-JSON API and oembed"
+msgstr ""
+
+#: modules/wp_customizer.class.php:415
+msgid "Disable Post Relational Links"
+msgstr ""
+
+#: modules/wp_customizer.class.php:416
+msgid "Disable XML-RPC"
+msgstr ""
+
+#: modules/wp_customizer.class.php:419
+msgid "Miscellanea"
+msgstr ""
+
+#: modules/wp_customizer.class.php:420
+msgid "Disable WordPress sitemap"
+msgstr ""
+
+#: modules/wp_customizer.class.php:421
+msgid "Disable pings"
+msgstr ""
+
+#: modules/wp_customizer.class.php:422
+msgid "Disable Self ping"
+msgstr ""
+
+#: modules/wp_customizer.class.php:423
+msgid "Disable WordPress Emoji support"
+msgstr ""
+
+#: modules/wp_customizer.class.php:424
+msgid "Disable jQuery Migrate"
+msgstr ""
+
+#: modules/wp_customizer.class.php:432
 msgid ""
 "If your theme does not support blocks, this feature is safe to disable."
 msgstr ""
 
-#: modules/wp_customizer.class.php:415
+#: modules/wp_customizer.class.php:433
 msgid ""
 "WordPress DNS prefetch, preloads domain name system (DNS) information "
 "for external resources, reducing the time it takes to connect to them. "
 "If no external resources is used it's possible to disable it."
 msgstr ""
 
-#: modules/wp_customizer.class.php:416
+#: modules/wp_customizer.class.php:434
 msgid ""
 "WordPress short-link generator creates shortened URLs for posts, pages "
 "or custom post types. In most cases not necessary."
 msgstr ""
 
-#: modules/wp_customizer.class.php:417
+#: modules/wp_customizer.class.php:435
 msgid ""
 "WordPress Custom CSS is a feature that allows users to add their own "
 "custom styles to a WordPress website, without modifying the theme "
 "files."
 msgstr ""
 
-#: modules/wp_customizer.class.php:418
+#: modules/wp_customizer.class.php:436
 msgid ""
 "WordPress jQuery Migrate is a plugin that restores deprecated jQuery "
 "features removed in newer versions, ensuring compatibility with older "

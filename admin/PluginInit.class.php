@@ -78,7 +78,7 @@ class PluginInit
 
             wps_run_upgrade('wpopt', WPOPT_VERSION, WPOPT_ADMIN . "upgrades/");
 
-            wps_utils()->is_upgrading(true);
+            wps_core()->is_upgrading(true);
 
             wps('wpopt')->moduleHandler->upgrade();
         }

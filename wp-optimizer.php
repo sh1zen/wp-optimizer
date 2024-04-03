@@ -13,10 +13,10 @@
  * Author URI: https://sh1zen.github.io/
  * Text Domain: wpopt
  * Domain Path: /languages
- * Version: 2.2.4
+ * Version: 2.2.5
  */
 
-const WPOPT_VERSION = '2.2.4';
+const WPOPT_VERSION = '2.2.5';
 
 const WPOPT_FILE = __FILE__;
 
@@ -72,4 +72,4 @@ require_once WPOPT_ADMIN . 'PluginInit.class.php';
  */
 WPOptimizer\core\PluginInit::Initialize();
 
-wps_utils()->meter->lap('wpopt-loaded');
+wps_core()->meter->lap('wpopt-loaded');

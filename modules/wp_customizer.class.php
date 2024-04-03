@@ -30,7 +30,7 @@ class Mod_WP_Customizer extends Module
 
             add_action('admin_init', function () {
                 if (headers_sent()) {
-                    echo '<script>window.location.replace("' . wps_utils()->home_url . $this->option('non-admin-redirect_to', '') . '");</script>';
+                    echo '<script>window.location.replace("' . wps_core()->home_url . $this->option('non-admin-redirect_to', '') . '");</script>';
                 }
                 else {
                     Rewriter::getInstance()->redirect($this->option('non-admin-redirect_to', '/') ?: '/', 302);
@@ -80,9 +80,6 @@ class Mod_WP_Customizer extends Module
 
             // theme related things
             remove_action('wp_enqueue_scripts', 'wp_enqueue_classic_theme_styles');
-            remove_action('plugins_loaded', '_wp_theme_json_webfonts_handler');
-            remove_action('setup_theme', 'wp_enable_block_templates', 1);
-            remove_action('wp_loaded', '_add_template_loader_filters');
             remove_action('wp_enqueue_scripts', 'wp_common_block_scripts_and_styles');
             remove_filter('block_editor_settings_all', 'wp_add_editor_classic_theme_styles');
 
@@ -104,11 +101,31 @@ class Mod_WP_Customizer extends Module
             remove_filter('the_content', 'do_blocks', 9);
             remove_filter('widget_block_content', 'do_blocks', 9);
 
+            remove_filter('render_block_context', '_block_template_render_without_post_block_context');
+            remove_filter('pre_wp_unique_post_slug', 'wp_filter_wp_template_unique_post_slug', 10, 5);
+            remove_action('save_post_wp_template_part', 'wp_set_unique_slug_on_create_template_part');
+            remove_action('wp_enqueue_scripts', 'wp_enqueue_block_template_skip_link');
+            remove_action('wp_footer', 'the_block_template_skip_link');
+            remove_action('after_setup_theme', 'wp_enable_block_templates', 1);
+            remove_action('wp_loaded', '_add_template_loader_filters');
+
+            // Footnotes Block.
+            remove_action('init', '_wp_footnotes_kses_init');
+            remove_action('set_current_user', '_wp_footnotes_kses_init');
+            remove_filter('force_filtered_html_on_import', '_wp_footnotes_force_filtered_html_on_import_filter', 999);
+
             add_filter('use_widgets_block_editor', '__return_false');
         }
 
         if ($this->option('core-blocks')) {
             wps_remove_actions('init', 'register_block_core_');
+        }
+
+        if ($this->option('fonts-management')) {
+            remove_action('wp_head', 'wp_print_font_faces', 50);
+            remove_action('deleted_post', '_wp_after_delete_font_family', 10);
+            remove_action('before_delete_post', '_wp_before_delete_font_face', 10);
+            remove_action('init', '_wp_register_default_font_collections');
         }
 
         if ($this->option('global-style-disable')) {
@@ -374,7 +391,8 @@ class Mod_WP_Customizer extends Module
                 $this->setting_field(__('Page Editor', 'wpopt'), false, 'separator'),
                 $this->setting_field(__('Add a selection filter in category list', 'wpopt'), 'category-filter', 'checkbox'),
                 $this->setting_field(__('Disable Block Editor (Gutenberg)', 'wpopt'), "blocks-editor", "checkbox"),
-                $this->setting_field(__('Disable Core Blocks', 'wpopt'), "core-blocks", "checkbox"),
+                $this->setting_field(__('Disable Core Blocks', 'wpopt'), "core-blocks", "checkbox", ['parent' => 'blocks-editor']),
+                $this->setting_field(__('Disable Fonts Management', 'wpopt'), "fonts-management", "checkbox", ['parent' => 'blocks-editor']),
                 $this->setting_field(__('Disable Auto Paragraph', 'wpopt'), "wpautop", "checkbox"),
             ),
             $this->group_setting_fields(

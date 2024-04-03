@@ -93,7 +93,38 @@ class TextReplacer
      * @param string $type
      * @return mixed
      */
-    public static function replace_property($rule, $object = null, string $type = 'post')
+    private static function replace_custom($rule, $object, string $type = 'post')
+    {
+        $res = false;
+
+        $replacer =  wps_core()->cache->get("$rule-$type", "Replacer");
+
+        if (empty($replacer)) {
+            $replacer = wps_core()->cache->get($rule, "Replacer");
+        }
+
+        if ($replacer) {
+            if (is_callable($replacer)) {
+                $res = call_user_func($replacer, $object);
+
+                // update the callable with its result
+                wps_core()->cache->set("$rule-$type", $res, "Replacer", true);
+            }
+            else {
+                $res = $replacer;
+            }
+        }
+
+        return $res;
+    }
+
+    /**
+     * @param $rule
+     * @param \WP_Term|\WP_Post_Type|\WP_Post|\WP_User|null $object
+     * @param string $type
+     * @return mixed
+     */
+    private static function replace_property($rule, $object = null, string $type = 'post')
     {
         if (!$object) {
             return false;
@@ -112,7 +143,7 @@ class TextReplacer
      * @param string $type
      * @return mixed
      */
-    public static function replace_meta($rule, $object = null, string $type = 'post')
+    private static function replace_meta($rule, $object = null, string $type = 'post')
     {
         if (!$object or !str_starts_with($rule, "meta")) {
             return false;
@@ -129,38 +160,7 @@ class TextReplacer
      * @param string $type
      * @return mixed
      */
-    public static function replace_custom($rule, $object, string $type = 'post')
-    {
-        $res = false;
-
-        $replacer = wps('wpfs')->cache->get("$rule-$type", "Replacer");
-
-        if (empty($replacer)) {
-            $replacer = wps('wpfs')->cache->get($rule, "Replacer");
-        }
-
-        if ($replacer) {
-            if (is_callable($replacer)) {
-                $res = call_user_func($replacer, $object);
-
-                // update the callable with its result
-                wps('wpfs')->cache->set("$rule-$type", $res, "Replacer", true);
-            }
-            else {
-                $res = $replacer;
-            }
-        }
-
-        return $res;
-    }
-
-    /**
-     * @param $rule
-     * @param \WP_Term|\WP_Post_Type|\WP_Post|\WP_User|null $object
-     * @param string $type
-     * @return mixed
-     */
-    public static function replace_static($rule, $object = null, string $type = 'post')
+    private static function replace_static($rule, $object = null, string $type = 'post')
     {
         $res = false;
 
@@ -168,7 +168,7 @@ class TextReplacer
 
         switch ($rule) {
             case 'sep':
-                $res = wps('wpfs')->settings->get('seo.title.separator', '-');
+                $res = '-';
                 break;
 
             case 'sitename':
@@ -251,6 +251,31 @@ class TextReplacer
         return $res;
     }
 
+    public static function run(string $string, $replacement): string
+    {
+        // Don't bother if there are no % - saves some processing.
+        if (!str_contains($string, '%')) {
+            return $string;
+        }
+
+        preg_match_all("#%%([^%]+)%%#Us", $string, $rules);
+
+        $rules = array_filter(array_map('trim', $rules[1]));
+
+        if (empty($rules)) {
+            return $string;
+        }
+
+        foreach ($rules as $rule) {
+
+            if ($replacement) {
+                $string = str_replace("%%$rule%%", $replacement, $string);
+            }
+        }
+
+        return StringHelper::clear($string, true, ' ');
+    }
+
     /**
      * Add a custom replacement rule with query type support
      *
@@ -260,6 +285,6 @@ class TextReplacer
      */
     public static function add_replacer(string $rule, $replacement, string $type = ''): void
     {
-        wps('wpfs')->cache->set((empty($type) ? $rule : "$rule-$type"), $replacement, "Replacer");
+        wps_core()->cache->set((empty($type) ? $rule : "$rule-$type"), $replacement, "Replacer");
     }
 }

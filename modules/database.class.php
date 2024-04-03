@@ -173,7 +173,7 @@ class Mod_Database extends Module
                                     $style = 'class="alternate"';
                                 }
 
-                                $file_size = filesize($database_file);
+                                $file_size = UtilEnv::filesize($database_file);
 
                                 $display_name = strlen($database_file) > 50 ? substr($database_file, 0, 25) . '.....' . substr($database_file, -24) : $database_file;
 

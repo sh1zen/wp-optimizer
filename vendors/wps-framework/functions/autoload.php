@@ -5,6 +5,7 @@
  * @license   http://www.gnu.org/licenses/gpl.html GNU/GPL
  */
 
+require_once WPS_FRAMEWORK . 'functions/utils.php';
 
 require_once WPS_FRAMEWORK . 'functions/images.php';
 

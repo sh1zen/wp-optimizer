@@ -5,7 +5,97 @@
  * @license   http://www.gnu.org/licenses/gpl.html GNU/GPL
  */
 
+use WPS\core\Images;
+use WPS\core\Query;
 use WPS\core\UtilEnv;
+
+function wps_get_images($attachments, $size = 'thumbnail'): array
+{
+    return Images::get_images($attachments, $size);
+}
+
+function wps_get_image($attachment, $size = 'thumbnail')
+{
+    return Images::get_image($attachment, $size);
+}
+
+function wps_get_mainImageURL($post = null, $size = 'large', $useContent = false): string
+{
+    return wps_get_mainImage($post, $size, $useContent)[1];
+}
+
+function wps_get_mainImage($post = null, $size = 'large', $useContent = false): array
+{
+    if (is_array($size)) {
+
+        foreach ($size as $_size) {
+            $mainImage = wps_get_mainImage($post, $_size, $useContent);
+
+            if ($mainImage and !empty($mainImage[1])) {
+                return $mainImage;
+            }
+        }
+
+        return [0, ''];
+    }
+
+    $post = wps_get_post($post);
+
+    if ($mainImage = wps()->options->get($post->ID, "mainImage-$size", "cache", false)) {
+        return $mainImage;
+    }
+
+    $mediaURL = '';
+    $mediaID = get_post_thumbnail_id($post);
+
+    if (!$mediaID) {
+
+        $media_query = Query::getInstance(ARRAY_A);
+
+        $mediaID = $media_query->tables($media_query->wpdb()->posts)->where([
+            'post_type'      => 'attachment',
+            'post_parent'    => $post->ID,
+            ['post_mime_type' => 'image/', 'compare' => 'LIKE']
+        ])->select('ID')->orderby('menu_order')->limit(1)->query_one() ?: 0;
+    }
+
+    if ($mediaID) {
+
+        $image = Images::get_image($mediaID, $size);
+
+        $mediaURL = $image ? $image['url'] : '';
+    }
+    elseif ($useContent) {
+
+        $images = Images::get_images_from_content($post->post_content);
+
+        if ($images) {
+            $mediaURL = Images::removeImageDimensions($images[0]);
+        }
+    }
+
+    wps()->options->add($post->ID, "mainImage-$size", [$mediaID, $mediaURL], "cache", MONTH_IN_SECONDS);
+
+    return [$mediaID, $mediaURL];
+}
+
+function wps_get_snippet_data($url, $size = 'large')
+{
+    $snippet_data = wps()->options->get($url, "snippet_data", "cache", false);
+
+    if (!$snippet_data) {
+
+        $snippet_data = Images::get_snippet_data($url, $size);
+
+        if (!$snippet_data) {
+            return false;
+        }
+
+        wps()->options->add($url, "snippet_data", $snippet_data, "cache", WEEK_IN_SECONDS);
+    }
+
+    return $snippet_data;
+}
 
 function wps_attachment_url_to_postid($url)
 {

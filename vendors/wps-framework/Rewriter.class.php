@@ -87,7 +87,7 @@ class Rewriter
         return self::$_Instance;
     }
 
-    public static function compile_endpoint($endpoint)
+    public static function compile_endpoint($endpoint): string
     {
         $endpoint = preg_replace('#\(/\)#', '/?', $endpoint);
 
@@ -100,7 +100,7 @@ class Rewriter
 
         $regex_endpoint = rtrim($regex_endpoint, '/');
 
-        return preg_replace('#/+#', '/', "^$regex_endpoint/?$");
+        return (string) preg_replace('#/+#', '/', "^$regex_endpoint/?$");
     }
 
     public static function reload()

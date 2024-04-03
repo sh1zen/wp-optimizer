@@ -18,10 +18,16 @@ class Options
 
     public function __construct($context, $table_name)
     {
+        global $wpdb;
+
         $this->cache = wps($context)->cache;
 
         if (empty($table_name)) {
             wps_debug_log("WPS Framework >> Options has not defined table name");
+        }
+
+        if (!str_starts_with($table_name, $wpdb->prefix)) {
+            $table_name = $wpdb->prefix . $table_name;
         }
 
         $this->table_name = $table_name;
@@ -324,5 +330,44 @@ class Options
         global $wpdb;
 
         return boolval($wpdb->query($wpdb->prepare("DELETE FROM " . $this->table_name() . " WHERE value " . ($regex ? 'REGEXP' : '=') . " %s", $value)));
+    }
+
+    public function get_list(array $obj_ids, $option, $context = 'core', $default = [], $cache = true)
+    {
+        if (empty($option)) {
+            return $default;
+        }
+
+        $cache_key = Cache::generate_key($option, $context, ...$obj_ids);
+
+        if ($cache and !is_null($values = $this->cache->get($cache_key, 'db_cache', null))) {
+            return $values;
+        }
+
+        $values = $default;
+
+        $rows = Query::getInstance()->tables($this->table_name())->where(['obj_id' => $obj_ids, 'item' => $option, 'context' => $context])->query_multi();
+
+        if (empty($rows)) {
+            return $default;
+        }
+
+        foreach ($rows as $row) {
+
+            $expiration = $row->expiration ? intval($row->expiration) : false;
+
+            if (!$expiration or $expiration >= time()) {
+                $values[$row->obj_id] = maybe_unserialize($row->value);
+            }
+            else {
+                $this->remove($row->obj_id, $option, $context);
+            }
+        }
+
+        if ($cache) {
+            $this->cache->set($cache_key, $values, 'db_cache');
+        }
+
+        return $values;
     }
 }

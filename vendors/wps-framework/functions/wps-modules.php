@@ -7,14 +7,29 @@
 
 use WPS\core\UtilEnv;
 
+function wps_admin_enqueue_scripts(): void
+{
+    $wps_assets_url = UtilEnv::path_to_url(dirname(__DIR__));
+
+    $min = (wps_core()->online and !wps_core()->debug) ? '.min' : '';
+
+    wp_register_style('vendor-wps-css', "{$wps_assets_url}assets/css/style{$min}.css", [], wps_core()->debug ? time() : WPS_VERSION);
+    wp_register_script('vendor-wps-js', "{$wps_assets_url}assets/js/core{$min}.js", ['jquery'], wps_core()->debug ? time() : WPS_VERSION);
+
+    wps_localize([
+        'text_close_warning' => __('Are you sure you want to leave?', 'wps')
+    ]);
+}
+
+
 function wps_module_panel_url($module = '', $panel = ''): ?string
 {
-    return admin_url("admin.php?page={$module}#{$panel}");
+    return admin_url("admin.php?page=$module#$panel");
 }
 
 function wps_module_setting_url($context, $panel = ''): ?string
 {
-    return admin_url("admin.php?page={$context}-modules-settings#settings-{$panel}");
+    return admin_url("admin.php?page=$context-modules-settings#settings-$panel");
 }
 
 function wps_run_upgrade($context, $version, $path): void
@@ -26,6 +41,23 @@ function wps_run_upgrade($context, $version, $path): void
     $settings['ver'] = $version;
 
     wps($context)->settings->reset($settings);
+}
+
+function wps_maybe_upgrade($context, $version, $path): void
+{
+    $current_version = wps($context)->settings->get('ver', false);
+
+    // need upgrade
+    if (!$current_version or version_compare($current_version, $version, '<')) {
+
+        wps_run_upgrade($context, $version, $path);
+
+        wps_core()->is_upgrading(true);
+
+        if (wps_loaded('wps', 'moduleHandler')) {
+            wps($context)->moduleHandler->upgrade();
+        }
+    }
 }
 
 function wps_localize($data = []): bool

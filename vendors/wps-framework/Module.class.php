@@ -84,7 +84,7 @@ class Module
             return;
         }
 
-        $this->module_id = wps_utils()->uid();
+        $this->module_id = wps_core()->uid();
 
         $this->action_hook = "$this->context-$this->slug-action";
         $this->action_hook_page = "$this->action_hook-page";

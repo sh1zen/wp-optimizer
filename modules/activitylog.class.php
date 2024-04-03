@@ -170,7 +170,7 @@ class Mod_ActivityLog extends Module
                 'action'     => $action,
                 'context'    => $subject,
                 'value'      => '',
-                'user_id'    => wps_utils()->get_cuID(),
+                'user_id'    => wps_core()->get_cuID(),
                 'object_id'  => false,
                 'ip'         => $this->option('log.ip') ? $this->get_ip() : '',
                 'user_agent' => $this->option('log.user_agent') ? $_SERVER['HTTP_USER_AGENT'] : '',

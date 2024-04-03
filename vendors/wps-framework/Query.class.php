@@ -409,7 +409,12 @@ class Query
                     $field = array_map('esc_sql', $field);
                 }
 
-                $field = "(" . implode(',', $field) . ")";
+                if ($unquoted) {
+                    $field = "(" . implode(',', $field) . ")";
+                }
+                else {
+                    $field = "('" . implode("','", $field) . "')";
+                }
             }
             elseif (is_bool($field)) {
                 $field = $field ? 1 : 0;

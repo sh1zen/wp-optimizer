@@ -23,19 +23,20 @@ class wps_wrapper
 
     public ?ModuleHandler $moduleHandler = null;
 
+    private string $path = '';
     private array $args = [];
-
     private string $context;
-
     private array $components = [];
 
     public function __construct($context, $args, $components = [])
     {
         $this->context = $context;
 
-        wps_utils()->meter->lap("{$context}-loading");
+        wps_core()->meter->lap("$context-loading");
 
         $this->filter_args($args);
+
+        $this->path = $this->args['modules_path'];
 
         $this->filter_components($components);
     }
@@ -98,6 +99,11 @@ class wps_wrapper
         if ($this->components['cron']) {
             $this->cron = new CronForModules($this->context);
         }
+    }
+
+    public function get_path()
+    {
+        return $this->path;
     }
 
     public function __get($name)

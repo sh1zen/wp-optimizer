@@ -251,7 +251,7 @@ function wps_var_dump(...$vars): void
 
 function wps_debug_log($message, $level = 0): void
 {
-    if (!wps_utils()->debug) {
+    if (!wps_core()->debug) {
         return;
     }
 

@@ -857,7 +857,7 @@ class UtilEnv
         // Remove default ports (e.g., :80 for HTTP, :443 for HTTPS)
         if (isset($urlComponents['port'])) {
             $defaultPorts = [
-                'http' => 80,
+                'http'  => 80,
                 'https' => 443,
                 // Add other default ports if necessary
             ];
@@ -896,5 +896,18 @@ class UtilEnv
         }
 
         return $normalizedUrl;
+    }
+
+    public static function filesize($path, bool $pre_clear_cache = false)
+    {
+        $size = 0;
+        if (file_exists($path)) {
+            if ($pre_clear_cache) {
+                clearstatcache(true, $path);
+            }
+            $size = @filesize($path) ?: 0;
+        }
+
+        return $size;
     }
 }

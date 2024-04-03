@@ -44,7 +44,7 @@ class Mod_Minify extends Module
 
                 list($script, $original_url) = $matches;
 
-                if (!str_contains($original_url, 'min') and str_starts_with($original_url, wps_utils()->home_url)) {
+                if (!str_contains($original_url, 'min') and str_starts_with($original_url, wps_core()->home_url)) {
 
                     $file_path = WPOPT_STORAGE . "minify/js/" . md5($original_url) . ".js";
 
@@ -78,7 +78,7 @@ class Mod_Minify extends Module
 
                 list($script, $original_url) = $matches;
 
-                if (!str_contains($original_url, 'min') and str_starts_with($original_url, wps_utils()->home_url) and str_contains($script, 'stylesheet')) {
+                if (!str_contains($original_url, 'min') and str_starts_with($original_url, wps_core()->home_url) and str_contains($script, 'stylesheet')) {
 
                     $file_path = WPOPT_STORAGE . "minify/css/" . md5($original_url) . ".css";
 

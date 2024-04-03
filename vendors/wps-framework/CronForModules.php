@@ -107,14 +107,14 @@ class CronForModules
 
         wps($this->context)->settings->update('cron.running', true, true);
 
-        if (wps_utils()->debug) {
-            wps_utils()->meter->lap('init_cron');
+        if (wps_core()->debug) {
+            wps_core()->meter->lap('init_cron');
         }
 
         do_action("{$this->context}_exec_cron", $args);
 
-        if (wps_utils()->debug) {
-            wps_utils()->meter->lap('end_cron');
+        if (wps_core()->debug) {
+            wps_core()->meter->lap('end_cron');
         }
 
         $this->reset_status();

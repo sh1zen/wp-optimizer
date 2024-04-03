@@ -744,7 +744,7 @@ class DBSupport
         }
 
         // If we have an empty file delete it
-        if (@filesize($SQLfilename) === 0) {
+        if (UtilEnv::filesize($SQLfilename) === 0) {
             unlink($SQLfilename);
             return false;
         }

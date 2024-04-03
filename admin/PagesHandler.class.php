@@ -30,7 +30,7 @@ class PagesHandler
     {
         global $pagenow;
 
-        $user_id = wps_utils()->get_cuID();
+        $user_id = wps_core()->get_cuID();
 
         if (isset($_GET['wpopt-dismiss-notice'])) {
 
@@ -89,16 +89,16 @@ class PagesHandler
         $this->enqueue_scripts();
 
         if (WPOPT_DEBUG) {
-            wps_utils()->meter->lap('Modules settings pre render');
+            wps_core()->meter->lap('Modules settings pre render');
         }
 
         wps('wpopt')->settings->render_modules_settings();
 
         if (WPOPT_DEBUG) {
 
-            wps_utils()->meter->lap('Modules settings rendered');
+            wps_core()->meter->lap('Modules settings rendered');
 
-            echo wps_utils()->meter->get_time() . ' - ' . wps_utils()->meter->get_memory();
+            echo wps_core()->meter->get_time() . ' - ' . wps_core()->meter->get_memory();
         }
     }
 
@@ -115,7 +115,7 @@ class PagesHandler
         wps('wpopt')->settings->render_core_settings();
 
         if (WPOPT_DEBUG) {
-            echo wps_utils()->meter->get_time() . ' - ' . wps_utils()->meter->get_memory();
+            echo wps_core()->meter->get_time() . ' - ' . wps_core()->meter->get_memory();
         }
     }
 
@@ -134,8 +134,8 @@ class PagesHandler
         $object->render_admin_page();
 
         if (WPOPT_DEBUG) {
-            wps_utils()->meter->lap($module_slug);
-            echo wps_utils()->meter->get_time() . ' - ' . wps_utils()->meter->get_memory(true, true);
+            wps_core()->meter->lap($module_slug);
+            echo wps_core()->meter->get_time() . ' - ' . wps_core()->meter->get_memory(true, true);
         }
     }
 
@@ -143,7 +143,7 @@ class PagesHandler
     {
         $assets_url = wpopt()->plugin_base_url;
 
-        $min = wps_utils()->online ? '.min' : '';
+        $min = wps_core()->online ? '.min' : '';
 
         wp_register_style("wpopt_css", "{$assets_url}assets/style{$min}.css", ['vendor-wps-css']);
 
@@ -282,8 +282,8 @@ class PagesHandler
                     <p>
                         <?php
                         echo '<div>' . sprintf(__('Server load: %s %%', 'wpopt'), UtilEnv::get_server_load(false)) . '</div><br>';
-                        echo '<div>' . sprintf(__('WordPress used memory: %s', 'wpopt'), wps_utils()->meter->get_memory(true, true)) . '</div><br>';
-                        echo '<div>' . sprintf(__('Wordpress execution time: %s s', 'wpopt'), wps_utils()->meter->get_time('wp_start', 'now', 3)) . '</div><br>';
+                        echo '<div>' . sprintf(__('WordPress used memory: %s', 'wpopt'), wps_core()->meter->get_memory(true, true)) . '</div><br>';
+                        echo '<div>' . sprintf(__('Wordpress execution time: %s s', 'wpopt'), wps_core()->meter->get_time('wp_start', 'now', 3)) . '</div><br>';
                         ?>
                     </p>
                 </block>

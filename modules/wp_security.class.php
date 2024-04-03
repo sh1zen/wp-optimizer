@@ -25,7 +25,7 @@ class Mod_WP_Security extends Module
         )
     );
 
-    public function hash_version_script($target_url)
+    public function hash_version_script($target_url): string
     {
         $rewriter = Rewriter::getInstance($target_url);
 
@@ -60,7 +60,7 @@ class Mod_WP_Security extends Module
         return $new_valid;
     }
 
-    private function load_dependencies()
+    private function load_dependencies(): void
     {
         require_once WPOPT_SUPPORTERS . 'optisec/WP_Htaccess.class.php';
     }

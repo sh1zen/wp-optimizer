@@ -365,7 +365,7 @@ class ImagesProcessor
 
         try {
 
-            $original_size = filesize($image_path);
+            $original_size = UtilEnv::filesize($image_path);
 
             $imagick = new \Imagick($image_path);
 
@@ -429,7 +429,7 @@ class ImagesProcessor
         clearstatcache(true, $image_path);
 
         $wpopt['prev_size'] = $original_size;
-        $wpopt['size'] = filesize($image_path);
+        $wpopt['size'] = UtilEnv::filesize($image_path);
 
         return ['width' => $width, 'height' => $height, 'mime-type' => $mimetype, 'file' => $image_path, 'filesize' => $wpopt['size'], 'wpopt' => $wpopt];
     }
@@ -438,7 +438,7 @@ class ImagesProcessor
     {
         $wpopt = array();
 
-        $original_size = filesize($image_path);
+        $original_size = UtilEnv::filesize($image_path);
 
         $imageGD = new GD($image_path);
 
@@ -483,7 +483,7 @@ class ImagesProcessor
         clearstatcache(true, $image_path);
 
         $wpopt['prev_size'] = $original_size;
-        $wpopt['size'] = filesize($image_path);
+        $wpopt['size'] = UtilEnv::filesize($image_path);
 
         return ['width' => $width, 'height' => $height, 'mime-type' => $mimetype, 'file' => $image_path, 'filesize' => $wpopt['size'], 'wpopt' => $wpopt];
     }

@@ -24,10 +24,14 @@ class Utility
 
     public PerformanceMeter $meter;
 
+    public ?Cache $cache = null;
+
     private bool $upgrading = false;
 
     private function __construct()
     {
+        $this->cache = new Cache('wps_core');
+
         $this->online = $_SERVER["SERVER_ADDR"] !== '127.0.0.1';
 
         $this->debug = (!$this->online or WPS_DEBUG);

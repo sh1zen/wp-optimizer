@@ -131,7 +131,7 @@ class CronActions
         /**
          * if not need to reset every cron event and there is already a scheduled event with the same hook return
          */
-        if (!wps_utils()->is_upgrading()) {
+        if (!wps_core()->is_upgrading()) {
             foreach ($crons as $timestamp => $cron) {
 
                 if (is_array($cron) and isset($cron[$this->hook])) {
@@ -397,7 +397,7 @@ class CronActions
             call_user_func($this->callback, ...$this->args);
         }
 
-        if (wps_utils()->debug) {
+        if (wps_core()->debug) {
             wps_log("Cron execution:: $this->hook > $this->timestamp");
         }
     }

@@ -29,7 +29,7 @@ class ModuleHandler
         $this->module_settings = wps($context)->settings->get('modules_handler', []);
     }
 
-    private function init_modules($load_path)
+    private function init_modules($load_path): void
     {
         $this->modules = array();
 

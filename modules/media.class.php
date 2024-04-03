@@ -10,7 +10,6 @@ namespace WPOptimizer\modules;
 use WPS\core\Ajax;
 use WPS\core\CronActions;
 use WPS\core\Graphic;
-use WPS\core\StringHelper;
 use WPS\core\UtilEnv;
 use WPS\modules\Module;
 
