@@ -68,7 +68,7 @@ class Mod_WP_Info extends Module
 
     public function get_info()
     {
-        global $wpdb, $is_IIS;
+        global $wpdb;
 
         $plugins = $this->get_plugins();
 
@@ -76,7 +76,7 @@ class Mod_WP_Info extends Module
             "Server" => array(
                 __('SITE_URL', 'wpopt')             => site_url(),
                 __('HOME_URL', 'wpopt')             => home_url(),
-                __('Server IP : port', 'wpopt')     => ($is_IIS ? $_SERVER['LOCAL_ADDR'] : $_SERVER['SERVER_ADDR']) . ' : ' . $_SERVER['SERVER_PORT'],
+                __('Server IP : port', 'wpopt')     => wps_server_addr() . ' : ' . $_SERVER['SERVER_PORT'],
                 __("OS", 'wpopt')                   => PHP_OS,
                 __("Server", 'wpopt')               => $_SERVER["SERVER_SOFTWARE"],
                 __('Server Document Root', 'wpopt') => $_SERVER['DOCUMENT_ROOT'],
@@ -97,7 +97,7 @@ class Mod_WP_Info extends Module
                 __('Upload Max File size', 'wpopt')   => ini_get('upload_max_filesize'),
                 __('Upload Max Files', 'wpopt')       => ini_get('max_file_uploads'),
                 __('Script execution limit', 'wpopt') => ini_get('max_execution_time') . ' s',
-                __('FPM', 'wpopt')                    => substr(php_sapi_name(), 0, 3) == 'fpm' ? __('On', 'wpopt') : __('Off', 'wpopt'),
+                __('FPM', 'wpopt')                    => str_starts_with(php_sapi_name(), 'fpm') ? __('On', 'wpopt') : __('Off', 'wpopt'),
                 __('Short Tag', 'wpopt')              => ini_get('short_open_tag') ? __('On', 'wpopt') : __('Off', 'wpopt'),
             ),
 

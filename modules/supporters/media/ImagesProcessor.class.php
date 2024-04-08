@@ -181,6 +181,9 @@ class ImagesProcessor
                 }
 
                 do_action('wpopt_delete_options_cache', $post_id);
+
+                // directly wipe related core cached items
+                wps()->options->remove_by_container($post_id);
             }
 
             wps('wpopt')->options->update('last_scanned_postID', 'scan_media', $scannedID, 'media');

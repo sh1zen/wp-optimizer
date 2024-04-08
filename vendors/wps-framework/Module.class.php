@@ -414,6 +414,11 @@ class Module
         return $this->settings_validator(UtilEnv::array_flatter_one_level($this->setting_fields()), $input, $filtering);
     }
 
+    public function has_panel(): bool
+    {
+        return in_array('admin-page', $this->scopes);
+    }
+
     protected function remove_browser_query_args($items = null): void
     {
         $items = is_array($items) ? array_filter($items) : [

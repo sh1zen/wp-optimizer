@@ -164,17 +164,19 @@ class Graphic
 
                 $o_inner .= self::buildField(
                     "input",
-                    [
-                        'class'        => self::parse_classes($args['classes']),
-                        'autocomplete' => 'off',
-                        'type'         => $args['type'],
-                        'name'         => $args['input_name'],
-                        'id'           => $args['id'],
-                        'placeholder'  => $args['placeholder'],
-                        'spellcheck'   => 'false',
-                        'value'        => esc_attr((string)$args['value']),
-                        ...$args['props']
-                    ]
+                    array_merge(
+                        [
+                            'class'        => self::parse_classes($args['classes']),
+                            'autocomplete' => 'off',
+                            'type'         => $args['type'],
+                            'name'         => $args['input_name'],
+                            'id'           => $args['id'],
+                            'placeholder'  => $args['placeholder'],
+                            'spellcheck'   => 'false',
+                            'value'        => esc_attr((string)$args['value']),
+                        ],
+                        $args['props']
+                    )
                 );
                 break;
 
@@ -184,14 +186,16 @@ class Graphic
 
                 $o_inner .= self::buildField(
                     "button",
-                    [
-                        'id'    => $args['id'],
-                        'class' => self::parse_classes($args['classes']),
-                        'type'  => 'submit',
-                        'name'  => $args['input_name'],
-                        'value' => (string)$args['value'],
-                        ...$args['props']
-                    ],
+                    array_merge(
+                        [
+                            'id'    => $args['id'],
+                            'class' => self::parse_classes($args['classes']),
+                            'type'  => 'submit',
+                            'name'  => $args['input_name'],
+                            'value' => (string)$args['value'],
+                        ],
+                        $args['props']
+                    ),
                     $args['name']
                 );
                 break;
@@ -225,15 +229,18 @@ class Graphic
 
                 $o_inner .= self::buildField(
                     "input",
-                    [
-                        'class'   => self::parse_classes($args['classes']),
-                        'type'    => 'checkbox',
-                        'name'    => $args['input_name'],
-                        'id'      => $args['id'],
-                        'value'   => (bool)$args['value'],
-                        'checked' => UtilEnv::to_boolean($args['value']) ? 'checked' : '',
-                        ...$args['props']
-                    ]);
+                    array_merge(
+                        [
+                            'class'   => self::parse_classes($args['classes']),
+                            'type'    => 'checkbox',
+                            'name'    => $args['input_name'],
+                            'id'      => $args['id'],
+                            'value'   => (bool)$args['value'],
+                            'checked' => UtilEnv::to_boolean($args['value']) ? 'checked' : '',
+                        ],
+                        $args['props']
+                    )
+                );
                 break;
 
             case "textarea":
@@ -243,16 +250,18 @@ class Graphic
 
                 $o_inner .= self:: buildField(
                     "textarea",
-                    [
-                        'class'      => self::parse_classes($args['classes']),
-                        'rows'       => '4',
-                        'cols'       => '80',
-                        'type'       => 'textarea',
-                        'name'       => $args['input_name'],
-                        'id'         => $args['id'],
-                        'spellcheck' => 'false',
-                        ...$args['props']
-                    ],
+                    array_merge(
+                        [
+                            'class'      => self::parse_classes($args['classes']),
+                            'rows'       => '4',
+                            'cols'       => '80',
+                            'type'       => 'textarea',
+                            'name'       => $args['input_name'],
+                            'id'         => $args['id'],
+                            'spellcheck' => 'false',
+                        ],
+                        $args['props']
+                    ),
                     $args['value']
                 );
                 break;
@@ -260,10 +269,12 @@ class Graphic
             case "label":
                 $o_inner .= self::buildField(
                     'span',
-                    [
-                        'class' => self::parse_classes($args['classes']),
-                        ...$args['props']
-                    ],
+                    array_merge(
+                        [
+                            'class' => self::parse_classes($args['classes']),
+                        ],
+                        $args['props']
+                    ),
                     $args['value']
                 );
                 break;
@@ -272,11 +283,13 @@ class Graphic
 
                 $o_inner .= self::buildField(
                     'a',
-                    [
-                        'class' => self::parse_classes($args['classes']),
-                        'href'  => esc_url($args['value']['href']),
-                        ...$args['props']
-                    ],
+                    array_merge(
+                        [
+                            'class' => self::parse_classes($args['classes']),
+                            'href'  => esc_url($args['value']['href']),
+                        ],
+                        $args['props']
+                    ),
                     $args['value']['text']
                 );
 
@@ -287,7 +300,14 @@ class Graphic
 
                 $parent = $args['parent'] ?: $args['depend'] ?: '';
 
-                $o_inner .= self::buildDropdown($args, ['class' => self::parse_classes($args['classes']), ...$args['props']], $parent);
+                $o_inner .= self::buildDropdown(
+                    $args,
+                    array_merge(
+                        ['class' => self::parse_classes($args['classes'])],
+                        $args['props']
+                    ),
+                    $parent
+                );
                 break;
 
             case 'raw':
@@ -425,7 +445,8 @@ class Graphic
                        value="<?php echo $args['value']; ?>" autocomplete="off" <?php echo $parent; ?>
                        placeholder="<?php _e("Choose a type or enter one manually.", 'wps'); ?>">
                 <?php if (!$editable) : ?>
-                    <strong class="width100 wps-input" data-input="<?php echo $args['id']; ?>"><?php echo $args['valueE'] ?? $args['value']; ?></strong>
+                    <strong class="width100 wps-input"
+                            data-input="<?php echo $args['id']; ?>"><?php echo $args['valueE'] ?? $args['value']; ?></strong>
                 <?php endif; ?>
                 <div class="wps-dropdown__opener">
                     <svg class="wps-icon wps-icon__arrow" viewBox="0 0 16 16" width="16" height="16">

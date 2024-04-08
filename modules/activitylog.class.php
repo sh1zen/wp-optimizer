@@ -125,8 +125,9 @@ class Mod_ActivityLog extends Module
 
             $path = $upgrader->plugin_info();
 
-            if (!$path)
+            if (!$path) {
                 return;
+            }
 
             $data = get_plugin_data($upgrader->skin->result['local_destination'] . '/' . $path, true, false);
 

@@ -37,7 +37,7 @@ class Mod_Widget extends Module
      * button if we're on a single post page and the current user can edit
      * the post
      */
-    public function dashboard_setup()
+    public function dashboard_setup(): void
     {
         $hasWidget = false;
 
@@ -63,7 +63,7 @@ class Mod_Widget extends Module
         }
     }
 
-    private function generate_id($path)
+    private function generate_id($path): string
     {
         $path = preg_replace('/[^a-z0-9-_.]/', '', strtolower($path));
         return "wpopt_" . substr($path, -8) . "_widget";
@@ -72,7 +72,7 @@ class Mod_Widget extends Module
     /**
      * Prints table styles in dashboard head
      */
-    public function head_style()
+    public function head_style(): void
     {
         echo '<style>
 		#wpopt_folder_sizes .inside, #wpopt_root_sizes .inside {
@@ -91,7 +91,7 @@ class Mod_Widget extends Module
         echo '</style>';
     }
 
-    public function wp_dashboard_serverinfo()
+    public function wp_dashboard_serverinfo(): void
     {
         global $wpdb;
 
@@ -99,7 +99,7 @@ class Mod_Widget extends Module
             __('OS', 'wpopt')                      => PHP_OS,
             __('Server', 'wpopt')                  => $_SERVER["SERVER_SOFTWARE"],
             __('Hostname', 'wpopt')                => $_SERVER['SERVER_NAME'],
-            __('IP:Port', 'wpopt')                 => $_SERVER['SERVER_ADDR'] . ':' . $_SERVER['SERVER_PORT'],
+            __('IP:Port', 'wpopt')                 => wps_server_addr() . ':' . $_SERVER['SERVER_PORT'],
             __('Document Root', 'wpopt')           => $_SERVER['DOCUMENT_ROOT'],
             "PHP"                                  => '',
             __('version', 'wpopt')                 => PHP_VERSION,
@@ -156,7 +156,7 @@ class Mod_Widget extends Module
         return $usage;
     }
 
-    public function wp_dashboard_foldersize($var, $args = array())
+    public function wp_dashboard_foldersize($var, $args = array()): void
     {
         $this->reset();
 
@@ -181,7 +181,7 @@ class Mod_Widget extends Module
             </thead>
             <tbody>
             <?php
-            $this->printDirectoryList(glob($path . '/*', GLOB_ONLYDIR));
+            $this->printDirectoryList(glob($path . '/*', \GLOB_ONLYDIR));
             ?>
             </tbody>
             <tfoot>
@@ -209,7 +209,7 @@ class Mod_Widget extends Module
      *
      * @param array $directories List of folders inside a directory
      */
-    private function printDirectoryList(array $directories)
+    private function printDirectoryList(array $directories): void
     {
         $count = 0;
         if (empty($this->cache) or !isset($this->cache['dir_list'])):
@@ -242,7 +242,7 @@ class Mod_Widget extends Module
     /**
      * Used for both Widgets configuration
      */
-    public function widget_handle()
+    public function widget_handle(): void
     {
         if (isset($_POST['wpopt_folder_sizes'])) {
 

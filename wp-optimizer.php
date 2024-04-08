@@ -13,25 +13,17 @@
  * Author URI: https://sh1zen.github.io/
  * Text Domain: wpopt
  * Domain Path: /languages
- * Version: 2.2.5
+ * Version: 2.2.8
  */
 
-const WPOPT_VERSION = '2.2.5';
-
+const WPOPT_VERSION = '2.2.8';
 const WPOPT_FILE = __FILE__;
-
 const WPOPT_ABSPATH = __DIR__ . '/';
 const WPOPT_INCPATH = WPOPT_ABSPATH . 'inc/';
 const WPOPT_MODULES = WPOPT_ABSPATH . 'modules/';
 const WPOPT_ADMIN = WPOPT_ABSPATH . 'admin/';
 const WPOPT_SUPPORTERS = WPOPT_MODULES . 'supporters/';
-
-// setup constants
-require_once WPOPT_INCPATH . 'constants.php';
-
-// essential
-require_once WPOPT_INCPATH . 'functions.php';
-require_once WPOPT_INCPATH . 'Report.class.php';
+const WPOPT_STORAGE = WP_CONTENT_DIR . '/wpopt/';
 
 
 // wps-framework commons
@@ -40,10 +32,10 @@ if (!defined('WPS_FRAMEWORK')) {
         require_once WPS_FRAMEWORK_SOURCE . 'loader.php';
     }
     else {
-        if (!file_exists( WPOPT_ABSPATH . 'vendors/wps-framework/loader.php')) {
+        if (!file_exists(WPOPT_ABSPATH . 'vendors/wps-framework/loader.php')) {
             return;
         }
-        require_once  WPOPT_ABSPATH . 'vendors/wps-framework/loader.php';
+        require_once WPOPT_ABSPATH . 'vendors/wps-framework/loader.php';
     }
 }
 
@@ -64,6 +56,14 @@ wps(
     ]
 );
 
+
+// setup constants
+require_once WPOPT_INCPATH . 'constants.php';
+
+// essential
+require_once WPOPT_INCPATH . 'functions.php';
+require_once WPOPT_INCPATH . 'Report.class.php';
+
 // initializer class
 require_once WPOPT_ADMIN . 'PluginInit.class.php';
 
@@ -73,3 +73,5 @@ require_once WPOPT_ADMIN . 'PluginInit.class.php';
 WPOptimizer\core\PluginInit::Initialize();
 
 wps_core()->meter->lap('wpopt-loaded');
+
+wps_error_handler('wp-optimizer');

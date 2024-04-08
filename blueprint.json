@@ -1,0 +1,30 @@
+{
+  "landingPage": "\/wp-admin\/admin.php?page=wp-optimizer",
+  "preferredVersions": {
+    "php": "8.3",
+    "wp": "latest"
+  },
+  "phpExtensionBundles": [
+    "kitchen-sink"
+  ],
+  "features": {
+    "networking": true
+  },
+  "steps": [
+    {
+      "step": "installPlugin",
+      "pluginZipFile": {
+        "resource": "wordpress.org\/plugins",
+        "slug": "wp-optimizer"
+      },
+      "options": {
+        "activate": true
+      }
+    },
+    {
+      "step": "login",
+      "username": "admin",
+      "password": "password"
+    }
+  ]
+}

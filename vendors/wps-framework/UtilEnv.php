@@ -819,10 +819,7 @@ class UtilEnv
         static $wpmu = null;
 
         if ($wpmu === null) {
-            $wpmu = (file_exists(ABSPATH . 'wpmu-settings.php') ||
-                (defined('MULTISITE') and MULTISITE) ||
-                defined('SUNRISE') ||
-                self::is_wpmu_subdomain());
+            $wpmu = (file_exists(ABSPATH . 'wpmu-settings.php') || (defined('MULTISITE') and MULTISITE) || defined('SUNRISE') || self::is_wpmu_subdomain());
         }
 
         return $wpmu;

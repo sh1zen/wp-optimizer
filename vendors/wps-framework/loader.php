@@ -8,7 +8,6 @@
 use WPS\core\Utility;
 use WPS\core\wps_wrapper;
 
-
 const WPS_FRAMEWORK = __DIR__ . '/';
 const WPS_DRIVERS_PATH = WPS_FRAMEWORK . 'drivers/';
 const WPS_ADDON_PATH = WPS_FRAMEWORK . 'addon/';
@@ -34,6 +33,7 @@ require_once WPS_FRAMEWORK . 'UtilEnv.php';
 require_once WPS_FRAMEWORK . 'Images.php';
 
 require_once WPS_FRAMEWORK . 'Cache.class.php';
+require_once WPS_FRAMEWORK . 'Stack.php';
 require_once WPS_FRAMEWORK . 'Storage.class.php';
 require_once WPS_FRAMEWORK . 'Disk.class.php';
 require_once WPS_FRAMEWORK . 'Settings.class.php';

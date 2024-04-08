@@ -13,9 +13,14 @@ class Disk
 
     public static function read($path)
     {
+        if (empty($path)) {
+            return '';
+        }
+
         // writing to system rules file, may be potentially write-protected
-        if ($data = @file_get_contents($path))
+        if ($data = @file_get_contents($path)) {
             return $data;
+        }
 
         return self::wp_filesystem()->get_contents($path);
     }
@@ -39,18 +44,24 @@ class Disk
 
     public static function write($path, $data, $flag = FILE_APPEND): bool
     {
+        if (empty($path)) {
+            return false;
+        }
+
         $container = dirname($path);
 
-        if (self::is_suspended(UtilEnv::realpath($container, true, true)))
+        if (self::is_suspended(UtilEnv::realpath($container, true, true))) {
             return false;
+        }
 
         if (!file_exists($container)) {
             self::make_path($container);
         }
 
         // writing to system rules file, may be potentially write-protected
-        if (@file_put_contents($path, $data, $flag))
+        if (@file_put_contents($path, $data, $flag)) {
             return true;
+        }
 
         return self::wp_filesystem()->put_contents($path, $data);
     }
@@ -155,9 +166,9 @@ class Disk
 
         $target = trailingslashit($target);
 
-        self::suspend_write($target);
+        $lock_file = self::suspend_write($target);
 
-        $deleted = self::deleter($target, $lifetime, true, $identifier);
+        $deleted = self::deleter($target, $lifetime, true, $identifier, preg_quote($lock_file, '#'));
 
         self::resume_write($target);
 
@@ -172,12 +183,22 @@ class Disk
     /**
      * Expects that $dir is real and normalized
      */
-    private static function suspend_write($dir): void
+    private static function suspend_write($dir): string
     {
-        (bool)@file_put_contents($dir . md5($dir) . '.lock', time(), 0);
+        $lock_file = md5($dir) . '.lock';
+
+        if (!@file_put_contents($dir . $lock_file, time(), 0)) {
+            return '';
+        }
+
+        return $lock_file;
     }
 
-    private static function deleter(string $path, $lifetime = 0, $recursive = false, $identifier = false): int
+    /**
+     * @param string $exclude must be a regex
+     * @param string $identifier must be a regex
+     */
+    private static function deleter(string $path, $lifetime = 0, $recursive = false, string $identifier = '', string $exclude = ''): int
     {
         if (!$handle = @opendir($path)) {
             return 0;
@@ -186,6 +207,11 @@ class Disk
         UtilEnv::rise_time_limit(0);
 
         $deleted = 0;
+
+        $excluded_file_quoted = empty($exclude) ? '' : "(?:^" . StringHelper::make_regex($exclude, '#') . "$)";
+        $identifier_quoted = (empty($exclude) or $identifier == '*') ? '' : "(?:(?!" . StringHelper::make_regex($identifier, '#') . ")^.+$)";
+
+        $file_matcher = trim($excluded_file_quoted . "|" . $identifier_quoted, " |");
 
         $time = time();
 
@@ -199,7 +225,7 @@ class Disk
 
             if (is_dir($file_path)) {
                 if ($recursive) {
-                    $deleted += self::deleter($file_path, $lifetime, $recursive, $identifier);
+                    $deleted += self::deleter($file_path, $lifetime, $recursive, $identifier, $exclude);
 
                     if (!$identifier and !$lifetime) {
                         @rmdir($path);
@@ -209,7 +235,7 @@ class Disk
             }
             else {
 
-                if (!empty($identifier) and $identifier !== '*' and !preg_match("#$identifier#", $filename)) {
+                if ($file_matcher and preg_match("#$file_matcher#ui", $filename)) {
                     continue;
                 }
 
@@ -231,15 +257,17 @@ class Disk
         return $deleted;
     }
 
-    private static function resume_write($dir)
+    private static function resume_write($dir): bool
     {
-        return @unlink($dir . md5($dir) . '.lock');
+        $file = $dir . md5($dir) . '.lock';
+
+        if (file_exists($file)) {
+            return @unlink($dir . md5($dir) . '.lock');
+        }
+
+        return true;
     }
 
-    /**
-     * @param $directory
-     * @return false|int|mixed
-     */
     public static function calc_size($directory)
     {
         $bytesTotal = 0;

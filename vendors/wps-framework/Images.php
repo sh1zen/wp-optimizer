@@ -80,12 +80,10 @@ class Images
 
     /**
      * Retrieve the internal WP image file sizes.
-     *
-     * @return array $image_sizes An array of image sizes.
      */
     private static function get_sizes(): array
     {
-        return apply_filters('wpfs_image_sizes', ['thumbnail', 'medium', 'medium_large', 'large', 'full']);
+        return apply_filters('wps_image_sizes', ['thumbnail', 'medium', 'medium_large', 'large', 'full']);
     }
 
     /**
@@ -387,7 +385,7 @@ class Images
             $url = "https://secure.gravatar.com/avatar/cb5febbf69fa9e85698bac992b2a4433?s=500&d=mm&r=g";
         }
 
-        $url = apply_filters("wpfs_author_avatar", $url, $userID);
+        $url = apply_filters("wps_author_avatar", $url, $userID);
 
         $snippet_data = wps()->options->get($url, "snippet_data", "cache", false);
 

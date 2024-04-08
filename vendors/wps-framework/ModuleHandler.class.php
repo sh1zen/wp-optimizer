@@ -84,8 +84,6 @@ class ModuleHandler
             wps($this->context)->cache->set($module_slug, $class, 'modules-handler', true, false);
         }
 
-        wps($this->context)->cache->set($module_name, $namespace, 'modules-to-namespace', true, false);
-
         return $module_name;
     }
 
@@ -212,7 +210,7 @@ class ModuleHandler
      */
     public function module_has_scope($module, $scope, $compare = 'AND'): bool
     {
-        $cache_Key = maybe_serialize($module) . maybe_serialize($scope) . $compare;
+        $cache_Key = $module['slug'] . maybe_serialize($scope) . $compare;
 
         if (!is_null($found = wps($this->context)->cache->get($cache_Key, 'module_has_scope', null))) {
             return $found;

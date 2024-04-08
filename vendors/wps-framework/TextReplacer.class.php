@@ -54,7 +54,7 @@ class TextReplacer
             return $string;
         }
 
-        $rules = apply_filters('wpfs_replacer_rules', $rules, $object, $type);
+        $rules = apply_filters('wps_replacer_rules', $rules, $object, $type);
 
         foreach ($rules as $rule) {
 
@@ -79,7 +79,7 @@ class TextReplacer
             /**
              * fallback for custom replace also
              */
-            $replacement = apply_filters("wpfs_replacement_{$rule}_$type", $replacement, $string, $object);
+            $replacement = apply_filters("wps_replacement_{$rule}_$type", $replacement, $string, $object);
 
             $string = str_replace("%%{$rule}%%", $replacement, $string);
         }
@@ -182,7 +182,7 @@ class TextReplacer
             case 'resume':
             case 'description':
                 if ($object instanceof \WP_Post) {
-                    $res = wpfs_get_post_excerpt($object, 150, '...');
+                    $res = wps_get_post_excerpt($object, 150, '...');
                 }
                 elseif ($object instanceof \WP_Term) {
                     $res = StringHelper::truncate($object->description ?? '', 150, '...');
@@ -285,6 +285,6 @@ class TextReplacer
      */
     public static function add_replacer(string $rule, $replacement, string $type = ''): void
     {
-        wps_core()->cache->set((empty($type) ? $rule : "$rule-$type"), $replacement, "Replacer");
+        wps_core()->cache->set(empty($type) ? $rule : "$rule-$type", $replacement, "Replacer");
     }
 }

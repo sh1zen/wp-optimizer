@@ -32,7 +32,7 @@ class Utility
     {
         $this->cache = new Cache('wps_core');
 
-        $this->online = $_SERVER["SERVER_ADDR"] !== '127.0.0.1';
+        $this->online = !preg_match("#127\.0\.0\.1|localhost#", wps_server_addr());
 
         $this->debug = (!$this->online or WPS_DEBUG);
 

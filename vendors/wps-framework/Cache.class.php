@@ -9,11 +9,12 @@ namespace WPS\core;
 
 class Cache
 {
+    public int $hits = 0;
+    public int $miss = 0;
+
     private $driver = null;
     private array $cache = [];
     private int $cached_data = 0;
-    private int $hits = 0;
-    private int $miss = 0;
     private bool $is_multisite;
     private string $blog_prefix;
     private string $context;

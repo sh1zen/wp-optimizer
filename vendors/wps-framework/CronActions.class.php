@@ -126,12 +126,13 @@ class CronActions
         $crons = _get_cron_array();
 
         // shorthand for empty array()
-        $key = empty($this->args) ? '40cd750bba9870f18aada2478b24840a' : md5(serialize($this->args));
+        $key = empty($this->args) ? '40cd750bba9870f18aada2478b24840a' : Cache::generate_key($this->args);
 
         /**
          * if not need to reset every cron event and there is already a scheduled event with the same hook return
          */
         if (!wps_core()->is_upgrading()) {
+
             foreach ($crons as $timestamp => $cron) {
 
                 if (is_array($cron) and isset($cron[$this->hook])) {
@@ -271,7 +272,7 @@ class CronActions
     {
         $crons = _get_cron_array();
 
-        $key = md5(serialize($args));
+        $key = Cache::generate_key($args);
 
         if (!$timestamp) {
             $timestamp = time();

@@ -1,15 +1,15 @@
 === WP Optimizer ===
 Contributors: sh1zen
-Tags: loading speed, optimization, optimize, performance, images, cache, minify, database, speed, disable Gutenberg, updates, activity log, optimizer
+Tags: optimize, performance, image conversion, cache, minify
 Donate link: https://www.paypal.com/donate?business=dev.sh1zen%40outlook.it&item_name=Thank+you+in+advanced+for+the+kind+donations.+You+will+sustain+me+developing+WP-Optimizer.&currency_code=EUR
 Requires at least: 5.0.0
 Tested up to: 6.5
 Requires PHP: 7.4
-Stable tag: 2.2.5
+Stable tag: 2.2.8
 License: GNU v3.0 License
 URI: https://github.com/sh1zen/wp-optimizer/blob/master/LICENSE
 
-Optimize your WordPress website performances and improve the search engines ranking with this Performance Optimization Plugin (WPOPT) - Automatic image compression, CSS JavaScript HTML minification, integrated caching, database cleanup, server enhancements and WordPress activity log.
+Optimize your website performances - Image compression, scripts minification, caching, database cleaner, server enhancements, activity log and more.
 
 == Description ==
 
@@ -32,7 +32,7 @@ Improve Your WordPress Performance and SEO with WP-Optimizer (WPOPT) - Contains 
 * At least 10x site performance improvements (Grade A in [WebPagetest](https://www.webpagetest.org/) or significant [Google Page Speed](https://developers.google.com/speed/pagespeed/insights/) improvements) when fully configured.
 * Reduced page load time: increased visitor time on site and number of viewed pages.
 * Improved web server performance: sustain high traffic periods.
-* Up to 80% bandwidth savings when images are optimized and HTML, CSS and JS are minified.
+* Up to 80% bandwidth savings when images are optimized and HTML, CSS and JavaScript are minified.
 * Storage saver, optimized images required less disk space.
 
 
@@ -190,6 +190,13 @@ Deactivate the plugin and reactivate it, if this doesn't work try to uninstall a
 That should work! Otherwise, go to the new added module "Setting" and try a reset.
 
 == Changelog ==
+
+= 2.2.8 =
+
+* added blueprint.json for WordPress preview
+* updated admin UI
+* updated translations
+* fixed some compatibility bugs
 
 = 2.2.5 =
 

@@ -262,11 +262,12 @@ class DB_List_Table extends \WP_List_Table
 
             $status = __('Ok', 'wpopt');
 
-            if ($table['DATA_FREE'] > 0) {
+            if (($table['DATA_FREE'] ?? 0) > 0) {
                 $status = __('Optimize', 'wpopt');
             }
 
-            $query_result = $wpdb->get_results("CHECK TABLE " . $table['TABLE_NAME'] . " FAST");
+            $query_result = isset($table['TABLE_NAME']) ? $wpdb->get_results("CHECK TABLE " . $table['TABLE_NAME'] . " FAST") : [];
+
             foreach ((array)$query_result as $row) {
                 if ($row->Msg_type == 'error') {
                     if (preg_match('/corrupt/i', $row->Msg_text)) {
@@ -289,12 +290,12 @@ class DB_List_Table extends \WP_List_Table
             }
 
             $items_to_display[] = array(
-                'table_name'  => $table['TABLE_NAME'],
-                'table_rows'  => $table['TABLE_ROWS'],
-                'data_length' => $table['DATA_LENGTH'],
-                'data_free'   => $table['DATA_FREE'],
+                'table_name'  => $table['TABLE_NAME'] ?? __('Table Name N/D', 'wpopt'),
+                'table_rows'  => $table['TABLE_ROWS'] ?? __('Rows N/D', 'wpopt'),
+                'data_length' => $table['DATA_LENGTH'] ?? __('Length N/D', 'wpopt'),
+                'data_free'   => $table['DATA_FREE'] ?? __('N/D', 'wpopt'),
                 'status'      => $status,
-                'engine'      => $table['ENGINE'],
+                'engine'      => $table['ENGINE'] ?? __('Engine N/D', 'wpopt'),
                 'site_id'     => $site_name,
             );
         }

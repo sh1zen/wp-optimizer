@@ -9,26 +9,15 @@ namespace WPS\core;
 
 class RuleUtil
 {
-    /**
-     * Returns true if we can modify rules
-     *
-     * @param string $path
-     * @return boolean
-     */
-    public static function can_modify_rules($path)
+    private string $rules = '';
+    private bool $autoLine;
+
+    public function __construct($autoLiner = true)
     {
-        return UtilEnv::is_wpmu() and (UtilEnv::is_apache() or UtilEnv::is_litespeed() or UtilEnv::is_nginx());
+        $this->autoLine = $autoLiner;
     }
 
-    /**
-     * @param string $rules rules to add
-     * @param string $start start marker
-     * @param string $end end marker
-     * @param array $order order where to place if some marker exists
-     * @param bool $virtual_page
-     * @return bool
-     */
-    public static function add_rules($rules, $start, $end, $order = array(), &$virtual_page = '')
+    public static function add_rules($rules, $start, $end, $order = array(), &$virtual_page = ''): bool
     {
         // removal mode: rule doesn't exist
         if (empty($rules) and !str_contains($virtual_page, $start)) {
@@ -75,25 +64,13 @@ class RuleUtil
         return true;
     }
 
-    /**
-     * Cleanup rewrite rules
-     *
-     * @param string $rules
-     * @return string
-     */
-    private static function clean_rules($rules)
+    private static function clean_rules(string $rules): string
     {
         $rules = preg_replace('#([\n\r]{2,})#m', "\n\n", $rules);
         return self::trim_rules($rules);
     }
 
-    /**
-     * Trim rules
-     *
-     * @param string $rules
-     * @return string
-     */
-    private static function trim_rules($rules)
+    private static function trim_rules(string $rules): string
     {
         $rules = trim($rules);
 
@@ -111,11 +88,6 @@ class RuleUtil
         return Disk::read($path) ?: '';
     }
 
-    /**
-     * Returns path of core rules file
-     *
-     * @return string
-     */
     public static function get_rules_path()
     {
         if (UtilEnv::is_apache() or UtilEnv::is_litespeed()) {
@@ -128,27 +100,12 @@ class RuleUtil
         return false;
     }
 
-    /**
-     * Check if rules exist
-     *
-     * @param string $rules
-     * @param string $start
-     * @param string $end
-     * @return int
-     */
-    public static function has_rule(string $rules, string $start, string $end)
+    public static function has_rule(string $rules, string $start, string $end): bool
     {
-        return preg_match('~' . UtilEnv::preg_quote($start) . "\n.*?" . UtilEnv::preg_quote($end) . "\n*~s", $rules);
+        return (bool)preg_match('~' . UtilEnv::preg_quote($start) . "\n.*?" . UtilEnv::preg_quote($end) . "\n*~s", $rules);
     }
 
-    /**
-     * Remove rules
-     * @param $start
-     * @param $end
-     * @param string $virtual_page
-     * @return bool
-     */
-    public static function remove_rules($start, $end, string &$virtual_page = '')
+    public static function remove_rules($start, $end, string &$virtual_page = ''): bool
     {
         if (!str_contains($virtual_page, $start)) {
             return false;
@@ -159,15 +116,7 @@ class RuleUtil
         return true;
     }
 
-    /**
-     * Erases text from start to end
-     *
-     * @param string $rules
-     * @param string $start
-     * @param string $end
-     * @return string
-     */
-    private static function erase_rules(string $rules, string $start, string $end)
+    private static function erase_rules(string $rules, string $start, string $end): string
     {
         $r = '~' . UtilEnv::preg_quote($start) . "\n.*?" . UtilEnv::preg_quote($end) . "\n*~s";
 
@@ -176,10 +125,39 @@ class RuleUtil
         return self::trim_rules($rules);
     }
 
-    public static function write_rules($rules)
+    public static function write_rules($rules): bool
     {
         $path = self::get_rules_path();
 
         return Disk::write($path, self::clean_rules($rules), 0);
+    }
+
+    public function autoLine($status): static
+    {
+        $this->autoLine = $status;
+        return $this;
+    }
+
+    public function add(string $rule, int $indent = 0): static
+    {
+        $this->rules .= str_repeat(" ", $indent) . $rule . ($this->autoLine ? "\n" : '');
+        return $this;
+    }
+
+    public function export(): string
+    {
+        return $this->rules;
+    }
+
+    public function reset(): static
+    {
+        $this->rules = '';
+        return $this;
+    }
+
+    public function newLine(): static
+    {
+        $this->rules .= "\n";
+        return $this;
     }
 }

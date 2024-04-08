@@ -5,6 +5,7 @@
  * @license   http://www.gnu.org/licenses/gpl.html GNU/GPL
  */
 
+use WPS\core\StringHelper;
 use WPS\core\UtilEnv;
 
 function wps_time($format = 'timestamp', $offset = 0, $zoned = true, $basetime = false)
@@ -34,11 +35,11 @@ function wps_time($format = 'timestamp', $offset = 0, $zoned = true, $basetime =
     return date($format, $time);
 }
 
-function wps_str_to_time(string $timestamp, $gmt = true)
+function wps_str_to_time(string $timestamp, $gmt = true): int
 {
     $gmt_offset = $gmt ? (int)(get_option('gmt_offset')) * HOUR_IN_SECONDS : 0;
 
-    return strtotime($timestamp, time() + $gmt_offset) - $gmt_offset;
+    return (int)(strtotime($timestamp, time() + $gmt_offset) - $gmt_offset);
 }
 
 function wps_get_user($user): ?WP_User
@@ -141,6 +142,23 @@ function wps_get_term_meta($meta_key, $default = '', $term_id = 0, $single = tru
     }
 
     return $default;
+}
+
+function wps_get_post_excerpt($post = null, $length = 32, $more = '...'): string
+{
+    $post = wps_get_post($post);
+
+    $post_excerpt = $post->post_excerpt ?: $post->post_content;
+
+    $post_excerpt = StringHelper::filter_text($post_excerpt, true);
+
+    $post_excerpt = preg_replace("#\s([.,:;])\s#", "$1 ", $post_excerpt);
+
+    if ($length) {
+        $post_excerpt = StringHelper::truncate($post_excerpt, $length, $more);
+    }
+
+    return $post_excerpt;
 }
 
 function wps_convert_to_javascript_object(array $arr, $sequential_keys = false, $quotes = false, $beautiful_json = false): string

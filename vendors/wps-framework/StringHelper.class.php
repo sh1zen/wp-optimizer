@@ -486,8 +486,8 @@ class StringHelper
         $truncatedWords = array_slice($words, 0, $numWords);
         $truncatedText = implode(' ', $truncatedWords);
 
-        return $truncatedText. $ellipsis;
-     }
+        return $truncatedText . $ellipsis;
+    }
 
     /**
      * Check if a string is JSON encoded or not.
@@ -498,6 +498,11 @@ class StringHelper
 
         // Return a boolean whether the last error matches.
         return json_last_error() === JSON_ERROR_NONE;
+    }
+
+    public static function make_regex($regex, $delimiter): string
+    {
+        return str_replace($delimiter, "\\$delimiter", $regex);
     }
 
     /**

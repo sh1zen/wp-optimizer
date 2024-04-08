@@ -68,26 +68,6 @@ class Query
         return new self($output, $useReference);
     }
 
-    public static function parse_key_value($fields, $nullable = false): array
-    {
-        $parsed = [];
-
-        foreach ($fields as $key => $field) {
-
-            if (!is_array($field)) {
-                $field = ['key' => $key, 'compare' => '=', 'value' => $field];
-            }
-
-            if (is_null($field['value']) and !$nullable) {
-                continue;
-            }
-
-            $parsed[] = $field;
-        }
-
-        return $parsed;
-    }
-
     public function alter($table, $action)
     {
         return $this->wpdb()->query("ALTER TABLE $table $action;");
@@ -336,8 +316,6 @@ class Query
      */
     public function parse_fields($fields, $escape = true, $prefix = '', $unquoted = false): array
     {
-        global $wpdb;
-
         $parsed = [];
 
         // convert one level array into standard two level ones
@@ -351,16 +329,15 @@ class Query
                 continue;
             }
 
-            $iter_unquoted = $unquoted;
-
             $compare = $field['compare'] ?? false;
             $key = $maybe_table;
+            $iter_unquoted = $unquoted;
 
             if (is_array($field)) {
 
                 if ($prx = $this->get_table_alias($maybe_table)) {
                     // handles table_name => [...]
-                    $parsed = [...$parsed, ...$this->parse_fields($field, true, $prx, $unquoted)];
+                    $parsed = array_merge($parsed, $this->parse_fields($field, true, $prx, $unquoted));
                     continue;
                 }
 
@@ -368,6 +345,7 @@ class Query
 
                     // handles ([column => [table2 => column]], table1, ...)
                     $field = "$prx." . $field[key($field)];
+                    // allowed to unquote because is prefixed by a table (alias)
                     $iter_unquoted = true;
                 }
                 else {
@@ -386,61 +364,73 @@ class Query
                 }
             }
 
-            if (!$compare) {
-                $compare = (is_array($field) ? 'IN' : '=');
+            list($key, $compare, $field) = self::parse_key_compare_field($key, $compare, $field, $escape, $iter_unquoted, $prefix);
+
+            if (is_null($field)) {
+                continue;
             }
-            else {
-                $compare = strtoupper($compare);
-            }
-
-            if ($compare === 'BETWEEN') {
-                $field = "'$field[0]' AND '$field[1]'";
-
-            }
-            elseif (is_array($field)) {
-
-                $field = array_filter($field);
-
-                if (empty($field)) {
-                    continue;
-                }
-
-                if ($escape) {
-                    $field = array_map('esc_sql', $field);
-                }
-
-                if ($unquoted) {
-                    $field = "(" . implode(',', $field) . ")";
-                }
-                else {
-                    $field = "('" . implode("','", $field) . "')";
-                }
-            }
-            elseif (is_bool($field)) {
-                $field = $field ? 1 : 0;
-            }
-            elseif (preg_match('#^[(\s]*SELECT\s+#i', $field)) {
-                $field = "($field)";
-            }
-            else {
-                if ($escape) {
-                    $field = $compare === 'LIKE' ? "%" . esc_sql($wpdb->esc_like(trim($field, "' %"))) . "%" : esc_sql($field);
-                }
-                else {
-                    $field = $compare === 'LIKE' ? "%" . trim($field, "' %") . "%" : $field;
-                }
-
-                if (!$iter_unquoted) {
-                    $field = "'$field'";
-                }
-            }
-
-            $key = empty($prefix) ? $key : "$prefix.$key";
 
             $parsed[] = "$key $compare $field";
         }
 
         return $parsed;
+    }
+
+    private static function parse_key_compare_field($key, $compare, $value, $escape, $unquoted, $prefix = ''): array
+    {
+        global $wpdb;
+
+        if (!$compare) {
+            $compare = (is_array($value) ? 'IN' : '=');
+        }
+        else {
+            $compare = strtoupper($compare);
+        }
+
+        if (str_contains($compare, 'BETWEEN')) {
+            $value = "'$value[0]' AND '$value[1]'";
+        }
+        elseif (is_array($value)) {
+
+            $value = array_filter($value);
+
+            if (empty($value)) {
+                return [$key, $compare, null];
+            }
+
+            if ($escape) {
+                $value = array_map('esc_sql', $value);
+            }
+
+            if ($unquoted) {
+                $value = "(" . implode(',', $value) . ")";
+            }
+            else {
+                $value = "('" . implode("','", $value) . "')";
+            }
+        }
+        elseif (is_bool($value)) {
+            $value = $value ? 1 : 0;
+        }
+        elseif (preg_match('#^[(\s]*SELECT\s+#i', $value)) {
+            $value = "($value)";
+        }
+        else {
+            if ($escape) {
+                $value = $compare === 'LIKE' ? "%" . esc_sql($wpdb->esc_like(trim($value, "' %"))) . "%" : esc_sql($value);
+            }
+            else {
+                $value = $compare === 'LIKE' ? "%" . trim($value, "' %") . "%" : $value;
+            }
+
+            if (!$unquoted) {
+                $value = "'$value'";
+            }
+        }
+
+        $key = empty($prefix) ? $key : "$prefix.$key";
+
+        return [$key, $compare, $value];
     }
 
     public function wpdb()

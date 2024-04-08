@@ -43,14 +43,14 @@ function wps_run_upgrade($context, $version, $path): void
     wps($context)->settings->reset($settings);
 }
 
-function wps_maybe_upgrade($context, $version, $path): void
+function wps_maybe_upgrade($context, $new_version, $path): void
 {
     $current_version = wps($context)->settings->get('ver', false);
 
     // need upgrade
-    if (!$current_version or version_compare($current_version, $version, '<')) {
+    if (!$current_version or version_compare($current_version, $new_version, '<')) {
 
-        wps_run_upgrade($context, $version, $path);
+        wps_run_upgrade($context, $new_version, $path);
 
         wps_core()->is_upgrading(true);
 

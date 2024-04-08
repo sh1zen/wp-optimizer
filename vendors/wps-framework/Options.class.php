@@ -238,7 +238,7 @@ class Options
             return $default;
         }
 
-        $rows = $wpdb->get_results($wpdb->prepare("SELECT * FROM " . $this->table_name() . " WHERE item = %s AND context = %s " . ($limiter ? "LIMIT {$limiter}" : "") . " OFFSET {$offset}", $option, $context));
+        $rows = $wpdb->get_results($wpdb->prepare("SELECT * FROM " . $this->table_name() . " WHERE item = %s AND context = %s " . ($limiter ? "LIMIT $limiter" : "") . " OFFSET {$offset}", $option, $context));
 
         if (!$rows) {
             return $default;
@@ -270,7 +270,7 @@ class Options
         return $values;
     }
 
-    public function remove_by_id($id)
+    public function remove_by_id($id): bool
     {
         global $wpdb;
 
@@ -318,7 +318,7 @@ class Options
         return $res;
     }
 
-    public function remove_by_container($container)
+    public function remove_by_container($container): bool
     {
         global $wpdb;
 

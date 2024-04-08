@@ -187,6 +187,21 @@ input.wps-apple-switch:checked:after {
     box-shadow: 2px 0 4px rgb(9 255 119 / .2)
 }
 
+.wps-code{
+    border-radius: 3px;
+    margin: 10px;
+    text-align: justify;
+    font-family: monospace;
+    font-weight: 800;
+    padding: 5px;
+    box-shadow:0 0 4px 2px rgb(0 0 0 / 20%);
+    background: #f0f0f1;
+    color: #000;
+    text-transform: uppercase;
+    text-decoration: none;
+    display: block;
+}
+
 .wps-ar-tabs {
     width: 100%;
     margin: 0;

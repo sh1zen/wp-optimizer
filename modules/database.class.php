@@ -154,7 +154,12 @@ class Mod_Database extends Module
 
                     if (is_readable(self::BACKUP_PATH)) {
 
-                        $database_files = glob(self::BACKUP_PATH . "*.{sql,gz}", GLOB_BRACE);
+                        $database_files = array_filter(
+                            array_merge(
+                                glob(self::BACKUP_PATH . "*.sql"),
+                                glob(self::BACKUP_PATH . "*.gz")
+                            )
+                        );
 
                         if (empty($database_files)) {
                             echo '<tr><td class="wps-centered" colspan="6">' . __('There Are No Database Backup Files Available.', 'wpopt') . '</td></tr>';

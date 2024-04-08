@@ -21,6 +21,7 @@ class Rewriter
     private array $query_args = [];
     private string $fragment = '';
     private string $request_uri;
+    private string $host;
 
     private function __construct($url = null, $base = null)
     {
@@ -37,11 +38,14 @@ class Rewriter
 
         $parsed = parse_url($this->raw_url);
 
+        $this->host = $parsed['host'] ?? $_SERVER['HTTP_HOST'];
+
         $this->base_url = $base ?: "{$parsed['scheme']}://{$parsed['host']}/";
         $this->request_uri = $parsed['path'] ?? '';
 
         // handle query args
         $this->query = $parsed['query'] ?? '';
+
         if (!empty($this->query)) {
             parse_str($this->query, $this->query_args);
         }
@@ -65,12 +69,8 @@ class Rewriter
         $this->matched_rule = '';
     }
 
-    public static function getClone($url = null, $base = null): Rewriter
+    public static function getClone(): Rewriter
     {
-        if (!empty($url) or !empty($base)) {
-            return self::getInstance();
-        }
-
         return clone self::getInstance();
     }
 
@@ -100,7 +100,7 @@ class Rewriter
 
         $regex_endpoint = rtrim($regex_endpoint, '/');
 
-        return (string) preg_replace('#/+#', '/', "^$regex_endpoint/?$");
+        return (string)preg_replace('#/+#', '/', "^$regex_endpoint/?$");
     }
 
     public static function reload()
@@ -406,5 +406,10 @@ class Rewriter
     {
         $this->base_url = $admin_url;
         return $this;
+    }
+
+    public function host()
+    {
+        return $this->host;
     }
 }

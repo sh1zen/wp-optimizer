@@ -5,9 +5,7 @@
  * @license   http://www.gnu.org/licenses/gpl.html GNU/GPL
  */
 
-define('WPOPT_DEBUG', $_SERVER["SERVER_ADDR"] === '127.0.0.1');
-
-const WPOPT_STORAGE = WP_CONTENT_DIR . '/wpopt/';
+define('WPOPT_DEBUG', !wps_core()->online);
 
 if (!defined("WPOPT_CACHE_DB_THRESHOLD_STORE")) {
     define('WPOPT_CACHE_DB_THRESHOLD_STORE', 0.001);

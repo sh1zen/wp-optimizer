@@ -50,7 +50,7 @@ class WP_Htaccess
         return $this->rules;
     }
 
-    public function has_rule($rule_name)
+    public function has_rule($rule_name): bool
     {
         $start_marker = '# WPOPT_MARKER_BEGIN_' . strtoupper($rule_name);
         $end_marker = '# WPOPT_MARKER_END_' . strtoupper($rule_name);
@@ -109,21 +109,21 @@ class WP_Htaccess
         $ext_types = self::get_ext_types(array('image', 'fonts', 'audio', 'document', 'spreadsheet', 'text', 'code'));
         $mime_types = self::get_mime_types($ext_types);
 
-        $rules = '';
-
         if (!$mime_types) {
             return '';
         }
 
-        $rules .= "<IfModule mod_mime.c>\n";
+        $rules = new RuleUtil(true);
+
+        $rules->add("<IfModule mod_mime.c>");
 
         foreach ($mime_types as $mime_type => $ext) {
-            $rules .= "    AddType " . $mime_type . " ." . implode(' .', $ext) . "\n";
+            $rules->add("AddType $mime_type ." . implode(' .', $ext), 4);
         }
 
-        $rules .= "</IfModule>\n";
+        $rules->autoLine(false)->add("</IfModule>");
 
-        return $rules;
+        return $rules->export();
     }
 
     private static function get_ext_types($filter = array(), $key_value = false): array
@@ -410,11 +410,11 @@ class WP_Htaccess
             }
             else {
 
+                $cache_control = [];
+
                 $cache_policy['immutable'] = ($cache_policy['immutable'] and Settings::get_option($settings, 'srv_browser_cache.immutable', false));
 
                 $headers_rules .= "        Header set Pragma \"public\"\n";
-
-                $cache_control = array();
 
                 $cache_control[] = $cache_policy['private'] ? 'private' : 'public';
 

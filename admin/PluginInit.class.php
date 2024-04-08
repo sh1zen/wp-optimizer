@@ -40,10 +40,10 @@ class PluginInit
 
         $this->load_textdomain();
 
-        $this->maybe_upgrade();
+        wps_maybe_upgrade('wpopt', WPOPT_VERSION, WPOPT_ADMIN . "upgrades/");
     }
 
-    private function register_actions()
+    private function register_actions(): void
     {
         // Plugin Activation/Deactivation.
         register_activation_hook(WPOPT_FILE, array($this, 'plugin_activation'));
@@ -67,21 +67,6 @@ class PluginInit
         }
 
         load_textdomain('wpopt', UtilEnv::normalize_path(WPOPT_ABSPATH . 'languages/', true) . $mo_file);
-    }
-
-    private function maybe_upgrade()
-    {
-        $version = wps('wpopt')->settings->get('ver', false);
-
-        // need upgrade
-        if (!$version or version_compare($version, WPOPT_VERSION, '<')) {
-
-            wps_run_upgrade('wpopt', WPOPT_VERSION, WPOPT_ADMIN . "upgrades/");
-
-            wps_core()->is_upgrading(true);
-
-            wps('wpopt')->moduleHandler->upgrade();
-        }
     }
 
     public static function getInstance(): PluginInit
