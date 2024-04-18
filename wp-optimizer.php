@@ -13,10 +13,10 @@
  * Author URI: https://sh1zen.github.io/
  * Text Domain: wpopt
  * Domain Path: /languages
- * Version: 2.2.8
+ * Version: 2.3.0
  */
 
-const WPOPT_VERSION = '2.2.8';
+const WPOPT_VERSION = '2.3.0';
 const WPOPT_FILE = __FILE__;
 const WPOPT_ABSPATH = __DIR__ . '/';
 const WPOPT_INCPATH = WPOPT_ABSPATH . 'inc/';

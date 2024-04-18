@@ -137,7 +137,7 @@ class Mod_Media extends Module
         wp_enqueue_script('wpopt-media-page', UtilEnv::path_to_url(WPOPT_ABSPATH) . 'modules/supporters/media/media.js', array('vendor-wps-js'), WPOPT_VERSION);
     }
 
-    public function render_mediaCleaner_Panel()
+    public function render_mediaCleaner_Panel(): string
     {
         require_once WPOPT_SUPPORTERS . '/media/Media_Table.class.php';
 
@@ -149,6 +149,7 @@ class Mod_Media extends Module
 
         ob_start();
         ?>
+        <block class="wps"><b><?php echo __('Find and remove orphaned media', 'wpopt') ?></b></block>
         <block>
             <?php if ($this->status('orphan-media-scanner') === 'running'): ?>
                 <h3><?php _e('Orphaned media scan is running.', 'wpopt'); ?></h3>
@@ -193,10 +194,10 @@ class Mod_Media extends Module
             <?php
         }
 
-        return ob_get_clean();
+        return (string)ob_get_clean();
     }
 
-    public function render_imagesOptimizer_Panel()
+    public function render_imagesOptimizer_Panel(): string
     {
         $nonce = wp_create_nonce('wpopt-ajax-nonce');
         ob_start();
@@ -253,7 +254,7 @@ class Mod_Media extends Module
             </notice>
         </section>
         <?php
-        return ob_get_clean();
+        return (string)ob_get_clean();
     }
 
     public function render_sub_modules(): void
@@ -287,7 +288,7 @@ class Mod_Media extends Module
         <?php
     }
 
-    public function cron_handler($args = array())
+    public function cron_handler($args = array()): void
     {
         $this->ipc_scanner_cron_handler();
     }
@@ -313,7 +314,7 @@ class Mod_Media extends Module
         }
     }
 
-    public function render_stats($args = array())
+    public function render_stats($args = array()): string
     {
         global $wpdb;
 
@@ -387,7 +388,7 @@ class Mod_Media extends Module
         </section>
         <?php
 
-        return ob_get_clean();
+        return (string)ob_get_clean();
     }
 
     public function restricted_access($context = ''): bool

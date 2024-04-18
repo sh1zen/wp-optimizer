@@ -19,8 +19,6 @@ use WPS\core\UtilEnv;
 /**
  * Core class used to display activity logs.
  *
- * @since 2.1.0
- *
  * @see \WP_List_Table
  */
 class ActivityLog extends \WP_List_Table

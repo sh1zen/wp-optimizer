@@ -4,7 +4,7 @@ msgstr ""
 "Project-Id-Version: wpopt-translation\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/wp-"
 "optimizer/\n"
-"POT-Creation-Date: 2024-04-11 13:43+0200\n"
+"POT-Creation-Date: 2024-04-19 01:35+0200\n"
 "PO-Revision-Date: 2020-05-13 02:34+0200\n"
 "Last-Translator: sh1zen\n"
 "Language-Team: sh1zen\n"
@@ -44,7 +44,7 @@ msgstr ""
 msgid "WPOPT Settings"
 msgstr ""
 
-#: admin/PagesHandler.class.php:79 admin/PluginInit.class.php:232
+#: admin/PagesHandler.class.php:79 admin/PluginInit.class.php:230
 msgid "Settings"
 msgstr ""
 
@@ -299,7 +299,7 @@ msgstr ""
 msgid "About me"
 msgstr ""
 
-#: admin/PluginInit.class.php:213
+#: admin/PluginInit.class.php:211
 msgid "Buy me a beer"
 msgstr ""
 
@@ -327,79 +327,79 @@ msgstr ""
 msgid "Reset Log"
 msgstr ""
 
-#: modules/activitylog.class.php:263
+#: modules/activitylog.class.php:264
 msgid "All activities have been successfully deleted."
 msgstr ""
 
-#: modules/activitylog.class.php:452
+#: modules/activitylog.class.php:453
 msgid "Log IP addresses"
 msgstr ""
 
-#: modules/activitylog.class.php:453
+#: modules/activitylog.class.php:454
 msgid "Log User Agent"
 msgstr ""
 
-#: modules/activitylog.class.php:454
+#: modules/activitylog.class.php:455
 msgid "Log REQUEST arguments"
 msgstr ""
 
-#: modules/activitylog.class.php:459
+#: modules/activitylog.class.php:460
 msgid "Auto clear logs"
 msgstr ""
 
-#: modules/activitylog.class.php:460
+#: modules/activitylog.class.php:461
 msgid "Keeps log for (days)"
 msgstr ""
 
-#: modules/activitylog.class.php:464
+#: modules/activitylog.class.php:465
 msgid "User activity log (login, registration, deletion)"
 msgstr ""
 
-#: modules/activitylog.class.php:465
+#: modules/activitylog.class.php:466
 msgid "Posts activity log"
 msgstr ""
 
-#: modules/activitylog.class.php:466
+#: modules/activitylog.class.php:467
 msgid "Terms activity log"
 msgstr ""
 
-#: modules/activitylog.class.php:467
+#: modules/activitylog.class.php:468
 msgid "Attachments activity log"
 msgstr ""
 
-#: modules/activitylog.class.php:472
+#: modules/activitylog.class.php:473
 msgid "Options update log"
 msgstr ""
 
-#: modules/activitylog.class.php:473
+#: modules/activitylog.class.php:474
 msgid "Plugin upgrades/installs log"
 msgstr ""
 
-#: modules/activitylog.class.php:477
+#: modules/activitylog.class.php:478
 msgid "404 log"
 msgstr ""
 
-#: modules/activitylog.class.php:478
+#: modules/activitylog.class.php:479
 msgid "Bad query (maybe info gathering) activity log"
 msgstr ""
 
-#: modules/activitylog.class.php:479
+#: modules/activitylog.class.php:480
 msgid "Try to match xss attempts"
 msgstr ""
 
-#: modules/activitylog.class.php:480
+#: modules/activitylog.class.php:481
 msgid "Try to match sql injections attempts"
 msgstr ""
 
-#: modules/activitylog.class.php:481
+#: modules/activitylog.class.php:482
 msgid "Try to match access to inconsistent data"
 msgstr ""
 
-#: modules/activitylog.class.php:482
+#: modules/activitylog.class.php:483
 msgid "Custom rules (one per line)"
 msgstr ""
 
-#: modules/activitylog.class.php:490
+#: modules/activitylog.class.php:491
 msgid ""
 "Provide a list of custom regexes that you want to use to monitor bad "
 "url."
@@ -574,7 +574,7 @@ msgstr ""
 
 #: modules/database.class.php:147
 #: modules/supporters/database/DB_List_Table.class.php:137
-#: modules/supporters/media/Media_Table.class.php:130
+#: modules/supporters/media/Media_Table.class.php:128
 msgid "Size"
 msgstr ""
 
@@ -607,7 +607,7 @@ msgstr ""
 
 #: modules/database.class.php:219
 #: modules/supporters/database/DB_List_Table.class.php:91
-#: modules/supporters/media/Media_Table.class.php:199
+#: modules/supporters/media/Media_Table.class.php:197
 msgid "Delete"
 msgstr ""
 
@@ -882,7 +882,7 @@ msgid "% Of"
 msgstr ""
 
 #: modules/database.class.php:634
-#: modules/supporters/activity-log/ActivityLog_Table.class.php:405
+#: modules/supporters/activity-log/ActivityLog_Table.class.php:403
 msgid "Action"
 msgstr ""
 
@@ -954,42 +954,46 @@ msgstr ""
 msgid "Action not supported"
 msgstr ""
 
-#: modules/media.class.php:154
+#: modules/media.class.php:152
+msgid "Find and remove orphaned media"
+msgstr ""
+
+#: modules/media.class.php:155
 msgid "Orphaned media scan is running."
 msgstr ""
 
-#: modules/media.class.php:161
+#: modules/media.class.php:162
 msgid "Scan now"
 msgstr ""
 
-#: modules/media.class.php:167 modules/media.class.php:244
+#: modules/media.class.php:168 modules/media.class.php:245
 msgid "Pause"
 msgstr ""
 
-#: modules/media.class.php:174 modules/media.class.php:251
-#: modules/media.class.php:384
+#: modules/media.class.php:175 modules/media.class.php:252
+#: modules/media.class.php:385
 msgid "Reset"
 msgstr ""
 
-#: modules/media.class.php:180
+#: modules/media.class.php:181
 msgid "No orphaned media found."
 msgstr ""
 
-#: modules/media.class.php:206
+#: modules/media.class.php:207
 msgid "Before start optimizing makes sure you did:"
 msgstr ""
 
-#: modules/media.class.php:209
+#: modules/media.class.php:210
 #, php-format
 msgid "Read related <a href=\"%s\">FAQ</a>."
 msgstr ""
 
-#: modules/media.class.php:212
+#: modules/media.class.php:213
 #, php-format
 msgid "Set up your optimization parameters <a href=\"%s\">here</a>."
 msgstr ""
 
-#: modules/media.class.php:215
+#: modules/media.class.php:216
 #, php-format
 msgid ""
 "Note that optimization will run in background and time required "
@@ -997,147 +1001,147 @@ msgid ""
 "active."
 msgstr ""
 
-#: modules/media.class.php:222
+#: modules/media.class.php:223
 #, php-format
 msgid ""
 "To proceed with image optimization you need to install <a "
 "href=\"%s\">imagick</a> or <a href=\"%s\">GD</a> on your server."
 msgstr ""
 
-#: modules/media.class.php:225
+#: modules/media.class.php:226
 #, php-format
 msgid ""
 "To guarantee a complete image optimization support, install <a "
 "href=\"%s\">imagick</a> on your server."
 msgstr ""
 
-#: modules/media.class.php:231
+#: modules/media.class.php:232
 msgid "Optimize all media library."
 msgstr ""
 
-#: modules/media.class.php:232
+#: modules/media.class.php:233
 #, php-format
 msgid ""
 "Optimization will run silently in background (<a href=\"%s\">Cron</a> "
 "must be active)."
 msgstr ""
 
-#: modules/media.class.php:238
+#: modules/media.class.php:239
 msgid "Start"
 msgstr ""
 
-#: modules/media.class.php:269
+#: modules/media.class.php:270
 msgid "Images optimizer"
 msgstr ""
 
-#: modules/media.class.php:274
+#: modules/media.class.php:275
 msgid "Media cleaner"
 msgstr ""
 
-#: modules/media.class.php:279
+#: modules/media.class.php:280
 msgid "Stats"
 msgstr ""
 
-#: modules/media.class.php:362
+#: modules/media.class.php:363
 #, php-format
 msgid "Media optimized: %d"
 msgstr ""
 
-#: modules/media.class.php:362
+#: modules/media.class.php:363
 #, php-format
 msgid "Left: %d."
 msgstr ""
 
-#: modules/media.class.php:366
+#: modules/media.class.php:367
 msgid "Processed media library:"
 msgstr ""
 
-#: modules/media.class.php:372
+#: modules/media.class.php:373
 #, php-format
 msgid "Space freed up: %s:"
 msgstr ""
 
-#: modules/media.class.php:425
+#: modules/media.class.php:426
 msgid "Force images to use browser built-in loading lazy advantages"
 msgstr ""
 
-#: modules/media.class.php:429
+#: modules/media.class.php:430
 msgid "Images optimization preferences"
 msgstr ""
 
-#: modules/media.class.php:430
+#: modules/media.class.php:431
 msgid "Auto optimize uploads"
 msgstr ""
 
-#: modules/media.class.php:430
+#: modules/media.class.php:431
 msgid "set it here"
 msgstr ""
 
-#: modules/media.class.php:431
+#: modules/media.class.php:432
 msgid "Use Imagick (if installed)"
 msgstr ""
 
-#: modules/media.class.php:432
+#: modules/media.class.php:433
 msgid "Optimization quality"
 msgstr ""
 
-#: modules/media.class.php:433
+#: modules/media.class.php:434
 msgid "Keep all the EXIF data of your images"
 msgstr ""
 
-#: modules/media.class.php:434
+#: modules/media.class.php:435
 msgid "Resize larger images"
 msgstr ""
 
-#: modules/media.class.php:435
+#: modules/media.class.php:436
 msgid "max with (px)"
 msgstr ""
 
-#: modules/media.class.php:436
+#: modules/media.class.php:437
 msgid "max height (px)"
 msgstr ""
 
-#: modules/media.class.php:440
+#: modules/media.class.php:441
 msgid "Formats"
 msgstr ""
 
-#: modules/media.class.php:441
+#: modules/media.class.php:442
 msgid "Convert all images to new webp format"
 msgstr ""
 
-#: modules/media.class.php:442
+#: modules/media.class.php:443
 msgid "Optimize JPG/JPEG"
 msgstr ""
 
-#: modules/media.class.php:443
+#: modules/media.class.php:444
 msgid "Optimize PNG"
 msgstr ""
 
-#: modules/media.class.php:444
+#: modules/media.class.php:445
 msgid "Optimize GIF"
 msgstr ""
 
-#: modules/media.class.php:445
+#: modules/media.class.php:446
 msgid "Optimize WEBP"
 msgstr ""
 
-#: modules/media.class.php:446
+#: modules/media.class.php:447
 msgid "Optimize other formats (tiff, heic, bmp)"
 msgstr ""
 
-#: modules/media.class.php:454
+#: modules/media.class.php:455
 msgid ""
 "Automatically compresses and resizes images for faster loading, "
 "improving website performance."
 msgstr ""
 
-#: modules/media.class.php:455
+#: modules/media.class.php:456
 msgid ""
 "A PHP extension for creating, modifying and manipulating images, it "
 "makes optimization faster."
 msgstr ""
 
-#: modules/media.class.php:456
+#: modules/media.class.php:457
 msgid ""
 "WebP is a modern image format with superior compression efficiency, "
 "reducing file size and improving website performance."
@@ -1201,97 +1205,97 @@ msgstr ""
 msgid "Import Plugin options"
 msgstr ""
 
-#: modules/supporters/activity-log/ActivityLog_Table.class.php:35
-#: modules/supporters/media/Media_Table.class.php:37
+#: modules/supporters/activity-log/ActivityLog_Table.class.php:33
+#: modules/supporters/media/Media_Table.class.php:35
 msgid "List view"
 msgstr ""
 
-#: modules/supporters/activity-log/ActivityLog_Table.class.php:43
+#: modules/supporters/activity-log/ActivityLog_Table.class.php:41
 msgid "activity"
 msgstr ""
 
-#: modules/supporters/activity-log/ActivityLog_Table.class.php:44
+#: modules/supporters/activity-log/ActivityLog_Table.class.php:42
 msgid "activities"
 msgstr ""
 
-#: modules/supporters/activity-log/ActivityLog_Table.class.php:54
+#: modules/supporters/activity-log/ActivityLog_Table.class.php:52
 msgid "Activities"
 msgstr ""
 
-#: modules/supporters/activity-log/ActivityLog_Table.class.php:73
+#: modules/supporters/activity-log/ActivityLog_Table.class.php:71
 msgid "Search"
 msgstr ""
 
-#: modules/supporters/activity-log/ActivityLog_Table.class.php:117
+#: modules/supporters/activity-log/ActivityLog_Table.class.php:115
 msgid "All Time"
 msgstr ""
 
-#: modules/supporters/activity-log/ActivityLog_Table.class.php:118
+#: modules/supporters/activity-log/ActivityLog_Table.class.php:116
 msgid "Today"
 msgstr ""
 
-#: modules/supporters/activity-log/ActivityLog_Table.class.php:119
+#: modules/supporters/activity-log/ActivityLog_Table.class.php:117
 msgid "Yesterday"
 msgstr ""
 
-#: modules/supporters/activity-log/ActivityLog_Table.class.php:120
+#: modules/supporters/activity-log/ActivityLog_Table.class.php:118
 msgid "This Week"
 msgstr ""
 
-#: modules/supporters/activity-log/ActivityLog_Table.class.php:121
+#: modules/supporters/activity-log/ActivityLog_Table.class.php:119
 msgid "This Month"
 msgstr ""
 
-#: modules/supporters/activity-log/ActivityLog_Table.class.php:130
+#: modules/supporters/activity-log/ActivityLog_Table.class.php:128
 msgid "Filter"
 msgstr ""
 
-#: modules/supporters/activity-log/ActivityLog_Table.class.php:141
+#: modules/supporters/activity-log/ActivityLog_Table.class.php:139
 msgid "All Actions"
 msgstr ""
 
-#: modules/supporters/activity-log/ActivityLog_Table.class.php:156
+#: modules/supporters/activity-log/ActivityLog_Table.class.php:154
 msgid "Reset Filters"
 msgstr ""
 
-#: modules/supporters/activity-log/ActivityLog_Table.class.php:177
+#: modules/supporters/activity-log/ActivityLog_Table.class.php:175
 msgid "Export File Format"
 msgstr ""
 
-#: modules/supporters/activity-log/ActivityLog_Table.class.php:183
+#: modules/supporters/activity-log/ActivityLog_Table.class.php:181
 msgid "Export Data"
 msgstr ""
 
-#: modules/supporters/activity-log/ActivityLog_Table.class.php:280
+#: modules/supporters/activity-log/ActivityLog_Table.class.php:278
 #, php-format
 msgid "%s ago"
 msgstr ""
 
-#: modules/supporters/activity-log/ActivityLog_Table.class.php:401
+#: modules/supporters/activity-log/ActivityLog_Table.class.php:399
 msgid "Time"
 msgstr ""
 
-#: modules/supporters/activity-log/ActivityLog_Table.class.php:402
+#: modules/supporters/activity-log/ActivityLog_Table.class.php:400
 msgid "User"
 msgstr ""
 
-#: modules/supporters/activity-log/ActivityLog_Table.class.php:403
+#: modules/supporters/activity-log/ActivityLog_Table.class.php:401
 msgid "IP"
 msgstr ""
 
-#: modules/supporters/activity-log/ActivityLog_Table.class.php:404
+#: modules/supporters/activity-log/ActivityLog_Table.class.php:402
 msgid "Meta"
 msgstr ""
 
-#: modules/supporters/activity-log/ActivityLog_Table.class.php:406
+#: modules/supporters/activity-log/ActivityLog_Table.class.php:404
 msgid "User-Agent"
 msgstr ""
 
-#: modules/supporters/activity-log/ActivityLog_Table.class.php:407
+#: modules/supporters/activity-log/ActivityLog_Table.class.php:405
 msgid "Request"
 msgstr ""
 
-#: modules/supporters/activity-log/ActivityLog_Table.class.php:424
+#: modules/supporters/activity-log/ActivityLog_Table.class.php:422
 msgid "No Logs found."
 msgstr ""
 
@@ -1309,7 +1313,7 @@ msgid "Optimize"
 msgstr ""
 
 #: modules/supporters/database/DB_List_Table.class.php:89
-#: modules/supporters/database/DB_List_Table.class.php:273
+#: modules/supporters/database/DB_List_Table.class.php:274
 msgid "Repair"
 msgstr ""
 
@@ -1377,41 +1381,61 @@ msgstr ""
 msgid "Ok"
 msgstr ""
 
-#: modules/supporters/database/DB_List_Table.class.php:313
+#: modules/supporters/database/DB_List_Table.class.php:293
+msgid "Table Name N/D"
+msgstr ""
+
+#: modules/supporters/database/DB_List_Table.class.php:294
+msgid "Rows N/D"
+msgstr ""
+
+#: modules/supporters/database/DB_List_Table.class.php:295
+msgid "Length N/D"
+msgstr ""
+
+#: modules/supporters/database/DB_List_Table.class.php:296
+msgid "N/D"
+msgstr ""
+
+#: modules/supporters/database/DB_List_Table.class.php:298
+msgid "Engine N/D"
+msgstr ""
+
+#: modules/supporters/database/DB_List_Table.class.php:314
 msgid ""
 "If no tables are selected, the action will run on all database tables. "
 "Be careful!"
 msgstr ""
 
-#: modules/supporters/media/Media_Table.class.php:53
+#: modules/supporters/media/Media_Table.class.php:51
 msgid "Images per page"
 msgstr ""
 
-#: modules/supporters/media/Media_Table.class.php:128
+#: modules/supporters/media/Media_Table.class.php:126
 msgid "Image"
 msgstr ""
 
-#: modules/supporters/media/Media_Table.class.php:129
+#: modules/supporters/media/Media_Table.class.php:127
 msgid "Path"
 msgstr ""
 
-#: modules/supporters/media/Media_Table.class.php:131
+#: modules/supporters/media/Media_Table.class.php:129
 msgid "Last Modify Date"
 msgstr ""
 
-#: modules/supporters/media/Media_Table.class.php:139
+#: modules/supporters/media/Media_Table.class.php:137
 msgid "No media files found."
 msgstr ""
 
-#: modules/supporters/media/Media_Table.class.php:185
+#: modules/supporters/media/Media_Table.class.php:183
 msgid "File name:"
 msgstr ""
 
-#: modules/supporters/media/Media_Table.class.php:200
+#: modules/supporters/media/Media_Table.class.php:198
 msgid "Ignore"
 msgstr ""
 
-#: modules/supporters/media/Media_Table.class.php:232
+#: modules/supporters/media/Media_Table.class.php:230
 msgid "View"
 msgstr ""
 

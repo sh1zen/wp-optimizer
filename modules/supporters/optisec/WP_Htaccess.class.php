@@ -13,7 +13,6 @@ use WPS\core\RuleUtil;
 
 /**
  * Class to handle Security and Optimization requests
- * @since 1.5.0
  */
 class WP_Htaccess
 {

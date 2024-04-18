@@ -160,7 +160,6 @@ class PluginInit
 
         /**
          * Hook for the plugin activation
-         * @since 1.4.0
          */
         do_action('wpopt-activate');
     }
@@ -193,7 +192,6 @@ class PluginInit
 
         /**
          * Hook for the plugin deactivation
-         * @since 1.4.0
          */
         do_action('wpopt-deactivate');
     }

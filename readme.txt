@@ -5,7 +5,7 @@ Donate link: https://www.paypal.com/donate?business=dev.sh1zen%40outlook.it&item
 Requires at least: 5.0.0
 Tested up to: 6.5
 Requires PHP: 7.4
-Stable tag: 2.2.8
+Stable tag: 2.3.0
 License: GNU v3.0 License
 URI: https://github.com/sh1zen/wp-optimizer/blob/master/LICENSE
 
@@ -169,12 +169,9 @@ WordPress plugin.
 
 = Why does speed matter? =
 
-Search engines like Google, measure and factor in the speed of websites in their ranking algorithm. When they recommend
-a site they want to make sure users find what they're looking for quickly. So in effect you and Google should have the
-same objective.
+Search engines like Google, measure and factor in the speed of websites in their ranking algorithm. When they recommend a site they want to make sure users find what they're looking for quickly. So in effect you and Google should have the same objective.
 
-Speed is among the most significant success factors websites face. In fact, your site's speed directly affects your
-income (revenue) &mdash; it's a fact.
+Speed is among the most significant success factors websites face. In fact, your site's speed directly affects your income (revenue) &mdash; it's a fact.
 
 Speed it's a game changer in visibility, and some consequences of poor performance are:
 
@@ -191,9 +188,10 @@ That should work! Otherwise, go to the new added module "Setting" and try a rese
 
 == Changelog ==
 
-= 2.2.8 =
+= 2.3.0 =
 
 * added blueprint.json for WordPress preview
+* improved ImagesProcessor
 * updated admin UI
 * updated translations
 * fixed some compatibility bugs

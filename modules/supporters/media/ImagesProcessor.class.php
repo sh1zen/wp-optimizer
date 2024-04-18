@@ -23,6 +23,8 @@ use WPS\core\UtilEnv;
 
 class ImagesProcessor
 {
+    private static string $allowedMimeTypeRegex = "(jpe?g|jpe|p(jpe|n)g|gif|webp|bmp|xbm|wbmp|tiff?|heic)";
+
     private array $settings;
 
     private array $metadata = [];
@@ -161,7 +163,7 @@ class ImagesProcessor
 
         while (UtilEnv::safe_time_limit(5, 60) !== false) {
 
-            $post_ids = $wpdb->get_col("SELECT ID FROM {$wpdb->posts} WHERE post_type = 'attachment' AND ID > {$scannedID} ORDER BY ID ASC LIMIT 20");
+            $post_ids = $wpdb->get_col("SELECT ID FROM $wpdb->posts WHERE post_type = 'attachment' AND ID > $scannedID AND post_mime_type REGEXP '" . self::$allowedMimeTypeRegex . "' ORDER BY ID ASC LIMIT 20");
 
             if (empty($post_ids)) {
                 break;
@@ -194,11 +196,11 @@ class ImagesProcessor
         return $return;
     }
 
-    public function scan_post($post_ID)
+    public function scan_post($attachment_id)
     {
         global $wpdb;
 
-        $metadata = wp_get_attachment_metadata($post_ID, true);
+        $metadata = wp_get_attachment_metadata($attachment_id, true);
 
         if (!$metadata) {
             return IPC_MEDIA_NOT_FOUND;
@@ -208,18 +210,25 @@ class ImagesProcessor
             return IPC_TIME_LIMIT;
         }
 
-        $sub_path = UtilEnv::normalize_path(pathinfo($metadata['file'], PATHINFO_DIRNAME), true);
+        // fix to handle corrupted metadata
+        $file = $metadata['file'] ?: wps_get_post_meta('_wp_attached_file', '', $attachment_id);
+
+        if (empty($file)) {
+            return IPC_MEDIA_NOT_FOUND;
+        }
+
+        $sub_path = UtilEnv::normalize_path(pathinfo($file, PATHINFO_DIRNAME), true);
 
         $image_path_container = UtilEnv::normalize_path(UtilEnv::wp_upload_dir('basedir') . '/' . $sub_path, true);
 
-        if ($this->optimize_image($image_path_container . basename($metadata['file']), true) === IPC_SUCCESS) {
+        if ($this->optimize_image($image_path_container . basename($file), true) === IPC_SUCCESS) {
 
             $wpdb->update($wpdb->posts,
                 [
                     'post_mime_type' => $this->get_metadata('mime-type'),
                     'guid'           => UtilEnv::path_to_url($this->get_metadata('file'), true),
                 ],
-                ['ID' => $post_ID]
+                ['ID' => $attachment_id]
             );
 
             $metadata['file'] = $sub_path . basename($this->get_metadata('file'));
@@ -227,7 +236,7 @@ class ImagesProcessor
             $metadata['height'] = $this->get_metadata('height');
             $metadata['filesize'] = $this->get_metadata('filesize');
 
-            update_post_meta($post_ID, "_wp_attached_file", $metadata['file']);
+            update_post_meta($attachment_id, "_wp_attached_file", $metadata['file']);
         }
 
         if (isset($metadata['original_image'])) {
@@ -275,7 +284,7 @@ class ImagesProcessor
             }
         }
 
-        wp_update_attachment_metadata($post_ID, $metadata);
+        wp_update_attachment_metadata($attachment_id, $metadata);
 
         return IPC_SUCCESS;
     }

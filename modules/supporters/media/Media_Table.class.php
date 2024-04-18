@@ -16,8 +16,6 @@ use WPS\core\UtilEnv;
 /**
  * Core class used to display media items in a list table.
  *
- * @since 1.5.0
- *
  * @see \WP_List_Table
  */
 class Media_Table extends \WP_List_Table

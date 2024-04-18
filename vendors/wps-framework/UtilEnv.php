@@ -433,7 +433,7 @@ class UtilEnv
             }
         }
         else {
-            if (is_readable("/proc/stat")) {
+            if (@is_readable("/proc/stat")) {
 
                 // Collect 2 samples - each with 1 second period
                 // See: https://de.wikipedia.org/wiki/Load#Der_Load_Average_auf_Unix-Systemen
