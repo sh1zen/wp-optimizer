@@ -72,6 +72,10 @@ function wps(string $context = 'wps', $args = false, $components = [])
 {
     static $cached = [];
 
+    if ($context == 'dump') {
+        return array_keys($cached);
+    }
+
     if ($args or !empty($components)) {
 
         if (!isset($cached[$context]) or !is_object($cached[$context])) {
@@ -114,6 +118,24 @@ function wps_init(): void
     );
 
     wps_maybe_upgrade('wps', WPS_VERSION, __DIR__ . '/upgrades/');
+}
+
+function wps_uninstall(): bool
+{
+    global $wpdb;
+
+    $uby = array_flip(wps('dump'));
+
+    unset($uby['wps']);
+
+    if (count(array_filter($uby)) <= 1) {
+        $wpdb->query("DROP TABLE IF EXISTS " . wps('wps')->options->table_name());
+        delete_option('wps');
+
+        return true;
+    }
+
+    return false;
 }
 
 wps_init();

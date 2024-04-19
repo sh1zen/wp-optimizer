@@ -6,6 +6,7 @@
  */
 
 use WPS\core\Rewriter;
+use WPS\core\StringHelper;
 use WPS\core\TextReplacer;
 
 if (!defined('WPS_ERROR_FATALS')) {
@@ -71,6 +72,8 @@ function wps_error_handler($hook, callable $callback = null, $notify_dev = true)
 
     $error_handler = (function ($nro, $string, $file, $line) use ($index, $callback, $hook, $notify_dev) {
 
+        global $wp_version;
+
         if (str_contains($file, $hook)) {
 
             if (is_callable($callback)) {
@@ -78,16 +81,16 @@ function wps_error_handler($hook, callable $callback = null, $notify_dev = true)
             }
 
             if ($notify_dev) {
-                $mail_content = "A Fatal error has just happened on " . wps_domain() . " .\n\n" .
-                    "Details:\n" .
-                    "Err: $string\n" .
-                    "File $file:$line\n" .
-                    "Request: {$_SERVER['REQUEST_URI']}\n" .
-                    "\nAutomatically sent message by wps framework.";
+                $mail_content = StringHelper::stringBuilder(
+                    "Details:",
+                    "Err: $string",
+                    "File $file:$line",
+                    "Conf: PHP:" . PHP_VERSION . ", WP:$wp_version",
+                    "Request: {$_SERVER['REQUEST_URI']}"
+                );
 
                 if (wps_core()->online) {
-                    wp_mail('dev.sh1zen@outlook.it', 'Fatal WordPress Error ' . wps_domain(), $mail_content);
-
+                    wp_mail('dev.sh1zen@outlook.it', 'Fatal WordPress Error ' . wps_domain(), "$mail_content\n\nAutomatically sent message by wps framework.");
                 }
                 else {
                     wps_log("$mail_content\n\n", 'wps-error-handler.log');

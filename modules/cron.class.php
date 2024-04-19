@@ -11,6 +11,8 @@ use WPS\modules\Module;
 
 class Mod_Cron extends Module
 {
+    public static ?string $name = 'Cron Handler';
+
     public array $scopes = array('core-settings');
 
     protected string $context = 'wpopt';

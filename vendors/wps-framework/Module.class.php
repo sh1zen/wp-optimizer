@@ -20,7 +20,7 @@ class Module
     /**
      * set the module name
      */
-    public static $name = null;
+    public static ?string $name = null;
 
     /**
      * List of Module loading contests
@@ -54,7 +54,7 @@ class Module
      */
     protected string $module_id;
 
-    protected string $context = '';
+    protected string $context;
 
     protected string $action_hook;
 
@@ -71,8 +71,9 @@ class Module
 
     public function __construct()
     {
-        if (empty($this->context)) {
-            die(__('A context must be set', 'wps'));
+        if (!isset($this->context)) {
+            trigger_error(__('A context must be set', 'wps'), E_WARNING);
+            return;
         }
 
         $this->slug = ModuleHandler::module_slug(get_class($this), true);
@@ -352,8 +353,13 @@ class Module
             $this->render_disabled();
         }
         else {
+            do_action("{$this->context}_enqueue_panel_scripts");
             //$this->remove_browser_query_args();
             $this->render_sub_modules();
+        }
+
+        if (WPS_DEBUG) {
+            wps_core()->meter->lap("page-$this->slug");
         }
     }
 
@@ -412,6 +418,15 @@ class Module
     public function validate_settings($input, $filtering = false): array
     {
         return $this->settings_validator(UtilEnv::array_flatter_one_level($this->setting_fields()), $input, $filtering);
+    }
+
+    public function register_panel($parent, $capability = 'customize')
+    {
+        if (!$this->has_panel()) {
+            return false;
+        }
+
+        return add_submenu_page($parent, 'WPOPT ' . static::$name, static::$name, $capability, "$this->context-$this->slug", array($this, 'render_admin_page'));
     }
 
     public function has_panel(): bool

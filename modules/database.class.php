@@ -18,7 +18,10 @@ use WPOptimizer\modules\supporters\DBSupport;
 
 class Mod_Database extends Module
 {
+    public static ?string $name = 'Database Manager';
+
     const BACKUP_PATH = WPOPT_STORAGE . 'backup-db/';
+
     public array $scopes = array('admin-page', 'cron', 'settings');
     private int $ajax_limit = 100;
 

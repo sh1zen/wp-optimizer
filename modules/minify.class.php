@@ -19,6 +19,8 @@ use WPOptimizer\modules\supporters\Minify_JS;
  */
 class Mod_Minify extends Module
 {
+    public static ?string $name = 'Minify';
+
     public array $scopes = array('settings', 'autoload');
 
     protected string $context = 'wpopt';

@@ -31,7 +31,7 @@ class Mod_Modules_Handler extends Module
 
     protected function init(): void
     {
-        $modules = wps('wpopt')->moduleHandler->get_modules(array('excepts' => array('modules_handler', 'settings', 'cron')), false);
+        $modules = wps('wpopt')->moduleHandler->get_modules(array('excepts' => array('modules_handler', 'settings', 'cron', 'tracking')), false);
 
         $this->modules_slug2name = array_combine(array_column($modules, 'slug'), array_column($modules, 'name'));
     }

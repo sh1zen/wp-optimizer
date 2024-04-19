@@ -13,7 +13,7 @@ use WPS\modules\Module;
 
 class Mod_Widget extends Module
 {
-    public static $name = "Widget";
+    public static ?string $name = "Widget";
 
     public array $scopes = array('settings', 'admin');
 

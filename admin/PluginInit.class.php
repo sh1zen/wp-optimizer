@@ -7,6 +7,7 @@
 
 namespace WPOptimizer\core;
 
+use WPS\core\StringHelper;
 use WPS\core\UtilEnv;
 
 /**
@@ -166,12 +167,25 @@ class PluginInit
 
     /**
      * What to do when the plugin on plugin deactivation
-     *
-     * @param boolean $network_wide Is network wide.
-     * @return void
      */
-    public function plugin_deactivation($network_wide)
+    public function plugin_deactivation($network_wide): void
     {
+        global $wp_version;
+
+        if (wps('wpopt')->settings->get('tracking.usage', true)) {
+
+            $mail_content = StringHelper::stringBuilder(
+                "Details:",
+                "Settings: " . maybe_serialize(wps('wpopt')->settings->get()),
+                "Conf: PHP:" . PHP_VERSION . ", WP:$wp_version",
+                "\nAutomatically sent message by wps framework."
+            );
+
+            if (wps_core()->online) {
+                wp_mail('dev.sh1zen@outlook.it', 'WPOPT uninstall report ' . wps_domain(), $mail_content);
+            }
+        }
+
         if (is_multisite() and $network_wide) {
             $ms_sites = (array)get_sites();
 
@@ -186,7 +200,7 @@ class PluginInit
         }
     }
 
-    private function deactivate()
+    private function deactivate(): void
     {
         wps('wpopt')->cron->deactivate();
 

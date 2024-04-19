@@ -5,7 +5,7 @@ Donate link: https://www.paypal.com/donate?business=dev.sh1zen%40outlook.it&item
 Requires at least: 5.0.0
 Tested up to: 6.5
 Requires PHP: 7.4
-Stable tag: 2.3.0
+Stable tag: 2.3.2
 License: GNU v3.0 License
 URI: https://github.com/sh1zen/wp-optimizer/blob/master/LICENSE
 
@@ -188,9 +188,9 @@ That should work! Otherwise, go to the new added module "Setting" and try a rese
 
 == Changelog ==
 
-= 2.3.0 =
+= 2.3.2 =
 
-* added blueprint.json for WordPress preview
+* added new module to configure mail transport and log mails
 * improved ImagesProcessor
 * updated admin UI
 * updated translations
@@ -199,6 +199,7 @@ That should work! Otherwise, go to the new added module "Setting" and try a rese
 = 2.2.5 =
 
 * added support for WordPress fonts
+* added blueprint.json for WordPress preview
 * improved core performances
 * improved performances
 * updated translations
@@ -252,102 +253,3 @@ That should work! Otherwise, go to the new added module "Setting" and try a rese
 * updated translations file
 * fixed .htaccess bug
 * moved minimum WordPress support to version 4.6.0
-
-= 1.9.2 =
-
-* added function wpopt_optimize_image(string $path, bool $replace = true, array $settings = [])
-* added function wpopt_minify_html(string $content, array $options = [])
-* added function wpopt_minify_css(string $content, array $options = [])
-* added function wpopt_minify_javascript(string $content, array $options = [])
-* improved media optimization module
-* fixed CSS minification url relative paths
-* fixed HTML minification textarea bug
-* updated core
-
-= 1.9.0 =
-
-* improved JavaScript, CSS and HTML minification performances
-* added some new rules to WP_Optimizer and WP_Security module
-* updated core
-
-= 1.8.0 =
-
-* tested up to WordPress 6.1
-* \[media module\] extended support to more images
-* \[media module\] improved conversion performances
-* updated core
-
-= 1.7.5 =
-
-* added an enhancer for WordPress Cron 
-* improved performances
-
-= 1.7.4 =
-
-* improved admin panels graphic generation
-
-= 1.7.3 =
-
-* improved daily uploads media optimization performances
-* improved handling of Gutenberg editor disabling 
-* fixed some php buffering notice
-
-= 1.7.2 =
-
-* added possibility to combine scripts (JavaScript, CSS) and to minify the content statically in Minify module
-* improved user interface
-* updated core
-
-= 1.7.1 =
-
-* added wpopt_optimize_media_path(string $path, array $settings = []) to optimize images in specified path
-* improved performances for database and media modules
-* removed x-powered by wpopt header
-
-= 1.7.0 =
-
-* added a filter input in category list in post edit page, actionable in wp_customizer module
-* added options in media module to make media loading lazy
-* added the long asked and waited module for minify your HTML, CSS and JavaScript.
-* improved some performances issues
-* updated wps core
-
-= 1.6.10 =
-
-* improved cache management
-* improved performances
-* fixed some reported bugs
-
-= 1.6.9 =
-
-* added an option in WP_Customizer module to disable WordPress global styles
-* updated core performances
-* tested up to WordPress 6.0
-* fixed a reported bugs in database cache
-
-= 1.6.5 =
-
-* added a new feature, under media module, to find orphaned media not still present in your WordPress installation
-* added options for media to clean stats and reset scanners
-* added new module for widgets in admin-homepage
-* improved performances
-* fixed some reported bugs
-
-= 1.6.2 =
-
-* added support for webp in htaccess rules
-* added option to reset media optimization statistics
-* added option to customize redirect for non-allowed wp-admin access
-* improved media cleaning performances
-* fixed some bugs
-
-= 1.6.0 =
-
-* added new module to optimize images
-* added possibility to suppress WordPress comments
-* fixed some security flaws
-* improved database cleaner
-* improved core performances
-* improved cron schedules handler
-* moved minimum PHP support to version 7.0
-* tested up to WordPress 5.9

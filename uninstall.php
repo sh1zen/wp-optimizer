@@ -9,9 +9,19 @@
  * Uninstall Procedure
  */
 
-// Make sure that we are uninstalling
-if (!defined('WP_UNINSTALL_PLUGIN'))
-    exit();
+// if uninstall.php is not called by WordPress, die
+if (!defined('WP_UNINSTALL_PLUGIN')) {
+    die();
+}
+
+global $wpdb;
+
+const WPOPT_ABSPATH = __DIR__ . '/';
+
+// setup constants
+require_once WPOPT_ABSPATH . 'inc/constants.php';
+
+require_once WPOPT_ABSPATH . 'wps-init.php';
 
 // Leave no trail
 $option_names = array('wpopt', 'wpopt.media.todo');
@@ -33,3 +43,9 @@ else {
     }
     switch_to_blog($original_blog_id);
 }
+
+$wpdb->query("DROP TABLE IF EXISTS " . wps('wpopt')->options->table_name());
+$wpdb->query("DROP TABLE IF EXISTS " . WPOPT_TABLE_ACTIVITY_LOG);
+$wpdb->query("DROP TABLE IF EXISTS " . WPOPT_TABLE_LOG_MAILS);
+
+wps_uninstall();

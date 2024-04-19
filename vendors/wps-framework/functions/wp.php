@@ -20,16 +20,16 @@ function wps_time($format = 'timestamp', $offset = 0, $zoned = true, $basetime =
 
     $time = $basetime + intval($offset);
 
-    if ('timestamp' === $format || 'U' === $format) {
-        return $time;
-    }
-
     if ('mysql' === $format) {
         $format = 'Y-m-d H:i:s';
     }
 
     if ($zoned) {
         $time += (int)(get_option('gmt_offset')) * HOUR_IN_SECONDS;
+    }
+
+    if ('timestamp' === $format || 'U' === $format) {
+        return $time;
     }
 
     return date($format, $time);

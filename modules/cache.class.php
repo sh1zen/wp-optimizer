@@ -18,6 +18,8 @@ use WPOptimizer\modules\supporters\StaticCache;
 
 class Mod_Cache extends Module
 {
+    public static ?string $name = 'Cache';
+
     public static string $storage_internal = 'cache';
 
     public array $scopes = array('settings', 'autoload');

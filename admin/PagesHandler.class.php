@@ -40,7 +40,8 @@ class PagesHandler
 
             ?>
             <div class="notice notice-info is-dismissible">
-                <h3>Help me to build <a href="<?php echo admin_url('admin.php?page=wp-optimizer'); ?>">WP-Optimizer</a>.</h3>
+                <h3>Help me to build <a href="<?php echo admin_url('admin.php?page=wp-optimizer'); ?>">WP-Optimizer</a>.
+                </h3>
                 <p><?php echo sprintf(__("Buy me a coffe <a target='_blank' href='%s'>here</a> or leave a review <a target='_blank' href='%s'>here</a>.", 'wpopt'), "https://www.paypal.com/donate?business=dev.sh1zen%40outlook.it&item_name=Thank+you+in+advanced+for+the+kind+donations.+You+will+sustain+me+developing+WP-Optimizer.&currency_code=EUR", "https://wordpress.org/support/plugin/wp-optimizer/reviews/?filter=5"); ?></p>
                 <a href="?wpopt-dismiss-notice"><?php echo __('Dismiss', 'wpopt') ?></a>
                 <br><br>
@@ -64,8 +65,7 @@ class PagesHandler
          * Modules - sub pages
          */
         foreach (wps('wpopt')->moduleHandler->get_modules(array('scopes' => 'admin-page')) as $module) {
-
-            add_submenu_page('wp-optimizer', 'WPOPT ' . $module['name'], $module['name'], 'customize', $module['slug'], array($this, 'render_module'));
+            wps('wpopt')->moduleHandler->get_module_instance($module)->register_panel('wp-optimizer');
         }
 
         /**
@@ -82,6 +82,8 @@ class PagesHandler
          * Plugin core settings
          */
         add_submenu_page('wp-optimizer', __('WPOPT FAQ', 'wpopt'), __('FAQ', 'wpopt'), 'edit_posts', 'wpopt-faqs', array($this, 'render_faqs'));
+
+        add_action('wpopt_enqueue_panel_scripts', [$this, 'enqueue_scripts']);
     }
 
     public function render_modules_settings(): void
@@ -95,14 +97,12 @@ class PagesHandler
         wps('wpopt')->settings->render_modules_settings();
 
         if (WPOPT_DEBUG) {
-
             wps_core()->meter->lap('Modules settings rendered');
-
             echo wps_core()->meter->get_time() . ' - ' . wps_core()->meter->get_memory();
         }
     }
 
-    private function enqueue_scripts(): void
+    public function enqueue_scripts(): void
     {
         wp_enqueue_style('wpopt_css');
         wp_enqueue_script('vendor-wps-js');
@@ -116,26 +116,6 @@ class PagesHandler
 
         if (WPOPT_DEBUG) {
             echo wps_core()->meter->get_time() . ' - ' . wps_core()->meter->get_memory();
-        }
-    }
-
-    public function render_module(): void
-    {
-        $module_slug = sanitize_text_field($_GET['page']);
-
-        $object = wps('wpopt')->moduleHandler->get_module_instance($module_slug);
-
-        if (is_null($object)) {
-            return;
-        }
-
-        $this->enqueue_scripts();
-
-        $object->render_admin_page();
-
-        if (WPOPT_DEBUG) {
-            wps_core()->meter->lap($module_slug);
-            echo wps_core()->meter->get_time() . ' - ' . wps_core()->meter->get_memory(true, true);
         }
     }
 
@@ -267,27 +247,44 @@ class PagesHandler
                         <h1>WP Optimizer Dashboard</h1>
                     </block>
                     <h2><?php _e('Modules:', 'wpopt'); ?></h2>
-                    <p>
+                    <?php
+                    echo '<div><b>' . __('This plugin uses modules, so you can disable non necessary one to not weigh down WordPress. Currently active:', 'wpopt') . '</b></div><br>';
+                    $modules = wps('wpopt')->moduleHandler->get_modules(array('excepts' => array('cron', 'modules_handler', 'settings', 'tracking')));
+                    echo '<div class="wps-gridRow">';
+                    foreach ($modules as $module) {
+                        echo "<a class='wps-code' target='_blank' href='" . (wps('wpopt')->moduleHandler->get_module_instance($module)->has_panel() ? wps_module_panel_url($module['slug']) : wps_module_setting_url('wpopt', $module['slug'])) . "'>{$module['name']}</a>";
+                    }
+                    echo '</div>';
+                    ?>
+                    <br><br>
+                    <block class="wps">
                         <?php
-                        echo '<div><b>' . __('This plugin uses modules, so you can disable non necessary one to not weigh down WordPress. Currently active:', 'wpopt') . '</b></div><br>';
-                        $modules = wps('wpopt')->moduleHandler->get_modules(array('excepts' => array('cron', 'modules_handler', 'settings')));
-                        echo '<div class="wps-gridRow">';
-                        foreach ($modules as $module) {
-                            echo "<a class='wps-code' target='_blank' href='" . (wps('wpopt')->moduleHandler->get_module_instance($module)->has_panel() ? wps_module_panel_url($module['slug']) : wps_module_setting_url('wpopt', $module['slug'])) . "'>{$module['name']}</a>";
-                        }
-                        echo '</div>';
+                        echo sprintf(__('<a class="button button-primary button-large" href="%s">Manage</a>', 'wpopt'), admin_url('admin.php?page=wpopt-settings#settings-modules_handler'));
                         ?>
-                        <br><br>
+                        &nbsp;&nbsp;
+                        <?php
+                        echo sprintf(__('<a class="button button-primary button-large" href="%s">Configure</a>', 'wpopt'), admin_url('admin.php?page=wpopt-modules-settings'));
+                        ?>
+                    </block>
+                    <?php
+                    if (wps('wpopt')->settings->get('tracking.errors', true) or wps('wpopt')->settings->get('tracking.usage', true)) {
+                        ?>
                         <block class="wps">
-                            <?php
-                            echo sprintf(__('<a class="button button-primary button-large" href="%s">Manage</a>', 'wpopt'), admin_url('admin.php?page=wpopt-settings#settings-modules_handler'));
-                            ?>
-                            &nbsp;&nbsp;
-                            <?php
-                            echo sprintf(__('<a class="button button-primary button-large" href="%s">Configure</a>', 'wpopt'), admin_url('admin.php?page=wpopt-modules-settings'));
-                            ?>
+                            <strong><?php echo sprintf(__('A tracking option is enabled, see more <a href="%s">here</a>.', 'wpopt'), admin_url('admin.php?page=wpopt-settings#settings-tracking')) ;?></strong>
+                            <br><br>
+                            <strong><?php echo __('We will collect any personal data, just errors details about this plugin and if enabled also some anonymous usage statistics (used plugin features).', 'wpopt'); ?></strong>
                         </block>
-                    </p>
+                        <?php
+                    }
+                    else{
+                        ?>
+                        <block class="wps">
+                            <strong><?php echo sprintf(__('If you run in some problem with this plugin, enable <a href="%s">this</a> feature and next time it happens the developer will be notified with same useful info about the issue.', 'wpopt'), admin_url('admin.php?page=wpopt-settings#settings-tracking')); ?></strong>
+                            <br><strong><?php echo __('We will never collect any personal data.', 'wpopt'); ?></strong>
+                        </block>
+                        <?php
+                    }
+                    ?>
                 </block>
                 <block class="wps">
                     <h2><?php _e('Fast actions:', 'wpopt'); ?></h2>

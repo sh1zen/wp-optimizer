@@ -52,7 +52,7 @@ class Mod_WP_Optimizer extends Module
         return $new_valid;
     }
 
-    private function load_dependencies()
+    private function load_dependencies(): void
     {
         require_once WPOPT_SUPPORTERS . 'optisec/WP_Htaccess.class.php';
     }
@@ -76,7 +76,7 @@ class Mod_WP_Optimizer extends Module
         $this->optimize();
     }
 
-    private function optimize()
+    private function optimize(): void
     {
         if ($this->option('cron.enhance')) {
 

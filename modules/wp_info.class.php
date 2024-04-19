@@ -12,13 +12,13 @@ use WPS\modules\Module;
 
 class Mod_WP_Info extends Module
 {
-    public static $name = "System Info";
+    public static ?string $name = "System Info";
 
     public array $scopes = array('admin-page');
 
     protected string $context = 'wpopt';
 
-    public function render_admin_page(): void
+    protected function render_sub_modules(): void
     {
         ?>
         <section class="wps-wrap">

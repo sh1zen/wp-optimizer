@@ -120,7 +120,7 @@ class CronForModules
         $this->reset_status();
     }
 
-    public function reset_status()
+    public function reset_status(): void
     {
         wps($this->context)->settings->update('cron.running', false, true);
     }

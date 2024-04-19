@@ -15,6 +15,8 @@ use WPS\modules\Module;
 
 class Mod_Settings extends Module
 {
+    public static ?string $name = 'Settings';
+
     public array $scopes = array('core-settings', 'admin');
 
     protected string $context = 'wpopt';
@@ -109,7 +111,7 @@ class Mod_Settings extends Module
 
                     echo RequestActions::get_action_button($this->action_hook, 'import_options', __('Import Plugin options', 'wpopt'), 'button-primary');
 
-                   ?>
+                    ?>
                 </row>
             </block>
         </form>

@@ -8,57 +8,24 @@
 /**
  * Plugin Name: WP Optimizer
  * Plugin URI: https://github.com/sh1zen/wp-optimizer
- * Description: Search Engine (SEO) & Performance Optimization plugin, support automatic image compression, integrated caching, database and server enhancements.
+ * Description: Performance Optimization plugin, support automatic image compression, integrated caching, deep WordPress and server enhancements .
  * Author: sh1zen
  * Author URI: https://sh1zen.github.io/
  * Text Domain: wpopt
  * Domain Path: /languages
- * Version: 2.3.0
+ * Version: 2.3.2
  */
 
-const WPOPT_VERSION = '2.3.0';
+const WPOPT_VERSION = '2.3.2';
 const WPOPT_FILE = __FILE__;
 const WPOPT_ABSPATH = __DIR__ . '/';
-const WPOPT_INCPATH = WPOPT_ABSPATH . 'inc/';
-const WPOPT_MODULES = WPOPT_ABSPATH . 'modules/';
-const WPOPT_ADMIN = WPOPT_ABSPATH . 'admin/';
-const WPOPT_SUPPORTERS = WPOPT_MODULES . 'supporters/';
-const WPOPT_STORAGE = WP_CONTENT_DIR . '/wpopt/';
-
-
-// wps-framework commons
-if (!defined('WPS_FRAMEWORK')) {
-    if (defined('WPS_FRAMEWORK_SOURCE') and file_exists(WPS_FRAMEWORK_SOURCE . 'loader.php')) {
-        require_once WPS_FRAMEWORK_SOURCE . 'loader.php';
-    }
-    else {
-        if (!file_exists(WPOPT_ABSPATH . 'vendors/wps-framework/loader.php')) {
-            return;
-        }
-        require_once WPOPT_ABSPATH . 'vendors/wps-framework/loader.php';
-    }
-}
-
-wps(
-    'wpopt',
-    [
-        'modules_path' => WPOPT_MODULES,
-        'table_name'   => "wp_wpopt",
-    ],
-    [
-        'cache'         => true,
-        'storage'       => true,
-        'settings'      => true,
-        'cron'          => true,
-        'ajax'          => true,
-        'moduleHandler' => true,
-        'options'       => true
-    ]
-);
-
 
 // setup constants
-require_once WPOPT_INCPATH . 'constants.php';
+require_once WPOPT_ABSPATH . '/inc/constants.php';
+
+require_once WPOPT_ABSPATH . 'wps-init.php';
+
+define('WPOPT_DEBUG', !wps_core()->online);
 
 // essential
 require_once WPOPT_INCPATH . 'functions.php';
@@ -74,4 +41,7 @@ WPOptimizer\core\PluginInit::Initialize();
 
 wps_core()->meter->lap('wpopt-loaded');
 
-wps_error_handler('wp-optimizer');
+if (wps('wpopt')->settings->get('tracking.errors', true)) {
+    // on user consent allow error tracking report
+    wps_error_handler('wp-optimizer');
+}

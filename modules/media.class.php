@@ -21,7 +21,7 @@ use WPOptimizer\modules\supporters\ImagesProcessor;
  */
 class Mod_Media extends Module
 {
-    public static $name = "Media Optimizer";
+    public static ?string $name = "Media Optimizer";
 
     public array $scopes = array('autoload', 'cron', 'admin-page', 'settings');
 

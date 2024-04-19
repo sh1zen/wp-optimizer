@@ -68,7 +68,7 @@ class ActivityLog extends \WP_List_Table
     public function display_tablenav($which)
     {
         if ('top' == $which) {
-            $this->search_box(__('Search', 'wpopt'), 'wpopt-al-search');
+            $this->search_box(__('Search', 'wpopt'), 'wpopt-activityLog');
         }
         ?>
         <div class="tablenav <?php echo esc_attr($which); ?>">
@@ -127,7 +127,7 @@ class ActivityLog extends \WP_List_Table
 
         submit_button(__('Filter', 'wpopt'), 'button', 'aal-filter', false, array('id' => 'activity-query-submit'));
 
-        $actions = Query::getInstance()->tables(WPOPT_ACTIVITY_LOG_TABLE)->orderby('action', 'ASC', WPOPT_ACTIVITY_LOG_TABLE)->select('DISTINCT action')->query(false, true);
+        $actions = Query::getInstance()->tables(WPOPT_TABLE_ACTIVITY_LOG)->orderby('action', 'ASC', WPOPT_TABLE_ACTIVITY_LOG)->select('DISTINCT action')->query(false, true);
 
         if ($actions) {
 
@@ -189,7 +189,7 @@ class ActivityLog extends \WP_List_Table
 
     private function get_filtered_link($name = '', $value = ''): string
     {
-        $base_page_url = menu_page_url('activitylog', false);
+        $base_page_url = menu_page_url('wpopt-activitylog', false);
 
         if (empty($name)) {
             return $base_page_url;
@@ -300,13 +300,13 @@ class ActivityLog extends \WP_List_Table
         }
 
         $query = Query::getInstance();
-        $query->tables(WPOPT_ACTIVITY_LOG_TABLE);
+        $query->tables(WPOPT_TABLE_ACTIVITY_LOG);
 
         if (!isset($request['orderby']) or !in_array($request['orderby'], array('time', 'ip', 'action', 'context', 'user_id', 'object_id'))) {
             $request['orderby'] = 'time';
         }
 
-        $query->orderby($request['orderby'], $request['order'] ?? 'DESC', WPOPT_ACTIVITY_LOG_TABLE);
+        $query->orderby($request['orderby'], $request['order'] ?? 'DESC', WPOPT_TABLE_ACTIVITY_LOG);
 
         if (!empty($request['filter_action'])) {
 

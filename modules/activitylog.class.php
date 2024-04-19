@@ -18,14 +18,12 @@ use WPOptimizer\modules\supporters\ActivityLog;
 
 global $wpdb;
 
-define('WPOPT_ACTIVITY_LOG_TABLE', "{$wpdb->prefix}wpopt_activity_log");
-
 /**
  *  Module for images optimization handling
  */
 class Mod_ActivityLog extends Module
 {
-    public static $name = 'Activity Log';
+    public static ?string $name = 'Activity Log';
 
     public array $scopes = array('autoload', 'admin-page', 'settings');
 
@@ -35,7 +33,7 @@ class Mod_ActivityLog extends Module
     {
         if ($this->option('auto_clear')) {
             CronActions::schedule("WPOPT-ActivityLog", DAY_IN_SECONDS, function () {
-                Query::getInstance()->delete(['time' => time() - ($this->option('lifetime') * DAY_IN_SECONDS), 'compare' => '<'], WPOPT_ACTIVITY_LOG_TABLE)->query();
+                Query::getInstance()->delete(['time' => time() - ($this->option('lifetime') * DAY_IN_SECONDS), 'compare' => '<'], WPOPT_TABLE_ACTIVITY_LOG)->query();
             }, '08:00');
         }
 
@@ -60,7 +58,7 @@ class Mod_ActivityLog extends Module
 
                 case 'reset':
 
-                    Query::getInstance()->tables(WPOPT_ACTIVITY_LOG_TABLE)->action('TRUNCATE')->query();
+                    Query::getInstance()->tables(WPOPT_TABLE_ACTIVITY_LOG)->action('TRUNCATE')->query();
 
                     Rewriter::getInstance(admin_url('admin.php'))->add_query_args(array(
                         'page'    => 'activitylog',
@@ -187,7 +185,7 @@ class Mod_ActivityLog extends Module
 
         $fields['value'] = maybe_serialize($fields['value']);
 
-        $wpdb->insert(WPOPT_ACTIVITY_LOG_TABLE, $fields);
+        $wpdb->insert(WPOPT_TABLE_ACTIVITY_LOG, $fields);
     }
 
     private function get_ip(): string

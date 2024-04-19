@@ -502,6 +502,11 @@ class StringHelper
         return str_replace($delimiter, "\\$delimiter", $regex);
     }
 
+    public static function stringBuilder(...$strings): string
+    {
+        return implode("\n", $strings);
+    }
+
     /**
      * Given an array of key/value pairs to replace in $string,
      * it does so by replacing the longest-matching strings first.

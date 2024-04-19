@@ -7,8 +7,6 @@
 
 global $wpdb;
 
-$wpdb->query("DROP TABLE IF EXISTS {$wpdb->prefix}wpopt_core");
-
 WPS\core\UtilEnv::db_create(
     wps('wpopt')->options->table_name(),
     [
@@ -18,6 +16,7 @@ WPS\core\UtilEnv::db_create(
             "context"    => "varchar(255)",
             "item"       => "varchar(255)",
             "value"      => "longtext NOT NULL",
+            "container"  => "varchar(255) NULL DEFAULT NULL",
             "expiration" => "bigint NOT NULL DEFAULT 0"
         ],
         "primary_key" => "id"
@@ -26,3 +25,4 @@ WPS\core\UtilEnv::db_create(
 );
 
 $wpdb->query("ALTER TABLE " . wps('wpopt')->options->table_name() . " ADD UNIQUE speeder (context, item, obj_id) USING BTREE;");
+$wpdb->query("ALTER TABLE " . wps('wpopt')->options->table_name() . " ADD UNIQUE speeder_container (container, item, obj_id) USING BTREE;");

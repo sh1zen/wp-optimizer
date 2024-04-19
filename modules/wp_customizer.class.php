@@ -16,6 +16,8 @@ use WPS\modules\Module;
  */
 class Mod_WP_Customizer extends Module
 {
+    public static ?string $name = 'WP Customizer';
+
     public array $scopes = array('settings', 'autoload');
 
     protected string $context = 'wpopt';

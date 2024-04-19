@@ -5,10 +5,8 @@
  * @license   http://www.gnu.org/licenses/gpl.html GNU/GPL
  */
 
-global $wpdb;
-
 WPS\core\UtilEnv::db_create(
-    'wpopt_activity_log',
+    WPOPT_TABLE_ACTIVITY_LOG,
     [
         "fields"      => [
             "id"         => "bigint NOT NULL AUTO_INCREMENT",
