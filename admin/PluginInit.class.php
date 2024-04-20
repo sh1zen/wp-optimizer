@@ -7,6 +7,7 @@
 
 namespace WPOptimizer\core;
 
+use WPS\core\Rewriter;
 use WPS\core\StringHelper;
 use WPS\core\UtilEnv;
 
@@ -35,8 +36,8 @@ class PluginInit
         $this->plugin_base_url = UtilEnv::path_to_url(WPOPT_ABSPATH);
 
         if (is_admin()) {
-
             $this->register_actions();
+            $this->do_welcome();
         }
 
         $this->load_textdomain();
@@ -139,22 +140,6 @@ class PluginInit
      */
     public function plugin_activation($network_wide)
     {
-        if (is_multisite() and $network_wide) {
-            $ms_sites = (array)get_sites();
-
-            foreach ($ms_sites as $ms_site) {
-                switch_to_blog($ms_site->blog_id);
-                $this->activate();
-                restore_current_blog();
-            }
-        }
-        else {
-            $this->activate();
-        }
-    }
-
-    private function activate()
-    {
         wps('wpopt')->settings->activate();
 
         wps('wpopt')->cron->activate();
@@ -163,6 +148,8 @@ class PluginInit
          * Hook for the plugin activation
          */
         do_action('wpopt-activate');
+
+        wps('wpopt')->settings->update('do_welcome', time(), true);
     }
 
     /**
@@ -186,22 +173,6 @@ class PluginInit
             }
         }
 
-        if (is_multisite() and $network_wide) {
-            $ms_sites = (array)get_sites();
-
-            foreach ($ms_sites as $ms_site) {
-                switch_to_blog($ms_site->blog_id);
-                $this->deactivate();
-                restore_current_blog();
-            }
-        }
-        else {
-            $this->deactivate();
-        }
-    }
-
-    private function deactivate(): void
-    {
         wps('wpopt')->cron->deactivate();
 
         /**
@@ -245,5 +216,13 @@ class PluginInit
         );
 
         return $links;
+    }
+
+    private function do_welcome()
+    {
+        if(wps('wpopt')->settings->get('do_welcome', false)) {
+            wps('wpopt')->settings->update('do_welcome', false, true);
+            Rewriter::getInstance()->redirect(admin_url('admin.php?page=wp-optimizer&wpsargs=do_welcome:true'));
+        }
     }
 }

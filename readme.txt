@@ -5,7 +5,7 @@ Donate link: https://www.paypal.com/donate?business=dev.sh1zen%40outlook.it&item
 Requires at least: 5.0.0
 Tested up to: 6.5
 Requires PHP: 7.4
-Stable tag: 2.3.2
+Stable tag: 2.3.3
 License: GNU v3.0 License
 URI: https://github.com/sh1zen/wp-optimizer/blob/master/LICENSE
 
@@ -188,9 +188,10 @@ That should work! Otherwise, go to the new added module "Setting" and try a rese
 
 == Changelog ==
 
-= 2.3.2 =
+= 2.3.3 =
 
 * added new module to configure mail transport and log mails
+* added Welcome page on plugin activation
 * improved ImagesProcessor
 * updated admin UI
 * updated translations
@@ -218,9 +219,6 @@ That should work! Otherwise, go to the new added module "Setting" and try a rese
 * added support to disable oembed and rest
 * improved activity log module
 * updated translations file
-
-= 2.1.3 =
-
 * extended support to WordPress 6.3
 
 = 2.1.2 =

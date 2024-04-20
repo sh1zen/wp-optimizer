@@ -48,7 +48,7 @@ class Mod_WP_Mail extends Module
                 'to_email'         => implode(', ', $mail_to),
                 'subject'          => StringHelper::sanitize_text($mail_info['subject']),
                 'message'          => wp_kses($mail_info['message'], $allowed_html),
-                'headers'          => implode(',', $mail_info['headers']),
+                'headers'          => implode(',', (array)$mail_info['headers']),
                 'sent_date'        => current_time('mysql', 0),
                 'sent_date_gmt'    => current_time('mysql', 1),
                 'attachments_file' => implode(',', $attachedFiles),

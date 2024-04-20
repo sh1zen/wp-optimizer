@@ -58,7 +58,6 @@ class DB_List_Table extends \WP_List_Table
             case 'status':
             case 'engine':
             case 'table_rows':
-            case 'site_id':
                 return $item[$column_name];
             default:
                 return print_r($item, true); //Show the whole array for troubleshooting purposes
@@ -131,7 +130,6 @@ class DB_List_Table extends \WP_List_Table
     {
         return array(
             'cb'          => '<input type="checkbox" />',
-            'site_id'     => __('Site', 'wpopt'),
             'table_name'  => __('Table name', 'wpopt'),
             'table_rows'  => __('Rows', 'wpopt'),
             'data_length' => __('Size', 'wpopt'),
@@ -144,13 +142,7 @@ class DB_List_Table extends \WP_List_Table
     /** WP: Get columns that should be hidden */
     function get_hidden_columns()
     {
-        // If MU, nothing to hide, else hide Side ID column
-        if (function_exists('is_multisite') and is_multisite()) {
-            return array();
-        }
-        else {
-            return array('site_id');
-        }
+        return [];
     }
 
     /**
@@ -246,7 +238,7 @@ class DB_List_Table extends \WP_List_Table
 
             $order_by = esc_sql($_GET['orderby']);
 
-            if (in_array($order_by, array("table_name", "table_rows", "data_length", "data_free", "engine", "site_id"))) {
+            if (in_array($order_by, array("table_name", "table_rows", "data_length", "data_free", "engine"))) {
                 $order = empty($_GET['order']) ? "ASC" : esc_sql($_GET['order']);
 
                 $sql .= " ORDER BY {$order_by} {$order}";
@@ -277,26 +269,13 @@ class DB_List_Table extends \WP_List_Table
                 }
             }
 
-            $site_name = '';
-
-            if (is_multisite()) {
-                $res = explode('_', $table['TABLE_NAME']);
-
-                if (is_numeric($res[2])) {
-
-                    $blog_id = $res[2];
-                    $site_name = get_blog_details(array('blog_id' => $blog_id))->blogname;
-                }
-            }
-
             $items_to_display[] = array(
                 'table_name'  => $table['TABLE_NAME'] ?? __('Table Name N/D', 'wpopt'),
                 'table_rows'  => $table['TABLE_ROWS'] ?? __('Rows N/D', 'wpopt'),
                 'data_length' => $table['DATA_LENGTH'] ?? __('Length N/D', 'wpopt'),
                 'data_free'   => $table['DATA_FREE'] ?? __('N/D', 'wpopt'),
                 'status'      => $status,
-                'engine'      => $table['ENGINE'] ?? __('Engine N/D', 'wpopt'),
-                'site_id'     => $site_name,
+                'engine'      => $table['ENGINE'] ?? __('Engine N/D', 'wpopt')
             );
         }
 

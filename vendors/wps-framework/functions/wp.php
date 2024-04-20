@@ -414,6 +414,34 @@ function wps_user_has_role($role, $user): bool
     return !empty(array_intersect(array($role), $roles));
 }
 
+function wps_get_page_args($item = null, $default = false)
+{
+    $args = maybe_unserialize($_REQUEST['wpsargs'] ?? '');
+
+    if (is_string($args)) {
+        $n_args = [];
+        // parse wps format
+        // key1:value1,key2:value2
+        foreach (explode(',', $args) as $arg) {
+            $parsed_arg = explode(':', $arg, 2);
+            if (isset($parsed_arg[0])) {
+                $n_args[$parsed_arg[0]] = $parsed_arg[1] ?? '';
+            }
+        }
+        $args = $n_args;
+    }
+
+    if (empty($args)) {
+        return $default;
+    }
+
+    if (!is_null($item)) {
+        return $args[$item] ?? $default;
+    }
+
+    return $args;
+}
+
 function wps_log($message, $file_name = 'wps-debug.log', $skip_frames = 1, $mode = FILE_APPEND): void
 {
     $trace = debug_backtrace();

@@ -214,6 +214,11 @@ class PagesHandler
      */
     public function render_main(): void
     {
+        if (wps_get_page_args('do_welcome')) {
+            $this->render_welcome();
+            return;
+        }
+
         $this->enqueue_scripts();
 
         $data = array();
@@ -240,7 +245,6 @@ class PagesHandler
                 if (!empty($data)) {
                     $this->output_results($data);
                 }
-
                 ?>
                 <block class="wps">
                     <block class="wps-header">
@@ -248,15 +252,16 @@ class PagesHandler
                     </block>
                     <h2><?php _e('Modules:', 'wpopt'); ?></h2>
                     <?php
-                    echo '<div><b>' . __('This plugin uses modules, so you can disable non necessary one to not weigh down WordPress. Currently active:', 'wpopt') . '</b></div><br>';
+                    echo '<b>' . __('Currently WP-Optimizer active modules:', 'wpopt') . '</b><br><br>';
                     $modules = wps('wpopt')->moduleHandler->get_modules(array('excepts' => array('cron', 'modules_handler', 'settings', 'tracking')));
-                    echo '<div class="wps-gridRow">';
+                    echo '<div class="wps-gridRow" style="justify-content: flex-start">';
                     foreach ($modules as $module) {
                         echo "<a class='wps-code' target='_blank' href='" . (wps('wpopt')->moduleHandler->get_module_instance($module)->has_panel() ? wps_module_panel_url($module['slug']) : wps_module_setting_url('wpopt', $module['slug'])) . "'>{$module['name']}</a>";
                     }
                     echo '</div>';
                     ?>
-                    <br><br>
+                    <br>
+                    <h2><?php echo __('Handle theme here:', 'wpopt')?></h2>
                     <block class="wps">
                         <?php
                         echo sprintf(__('<a class="button button-primary button-large" href="%s">Manage</a>', 'wpopt'), admin_url('admin.php?page=wpopt-settings#settings-modules_handler'));
@@ -270,13 +275,13 @@ class PagesHandler
                     if (wps('wpopt')->settings->get('tracking.errors', true) or wps('wpopt')->settings->get('tracking.usage', true)) {
                         ?>
                         <block class="wps">
-                            <strong><?php echo sprintf(__('A tracking option is enabled, see more <a href="%s">here</a>.', 'wpopt'), admin_url('admin.php?page=wpopt-settings#settings-tracking')) ;?></strong>
+                            <strong><?php echo sprintf(__('A tracking option is enabled, see more <a href="%s">here</a>.', 'wpopt'), admin_url('admin.php?page=wpopt-settings#settings-tracking')); ?></strong>
                             <br><br>
                             <strong><?php echo __('We will collect any personal data, just errors details about this plugin and if enabled also some anonymous usage statistics (used plugin features).', 'wpopt'); ?></strong>
                         </block>
                         <?php
                     }
-                    else{
+                    else {
                         ?>
                         <block class="wps">
                             <strong><?php echo sprintf(__('If you run in some problem with this plugin, enable <a href="%s">this</a> feature and next time it happens the developer will be notified with same useful info about the issue.', 'wpopt'), admin_url('admin.php?page=wpopt-settings#settings-tracking')); ?></strong>
@@ -374,5 +379,90 @@ class PagesHandler
             print_r($result);
             echo "</block>";
         }
+    }
+
+    private function render_welcome()
+    {
+        $this->enqueue_scripts();
+        ?>
+        <section class="wps-wrap-flex wps-wrap wps-home">
+            <section class="wps">
+                <block class="wps">
+                    <block class="wps-header">
+                        <h1>Welcome to WP Optimizer</h1>
+                    </block>
+                    <h4>
+                    <?php
+                    echo '<b>' . __('This plugin is intended to increase WordPress performances and help you to configure your best WordPress experience.', 'wpopt') . '</b><br><br>';
+                    echo '<b>' . __('WP-Optimizer is divided into modules, so you can disable non necessary one to not weigh down WordPress performances.', 'wpopt') . '</b><br>';
+                    ?>
+                    </h4>
+                </block>
+                <block class="wps">
+                    <?php
+                    echo '<h2>' . __('All available modules:.', 'wpopt') . '</h2><br>';
+                    $modules = wps('wpopt')->moduleHandler->get_modules(array('excepts' => array('cron', 'modules_handler', 'settings', 'tracking')), false);
+                    echo '<div class="wps-gridRow" style="justify-content: flex-start">';
+                    foreach ($modules as $module) {
+                        echo "<span class='wps-code'>{$module['name']}</span>";
+                    }
+                    echo '</div>';
+                    ?>
+                </block>
+                <block class="wps">
+                    <h2><?php echo __('Try to explore this plugin:', 'wpopt');?></h2>
+                    <?php
+                    echo sprintf(__('<a class="button button-primary button-large" href="%s">Home</a>', 'wpopt'), admin_url('admin.php?page=wp-optimizer'));
+                    echo '&nbsp;';
+                    echo sprintf(__('<a class="button button-primary button-large" href="%s">Manage Modules</a>', 'wpopt'), admin_url('admin.php?page=wpopt-settings#settings-modules_handler'));
+                    echo '&nbsp;';
+                    echo sprintf(__('<a class="button button-primary button-large" href="%s">Configure Modules</a>', 'wpopt'), admin_url('admin.php?page=wpopt-modules-settings'));
+                    echo '&nbsp;';
+                    echo sprintf(__('<a class="button button-primary button-large" href="%s">FAQ</a>', 'wpopt'), admin_url('admin.php?page=wpopt-faqs'));
+                    echo '&nbsp;';
+                    ?>
+                </block>
+            </section>
+            <aside class="wps">
+                <section class="wps-box">
+                    <div class="wps-donation-wrap">
+                        <div
+                                class="wps-donation-title"><?php _e('Support this project, buy me a coffee.', 'wpopt'); ?></div>
+                        <br>
+                        <a href="https://www.paypal.com/donate?business=dev.sh1zen%40outlook.it&item_name=Thank+you+in+advanced+for+the+kind+donations.+You+will+sustain+me+developing+WP-Optimizer.&currency_code=EUR"
+                           target="_blank">
+                            <img src="https://www.paypalobjects.com/en_US/IT/i/btn/btn_donateCC_LG.gif"
+                                 title="PayPal - The safer, easier way to pay online!" alt="Donate with PayPal button"/>
+                        </a>
+                        <div class="wps-donation-hr"></div>
+                        <div class="dn-btc">
+                            <div class="wps-donation-name">BTC:</div>
+                            <p class="wps-donation-value">3QE5CyfTxb5kufKxWtx4QEw4qwQyr9J5eo</p>
+                        </div>
+                    </div>
+                </section>
+                <section class="wps-box">
+                    <h3><?php _e('Want to support in other ways?', 'wpopt'); ?></h3>
+                    <ul class="wps">
+                        <li>
+                            <a href="https://translate.wordpress.org/projects/wp-plugins/wp-optimizer/"><?php _e('Help me translating', 'wpopt'); ?></a>
+                        </li>
+                        <li>
+                            <a href="https://wordpress.org/support/plugin/wp-optimizer/reviews/?filter=5"><?php _e('Leave a review', 'wpopt'); ?></a>
+                        </li>
+                    </ul>
+                    <h3>WP-Optimizer:</h3>
+                    <ul class="wps">
+                        <li>
+                            <a href="https://github.com/sh1zen/wp-optimizer/"><?php _e('Source code', 'wpopt'); ?></a>
+                        </li>
+                        <li>
+                            <a href="https://sh1zen.github.io/"><?php _e('About me', 'wpopt'); ?></a>
+                        </li>
+                    </ul>
+                </section>
+            </aside>
+        </section>
+        <?php
     }
 }

@@ -4,7 +4,7 @@ msgstr ""
 "Project-Id-Version: wpopt-translation\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/wp-"
 "optimizer/\n"
-"POT-Creation-Date: 2024-04-19 17:42+0200\n"
+"POT-Creation-Date: 2024-04-20 14:06+0200\n"
 "PO-Revision-Date: 2020-05-13 02:34+0200\n"
 "Last-Translator: sh1zen\n"
 "Language-Team: sh1zen\n"
@@ -44,7 +44,7 @@ msgstr ""
 msgid "WPOPT Settings"
 msgstr ""
 
-#: admin/PagesHandler.class.php:79 admin/PluginInit.class.php:244
+#: admin/PagesHandler.class.php:79 admin/PluginInit.class.php:215
 msgid "Settings"
 msgstr ""
 
@@ -199,42 +199,44 @@ msgid ""
 "href=\"%s\">Here</a>."
 msgstr ""
 
-#: admin/PagesHandler.class.php:249
+#: admin/PagesHandler.class.php:253
 msgid "Modules:"
 msgstr ""
 
-#: admin/PagesHandler.class.php:251
-msgid ""
-"This plugin uses modules, so you can disable non necessary one to not "
-"weigh down WordPress. Currently active:"
+#: admin/PagesHandler.class.php:255
+msgid "Currently WP-Optimizer active modules:"
 msgstr ""
 
-#: admin/PagesHandler.class.php:262
+#: admin/PagesHandler.class.php:264
+msgid "Handle theme here:"
+msgstr ""
+
+#: admin/PagesHandler.class.php:267
 #, php-format
 msgid ""
 "<a class=\"button button-primary button-large\" href=\"%s\">Manage</a>"
 msgstr ""
 
-#: admin/PagesHandler.class.php:266
+#: admin/PagesHandler.class.php:271
 #, php-format
 msgid ""
 "<a class=\"button button-primary button-large\" href=\"%s\">Configure</"
 "a>"
 msgstr ""
 
-#: admin/PagesHandler.class.php:273
+#: admin/PagesHandler.class.php:278
 #, php-format
 msgid "A tracking option is enabled, see more <a href=\"%s\">here</a>."
 msgstr ""
 
-#: admin/PagesHandler.class.php:275
+#: admin/PagesHandler.class.php:280
 msgid ""
 "We will collect any personal data, just errors details about this "
 "plugin and if enabled also some anonymous usage statistics (used "
 "plugin features)."
 msgstr ""
 
-#: admin/PagesHandler.class.php:282
+#: admin/PagesHandler.class.php:287
 #, php-format
 msgid ""
 "If you run in some problem with this plugin, enable <a "
@@ -242,88 +244,134 @@ msgid ""
 "will be notified with same useful info about the issue."
 msgstr ""
 
-#: admin/PagesHandler.class.php:283
+#: admin/PagesHandler.class.php:288
 msgid "We will never collect any personal data."
 msgstr ""
 
-#: admin/PagesHandler.class.php:290
+#: admin/PagesHandler.class.php:295
 msgid "Fast actions:"
 msgstr ""
 
-#: admin/PagesHandler.class.php:291
+#: admin/PagesHandler.class.php:296
 msgid "Run now the Optimization process."
 msgstr ""
 
-#: admin/PagesHandler.class.php:293
+#: admin/PagesHandler.class.php:298
 msgid "A cron job is running."
 msgstr ""
 
-#: admin/PagesHandler.class.php:298
+#: admin/PagesHandler.class.php:303
 msgid "Auto optimize now"
 msgstr ""
 
-#: admin/PagesHandler.class.php:302
+#: admin/PagesHandler.class.php:307
 msgid "Reset cron status"
 msgstr ""
 
-#: admin/PagesHandler.class.php:309
+#: admin/PagesHandler.class.php:314
 msgid "Persistent cache:"
 msgstr ""
 
-#: admin/PagesHandler.class.php:310
+#: admin/PagesHandler.class.php:315
 msgid "WP-Optimizer supports <b>Redis</b> and <b>Memcached</b> systems."
 msgstr ""
 
-#: admin/PagesHandler.class.php:311
+#: admin/PagesHandler.class.php:316
 msgid ""
 "To activate persistent cache for your site copy this "
 "<b>define('WP_PERSISTENT_CACHE', true);</b> in wp-config.php"
 msgstr ""
 
-#: admin/PagesHandler.class.php:315
+#: admin/PagesHandler.class.php:320
 msgid "WordPress performances:"
 msgstr ""
 
-#: admin/PagesHandler.class.php:318
+#: admin/PagesHandler.class.php:323
 #, php-format
 msgid "Server load: %s %%"
 msgstr ""
 
-#: admin/PagesHandler.class.php:319
+#: admin/PagesHandler.class.php:324
 #, php-format
 msgid "WordPress memory load: %s"
 msgstr ""
 
-#: admin/PagesHandler.class.php:320
+#: admin/PagesHandler.class.php:325
 #, php-format
 msgid "Wordpress execution time: %s s"
 msgstr ""
 
-#: admin/PagesHandler.class.php:329
+#: admin/PagesHandler.class.php:334 admin/PagesHandler.class.php:430
 msgid "Support this project, buy me a coffee."
 msgstr ""
 
-#: admin/PagesHandler.class.php:344
+#: admin/PagesHandler.class.php:349 admin/PagesHandler.class.php:445
 msgid "Want to support in other ways?"
 msgstr ""
 
-#: admin/PagesHandler.class.php:347
+#: admin/PagesHandler.class.php:352 admin/PagesHandler.class.php:448
 msgid "Help me translating"
 msgstr ""
 
-#: admin/PagesHandler.class.php:350
+#: admin/PagesHandler.class.php:355 admin/PagesHandler.class.php:451
 msgid "Leave a review"
 msgstr ""
 
-#: admin/PagesHandler.class.php:356
+#: admin/PagesHandler.class.php:361 admin/PagesHandler.class.php:457
 msgid "Source code"
 msgstr ""
 
-#: admin/PagesHandler.class.php:359
+#: admin/PagesHandler.class.php:364 admin/PagesHandler.class.php:460
 msgid "About me"
 msgstr ""
 
-#: admin/PluginInit.class.php:225
+#: admin/PagesHandler.class.php:396
+msgid ""
+"This plugin is intended to increase WordPress performances and help "
+"you to configure your best WordPress experience."
+msgstr ""
+
+#: admin/PagesHandler.class.php:397
+msgid ""
+"WP-Optimizer is divided into modules, so you can disable non necessary "
+"one to not weigh down WordPress performances."
+msgstr ""
+
+#: admin/PagesHandler.class.php:403
+msgid "All available modules:."
+msgstr ""
+
+#: admin/PagesHandler.class.php:413
+msgid "Try to explore this plugin:"
+msgstr ""
+
+#: admin/PagesHandler.class.php:415
+#, php-format
+msgid ""
+"<a class=\"button button-primary button-large\" href=\"%s\">Home</a>"
+msgstr ""
+
+#: admin/PagesHandler.class.php:417
+#, php-format
+msgid ""
+"<a class=\"button button-primary button-large\" href=\"%s\">Manage "
+"Modules</a>"
+msgstr ""
+
+#: admin/PagesHandler.class.php:419
+#, php-format
+msgid ""
+"<a class=\"button button-primary button-large\" href=\"%s\">Configure "
+"Modules</a>"
+msgstr ""
+
+#: admin/PagesHandler.class.php:421
+#, php-format
+msgid ""
+"<a class=\"button button-primary button-large\" href=\"%s\">FAQ</a>"
+msgstr ""
+
+#: admin/PluginInit.class.php:196
 msgid "Buy me a beer"
 msgstr ""
 
@@ -597,7 +645,7 @@ msgid "Creation date"
 msgstr ""
 
 #: modules/database.class.php:150
-#: modules/supporters/database/DB_List_Table.class.php:137
+#: modules/supporters/database/DB_List_Table.class.php:135
 #: modules/supporters/media/Media_Table.class.php:128
 msgid "Size"
 msgstr ""
@@ -630,7 +678,7 @@ msgid ""
 msgstr ""
 
 #: modules/database.class.php:222
-#: modules/supporters/database/DB_List_Table.class.php:91
+#: modules/supporters/database/DB_List_Table.class.php:90
 #: modules/supporters/media/Media_Table.class.php:197
 msgid "Delete"
 msgstr ""
@@ -1343,101 +1391,97 @@ msgstr ""
 msgid "No tables found."
 msgstr ""
 
-#: modules/supporters/database/DB_List_Table.class.php:88
-#: modules/supporters/database/DB_List_Table.class.php:266
+#: modules/supporters/database/DB_List_Table.class.php:87
+#: modules/supporters/database/DB_List_Table.class.php:258
 msgid "Optimize"
 msgstr ""
 
-#: modules/supporters/database/DB_List_Table.class.php:89
-#: modules/supporters/database/DB_List_Table.class.php:274
+#: modules/supporters/database/DB_List_Table.class.php:88
+#: modules/supporters/database/DB_List_Table.class.php:266
 msgid "Repair"
 msgstr ""
 
-#: modules/supporters/database/DB_List_Table.class.php:90
+#: modules/supporters/database/DB_List_Table.class.php:89
 msgid "Empty rows"
 msgstr ""
 
-#: modules/supporters/database/DB_List_Table.class.php:92
+#: modules/supporters/database/DB_List_Table.class.php:91
 msgid "Convert to InnoDB"
 msgstr ""
 
-#: modules/supporters/database/DB_List_Table.class.php:93
+#: modules/supporters/database/DB_List_Table.class.php:92
 msgid "Convert to MyISAM"
 msgstr ""
 
-#: modules/supporters/database/DB_List_Table.class.php:134
-msgid "Site"
-msgstr ""
-
-#: modules/supporters/database/DB_List_Table.class.php:135
+#: modules/supporters/database/DB_List_Table.class.php:133
 msgid "Table name"
 msgstr ""
 
-#: modules/supporters/database/DB_List_Table.class.php:136
+#: modules/supporters/database/DB_List_Table.class.php:134
 msgid "Rows"
 msgstr ""
 
-#: modules/supporters/database/DB_List_Table.class.php:138
+#: modules/supporters/database/DB_List_Table.class.php:136
 msgid "Space lost"
 msgstr ""
 
-#: modules/supporters/database/DB_List_Table.class.php:139
+#: modules/supporters/database/DB_List_Table.class.php:137
 msgid "Status"
 msgstr ""
 
-#: modules/supporters/database/DB_List_Table.class.php:140
+#: modules/supporters/database/DB_List_Table.class.php:138
 msgid "Table engine"
 msgstr ""
 
-#: modules/supporters/database/DB_List_Table.class.php:200
+#: modules/supporters/database/DB_List_Table.class.php:192
 msgid "optimized"
 msgstr ""
 
-#: modules/supporters/database/DB_List_Table.class.php:201
+#: modules/supporters/database/DB_List_Table.class.php:193
 msgid "repaired"
 msgstr ""
 
-#: modules/supporters/database/DB_List_Table.class.php:202
+#: modules/supporters/database/DB_List_Table.class.php:194
 msgid "emptied"
 msgstr ""
 
-#: modules/supporters/database/DB_List_Table.class.php:203
+#: modules/supporters/database/DB_List_Table.class.php:195
 msgid "deleted"
 msgstr ""
 
-#: modules/supporters/database/DB_List_Table.class.php:204
+#: modules/supporters/database/DB_List_Table.class.php:196
 msgid "converted to InnoDB"
 msgstr ""
 
-#: modules/supporters/database/DB_List_Table.class.php:205
+#: modules/supporters/database/DB_List_Table.class.php:197
 msgid "converted to MyISAM"
 msgstr ""
 
-#: modules/supporters/database/DB_List_Table.class.php:263
+#: modules/supporters/database/DB_List_Table.class.php:255
 msgid "Ok"
 msgstr ""
 
-#: modules/supporters/database/DB_List_Table.class.php:293
+#: modules/supporters/database/DB_List_Table.class.php:273
 msgid "Table Name N/D"
 msgstr ""
 
-#: modules/supporters/database/DB_List_Table.class.php:294
+#: modules/supporters/database/DB_List_Table.class.php:274
 msgid "Rows N/D"
 msgstr ""
 
-#: modules/supporters/database/DB_List_Table.class.php:295
+#: modules/supporters/database/DB_List_Table.class.php:275
 msgid "Length N/D"
 msgstr ""
 
-#: modules/supporters/database/DB_List_Table.class.php:296
+#: modules/supporters/database/DB_List_Table.class.php:276
 msgid "N/D"
 msgstr ""
 
-#: modules/supporters/database/DB_List_Table.class.php:298
+#: modules/supporters/database/DB_List_Table.class.php:278
 msgid "Engine N/D"
 msgstr ""
 
-#: modules/supporters/database/DB_List_Table.class.php:314
+#: modules/supporters/database/DB_List_Table.class.php:293
 msgid ""
 "If no tables are selected, the action will run on all database tables. "
 "Be careful!"
