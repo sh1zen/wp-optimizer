@@ -25,5 +25,3 @@ WPS\core\UtilEnv::db_create(
     true
 );
 
-$wpdb->query("ALTER TABLE " . WPOPT_TABLE_LOG_MAILS . " ADD UNIQUE dest_mail (to_email) USING BTREE;");
-$wpdb->query("ALTER TABLE " . WPOPT_TABLE_LOG_MAILS . " ADD UNIQUE sent_date (sent_date) USING BTREE;");

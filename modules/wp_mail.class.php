@@ -9,7 +9,11 @@ namespace WPOptimizer\modules;
 
 use PHPMailer\PHPMailer\PHPMailer;
 use WPOptimizer\modules\supporters\WPMails;
+use WPS\core\addon\Exporter;
+use WPS\core\CronActions;
+use WPS\core\Query;
 use WPS\core\RequestActions;
+use WPS\core\Rewriter;
 use WPS\core\StringHelper;
 use WPS\modules\Module;
 
@@ -20,6 +24,46 @@ class Mod_WP_Mail extends Module
     public array $scopes = array('settings', 'autoload', 'admin-page');
 
     protected string $context = 'wpopt';
+
+    public function actions(): void
+    {
+        if ($this->option('auto_clear', false)) {
+            CronActions::schedule("WPOPT-WP-Mails", DAY_IN_SECONDS, function () {
+                 Query::getInstance()->delete(['sent_date' => wps_time('mysql', WEEK_IN_SECONDS), 'compare' => '<'], WPOPT_TABLE_LOG_MAILS)->query();
+            }, '08:00');
+        }
+
+        RequestActions::request($this->action_hook, function ($action) {
+
+            require_once WPS_ADDON_PATH . 'Exporter.class.php';
+
+            switch ($action) {
+
+                case 'export':
+
+                    require_once WPOPT_SUPPORTERS . 'wp-mails/WPMails_Table.class.php';
+
+                    $format = $_REQUEST['export-format'] ?? 'csv';
+
+                    $table = new WPMails(['action_hook' => $this->action_hook, 'settings' => $this->option()]);
+
+                    $exporter = new Exporter();
+
+                    $exporter->format($format)->set_data($table->get_items())->prepare()->download('wp-mails');
+                    break;
+
+                case 'reset':
+
+                    Query::getInstance()->tables(WPOPT_TABLE_LOG_MAILS)->action('TRUNCATE')->query();
+
+                    Rewriter::getInstance(admin_url('admin.php'))->add_query_args(array(
+                        'page'    => 'wpopt-wp_mail',
+                        'message' => 'wpopt-wpmails-data-erased',
+                    ))->redirect();
+                    break;
+            }
+        });
+    }
 
     public function mail_logger($mail_info)
     {
@@ -103,6 +147,11 @@ class Mod_WP_Mail extends Module
         if ($this->option('log-mail', false)) {
             add_filter('wp_mail', [$this, 'mail_logger']);
         }
+
+
+        if (filter_input(INPUT_GET, 'message') == 'wpopt-wpmails-data-erased') {
+            $this->add_notices('success', __('All mails have been successfully deleted.', 'wpopt'));
+        }
     }
 
     public function render_sub_modules(): void
@@ -144,7 +193,8 @@ class Mod_WP_Mail extends Module
             $this->group_setting_fields(
                 $this->setting_field(__('General', 'wpopt'), false, "separator"),
                 $this->setting_field(__('Configuration Override', 'wpopt'), "active", "checkbox"),
-                $this->setting_field(__('Mails logging', 'wpopt'), "log-mail", "checkbox"),
+                $this->setting_field(__('Mails logging', 'wpopt'), "log-mail", "checkbox", ['default_value' => true]),
+                $this->setting_field(__('Delete mails older then a week', 'wpopt'), "auto_clear", "checkbox"),
             ),
 
             $this->group_setting_fields(

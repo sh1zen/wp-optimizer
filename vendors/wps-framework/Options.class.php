@@ -320,9 +320,10 @@ class Options
 
     public function remove_by_container($container): bool
     {
-        global $wpdb;
-
-        return boolval($wpdb->query($wpdb->prepare("DELETE FROM " . $this->table_name() . " WHERE container = %s", $container)));
+        if (empty($container)) {
+            return true;
+        }
+        return (bool)Query::getInstance()->delete(['container' => $container], $this->table_name())->query();
     }
 
     public function remove_by_value($value, $regex = false)

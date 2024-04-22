@@ -54,7 +54,7 @@ function wps_maybe_upgrade($context, $new_version, $path): void
 
         wps_core()->is_upgrading(true);
 
-        if (wps_loaded('wps', 'moduleHandler')) {
+        if (wps_loaded($context, 'moduleHandler')) {
             wps($context)->moduleHandler->upgrade();
         }
     }

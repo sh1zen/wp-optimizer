@@ -195,7 +195,7 @@ class WPMails extends \WP_List_Table
     public function get_items($use_limit = false)
     {
         // get requested order and other filters from _wp_http_referer
-        parse_str(parse_url($_REQUEST['_wp_http_referer'] ?? '', PHP_URL_QUERY), $request);
+        parse_str(parse_url($_REQUEST['_wp_http_referer'] ?? '', PHP_URL_QUERY) ?: '', $request);
 
         $query = $this->parse_query($request)->output(ARRAY_A);
 

@@ -28,7 +28,7 @@ class Cache_Dispatcher
 
         $this->lifetime = self::parse_lifetime($lifetime);
 
-        $this->is_cacheable = !(is_admin() or wp_doing_cron() or (defined('REST_REQUEST') && REST_REQUEST) or wp_doing_ajax());
+        $this->is_cacheable = !(is_admin() or wps_core()->doing_jobs);
 
         $this->reset();
 

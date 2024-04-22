@@ -13,19 +13,14 @@
  * Author URI: https://sh1zen.github.io/
  * Text Domain: wpopt
  * Domain Path: /languages
- * Version: 2.3.3
+ * Version: 2.3.4
  */
 
-const WPOPT_VERSION = '2.3.3';
+const WPOPT_VERSION = '2.3.4';
 const WPOPT_FILE = __FILE__;
-const WPOPT_ABSPATH = __DIR__ . '/';
 
 // setup constants
-require_once WPOPT_ABSPATH . '/inc/constants.php';
-
-require_once WPOPT_ABSPATH . 'wps-init.php';
-
-define('WPOPT_DEBUG', !wps_core()->online);
+require_once __DIR__ . '/inc/wps_and_constants.php';
 
 // essential
 require_once WPOPT_INCPATH . 'functions.php';

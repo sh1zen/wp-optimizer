@@ -4,7 +4,7 @@ msgstr ""
 "Project-Id-Version: wpopt-translation\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/wp-"
 "optimizer/\n"
-"POT-Creation-Date: 2024-04-20 14:06+0200\n"
+"POT-Creation-Date: 2024-04-22 15:11+0200\n"
 "PO-Revision-Date: 2020-05-13 02:34+0200\n"
 "Last-Translator: sh1zen\n"
 "Language-Team: sh1zen\n"
@@ -395,83 +395,83 @@ msgstr ""
 msgid "Errors:"
 msgstr ""
 
-#: modules/activitylog.class.php:96 modules/wp_mail.class.php:132
+#: modules/activitylog.class.php:94 modules/wp_mail.class.php:181
 msgid "Reset Log"
 msgstr ""
 
-#: modules/activitylog.class.php:262
+#: modules/activitylog.class.php:260
 msgid "All activities have been successfully deleted."
 msgstr ""
 
-#: modules/activitylog.class.php:451
+#: modules/activitylog.class.php:449
 msgid "Log IP addresses"
 msgstr ""
 
-#: modules/activitylog.class.php:452
+#: modules/activitylog.class.php:450
 msgid "Log User Agent"
 msgstr ""
 
-#: modules/activitylog.class.php:453
+#: modules/activitylog.class.php:451
 msgid "Log REQUEST arguments"
 msgstr ""
 
-#: modules/activitylog.class.php:458
+#: modules/activitylog.class.php:456
 msgid "Auto clear logs"
 msgstr ""
 
-#: modules/activitylog.class.php:459
+#: modules/activitylog.class.php:457
 msgid "Keeps log for (days)"
 msgstr ""
 
-#: modules/activitylog.class.php:463
+#: modules/activitylog.class.php:461
 msgid "User activity log (login, registration, deletion)"
 msgstr ""
 
-#: modules/activitylog.class.php:464
+#: modules/activitylog.class.php:462
 msgid "Posts activity log"
 msgstr ""
 
-#: modules/activitylog.class.php:465
+#: modules/activitylog.class.php:463
 msgid "Terms activity log"
 msgstr ""
 
-#: modules/activitylog.class.php:466
+#: modules/activitylog.class.php:464
 msgid "Attachments activity log"
 msgstr ""
 
-#: modules/activitylog.class.php:471
+#: modules/activitylog.class.php:469
 msgid "Options update log"
 msgstr ""
 
-#: modules/activitylog.class.php:472
+#: modules/activitylog.class.php:470
 msgid "Plugin upgrades/installs log"
 msgstr ""
 
-#: modules/activitylog.class.php:476
+#: modules/activitylog.class.php:474
 msgid "404 log"
 msgstr ""
 
-#: modules/activitylog.class.php:477
+#: modules/activitylog.class.php:475
 msgid "Bad query (maybe info gathering) activity log"
 msgstr ""
 
-#: modules/activitylog.class.php:478
+#: modules/activitylog.class.php:476
 msgid "Try to match xss attempts"
 msgstr ""
 
-#: modules/activitylog.class.php:479
+#: modules/activitylog.class.php:477
 msgid "Try to match sql injections attempts"
 msgstr ""
 
-#: modules/activitylog.class.php:480
+#: modules/activitylog.class.php:478
 msgid "Try to match access to inconsistent data"
 msgstr ""
 
-#: modules/activitylog.class.php:481
+#: modules/activitylog.class.php:479
 msgid "Custom rules (one per line)"
 msgstr ""
 
-#: modules/activitylog.class.php:489
+#: modules/activitylog.class.php:487
 msgid ""
 "Provide a list of custom regexes that you want to use to monitor bad "
 "url."
@@ -1133,87 +1133,87 @@ msgstr ""
 msgid "Space freed up: %s:"
 msgstr ""
 
-#: modules/media.class.php:426
+#: modules/media.class.php:429
 msgid "Force images to use browser built-in loading lazy advantages"
 msgstr ""
 
-#: modules/media.class.php:430
+#: modules/media.class.php:433
 msgid "Images optimization preferences"
 msgstr ""
 
-#: modules/media.class.php:431
+#: modules/media.class.php:434
 msgid "Auto optimize uploads"
 msgstr ""
 
-#: modules/media.class.php:431
+#: modules/media.class.php:434
 msgid "set it here"
 msgstr ""
 
-#: modules/media.class.php:432
+#: modules/media.class.php:435
 msgid "Use Imagick (if installed)"
 msgstr ""
 
-#: modules/media.class.php:433
+#: modules/media.class.php:436
 msgid "Optimization quality"
 msgstr ""
 
-#: modules/media.class.php:434
+#: modules/media.class.php:437
 msgid "Keep all the EXIF data of your images"
 msgstr ""
 
-#: modules/media.class.php:435
+#: modules/media.class.php:438
 msgid "Resize larger images"
 msgstr ""
 
-#: modules/media.class.php:436
+#: modules/media.class.php:439
 msgid "max with (px)"
 msgstr ""
 
-#: modules/media.class.php:437
+#: modules/media.class.php:440
 msgid "max height (px)"
 msgstr ""
 
-#: modules/media.class.php:441
+#: modules/media.class.php:444
 msgid "Formats"
 msgstr ""
 
-#: modules/media.class.php:442
+#: modules/media.class.php:445
 msgid "Convert all images to new webp format"
 msgstr ""
 
-#: modules/media.class.php:443
+#: modules/media.class.php:446
 msgid "Optimize JPG/JPEG"
 msgstr ""
 
-#: modules/media.class.php:444
+#: modules/media.class.php:447
 msgid "Optimize PNG"
 msgstr ""
 
-#: modules/media.class.php:445
+#: modules/media.class.php:448
 msgid "Optimize GIF"
 msgstr ""
 
-#: modules/media.class.php:446
+#: modules/media.class.php:449
 msgid "Optimize WEBP"
 msgstr ""
 
-#: modules/media.class.php:447
+#: modules/media.class.php:450
 msgid "Optimize other formats (tiff, heic, bmp)"
 msgstr ""
 
-#: modules/media.class.php:455
+#: modules/media.class.php:458
 msgid ""
 "Automatically compresses and resizes images for faster loading, "
 "improving website performance."
 msgstr ""
 
-#: modules/media.class.php:456
+#: modules/media.class.php:459
 msgid ""
 "A PHP extension for creating, modifying and manipulating images, it "
 "makes optimization faster."
 msgstr ""
 
-#: modules/media.class.php:457
+#: modules/media.class.php:460
 msgid ""
 "WebP is a modern image format with superior compression efficiency, "
 "reducing file size and improving website performance."
@@ -1555,7 +1555,7 @@ msgstr ""
 msgid "No Mails found."
 msgstr ""
 
-#: modules/tracking.class.php:23 modules/wp_mail.class.php:145
+#: modules/tracking.class.php:23 modules/wp_mail.class.php:194
 msgid "General"
 msgstr ""
 
@@ -2126,59 +2126,67 @@ msgstr ""
 msgid "AuthorURI"
 msgstr ""
 
-#: modules/wp_mail.class.php:146
+#: modules/wp_mail.class.php:153
+msgid "All mails have been successfully deleted."
+msgstr ""
+
+#: modules/wp_mail.class.php:195
 msgid "Configuration Override"
 msgstr ""
 
-#: modules/wp_mail.class.php:147
+#: modules/wp_mail.class.php:196
 msgid "Mails logging"
 msgstr ""
 
-#: modules/wp_mail.class.php:151
+#: modules/wp_mail.class.php:197
+msgid "Delete mails older then a week"
+msgstr ""
+
+#: modules/wp_mail.class.php:201
 msgid "Server Conf"
 msgstr ""
 
-#: modules/wp_mail.class.php:152
+#: modules/wp_mail.class.php:202
 msgid "Host"
 msgstr ""
 
-#: modules/wp_mail.class.php:153 modules/wp_mail.class.php:154
+#: modules/wp_mail.class.php:203 modules/wp_mail.class.php:204
 msgid "Port"
 msgstr ""
 
-#: modules/wp_mail.class.php:158
+#: modules/wp_mail.class.php:208
 msgid "SMTP"
 msgstr ""
 
-#: modules/wp_mail.class.php:159
+#: modules/wp_mail.class.php:209
 msgid "Enable"
 msgstr ""
 
-#: modules/wp_mail.class.php:160
+#: modules/wp_mail.class.php:210
 msgid "Username"
 msgstr ""
 
-#: modules/wp_mail.class.php:161
+#: modules/wp_mail.class.php:211
 msgid "Password"
 msgstr ""
 
-#: modules/wp_mail.class.php:162
+#: modules/wp_mail.class.php:212
 msgid "Encryption"
 msgstr ""
 
-#: modules/wp_mail.class.php:163
+#: modules/wp_mail.class.php:213
 msgid "AutoTLS"
 msgstr ""
 
-#: modules/wp_mail.class.php:167
+#: modules/wp_mail.class.php:217
 msgid "SSL"
 msgstr ""
 
-#: modules/wp_mail.class.php:168
+#: modules/wp_mail.class.php:218
 msgid "Allow self signed ssl certificate"
 msgstr ""
 
-#: modules/wp_mail.class.php:176
+#: modules/wp_mail.class.php:226
 msgid ""
 "If enabled allow to inject the below connection specification into "
 "phpmailer of WordPress"

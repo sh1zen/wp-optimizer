@@ -57,8 +57,8 @@ function wps_loaded(string $context = 'wps', $module = null): bool
 {
     $debug = wps_core()->debug;
     wps_core()->debug = false;
-    $loaded = wps($context);
 
+    $loaded = wps($context);
     if ($module and is_null($loaded->$module)) {
         $loaded = false;
     }

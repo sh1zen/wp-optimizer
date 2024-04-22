@@ -81,16 +81,16 @@ class Query
             $this->compile();
         }
 
+        if ($this->debug) {
+            print_r($this->sql);
+        }
+
         if (!str_starts_with($this->sql, 'SELECT')) {
             return $wpdb->query($this->sql);
         }
         else {
 
             $field_count = preg_match("#^SELECT\s+\*\s+FROM#", $this->sql) ? 1000 : count($this->columns);
-
-            if ($this->debug) {
-                print_r($this->sql);
-            }
 
             if ($single) {
 

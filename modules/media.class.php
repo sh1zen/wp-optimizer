@@ -231,9 +231,18 @@ class Mod_Media extends Module
             <notice class="wps">
                 <h2><?php _e('Optimize all media library.', 'wpopt'); ?></h2>
                 <pre><?php echo sprintf(__('Optimization will run silently in background (<a href="%s">Cron</a> must be active).', 'wpopt'), admin_url('admin.php?page=wpopt-settings#settings-cron')); ?></pre>
+                <?php
+
+                if ($scheduled = CronActions::get_scheduled_function('ipc_scanner_cron_handler')) {
+                    echo "<b>" . sprintf(__('Scheduled for %s', 'wpopt'), wps_time('mysql', 0, true, $scheduled['timestamp'])) . "</b><br><br>";
+                }
+
+                $button_disabled = (!empty($scheduled) or $this->status('optimization') === 'running');
+                ?>
+
                 <block style="padding-right: 30px">
                     <button class="button button-primary button-large"
-                        <?php echo $this->status('optimization') === 'running' ? 'disabled' : '' ?>
+                        <?php echo $button_disabled ? 'disabled' : '' ?>
                             data-wps="ajax-action" data-mod="media" data-action="start-ipc-posts"
                             data-nonce="<?php echo $nonce; ?>">
                         <?php echo __('Start', 'wpopt') ?>
@@ -246,7 +255,7 @@ class Mod_Media extends Module
                     </button>
                 </block>
                 <button class="button button-primary button-large"
-                    <?php echo $this->status('optimization') === 'running' ? 'disabled' : '' ?>
+                    <?php echo $button_disabled ? 'disabled' : '' ?>
                         data-wps="ajax-action" data-mod="media" data-action="reset-ipc-posts"
                         data-nonce="<?php echo $nonce; ?>">
                     <?php echo __('Reset', 'wpopt') ?>
@@ -320,12 +329,12 @@ class Mod_Media extends Module
 
         $scannedID = wps('wpopt')->options->get('last_scanned_postID', 'scan_media', 'media', 0);
 
-        $optimized_images_count = $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->posts} WHERE ID <= {$scannedID} AND post_type = 'attachment' AND post_mime_type LIKE '%image%'");
-        $all_media_count = $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->posts} WHERE post_type = 'attachment' AND post_mime_type LIKE '%image%'");
+        $optimized_images_count = $wpdb->get_var("SELECT COUNT(*) FROM $wpdb->posts WHERE ID <= $scannedID AND post_type = 'attachment' AND post_mime_type LIKE '%image%'");
+        $all_media_count = $wpdb->get_var("SELECT COUNT(*) FROM $wpdb->posts WHERE post_type = 'attachment' AND post_mime_type LIKE '%image%'");
 
         list($size, $prev_size, $media_optimized_id) = wps('wpopt')->options->get('size_prevsize', 'stats', 'media', [0, 0, 0]);
 
-        while (!empty($optimized_images = $wpdb->get_results("SELECT id, value FROM " . wps('wpopt')->options->table_name() . " WHERE item = 'optimized_images' AND context = 'media' AND id > '{$media_optimized_id}' ORDER BY id LIMIT 10000", ARRAY_A))) {
+        while (!empty($optimized_images = $wpdb->get_results("SELECT id, value FROM " . wps('wpopt')->options->table_name() . " WHERE item = 'optimized_images' AND context = 'media' AND id > '$media_optimized_id' ORDER BY id LIMIT 10000", ARRAY_A))) {
 
             $wpdb->flush();
 
@@ -430,7 +439,7 @@ class Mod_Media extends Module
                 $this->setting_field(__('Images optimization preferences', 'wpopt'), false, 'separator'),
                 $this->setting_field(__('Auto optimize uploads', 'wpopt'), 'auto_optimize_uploads', 'link', ['value' => ['text' => __('set it here', 'wpopt'), 'href' => admin_url('admin.php?page=wpopt-settings#settings-cron')]]),
                 $this->setting_field(__('Use Imagick (if installed)', 'wpopt'), "use_imagick", "checkbox", ['default_value' => true]),
-                $this->setting_field(__('Optimization quality', 'wpopt'), "quality", "number", ['default_value' => 80]),
+                $this->setting_field(__('Optimization quality 0%-100%', 'wpopt'), "quality", "number", ['default_value' => 80]),
                 $this->setting_field(__('Keep all the EXIF data of your images', 'wpopt'), "keep_exif", "checkbox", ['default_value' => false]),
                 $this->setting_field(__('Resize larger images', 'wpopt'), "resize_larger_images", "checkbox", ['default_value' => false]),
                 $this->setting_field(__('max with (px)', 'wpopt'), "resize_width_px", "number", ['default_value' => 2560, 'parent' => 'resize_larger_images']),

@@ -21,19 +21,13 @@ class PluginInit
     /**
      * Holds the plugin base name
      */
-    public string $plugin_basename;
-
-    /**
-     * Holds the plugin base url
-     */
-    public string $plugin_base_url;
+    private string $plugin_basename;
 
     public ?PagesHandler $pages_handler;
 
     private function __construct()
     {
         $this->plugin_basename = UtilEnv::plugin_basename(WPOPT_FILE);
-        $this->plugin_base_url = UtilEnv::path_to_url(WPOPT_ABSPATH);
 
         if (is_admin()) {
             $this->register_actions();

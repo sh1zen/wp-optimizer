@@ -8,20 +8,15 @@
 /**
  * Uninstall Procedure
  */
+global $wpdb;
 
 // if uninstall.php is not called by WordPress, die
 if (!defined('WP_UNINSTALL_PLUGIN')) {
     die();
 }
 
-global $wpdb;
-
-const WPOPT_ABSPATH = __DIR__ . '/';
-
 // setup constants
-require_once WPOPT_ABSPATH . 'inc/constants.php';
-
-require_once WPOPT_ABSPATH . 'wps-init.php';
+require_once __DIR__ . '/inc/wps_and_constants.php';
 
 // Leave no trail
 $option_names = array('wpopt', 'wpopt.media.todo');

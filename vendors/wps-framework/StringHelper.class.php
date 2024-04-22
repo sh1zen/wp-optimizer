@@ -122,7 +122,7 @@ class StringHelper
 
         if (str_contains($str, '<')) {
 
-            $str = preg_replace_callback('#<[^>]*?((?=<)|>|$)#', ['self', 'pre_kses_less_than_callback'], $str);
+            $str = preg_replace_callback('#<[^>]*?((?=<)|>|$)#', 'WPS\core\StringHelper::pre_kses_less_than_callback', $str);
 
             // remove also style and scripts
             $str = preg_replace('#<(script|style)[^>]*?>.*?</\\1>#si', '', $str);

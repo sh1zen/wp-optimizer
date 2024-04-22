@@ -5,7 +5,7 @@ Donate link: https://www.paypal.com/donate?business=dev.sh1zen%40outlook.it&item
 Requires at least: 5.0.0
 Tested up to: 6.5
 Requires PHP: 7.4
-Stable tag: 2.3.3
+Stable tag: 2.3.4
 License: GNU v3.0 License
 URI: https://github.com/sh1zen/wp-optimizer/blob/master/LICENSE
 
@@ -82,6 +82,10 @@ Improve Your WordPress Performance and SEO with WP-Optimizer (WPOPT) - Contains 
   * Offers an easy way to set up some basic security enhancements.
   * Soon will be available also blocking some specific attack patterns
 
+
+* ***WP Mail:***
+  * Mail Logging
+  * Configure external smtp server
 
 * ***WP Customizer:*** 
   * Prevent access to WordPress dashboard for non admins 
@@ -188,11 +192,13 @@ That should work! Otherwise, go to the new added module "Setting" and try a rese
 
 == Changelog ==
 
-= 2.3.3 =
+= 2.3.4 =
 
 * added new module to configure mail transport and log mails
 * added Welcome page on plugin activation
 * improved ImagesProcessor
+* improved core performances
+* improved uninstallation process
 * updated admin UI
 * updated translations
 * fixed some compatibility bugs

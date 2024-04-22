@@ -40,7 +40,7 @@ class Exporter
     {
         switch ($this->format) {
             case 'csv':
-                $this->parsed .= implode(',', array_keys($this->items[0])) . "\n";
+                $this->parsed .= implode(',', array_keys($this->items[0] ?? [])) . "\n";
 
                 foreach ($this->items as $item) {
                     $this->parsed .= implode(',', $item) . "\n";

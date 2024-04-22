@@ -163,11 +163,13 @@ class ImagesProcessor
 
         while (UtilEnv::safe_time_limit(5, 60) !== false) {
 
-            $post_ids = $wpdb->get_col("SELECT ID FROM $wpdb->posts WHERE post_type = 'attachment' AND ID > $scannedID AND post_mime_type REGEXP '" . self::$allowedMimeTypeRegex . "' ORDER BY ID ASC LIMIT 20");
+            $post_ids = $wpdb->get_col("SELECT ID FROM $wpdb->posts WHERE post_type = 'attachment' AND ID > $scannedID AND post_mime_type LIKE '%image%' ORDER BY ID ASC LIMIT 30");
 
             if (empty($post_ids)) {
                 break;
             }
+
+            $optimized = [];
 
             foreach ($post_ids as $post_id) {
 
@@ -182,11 +184,13 @@ class ImagesProcessor
                     break;
                 }
 
-                do_action('wpopt_delete_options_cache', $post_id);
+                $optimized[] = $post_id;
 
-                // directly wipe related core cached items
-                wps()->options->remove_by_container($post_id);
+                do_action('wpopt_media_optimized', $post_id);
             }
+
+            // directly wipe related core cached items
+            wps()->options->remove_by_container($optimized);
 
             wps('wpopt')->options->update('last_scanned_postID', 'scan_media', $scannedID, 'media');
         }
@@ -200,14 +204,14 @@ class ImagesProcessor
     {
         global $wpdb;
 
+        if (UtilEnv::safe_time_limit(6, 60) === false) {
+            return IPC_TIME_LIMIT;
+        }
+
         $metadata = wp_get_attachment_metadata($attachment_id, true);
 
         if (!$metadata) {
             return IPC_MEDIA_NOT_FOUND;
-        }
-
-        if (UtilEnv::safe_time_limit(6, 60) === false) {
-            return IPC_TIME_LIMIT;
         }
 
         // fix to handle corrupted metadata
@@ -319,7 +323,7 @@ class ImagesProcessor
         }
 
         if ($remove_converted) {
-            unlink($image_path);
+            @unlink($image_path);
         }
 
         if ($save_processed) {

@@ -9,11 +9,6 @@ use WPS\core\CronActions;
 use WPOptimizer\core\PluginInit;
 use WPOptimizer\modules\supporters\ImagesProcessor;
 
-function wpopt(): PluginInit
-{
-    return PluginInit::getInstance();
-}
-
 function wpopt_optimize_image(string $path, bool $replace = true, array $settings = [])
 {
     if (!wps('wpopt')) {

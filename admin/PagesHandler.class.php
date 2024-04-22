@@ -121,7 +121,7 @@ class PagesHandler
 
     public function register_assets(): void
     {
-        $assets_url = wpopt()->plugin_base_url;
+        $assets_url = UtilEnv::path_to_url(WPOPT_ABSPATH);
 
         $min = wps_core()->online ? '.min' : '';
 

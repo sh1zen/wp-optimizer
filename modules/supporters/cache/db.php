@@ -14,7 +14,7 @@ else {
     require_once ABSPATH . WPINC . '/wp-db.php';
 }
 
-require_once dirname(__FILE__, 4) . '/inc/constants.php';
+require_once dirname(__FILE__, 4) . '/inc/wps_and_constants.php';
 
 // no caching during activation or if is admin
 if (!((defined('WP_INSTALLING') and WP_INSTALLING) or is_admin())) {

@@ -328,6 +328,17 @@ class CronActions
         return true;
     }
 
+    public static function get_scheduled_function($hook)
+    {
+        $events = get_option('wps#cron-events', array());
+
+        if (empty($events) or !isset($events[$hook])) {
+            return false;
+        }
+
+        return $events[$hook];
+    }
+
     public static function unschedule_function(string $hook): bool
     {
         $events = get_option('wps#cron-events', array());

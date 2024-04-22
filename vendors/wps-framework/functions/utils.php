@@ -46,19 +46,26 @@ function wps_domain()
     return Rewriter::getInstance()->host();
 }
 
-function wps_server_addr()
+function wps_server_addr(): string
 {
-    global $is_IIS;
+    static $addr = null;
 
-    if ($is_IIS and isset($_SERVER['LOCAL_ADDR'])) {
-        $addr = $_SERVER['LOCAL_ADDR'];
-    }
-    else {
-        $addr = $_SERVER['SERVER_ADDR'] ?? '';
-    }
+    if (!isset($addr)) {
 
-    if (empty($addr) and isset($_SERVER['SERVER_NAME'])) {
-        $addr = gethostbyname($_SERVER['SERVER_NAME']);
+        global $is_IIS;
+
+        if ($is_IIS and isset($_SERVER['LOCAL_ADDR'])) {
+            $addr = $_SERVER['LOCAL_ADDR'];
+        }
+        else {
+            $addr = $_SERVER['SERVER_ADDR'] ?? '';
+        }
+
+        if (empty($addr) and isset($_SERVER['SERVER_NAME'])) {
+            $addr = gethostbyname($_SERVER['SERVER_NAME']);
+        }
+
+        $addr = trim($addr);
     }
 
     return $addr;

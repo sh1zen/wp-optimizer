@@ -16,8 +16,6 @@ use WPS\modules\Module;
 
 use WPOptimizer\modules\supporters\ActivityLog;
 
-global $wpdb;
-
 /**
  *  Module for images optimization handling
  */
