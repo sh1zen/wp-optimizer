@@ -51,7 +51,8 @@ require_once WPS_FRAMEWORK . 'ModuleHandler.class.php';
 
 add_action('admin_enqueue_scripts', 'wps_admin_enqueue_scripts', 10, 0);
 
-add_action('init', ['\WPS\core\CronActions', 'Initialize']);
+// make sure to be fired after all modules are loaded to prevent serialize of incomplete php object class
+add_action('init', ['\WPS\core\CronActions', 'Initialize'], 10000);
 
 function wps_loaded(string $context = 'wps', $module = null): bool
 {

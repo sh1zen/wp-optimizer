@@ -80,6 +80,7 @@ class Mod_Media extends Module
 
             case 'pause-ipc-posts':
                 $this->status('optimization', 'paused');
+                CronActions::unschedule_function('ipc_scanner_cron_handler');
                 $response = __('Media optimization scan is shutting down.', 'wpopt');
                 break;
 
@@ -94,6 +95,7 @@ class Mod_Media extends Module
 
             case 'reset-ipc-posts':
                 wps('wpopt')->options->remove_all('media', 'scan_media');
+                CronActions::unschedule_function('ipc_scanner_cron_handler');
                 $this->status('optimization', 'paused');
                 $response = __('Media posts optimization has been successfully reset.', 'wpopt');
                 break;
@@ -237,12 +239,10 @@ class Mod_Media extends Module
                     echo "<b>" . sprintf(__('Scheduled for %s', 'wpopt'), wps_time('mysql', 0, true, $scheduled['timestamp'])) . "</b><br><br>";
                 }
 
-                $button_disabled = (!empty($scheduled) or $this->status('optimization') === 'running');
                 ?>
-
                 <block style="padding-right: 30px">
                     <button class="button button-primary button-large"
-                        <?php echo $button_disabled ? 'disabled' : '' ?>
+                        <?php echo (!empty($scheduled) or $this->status('optimization') === 'running') ? 'disabled' : '' ?>
                             data-wps="ajax-action" data-mod="media" data-action="start-ipc-posts"
                             data-nonce="<?php echo $nonce; ?>">
                         <?php echo __('Start', 'wpopt') ?>
@@ -255,7 +255,7 @@ class Mod_Media extends Module
                     </button>
                 </block>
                 <button class="button button-primary button-large"
-                    <?php echo $button_disabled ? 'disabled' : '' ?>
+                    <?php echo $this->status('optimization') === 'running' ? 'disabled' : '' ?>
                         data-wps="ajax-action" data-mod="media" data-action="reset-ipc-posts"
                         data-nonce="<?php echo $nonce; ?>">
                     <?php echo __('Reset', 'wpopt') ?>

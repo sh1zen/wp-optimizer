@@ -209,7 +209,7 @@ class Rewriter
         $matched_rule = false;
 
         if ($start and !str_starts_with($regex, '^')) {
-            $regex = '^' . $regex;
+            $regex = "^($regex)";
         }
 
         if (preg_match("#$regex#iD", $url, $matches)) {

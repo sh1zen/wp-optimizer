@@ -11,7 +11,7 @@ class Query
 {
     private $output = OBJECT;
 
-    private string $sql;
+    private string $sql = '';
 
     private string $action = 'SELECT';
     private array $tables = [];
@@ -35,26 +35,13 @@ class Query
 
     private bool $use_reference;
 
-    private array $joining_tables = [];
+    private array $merging_tables = [];
 
     private function __construct($output, $useReference)
     {
-        $this->reset();
-
         $this->use_reference = $useReference;
 
         $this->output($output);
-    }
-
-    public function reset(): void
-    {
-        $this->joining_tables = [];
-
-        $this->table_aliases = [];
-        $this->references_map = [];
-        $this->reference_count = [];
-
-        $this->sql = '';
     }
 
     public function output($output): Query
@@ -144,27 +131,12 @@ class Query
         }
 
         foreach ($this->tables as $table) {
+
             $tables[] = ($this->use_reference ? "$table AS " . $this->get_table_alias($table) : $table) . ' ' . ($this->joins[$table] ?? '');
         }
         $tables = implode(', ', $tables);
 
-        foreach ($this->joining_tables as $conditions) {
-
-            $compare = $conditions['compare'] ?? '=';
-            unset($conditions['compare']);
-
-            $tab1 = wps_array_key_next($conditions);
-            $field1 = $conditions[$tab1];
-            $tab1_reference = $this->get_table_alias($tab1);
-
-            $tab2 = wps_array_key_next($conditions);
-            $field2 = $conditions[$tab2];
-            $tab2_reference = $this->get_table_alias($tab2);
-
-            if ($this->reference_count[$tab1] and $this->reference_count[$tab2]) {
-                $this->where[] = "$tab1_reference.$field1 $compare $tab2_reference.$field2";
-            }
-        }
+        $this->parse_merging_tables();
 
         $where = implode(' AND ', $this->where);
 
@@ -300,6 +272,27 @@ class Query
         }
 
         return $this;
+    }
+
+    private function parse_merging_tables(): void
+    {
+        foreach ($this->merging_tables as $conditions) {
+
+            $compare = $conditions['compare'] ?? '=';
+            unset($conditions['compare']);
+
+            $tab1 = wps_array_key_next($conditions);
+            $field1 = $conditions[$tab1];
+            $tab1_reference = $this->get_table_alias($tab1);
+
+            $tab2 = wps_array_key_next($conditions);
+            $field2 = $conditions[$tab2];
+            $tab2_reference = $this->get_table_alias($tab2);
+
+            if ($this->reference_count[$tab1] and $this->reference_count[$tab2]) {
+                $this->where[] = "$tab1_reference.$field1 $compare $tab2_reference.$field2";
+            }
+        }
     }
 
     /**
@@ -488,6 +481,7 @@ class Query
                 $as_table = '';
             }
 
+            // tablename/Function(column)/ (as count)?
             preg_match("#^(([^(]+)\((.+)\)([^()]+)?|^(^\S+)\s+(.*))(\s+AS\s+(\w+))?$#iU", $field, $matches);
 
             $_columns[] = [
@@ -514,7 +508,7 @@ class Query
      * $from = ['T1' => 'table1', 'T2' => 'table2' ]
      * $from = 'table'
      */
-    public function tables($tables, array $joining_tables = []): Query
+    public function tables($tables, array ...$joining_tables): Query
     {
         if (!empty($tables)) {
 
@@ -534,23 +528,18 @@ class Query
                 $this->set_table_alias([$table => $key]);
             }
 
-            $this->merge_tables($joining_tables);
+            $this->merge_tables(...$joining_tables);
         }
 
         return $this;
     }
 
-    public function merge_tables(array $joining_tables = []): Query
+    public function merge_tables(array ...$joining_tables): Query
     {
         if (!empty($joining_tables)) {
 
-            // must be an array of arrays
-            if (!isset($joining_tables[0])) {
-                $joining_tables = [$joining_tables];
-            }
-
             foreach ($joining_tables as $joining_table) {
-                $this->joining_tables[] = $joining_table;
+                $this->merging_tables[] = $joining_table;
             }
         }
 
@@ -646,32 +635,36 @@ class Query
         return $this;
     }
 
+    public function join_sql(string $base_table, string $join_sql): Query
+    {
+        $this->joins[$base_table] = $join_sql;
+        return $this;
+    }
+
     /**
      * join( tb1, tb2, [id => user_id]... )
      * join( tb1, join sql, []... )
      */
-    public function join(string $table1, string $table2, array $on = [], $type = 'INNER JOIN'): Query
+    public function join(string $base_table, string $joining_table, array $on, $type = 'INNER JOIN'): Query
     {
-        if (empty($on)) {
-            $this->joins[$table1] = $table2;
+        // get reference of tab 1
+        $_table1 = $this->get_table_alias($base_table, true);
+
+        $need_ref = !$this->has_reference($joining_table);
+
+        // get reference of tab 2
+        $_table2 = $this->get_table_alias($joining_table, true, true);
+
+        if ($need_ref) {
+            $joining_table = rtrim("$joining_table AS $_table2", '.');
         }
-        else {
-            // get reference of tab 1
-            $_table1 = $this->get_table_alias($table1, true);
 
-            $need_ref = !$this->has_reference($table2);
+        $tab1_key = key($on);
+        $tab2_key = $on[$tab1_key];
 
-            // get reference of tab 2
-            $_table2 = $this->get_table_alias($table2, true, true);
+        $join_statement = " $type $joining_table ON {$_table1}{$tab1_key} = {$_table2}{$tab2_key} ";
 
-            if ($need_ref) {
-                $table2 = rtrim("$table2 AS $_table2", '.');
-            }
-
-            $tab1_key = key($on);
-            $tab2_key = $on[$tab1_key];
-            $this->joins[$table1] = "$type $table2 ON {$_table1}{$tab1_key} = {$_table2}{$tab2_key}";
-        }
+        $this->joins[$base_table] = trim(($this->joins[$base_table] ?? '') . $join_statement, ' ');
 
         return $this;
     }

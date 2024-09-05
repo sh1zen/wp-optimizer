@@ -82,13 +82,13 @@ class wps_wrapper
             $this->storage = new Storage($this->context);
         }
 
-        if ($this->components['options']) {
+        if ($this->components['options'] and !empty($this->args['table_name'])) {
             $this->options = new Options($this->context, $this->args['table_name']);
         }
 
         $this->settings = new Settings($this->context);
 
-        if ($this->components['moduleHandler']) {
+        if ($this->components['moduleHandler'] and !empty($this->args['modules_path'])) {
             $this->moduleHandler = new ModuleHandler($this->context, $this->args['modules_path']);
         }
 

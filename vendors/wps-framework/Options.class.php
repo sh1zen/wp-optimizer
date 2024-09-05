@@ -16,21 +16,29 @@ class Options
 
     private Cache $cache;
 
-    public function __construct($context, $table_name)
+    public function __construct($context, $table_name, $cache_object = null)
     {
         global $wpdb;
 
-        $this->cache = wps($context)->cache;
+        if ($cache_object and $cache_object instanceof Cache) {
+            $this->cache = $cache_object;
+        }
+        else {
+            $this->cache = wps_loaded($context) ? wps($context)->cache : new Cache($context);
+        }
 
         if (empty($table_name)) {
             wps_debug_log("WPS Framework >> Options has not defined table name");
         }
-
-        if (!str_starts_with($table_name, $wpdb->prefix)) {
-            $table_name = $wpdb->prefix . $table_name;
+        else {
+            if (!str_starts_with($table_name, $wpdb->prefix)) {
+                $table_name = $wpdb->prefix . $table_name;
+            }
         }
 
         $this->table_name = $table_name;
+
+        $this->maybe_create_options_table();
 
         CronActions::schedule("$context-clear-options", 'daily', function () {
             /**
@@ -38,6 +46,37 @@ class Options
              */
             $this->delete_expired();
         }, '23:00');
+    }
+
+    private function maybe_create_options_table(): void
+    {
+        global $wpdb;
+
+        if ($this->table_name and UtilEnv::table_exist($this->table_name)) {
+            return;
+        }
+
+        var_dump($this->table_name);
+
+        UtilEnv::db_create(
+            $this->table_name,
+            [
+                "fields"      => [
+                    "id"         => "bigint NOT NULL AUTO_INCREMENT",
+                    "obj_id"     => "varchar(255)",
+                    "context"    => "varchar(255)",
+                    "item"       => "varchar(255)",
+                    "value"      => "longtext NOT NULL",
+                    "container"  => "varchar(255) NULL DEFAULT NULL",
+                    "expiration" => "bigint NOT NULL DEFAULT 0"
+                ],
+                "primary_key" => "id"
+            ],
+            true
+        );
+
+        $wpdb->query("ALTER TABLE $this->table_name ADD UNIQUE speeder (context, item, obj_id) USING BTREE;");
+        $wpdb->query("ALTER TABLE $this->table_name ADD UNIQUE speeder_container (container, item, obj_id) USING BTREE;");
     }
 
     public function delete_expired(): void
@@ -52,16 +91,7 @@ class Options
         return $this->table_name;
     }
 
-    /**
-     * @param $obj_id
-     * @param $option
-     * @param bool $value
-     * @param string $context
-     * @param int $expiration could be 0, specific time, DAY_IN_SECONDS, or negative -> not persistent cache
-     * @param string|int|null $container
-     * @return bool
-     */
-    public function update($obj_id, $option, $value = false, $context = 'core', $expiration = 0, $container = null)
+    public function update($obj_id, $option, $value = false, $context = 'core', $expiration = 0, $container = null): bool
     {
         global $wpdb;
 
@@ -147,7 +177,7 @@ class Options
         return $value;
     }
 
-    public function remove($obj_id, $option, $context = 'core')
+    public function remove($obj_id, $option, $context = 'core'): bool
     {
         global $wpdb;
 
@@ -166,16 +196,7 @@ class Options
         return true;
     }
 
-    /**
-     * @param $obj_id
-     * @param $option
-     * @param bool $value
-     * @param string $context
-     * @param int $expiration could be 0, specific time, DAY_IN_SECONDS, or negative -> not persistent cache
-     * @param string|int|null $container
-     * @return bool
-     */
-    public function add($obj_id, $option, $value = false, string $context = 'core', int $expiration = 0, $container = null)
+    public function add($obj_id, $option, $value = false, string $context = 'core', int $expiration = 0, $container = null): bool
     {
         global $wpdb;
 
