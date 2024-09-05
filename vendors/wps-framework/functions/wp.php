@@ -326,7 +326,7 @@ function wps_timestr2seconds($time = '')
     return $matches[1] * HOUR_IN_SECONDS + $matches[2] * MINUTE_IN_SECONDS;
 }
 
-function wps_multi_mail($to, $subject, $message, $headers, $attachments)
+function wps_multi_mail($to, $subject, $message, $headers = [], $attachments = [])
 {
     if (!is_array($to)) {
         return wp_mail($to, $subject, $message, $headers, $attachments);

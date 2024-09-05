@@ -270,11 +270,11 @@ class ImagesProcessor
                 list($width, $height) = explode('x', $size, 2);
 
                 if (is_numeric($width) and is_numeric($height)) {
-
                     if ($width > $allowed_width or $height > $allowed_height) {
-                        unlink($image_path_container . $image['file']);
+                        if (file_exists($image_path_container . $image['file'])) {
+                            @unlink($image_path_container . $image['file']);
+                        }
                         unset($metadata['sizes'][$size]);
-                        continue;
                     }
                 }
             }
@@ -322,7 +322,7 @@ class ImagesProcessor
             return IPC_FAIL;
         }
 
-        if ($remove_converted) {
+        if ($remove_converted and file_exists($image_path)) {
             @unlink($image_path);
         }
 

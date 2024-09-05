@@ -4,7 +4,7 @@ msgstr ""
 "Project-Id-Version: wpopt-translation\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/wp-"
 "optimizer/\n"
-"POT-Creation-Date: 2024-04-22 15:11+0200\n"
+"POT-Creation-Date: 2024-11-13 14:55+0100\n"
 "PO-Revision-Date: 2020-05-13 02:34+0200\n"
 "Last-Translator: sh1zen\n"
 "Language-Team: sh1zen\n"
@@ -13,7 +13,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
-"X-Generator: Poedit 3.4.2\n"
+"X-Generator: Poedit 3.5\n"
 "X-Poedit-Basepath: ..\n"
 "X-Poedit-SourceCharset: UTF-8\n"
 "X-Poedit-KeywordsList: __;_e;_ex;_x;_n;_nx;_n_noop;_nx_noop;esc_html__;"
@@ -44,7 +44,7 @@ msgstr ""
 msgid "WPOPT Settings"
 msgstr ""
 
-#: admin/PagesHandler.class.php:79 admin/PluginInit.class.php:215
+#: admin/PagesHandler.class.php:79 admin/PluginInit.class.php:209
 msgid "Settings"
 msgstr ""
 
@@ -371,7 +371,7 @@ msgid ""
 "<a class=\"button button-primary button-large\" href=\"%s\">FAQ</a>"
 msgstr ""
 
-#: admin/PluginInit.class.php:196
+#: admin/PluginInit.class.php:190
 msgid "Buy me a beer"
 msgstr ""
 
@@ -491,6 +491,7 @@ msgstr ""
 
 #: modules/cache.class.php:179 modules/cache.class.php:184
 #: modules/cache.class.php:188 modules/cache.class.php:192
+#: vendors/wps-framework/CronForModules.php:80
 msgid "Active"
 msgstr ""
 
@@ -1006,66 +1007,66 @@ msgstr ""
 msgid "Orphaned media scanner has been successfully reset."
 msgstr ""
 
-#: modules/media.class.php:83
+#: modules/media.class.php:84
 msgid "Media optimization scan is shutting down."
 msgstr ""
 
-#: modules/media.class.php:88
+#: modules/media.class.php:89
 msgid "Media optimization scan is successfully started."
 msgstr ""
 
-#: modules/media.class.php:91
+#: modules/media.class.php:92
 msgid "An error occurred while starting optimization scan."
 msgstr ""
 
-#: modules/media.class.php:98
+#: modules/media.class.php:100
 msgid "Media posts optimization has been successfully reset."
 msgstr ""
 
-#: modules/media.class.php:103
+#: modules/media.class.php:105
 msgid "Action not supported"
 msgstr ""
 
-#: modules/media.class.php:152
+#: modules/media.class.php:154
 msgid "Find and remove orphaned media"
 msgstr ""
 
-#: modules/media.class.php:155
+#: modules/media.class.php:157
 msgid "Orphaned media scan is running."
 msgstr ""
 
-#: modules/media.class.php:162
+#: modules/media.class.php:164
 msgid "Scan now"
 msgstr ""
 
-#: modules/media.class.php:168 modules/media.class.php:245
+#: modules/media.class.php:170 modules/media.class.php:254
 msgid "Pause"
 msgstr ""
 
-#: modules/media.class.php:175 modules/media.class.php:252
-#: modules/media.class.php:385
+#: modules/media.class.php:177 modules/media.class.php:261
+#: modules/media.class.php:394
 msgid "Reset"
 msgstr ""
 
-#: modules/media.class.php:181
+#: modules/media.class.php:183
 msgid "No orphaned media found."
 msgstr ""
 
-#: modules/media.class.php:207
+#: modules/media.class.php:209
 msgid "Before start optimizing makes sure you did:"
 msgstr ""
 
-#: modules/media.class.php:210
+#: modules/media.class.php:212
 #, php-format
 msgid "Read related <a href=\"%s\">FAQ</a>."
 msgstr ""
 
-#: modules/media.class.php:213
+#: modules/media.class.php:215
 #, php-format
 msgid "Set up your optimization parameters <a href=\"%s\">here</a>."
 msgstr ""
 
-#: modules/media.class.php:216
+#: modules/media.class.php:218
 #, php-format
 msgid ""
 "Note that optimization will run in background and time required "
@@ -1073,25 +1074,25 @@ msgid ""
 "active."
 msgstr ""
 
-#: modules/media.class.php:223
+#: modules/media.class.php:225
 #, php-format
 msgid ""
 "To proceed with image optimization you need to install <a "
 "href=\"%s\">imagick</a> or <a href=\"%s\">GD</a> on your server."
 msgstr ""
 
-#: modules/media.class.php:226
+#: modules/media.class.php:228
 #, php-format
 msgid ""
 "To guarantee a complete image optimization support, install <a "
 "href=\"%s\">imagick</a> on your server."
 msgstr ""
 
-#: modules/media.class.php:232
+#: modules/media.class.php:234
 msgid "Optimize all media library."
 msgstr ""
 
-#: modules/media.class.php:233
+#: modules/media.class.php:235
 #, php-format
 msgid ""
 "Optimization will run silently in background (<a href=\"%s\">Cron</a> "
@@ -1099,121 +1100,126 @@ msgid ""
 msgstr ""
 
 #: modules/media.class.php:239
+#, php-format
+msgid "Scheduled for %s"
+msgstr ""
+
+#: modules/media.class.php:248
 msgid "Start"
 msgstr ""
 
-#: modules/media.class.php:270
+#: modules/media.class.php:279
 msgid "Images optimizer"
 msgstr ""
 
-#: modules/media.class.php:275
+#: modules/media.class.php:284
 msgid "Media cleaner"
 msgstr ""
 
-#: modules/media.class.php:280
+#: modules/media.class.php:289
 msgid "Stats"
 msgstr ""
 
-#: modules/media.class.php:363
+#: modules/media.class.php:372
 #, php-format
 msgid "Media optimized: %d"
 msgstr ""
 
-#: modules/media.class.php:363
+#: modules/media.class.php:372
 #, php-format
 msgid "Left: %d."
 msgstr ""
 
-#: modules/media.class.php:367
+#: modules/media.class.php:376
 msgid "Processed media library:"
 msgstr ""
 
-#: modules/media.class.php:373
+#: modules/media.class.php:382
 #, php-format
 msgid "Space freed up: %s:"
 msgstr ""
 
-#: modules/media.class.php:429
+#: modules/media.class.php:435
 msgid "Force images to use browser built-in loading lazy advantages"
 msgstr ""
 
-#: modules/media.class.php:433
+#: modules/media.class.php:439
 msgid "Images optimization preferences"
 msgstr ""
 
-#: modules/media.class.php:434
+#: modules/media.class.php:440
 msgid "Auto optimize uploads"
 msgstr ""
 
-#: modules/media.class.php:434
+#: modules/media.class.php:440
 msgid "set it here"
 msgstr ""
 
-#: modules/media.class.php:435
+#: modules/media.class.php:441
 msgid "Use Imagick (if installed)"
 msgstr ""
 
-#: modules/media.class.php:436
-msgid "Optimization quality"
+#: modules/media.class.php:442
+msgid "Optimization quality 0%-100%"
 msgstr ""
 
-#: modules/media.class.php:437
+#: modules/media.class.php:443
 msgid "Keep all the EXIF data of your images"
 msgstr ""
 
-#: modules/media.class.php:438
+#: modules/media.class.php:444
 msgid "Resize larger images"
 msgstr ""
 
-#: modules/media.class.php:439
+#: modules/media.class.php:445
 msgid "max with (px)"
 msgstr ""
 
-#: modules/media.class.php:440
+#: modules/media.class.php:446
 msgid "max height (px)"
 msgstr ""
 
-#: modules/media.class.php:444
+#: modules/media.class.php:450
 msgid "Formats"
 msgstr ""
 
-#: modules/media.class.php:445
+#: modules/media.class.php:451
 msgid "Convert all images to new webp format"
 msgstr ""
 
-#: modules/media.class.php:446
+#: modules/media.class.php:452
 msgid "Optimize JPG/JPEG"
 msgstr ""
 
-#: modules/media.class.php:447
+#: modules/media.class.php:453
 msgid "Optimize PNG"
 msgstr ""
 
-#: modules/media.class.php:448
+#: modules/media.class.php:454
 msgid "Optimize GIF"
 msgstr ""
 
-#: modules/media.class.php:449
+#: modules/media.class.php:455
 msgid "Optimize WEBP"
 msgstr ""
 
-#: modules/media.class.php:450
+#: modules/media.class.php:456
 msgid "Optimize other formats (tiff, heic, bmp)"
 msgstr ""
 
-#: modules/media.class.php:458
+#: modules/media.class.php:464
 msgid ""
 "Automatically compresses and resizes images for faster loading, "
 "improving website performance."
 msgstr ""
 
-#: modules/media.class.php:459
+#: modules/media.class.php:465
 msgid ""
 "A PHP extension for creating, modifying and manipulating images, it "
 "makes optimization faster."
 msgstr ""
 
-#: modules/media.class.php:460
+#: modules/media.class.php:466
 msgid ""
 "WebP is a modern image format with superior compression efficiency, "
 "reducing file size and improving website performance."
@@ -2534,4 +2540,106 @@ msgstr ""
 
 #: modules/wp_updates.class.php:134
 msgid "Disable WordPress update notices mail"
+msgstr ""
+
+#: vendors/wps-framework/Ajax.class.php:47
+#: vendors/wps-framework/Ajax.class.php:65
+#: vendors/wps-framework/RequestActions.class.php:42
+#: vendors/wps-framework/RequestActions.class.php:58
+msgid "It seems that you are not allowed to do this request."
+msgstr ""
+
+#: vendors/wps-framework/Ajax.class.php:48
+#: vendors/wps-framework/Ajax.class.php:66
+#: vendors/wps-framework/Ajax.class.php:76
+#: vendors/wps-framework/Module.class.php:256
+#: vendors/wps-framework/RequestActions.class.php:43
+#: vendors/wps-framework/RequestActions.class.php:59
+msgid "Request error"
+msgstr ""
+
+#: vendors/wps-framework/Ajax.class.php:75
+msgid "Wrong ajax request."
+msgstr ""
+
+#: vendors/wps-framework/CronForModules.php:81
+msgid "Execution Time"
+msgstr ""
+
+#: vendors/wps-framework/CronForModules.php:82
+msgid "Schedule"
+msgstr ""
+
+#: vendors/wps-framework/Graphic.class.php:446
+msgid "Choose a type or enter one manually."
+msgstr ""
+
+#: vendors/wps-framework/Module.class.php:75
+msgid "A context must be set"
+msgstr ""
+
+#: vendors/wps-framework/Module.class.php:255
+#, php-format
+msgid "Wrong ajax request for %s"
+msgstr ""
+
+#: vendors/wps-framework/Module.class.php:298
+msgid "Save Changes"
+msgstr ""
+
+#: vendors/wps-framework/Module.class.php:326
+msgid "This Module is disabled for you or for your settings."
+msgstr ""
+
+#: vendors/wps-framework/RequestActions.class.php:59
+msgid "Request response"
+msgstr ""
+
+#: vendors/wps-framework/Settings.class.php:151
+msgid "Core Settings"
+msgstr ""
+
+#: vendors/wps-framework/Settings.class.php:210
+msgid "Modules Settings"
+msgstr ""
+
+#: vendors/wps-framework/Settings.class.php:217
+#, php-format
+msgid "No modules enabled. To enable them go <a href='%s'>here</a>."
+msgstr ""
+
+#: vendors/wps-framework/UtilEnv.php:232
+msgid "Year"
+msgstr ""
+
+#: vendors/wps-framework/UtilEnv.php:232
+msgid "Years"
+msgstr ""
+
+#: vendors/wps-framework/UtilEnv.php:233
+msgid "Month"
+msgstr ""
+
+#: vendors/wps-framework/UtilEnv.php:233
+msgid "Months"
+msgstr ""
+
+#: vendors/wps-framework/UtilEnv.php:234
+msgid "Day"
+msgstr ""
+
+#: vendors/wps-framework/UtilEnv.php:234
+msgid "Days"
+msgstr ""
+
+#: vendors/wps-framework/UtilEnv.php:235
+msgid "Hour"
+msgstr ""
+
+#: vendors/wps-framework/UtilEnv.php:235
+msgid "Hours"
+msgstr ""
+
+#: vendors/wps-framework/functions/wps-modules.php:20
+msgid "Are you sure you want to leave?"
 msgstr ""

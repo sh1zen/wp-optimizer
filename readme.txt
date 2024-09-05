@@ -3,9 +3,9 @@ Contributors: sh1zen
 Tags: optimize, performance, image conversion, cache, minify
 Donate link: https://www.paypal.com/donate?business=dev.sh1zen%40outlook.it&item_name=Thank+you+in+advanced+for+the+kind+donations.+You+will+sustain+me+developing+WP-Optimizer.&currency_code=EUR
 Requires at least: 5.0.0
-Tested up to: 6.5
+Tested up to: 6.7
 Requires PHP: 7.4
-Stable tag: 2.3.4
+Stable tag: 2.3.5
 License: GNU v3.0 License
 URI: https://github.com/sh1zen/wp-optimizer/blob/master/LICENSE
 
@@ -191,6 +191,12 @@ Deactivate the plugin and reactivate it, if this doesn't work try to uninstall a
 That should work! Otherwise, go to the new added module "Setting" and try a reset.
 
 == Changelog ==
+
+= 2.3.5 =
+* improved core performances
+* improved performances
+* updated translations
+* extended support to WordPress 6.7
 
 = 2.3.4 =
 

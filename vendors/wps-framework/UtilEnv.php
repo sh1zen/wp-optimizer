@@ -895,16 +895,32 @@ class UtilEnv
         return $normalizedUrl;
     }
 
-    public static function filesize($path, bool $pre_clear_cache = false)
+    public static function filesize($path, bool $pre_clear_cache = false): int
     {
         $size = 0;
         if (file_exists($path)) {
             if ($pre_clear_cache) {
                 clearstatcache(true, $path);
             }
-            $size = @filesize($path) ?: 0;
+            $size = (int)(@filesize($path) ?: 0);
         }
 
         return $size;
+    }
+
+    public static function table_exist(string $table_name): bool
+    {
+        global $wpdb;
+        static $tables = [];
+
+        if (empty($table_name)) {
+            return false;
+        }
+
+        if (empty($tables)) {
+            $tables = array_flip($wpdb->get_col("SHOW TABLES"));
+        }
+
+        return isset($tables[$table_name]);
     }
 }
