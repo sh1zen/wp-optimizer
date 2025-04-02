@@ -1,7 +1,7 @@
 <?php
 /**
  * @author    sh1zen
- * @copyright Copyright (C) 2024.
+ * @copyright Copyright (C) 2025.
  * @license   http://www.gnu.org/licenses/gpl.html GNU/GPL
  */
 
@@ -183,10 +183,11 @@ class UtilEnv
             $bool = self::to_boolean($bool);
         }
 
-        return match ($bool) {
-            true => 'true',
-            false => 'false'
-        };
+        if ($bool) {
+            return 'true';
+        }
+
+        return 'false';
     }
 
     /**

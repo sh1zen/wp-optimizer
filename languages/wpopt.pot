@@ -4,7 +4,7 @@ msgstr ""
 "Project-Id-Version: wpopt-translation\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/wp-"
 "optimizer/\n"
-"POT-Creation-Date: 2024-11-13 14:55+0100\n"
+"POT-Creation-Date: 2025-04-09 11:04+0200\n"
 "PO-Revision-Date: 2020-05-13 02:34+0200\n"
 "Last-Translator: sh1zen\n"
 "Language-Team: sh1zen\n"
@@ -13,11 +13,11 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
-"X-Generator: Poedit 3.5\n"
+"X-Generator: Poedit 3.6\n"
 "X-Poedit-Basepath: ..\n"
 "X-Poedit-SourceCharset: UTF-8\n"
-"X-Poedit-KeywordsList: __;_e;_ex;_x;_n;_nx;_n_noop;_nx_noop;esc_html__;"
-"esc_attr__;esc_attr_e;esc_html_e;esc_attr_x;esc_html_x\n"
+"X-Poedit-KeywordsList: "
+"__;_e;_ex;_x;_n;_nx;_n_noop;_nx_noop;esc_html__;esc_attr__;esc_attr_e;esc_html_e;esc_attr_x;esc_html_x\n"
 "X-Poedit-SearchPath-0: .\n"
 "X-Poedit-SearchPathExcluded-0: languages\n"
 
@@ -491,7 +491,6 @@ msgstr ""
 
 #: modules/cache.class.php:179 modules/cache.class.php:184
 #: modules/cache.class.php:188 modules/cache.class.php:192
-#: vendors/wps-framework/CronForModules.php:80
 msgid "Active"
 msgstr ""
 
@@ -2540,106 +2539,4 @@ msgstr ""
 
 #: modules/wp_updates.class.php:134
 msgid "Disable WordPress update notices mail"
-msgstr ""
-
-#: vendors/wps-framework/Ajax.class.php:47
-#: vendors/wps-framework/Ajax.class.php:65
-#: vendors/wps-framework/RequestActions.class.php:42
-#: vendors/wps-framework/RequestActions.class.php:58
-msgid "It seems that you are not allowed to do this request."
-msgstr ""
-
-#: vendors/wps-framework/Ajax.class.php:48
-#: vendors/wps-framework/Ajax.class.php:66
-#: vendors/wps-framework/Ajax.class.php:76
-#: vendors/wps-framework/Module.class.php:256
-#: vendors/wps-framework/RequestActions.class.php:43
-#: vendors/wps-framework/RequestActions.class.php:59
-msgid "Request error"
-msgstr ""
-
-#: vendors/wps-framework/Ajax.class.php:75
-msgid "Wrong ajax request."
-msgstr ""
-
-#: vendors/wps-framework/CronForModules.php:81
-msgid "Execution Time"
-msgstr ""
-
-#: vendors/wps-framework/CronForModules.php:82
-msgid "Schedule"
-msgstr ""
-
-#: vendors/wps-framework/Graphic.class.php:446
-msgid "Choose a type or enter one manually."
-msgstr ""
-
-#: vendors/wps-framework/Module.class.php:75
-msgid "A context must be set"
-msgstr ""
-
-#: vendors/wps-framework/Module.class.php:255
-#, php-format
-msgid "Wrong ajax request for %s"
-msgstr ""
-
-#: vendors/wps-framework/Module.class.php:298
-msgid "Save Changes"
-msgstr ""
-
-#: vendors/wps-framework/Module.class.php:326
-msgid "This Module is disabled for you or for your settings."
-msgstr ""
-
-#: vendors/wps-framework/RequestActions.class.php:59
-msgid "Request response"
-msgstr ""
-
-#: vendors/wps-framework/Settings.class.php:151
-msgid "Core Settings"
-msgstr ""
-
-#: vendors/wps-framework/Settings.class.php:210
-msgid "Modules Settings"
-msgstr ""
-
-#: vendors/wps-framework/Settings.class.php:217
-#, php-format
-msgid "No modules enabled. To enable them go <a href='%s'>here</a>."
-msgstr ""
-
-#: vendors/wps-framework/UtilEnv.php:232
-msgid "Year"
-msgstr ""
-
-#: vendors/wps-framework/UtilEnv.php:232
-msgid "Years"
-msgstr ""
-
-#: vendors/wps-framework/UtilEnv.php:233
-msgid "Month"
-msgstr ""
-
-#: vendors/wps-framework/UtilEnv.php:233
-msgid "Months"
-msgstr ""
-
-#: vendors/wps-framework/UtilEnv.php:234
-msgid "Day"
-msgstr ""
-
-#: vendors/wps-framework/UtilEnv.php:234
-msgid "Days"
-msgstr ""
-
-#: vendors/wps-framework/UtilEnv.php:235
-msgid "Hour"
-msgstr ""
-
-#: vendors/wps-framework/UtilEnv.php:235
-msgid "Hours"
-msgstr ""
-
-#: vendors/wps-framework/functions/wps-modules.php:20
-msgid "Are you sure you want to leave?"
 msgstr ""

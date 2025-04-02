@@ -263,28 +263,30 @@ class ImagesProcessor
             }
         }
 
-        foreach ($metadata['sizes'] as $size => $image) {
+        if ($metadata['sizes']) {
+            foreach ($metadata['sizes'] as $size => $image) {
 
-            if ($allow_unlink_oversize_images and str_contains($size, 'x')) {
+                if ($allow_unlink_oversize_images and str_contains($size, 'x')) {
 
-                list($width, $height) = explode('x', $size, 2);
+                    list($width, $height) = explode('x', $size, 2);
 
-                if (is_numeric($width) and is_numeric($height)) {
-                    if ($width > $allowed_width or $height > $allowed_height) {
-                        if (file_exists($image_path_container . $image['file'])) {
-                            @unlink($image_path_container . $image['file']);
+                    if (is_numeric($width) and is_numeric($height)) {
+                        if ($width > $allowed_width or $height > $allowed_height) {
+                            if (file_exists($image_path_container . $image['file'])) {
+                                @unlink($image_path_container . $image['file']);
+                            }
+                            unset($metadata['sizes'][$size]);
                         }
-                        unset($metadata['sizes'][$size]);
                     }
                 }
-            }
 
-            if ($this->optimize_image($image_path_container . $image['file'], true) === IPC_SUCCESS) {
+                if ($this->optimize_image($image_path_container . $image['file'], true) === IPC_SUCCESS) {
 
-                $new_metadata = $this->get_metadata('', []);
-                $new_metadata['file'] = basename($new_metadata['file']);
+                    $new_metadata = $this->get_metadata('', []);
+                    $new_metadata['file'] = basename($new_metadata['file']);
 
-                $metadata['sizes'][$size] = array_merge($image, $new_metadata);
+                    $metadata['sizes'][$size] = array_merge($image, $new_metadata);
+                }
             }
         }
 
@@ -546,11 +548,11 @@ class ImagesProcessor
         return IPC_SUCCESS;
     }
 
-    private function allow_media_clean($getExtension)
+    private function allow_media_clean($getExtension): bool
     {
-        return match (strtolower($getExtension)) {
-            'php', 'htaccess' => false,
-            default => true,
-        };
+        return in_array(
+            strtolower($getExtension),
+            ['php', 'htaccess']
+        );
     }
 }

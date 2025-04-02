@@ -1,7 +1,7 @@
 <?php
 /**
  * @author    sh1zen
- * @copyright Copyright (C) 2024.
+ * @copyright Copyright (C) 2025.
  * @license   http://www.gnu.org/licenses/gpl.html GNU/GPL
  */
 
@@ -161,20 +161,31 @@ class Query
 
         $columns_list = implode(', ', $columns) ?: '*';
 
-        $sql = match ($this->action) {
+        switch ($this->action) {
+            case 'SELECT':
+                $sql = "SELECT $columns_list FROM $tables $where $groupby $having $orderby $limit $offset";
+                break;
 
-            'SELECT' => "SELECT $columns_list FROM $tables $where $groupby $having $orderby $limit $offset",
+            case 'DELETE':
+                $sql = "DELETE FROM $tables $where";
+                break;
 
-            'DELETE' => "DELETE FROM $tables $where",
+            case 'TRUNCATE':
+                $sql = "TRUNCATE $tables";
+                break;
 
-            'TRUNCATE' => "TRUNCATE $tables",
+            case 'INSERT':
+                $sql = "INSERT INTO $tables ($columns_list) VALUES ($values)";
+                break;
 
-            'INSERT' => "INSERT INTO $tables ($columns_list) VALUES ($values)",
+            case 'UPDATE':
+                $sql = "UPDATE $tables SET {$values} $where";
+                break;
 
-            'UPDATE' => "UPDATE $tables SET {$values} $where",
-
-            default => '',
-        };
+            default:
+                $sql = '';
+                break;
+        }
 
         $sql = trim($sql, ' ');
 

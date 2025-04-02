@@ -1,11 +1,12 @@
 <?php
 /**
  * @author    sh1zen
- * @copyright Copyright (C) 2024.
+ * @copyright Copyright (C) 2025.
  * @license   http://www.gnu.org/licenses/gpl.html GNU/GPL
  */
 
 use WPS\core\Rewriter;
+use WPS\core\Stack;
 use WPS\core\StringHelper;
 use WPS\core\TextReplacer;
 
@@ -105,7 +106,7 @@ function wps_error_handler($hook, callable $callback = null, $notify_dev = true)
             }
         }
 
-        if ($prev_error_handler = \WPS\core\Stack::getInstance()->get($index, 'prev_error_handler', null)) {
+        if ($prev_error_handler = Stack::getInstance()->get($index, 'prev_error_handler', null)) {
             call_user_func($prev_error_handler, $nro, $string, $file, $line);
         }
 
@@ -114,5 +115,5 @@ function wps_error_handler($hook, callable $callback = null, $notify_dev = true)
 
     $prev_error_handler = set_error_handler($error_handler, E_ALL);
 
-    \WPS\core\Stack::getInstance('wps')->set($index, 'prev_error_handler', $prev_error_handler);
+    Stack::getInstance()->set($index, 'prev_error_handler', $prev_error_handler);
 }
