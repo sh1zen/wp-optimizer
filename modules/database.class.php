@@ -7,14 +7,13 @@
 
 namespace WPOptimizer\modules;
 
+use WPOptimizer\modules\supporters\DB_List_Table;
+use WPOptimizer\modules\supporters\DBSupport;
 use WPS\core\Ajax;
 use WPS\core\Disk;
 use WPS\core\Graphic;
 use WPS\core\UtilEnv;
 use WPS\modules\Module;
-
-use WPOptimizer\modules\supporters\DB_List_Table;
-use WPOptimizer\modules\supporters\DBSupport;
 
 class Mod_Database extends Module
 {
@@ -35,7 +34,7 @@ class Mod_Database extends Module
     public function cron_setting_fields(): array
     {
         return [
-            ['type' => 'checkbox', 'name' => __('Auto optimize Database', 'wpopt'), 'id' => 'database.active', 'value' => wps($this->context)->cron->is_active($this->slug), 'depend' => 'active']
+                ['type' => 'checkbox', 'name' => __('Auto optimize Database', 'wpopt'), 'id' => 'database.active', 'value' => wps($this->context)->cron->is_active($this->slug), 'depend' => 'active']
         ];
     }
 
@@ -158,10 +157,10 @@ class Mod_Database extends Module
                     if (is_readable(self::BACKUP_PATH)) {
 
                         $database_files = array_filter(
-                            array_merge(
-                                glob(self::BACKUP_PATH . "*.sql"),
-                                glob(self::BACKUP_PATH . "*.gz")
-                            )
+                                array_merge(
+                                        glob(self::BACKUP_PATH . "*.sql"),
+                                        glob(self::BACKUP_PATH . "*.gz")
+                                )
                         );
 
                         if (empty($database_files)) {
@@ -317,10 +316,10 @@ class Mod_Database extends Module
                 $total_count = DBSupport::total_count($action_args['sweep-type']);
 
                 $response = array(
-                    'sweep'      => $sweep,
-                    'count'      => $count,
-                    'total'      => $total_count,
-                    'percentage' => UtilEnv::format_percentage($sweep, $total_count)
+                        'sweep'      => $sweep,
+                        'count'      => $count,
+                        'total'      => $total_count,
+                        'percentage' => UtilEnv::format_percentage($sweep, $total_count)
                 );
                 break;
         }
@@ -439,16 +438,16 @@ class Mod_Database extends Module
                 if (DBSupport::get_mysqlDump_cmd_path($this->option('backup.mysqldump_path', ''))) {
 
                     $res = DBSupport::mysqlDump_db(
-                        $backup_path,
-                        $this->option('backup.excluded_tables', []),
-                        $this->option('backup.mysqldump_path', '')
+                            $backup_path,
+                            $this->option('backup.excluded_tables', []),
+                            $this->option('backup.mysqldump_path', '')
                     );
                 }
 
                 if (!$res) {
                     $res = DBSupport::queryDump_db(
-                        $backup_path,
-                        $this->option('backup.excluded_tables', [])
+                            $backup_path,
+                            $this->option('backup.excluded_tables', [])
                     );
                 }
 
@@ -501,32 +500,32 @@ class Mod_Database extends Module
                 <section class='wps-header'><h1>Database Manager</h1></section>
                 <?php
                 echo Graphic::generateHTML_tabs_panels(array(
+                        array(
+                                'id'          => 'db-sweeper',
+                                'tab-title'   => __('Database sweeper', 'wpopt'),
+                                'panel-title' => __('Database Sweeper', 'wpopt'),
+                                'callback'    => array($this, 'render_sweeper_panel'),
+                        ),
+                        array(
+                                'id'          => 'db-tables',
+                                'tab-title'   => __('Tables', 'wpopt'),
+                                'panel-title' => __('Database tables', 'wpopt'),
+                                'callback'    => array($this, 'render_tablesList_panel')
+                        ),
 
-                    array(
-                        'id'          => 'db-tables',
-                        'tab-title'   => __('Tables', 'wpopt'),
-                        'panel-title' => __('Database tables', 'wpopt'),
-                        'callback'    => array($this, 'render_tablesList_panel')
-                    ),
-                    array(
-                        'id'          => 'db-sweeper',
-                        'tab-title'   => __('Database sweeper', 'wpopt'),
-                        'panel-title' => __('Database Sweeper', 'wpopt'),
-                        'callback'    => array($this, 'render_sweeper_panel'),
-                    ),
-                    array(
-                        'id'          => 'db-backup',
-                        'tab-title'   => __('Backup Manager', 'wpopt'),
-                        'panel-title' => __('Backup your database', 'wpopt'),
-                        'callback'    => array($this, 'render_backup_panel'),
-                        'args'        => array($this->option('backup', array()))
-                    ),
-                    array(
-                        'id'          => 'db-runsql',
-                        'tab-title'   => __('Run SQL Query', 'wpopt'),
-                        'panel-title' => __('Run SQL Query', 'wpopt'),
-                        'callback'    => array($this, 'render_execSQL_panel'),
-                    )
+                        array(
+                                'id'          => 'db-backup',
+                                'tab-title'   => __('Backup Manager', 'wpopt'),
+                                'panel-title' => __('Backup your database', 'wpopt'),
+                                'callback'    => array($this, 'render_backup_panel'),
+                                'args'        => array($this->option('backup', array()))
+                        ),
+                        array(
+                                'id'          => 'db-runsql',
+                                'tab-title'   => __('Run SQL Query', 'wpopt'),
+                                'panel-title' => __('Run SQL Query', 'wpopt'),
+                                'callback'    => array($this, 'render_execSQL_panel'),
+                        )
                 ));
                 ?>
             </block>
@@ -537,71 +536,71 @@ class Mod_Database extends Module
     public function render_sweeper_panel()
     {
         $sweepers = array(
-            array('title'  => __('Posts', 'wpopt'),
-                  'type'   => 'posts',
-                  'sweeps' => array(
-                      __('Revision', 'wpopt')      => 'revisions',
-                      __('Auto Draft', 'wpopt')    => 'auto_drafts',
-                      __('Deleted Posts', 'wpopt') => 'deleted_posts',
-                  )
-            ),
-            array('title'  => __('Posts Metas', 'wpopt'),
-                  'type'   => 'postmeta',
-                  'sweeps' => array(
-                      __('Orphan Postmeta', 'wpopt')     => 'orphan_postmeta',
-                      __('Duplicated Postmeta', 'wpopt') => $this->option('sweeper.duplicated_postmeta') ? 'duplicated_postmeta' : '',
-                      __('Oembed Postmeta', 'wpopt')     => 'oembed_postmeta'
-                  )
-            ),
+                array('title'  => __('Posts', 'wpopt'),
+                      'type'   => 'posts',
+                      'sweeps' => array(
+                              __('Revision', 'wpopt')      => 'revisions',
+                              __('Auto Draft', 'wpopt')    => 'auto_drafts',
+                              __('Deleted Posts', 'wpopt') => 'deleted_posts',
+                      )
+                ),
+                array('title'  => __('Posts Metas', 'wpopt'),
+                      'type'   => 'postmeta',
+                      'sweeps' => array(
+                              __('Orphan Postmeta', 'wpopt')     => 'orphan_postmeta',
+                              __('Duplicated Postmeta', 'wpopt') => $this->option('sweeper.duplicated_postmeta') ? 'duplicated_postmeta' : '',
+                              __('Oembed Postmeta', 'wpopt')     => 'oembed_postmeta'
+                      )
+                ),
 
-            array('title'  => __('Comments', 'wpopt'),
-                  'type'   => 'comments',
-                  'sweeps' => array(
-                      __('Unapproved Comments', 'wpopt') => 'unapproved_comments',
-                      __('Spam Comments', 'wpopt')       => 'spam_comments',
-                      __('Deleted Comments', 'wpopt')    => 'deleted_comments'
-                  )
-            ),
+                array('title'  => __('Comments', 'wpopt'),
+                      'type'   => 'comments',
+                      'sweeps' => array(
+                              __('Unapproved Comments', 'wpopt') => 'unapproved_comments',
+                              __('Spam Comments', 'wpopt')       => 'spam_comments',
+                              __('Deleted Comments', 'wpopt')    => 'deleted_comments'
+                      )
+                ),
 
-            array('title'  => __('Comments Metas', 'wpopt'),
-                  'type'   => 'commentmeta',
-                  'sweeps' => array(
-                      __('Orphan Comments', 'wpopt')     => 'orphan_commentmeta',
-                      __('Duplicated Comments', 'wpopt') => 'duplicated_commentmeta'
-                  )
-            ),
+                array('title'  => __('Comments Metas', 'wpopt'),
+                      'type'   => 'commentmeta',
+                      'sweeps' => array(
+                              __('Orphan Comments', 'wpopt')     => 'orphan_commentmeta',
+                              __('Duplicated Comments', 'wpopt') => 'duplicated_commentmeta'
+                      )
+                ),
 
-            array('title'  => __('Users Metas', 'wpopt'),
-                  'type'   => 'usermeta',
-                  'sweeps' => array(
-                      __('Orphaned User Meta', 'wpopt')   => 'orphan_usermeta',
-                      __('Duplicated User Meta', 'wpopt') => 'duplicated_usermeta'
-                  )
-            ),
+                array('title'  => __('Users Metas', 'wpopt'),
+                      'type'   => 'usermeta',
+                      'sweeps' => array(
+                              __('Orphaned User Meta', 'wpopt')   => 'orphan_usermeta',
+                              __('Duplicated User Meta', 'wpopt') => 'duplicated_usermeta'
+                      )
+                ),
 
-            array('title'  => __('Terms', 'wpopt'),
-                  'type'   => 'terms',
-                  'sweeps' => array(
-                      __('Orphaned Term Relationship', 'wpopt') => 'orphan_term_relationships',
-                      __('Unused Terms', 'wpopt')               => 'unused_terms',
-                  )
-            ),
+                array('title'  => __('Terms', 'wpopt'),
+                      'type'   => 'terms',
+                      'sweeps' => array(
+                              __('Orphaned Term Relationship', 'wpopt') => 'orphan_term_relationships',
+                              __('Unused Terms', 'wpopt')               => 'unused_terms',
+                      )
+                ),
 
-            array('title'  => __('Terms metas', 'wpopt'),
-                  'type'   => 'termmeta',
-                  'sweeps' => array(
-                      __('Orphaned Term Meta', 'wpopt')   => 'orphan_termmeta',
-                      __('Duplicated Term Meta', 'wpopt') => 'duplicated_termmeta',
+                array('title'  => __('Terms metas', 'wpopt'),
+                      'type'   => 'termmeta',
+                      'sweeps' => array(
+                              __('Orphaned Term Meta', 'wpopt')   => 'orphan_termmeta',
+                              __('Duplicated Term Meta', 'wpopt') => 'duplicated_termmeta',
 
-                  )
-            ),
+                      )
+                ),
 
-            array('title'  => __('Option', 'wpopt'),
-                  'type'   => 'options',
-                  'sweeps' => array(
-                      __('Transient Options', 'wpopt') => 'transient_options'
-                  )
-            ),
+                array('title'  => __('Option', 'wpopt'),
+                      'type'   => 'options',
+                      'sweeps' => array(
+                              __('Transient Options', 'wpopt') => 'transient_options'
+                      )
+                ),
         );
 
         ob_start();
@@ -723,11 +722,11 @@ class Mod_Database extends Module
     {
         return $this->group_setting_fields(
 
-            $this->setting_field(__('Sweeper:', 'wpopt'), false, "separator"),
-            $this->setting_field(__('Check for duplicate postmeta?', 'wpopt'), "sweeper.duplicated_postmeta", "checkbox", ['default_value' => false]),
+                $this->setting_field(__('Sweeper:', 'wpopt'), false, "separator"),
+                $this->setting_field(__('Check for duplicate postmeta?', 'wpopt'), "sweeper.duplicated_postmeta", "checkbox", ['default_value' => false]),
 
-            $this->setting_field(__('Backups:', 'wpopt'), false, "separator"),
-            $this->setting_field(__('Excluded Tables (one per line)', 'wpopt'), "backup.excluded_tables", "textarea_array", ['value' => implode("\n", $this->option('backup.excluded_tables', []))])
+                $this->setting_field(__('Backups:', 'wpopt'), false, "separator"),
+                $this->setting_field(__('Excluded Tables (one per line)', 'wpopt'), "backup.excluded_tables", "textarea_array", ['value' => implode("\n", $this->option('backup.excluded_tables', []))])
         );
     }
 }
