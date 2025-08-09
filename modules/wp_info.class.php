@@ -136,8 +136,8 @@ class Mod_WP_Info extends Module
                 __('Use Only Cookies', 'wpopt') => ini_get('session.use_only_cookies') ? __('On', 'wpopt') : __('Off', 'wpopt'),
             ),
 
-            __('Active plugins', 'wpopt')   => $plugins['active'],
-            __('Inactive plugins', 'wpopt') => $plugins['inactive'],
+            __('Active plugins', 'wpopt')   => $plugins['active'] ?? 0,
+            __('Inactive plugins', 'wpopt') => $plugins['inactive'] ?? 0,
             __('Current theme', 'wpopt')    => $this->get_current_theme(),
         );
 

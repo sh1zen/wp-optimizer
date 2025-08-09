@@ -26,10 +26,6 @@ class Utility
 
     public ?Cache $cache = null;
 
-    public bool $doing_ajax;
-    public bool $doing_cron;
-    public bool $doing_request;
-    public bool $doing_jobs;
     private bool $upgrading = false;
 
     private function __construct()
@@ -37,11 +33,6 @@ class Utility
         $this->online = !preg_match("#^(127\.0\.0\.1|localhost|::1)$#", wps_server_addr());
 
         $this->debug = (!$this->online or WPS_DEBUG);
-
-        $this->doing_ajax = (defined('DOING_AJAX') && DOING_AJAX);
-        $this->doing_cron = (defined('DOING_CRON') && DOING_CRON);
-        $this->doing_request = (defined('REST_REQUEST') && REST_REQUEST);
-        $this->doing_jobs = ($this->doing_request or $this->doing_cron or $this->doing_ajax);
 
         if (!did_action('init')) {
             require_once ABSPATH . '/wp-includes/user.php';
@@ -57,9 +48,29 @@ class Utility
         $this->home_url = $this->rewriter->home_url('', true);
     }
 
+    public function doing_ajax(): bool
+    {
+        return defined('DOING_AJAX') && DOING_AJAX;
+    }
+
+    public function doing_cron(): bool
+    {
+        return defined('DOING_CRON') && DOING_CRON;
+    }
+
+    public function doing_request(): bool
+    {
+        return defined('REST_REQUEST') && REST_REQUEST;
+    }
+
+    public function doing_jobs(): bool
+    {
+        return $this->doing_cron() or $this->doing_ajax() or $this->doing_request();
+    }
+
     public function doing_webview(): bool
     {
-        return !($this->doing_jobs or is_admin());
+        return !($this->doing_jobs() or is_admin());
     }
 
     public static function getInstance(): Utility

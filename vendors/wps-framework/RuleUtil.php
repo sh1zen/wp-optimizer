@@ -132,13 +132,13 @@ class RuleUtil
         return Disk::write($path, self::clean_rules($rules), 0);
     }
 
-    public function autoLine($status): static
+    public function autoLine($status)
     {
         $this->autoLine = $status;
         return $this;
     }
 
-    public function add(string $rule, int $indent = 0): static
+    public function add(string $rule, int $indent = 0)
     {
         $this->rules .= str_repeat(" ", $indent) . $rule . ($this->autoLine ? "\n" : '');
         return $this;
@@ -149,13 +149,13 @@ class RuleUtil
         return $this->rules;
     }
 
-    public function reset(): static
+    public function reset()
     {
         $this->rules = '';
         return $this;
     }
 
-    public function newLine(): static
+    public function newLine()
     {
         $this->rules .= "\n";
         return $this;

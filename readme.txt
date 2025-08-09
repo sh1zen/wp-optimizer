@@ -5,9 +5,8 @@ Donate link: https://www.paypal.com/donate?business=dev.sh1zen%40outlook.it&item
 Requires at least: 5.0.0
 Tested up to: 6.8
 Requires PHP: 7.4
-Stable tag: 2.3.6
-License: GNU v3.0 License
-URI: https://github.com/sh1zen/wp-optimizer/blob/master/LICENSE
+Stable tag: 2.3.7
+License: GPLv2 or later
 
 Optimize your website performances - Image compression, scripts minification, caching, database cleaner, server enhancements, activity log and more.
 
@@ -192,10 +191,11 @@ That should work! Otherwise, go to the new added module "Setting" and try a rese
 
 == Changelog ==
 
-= 2.3.6 =
+= 2.3.7 =
 
 * updated translations
 * extended support to WordPress 6.8
+* fixed some bugs on old version of PHP
 
 = 2.3.5 =
 

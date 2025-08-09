@@ -415,7 +415,8 @@ class UtilEnv
     public static function get_server_load($now = true): float
     {
         if ($now and function_exists('sys_getloadavg')) {
-            return round(sys_getloadavg()[0], 2);
+            $r = sys_getloadavg();
+            return is_array($r) ? round($r[0], 2) : 0;
         }
 
         $server_load = 0;
@@ -483,12 +484,14 @@ class UtilEnv
                         $server_load = trim($load_avg[0]);
                     }
                 }
-                else {
-
+                elseif (function_exists('system')) {
                     $data = @system('uptime');
                     preg_match('/(.*):(.*)/', $data, $matches);
                     $load_arr = explode(',', $matches[2]);
                     $server_load = trim($load_arr[0]);
+                }
+                else {
+                    $server_load = 0;
                 }
             }
         }
