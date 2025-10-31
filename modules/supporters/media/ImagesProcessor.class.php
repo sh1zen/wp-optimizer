@@ -215,7 +215,7 @@ class ImagesProcessor
         }
 
         // fix to handle corrupted metadata
-        $file = $metadata['file'] ?: wps_get_post_meta('_wp_attached_file', '', $attachment_id);
+        $file = (isset($metadata['file']) and !empty($metadata['file'])) ? $metadata['file'] : wps_get_post_meta('_wp_attached_file', '', $attachment_id);
 
         if (empty($file)) {
             return IPC_MEDIA_NOT_FOUND;

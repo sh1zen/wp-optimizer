@@ -113,7 +113,7 @@ function wps_error_handler($hook, callable $callback = null, $notify_dev = true)
         return false;
     });
 
-    $prev_error_handler = set_error_handler($error_handler, E_ALL);
+    $prev_error_handler = set_error_handler($error_handler, E_ALL & ~E_NOTICE & ~E_DEPRECATED);
 
     Stack::getInstance()->set($index, 'prev_error_handler', $prev_error_handler);
 }
