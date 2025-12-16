@@ -44,8 +44,8 @@ class Ajax
 
         if (!empty($request['mod_nonce']) and !UtilEnv::verify_nonce("{$this->context}-ajax-nonce", $request['mod_nonce'])) {
             self::response([
-                'body'  => __('It seems that you are not allowed to do this request.', $this->context),
-                'title' => __('Request error', $this->context)
+                'body'  => "It seems that you are not allowed to do this request.",
+                'title' => 'Request error'
             ], 'error');
         }
 
@@ -62,8 +62,8 @@ class Ajax
 
             if ($object->restricted_access('ajax')) {
                 self::response([
-                    'body'  => __('It seems that you are not allowed to do this request.', $this->context),
-                    'title' => __('Request error', $this->context)
+                    'body'  => 'It seems that you are not allowed to do this request.',
+                    'title' => 'Request error'
                 ], 'error');
             }
 
@@ -72,8 +72,8 @@ class Ajax
         else {
 
             self::response([
-                'body'  => __('Wrong ajax request.', $this->context),
-                'title' => __('Request error', $this->context)
+                'body'  => 'Wrong ajax request.',
+                'title' => 'Request error'
             ], 'error');
         }
     }

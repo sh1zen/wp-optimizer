@@ -72,7 +72,7 @@ class Module
     public function __construct()
     {
         if (!isset($this->context)) {
-            trigger_error(__('A context must be set', 'wps'), E_WARNING);
+            trigger_error('A context must be set.', E_WARNING);
             return;
         }
 
@@ -252,8 +252,8 @@ class Module
     public function ajax_handler($args = array()): void
     {
         Ajax::response([
-            'body'  => sprintf(__('Wrong ajax request for %s', $this->context), $this->slug),
-            'title' => __('Request error', $this->context)
+            'body'  => sprintf('Wrong ajax request for %s', $this->slug),
+            'title' => 'Request error'
         ], 'error');
     }
 
@@ -295,7 +295,7 @@ class Module
                     <?php Graphic::generate_fields($setting_fields, $this->infos(), array('name_prefix' => $option_name)); ?>
                 </block>
                 <section class="wps-submit">
-                    <input type="submit" class="button-primary" value="<?php _e('Save Changes', $this->context) ?>"/>
+                    <input type="submit" class="button-primary" value="Save Changes"/>
                 </section>
             </form>
             <?php
@@ -323,7 +323,7 @@ class Module
     private function render_disabled(): void
     {
         ?>
-        <block><h2><?php _e('This Module is disabled for you or for your settings.', $this->context); ?></h2></block>
+        <block><h2>This Module is disabled for you or for your settings.</h2></block>
         <?php
     }
 

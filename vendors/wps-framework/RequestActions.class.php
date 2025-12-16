@@ -39,8 +39,8 @@ class RequestActions
             }
 
             Ajax::response([
-                'body'  => __('It seems that you are not allowed to do this request.', 'wps'),
-                'title' => __('Request error', 'wps')
+                'body'  => "It seems that you are not allowed to do this request.",
+                'title' => "Request error"
             ], 'error');
         }
 
@@ -55,8 +55,8 @@ class RequestActions
         }
 
         Ajax::response([
-            'body'  => $response ?: __('It seems that you are not allowed to do this request.', 'wps'),
-            'title' => $response ? __('Request response', 'wps') : __('Request error', 'wps')
+            'body'  => $response ?: "It seems that you are not allowed to do this request.",
+            'title' => $response ? "Request response" : 'Request error'
         ], $response ? 'success' : 'error');
     }
 

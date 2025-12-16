@@ -443,7 +443,7 @@ class Graphic
                 <input name="<?php echo $args['input_name']; ?>" id="<?php echo $args['id']; ?>"
                        type="<?php echo $editable ? 'text' : 'hidden' ?>"
                        value="<?php echo $args['value']; ?>" autocomplete="off" <?php echo $parent; ?>
-                       placeholder="<?php _e("Choose a type or enter one manually.", 'wps'); ?>">
+                       placeholder="Choose a type or enter one manually.">
                 <?php if (!$editable) : ?>
                     <strong class="width100 wps-input"
                             data-input="<?php echo $args['id']; ?>"><?php echo $args['valueE'] ?? $args['value']; ?></strong>

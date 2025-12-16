@@ -9,6 +9,8 @@ namespace WPS\core;
 
 class UtilEnv
 {
+    static $dynamic_time_limit = true;
+
     public static function handle_upgrade($ver_start, $ver_to, $upgrade_path)
     {
         $upgrades = array_filter(
@@ -40,8 +42,12 @@ class UtilEnv
         return $current_ver;
     }
 
-    public static function rise_time_limit($rise_time = false)
+    public static function rise_time_limit($rise_time = false): int
     {
+        if (!self::$dynamic_time_limit) {
+            return 300;
+        }
+
         if ($rise_time === false) {
             $rise_time = ini_get('max_execution_time');
         }
@@ -49,10 +55,13 @@ class UtilEnv
         $rise_time = absint($rise_time);
 
         if (function_exists('set_time_limit') and set_time_limit($rise_time)) {
+
+            self::$dynamic_time_limit = ($rise_time != 0);
+
             return $rise_time;
         }
 
-        return false;
+        return 0;
     }
 
     public static function db_create($table_name, $args, $drop_if_exist = false): array
@@ -230,21 +239,30 @@ class UtilEnv
         $duration = array();
 
         $units = array(
-            YEAR_IN_SECONDS  => [__('Year', 'wps'), __('Years', 'wps')],
-            MONTH_IN_SECONDS => [__('Month', 'wps'), __('Months', 'wps')],
-            DAY_IN_SECONDS   => [__('Day', 'wps'), __('Days', 'wps')],
-            HOUR_IN_SECONDS  => [__('Hour', 'wps'), __('Hours', 'wps')],
+            YEAR_IN_SECONDS  => [__('Year'), __('Years')],
+            MONTH_IN_SECONDS => [__('Month'), __('Months')],
+            DAY_IN_SECONDS   => [__('Day'), __('Days')],
+            HOUR_IN_SECONDS  => [__('Hour'), __('Hours')],
         );
 
         foreach ($units as $value => $unit) {
             $result = floor($seconds / $value);
             if ($result > 0) {
-                $duration[_n($unit[0], $unit[1], $result)] = $result;
+                $duration[self::text_n($unit[0], $unit[1], $result)] = $result;
                 $seconds -= $result * $value;
             }
         }
 
         return $duration;
+    }
+
+    public static function text_n($singular, $plural, $count)
+    {
+        if (absint($count) > 1) {
+            return $plural;
+        }
+
+        return $singular;
     }
 
     /**
@@ -595,6 +613,10 @@ class UtilEnv
      */
     public static function safe_time_limit(int $margin = 0, int $extend = 0)
     {
+        if (!self::$dynamic_time_limit) {
+            return 300;
+        }
+
         static $time_reset = WP_START_TIMESTAMP;
         static $max_execution_time = null;
 
@@ -609,8 +631,7 @@ class UtilEnv
         $left_time = $max_execution_time - (microtime(true) - $time_reset);
 
         if ($margin > $left_time) {
-
-            if ($extend and ($extended = self::rise_time_limit($extend)) !== false) {
+            if ($extend and ($extended = self::rise_time_limit($extend)) != 0) {
                 $time_reset = microtime(true);
                 $max_execution_time = $extended;
                 return $extended;

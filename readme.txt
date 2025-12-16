@@ -3,9 +3,9 @@ Contributors: sh1zen
 Tags: optimize, performance, image conversion, cache, minify
 Donate link: https://www.paypal.com/donate?business=dev.sh1zen%40outlook.it&item_name=Thank+you+in+advanced+for+the+kind+donations.+You+will+sustain+me+developing+WP-Optimizer.&currency_code=EUR
 Requires at least: 5.0.0
-Tested up to: 6.8
+Tested up to: 6.9
 Requires PHP: 7.4
-Stable tag: 2.3.7
+Stable tag: 2.3.8
 License: GPLv2 or later
 
 Optimize your website performances - Image compression, scripts minification, caching, database cleaner, server enhancements, activity log and more.
@@ -14,7 +14,7 @@ Optimize your website performances - Image compression, scripts minification, ca
 
 Improve Your WordPress Performance and SEO with WP-Optimizer (WPOPT) - Contains the most requested features for maintaining WordPress. Customizable in few easy steps to increase your website performances for an enhanced and safer user experience.
 
-**WHY USING WP Optimizer?**
+**WHY USING WP-Optimizer?**
 
 * **All In One:** WPOPT support: image optimization, media clean-up, database optimization and backup, WordPress updates manager, Server info, Server configuration manager, WordPress performances enhancer, caching system and HTML - JavaScript - CSS minifier.
 * **Modules Oriented:** WPOPT is divided in modules, so you can disable not necessary one to reduce memory and CPU usage.
@@ -190,6 +190,12 @@ Deactivate the plugin and reactivate it, if this doesn't work try to uninstall a
 That should work! Otherwise, go to the new added module "Setting" and try a reset.
 
 == Changelog ==
+
+= 2.3.8 =
+
+* updated translations
+* extended support to WordPress 6.9
+* improved media cleaner
 
 = 2.3.7 =
 

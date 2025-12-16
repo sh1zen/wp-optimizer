@@ -148,7 +148,7 @@ class Settings
         ?>
         <section class="wps-wrap wps">
             <block class="wps">
-                <section class='wps-header'><h1><?php _e('Core Settings', $this->context); ?></h1></section>
+                <section class='wps-header'><h1>Core Settings</h1></section>
                 <?php
 
                 if (!empty($modules)) {
@@ -207,14 +207,14 @@ class Settings
         ?>
         <section class="wps-wrap wps">
             <block class="wps">
-                <section class='wps-header'><h1><?php _e('Modules Settings', $this->context); ?></h1></section>
+                <section class='wps-header'><h1>Modules Settings</h1></section>
                 <?php
 
                 if (!empty($modules)) {
                     echo $this->generateHTML_tabpan($modules);
                 }
                 else {
-                    echo "<h2>" . sprintf(__("No modules enabled. To enable them go <a href='%s'>here</a>.", $this->context), admin_url("admin.php?page={$this->context}-settings")) . "</h2>";
+                    echo "<h2>" . sprintf("No modules enabled. To enable them go <a href='%s'>here</a>.", admin_url("admin.php?page={$this->context}-settings")) . "</h2>";
                 }
                 ?>
             </block>

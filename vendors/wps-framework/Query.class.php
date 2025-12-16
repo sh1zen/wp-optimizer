@@ -55,6 +55,42 @@ class Query
         return new self($output, $useReference);
     }
 
+    public static function withSQL(string $sql): Query
+    {
+        $q = new self(OBJECT, false);
+        $q->sql = $sql;
+        return $q;
+    }
+
+    public static function recursive($table, $s_id, $p_alias, $start_id, $parent_stop = 0)
+    {
+        global $wpdb;
+
+        // Creiamo l'istanza della query
+        $sq = Query::getInstance()
+            ->select([$s_id, $p_alias], $table)
+            ->where([$s_id => $start_id])->compile();
+
+        $mq = Query::getInstance(OBJECT, true)
+            ->select(["$s_id", "$p_alias"], $table)   // colonne e tabella principale
+            ->join(
+                $table,              // tabella base (tt)
+                't_hierarchy',       // tabella da joinare (th)
+                [$s_id => $p_alias], // condizione: tt.id = th.alias
+                'INNER JOIN'         // tipo di join
+            )
+            ->compile();
+
+
+        $rq = Query::getInstance()
+            ->select([$s_id], "t_hierarchy")
+            ->where([$p_alias => $parent_stop])->compile();
+
+        $res = "WITH RECURSIVE t_hierarchy AS ($sq UNION ALL $mq) $rq;";
+
+        return $wpdb->get_var($res);
+    }
+
     public function alter($table, $action)
     {
         return $this->wpdb()->query("ALTER TABLE $table $action;");

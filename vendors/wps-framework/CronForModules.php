@@ -77,9 +77,9 @@ class CronForModules
 
         $schedules = array_keys(wp_get_schedules());
 
-        $cron_settings[] = array('type' => 'checkbox', 'name' => __('Active', $this->context), 'id' => 'active', 'value' => $this->option('active'));
-        $cron_settings[] = array('type' => 'time', 'name' => __('Execution Time', $this->context), 'id' => 'execution-time', 'value' => $this->option('execution-time', '01:00'), 'depend' => 'active');
-        $cron_settings[] = array('type' => 'dropdown', 'name' => __('Schedule', $this->context), 'id' => 'recurrence', 'list' => $schedules, 'value' => $this->option('recurrence', 'daily') ?: 'daily', 'depend' => 'active');
+        $cron_settings[] = array('type' => 'checkbox', 'name' => 'Active', 'id' => 'active', 'value' => $this->option('active'));
+        $cron_settings[] = array('type' => 'time', 'name' => 'Execution Time', 'id' => 'execution-time', 'value' => $this->option('execution-time', '01:00'), 'depend' => 'active');
+        $cron_settings[] = array('type' => 'dropdown', 'name' => 'Schedule', 'id' => 'recurrence', 'list' => $schedules, 'value' => $this->option('recurrence', 'daily') ?: 'daily', 'depend' => 'active');
 
         foreach ($this->modules as $module) {
             $module_object = wps($this->context)->moduleHandler->get_module_instance($module);

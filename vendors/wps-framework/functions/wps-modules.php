@@ -17,7 +17,7 @@ function wps_admin_enqueue_scripts(): void
     wp_register_script('vendor-wps-js', "{$wps_assets_url}assets/js/core{$min}.js", ['jquery'], wps_core()->debug ? time() : WPS_VERSION);
 
     wps_localize([
-        'text_close_warning' => __('Are you sure you want to leave?', 'wps')
+        'text_close_warning' => 'Are you sure you want to leave?'
     ]);
 }
 
