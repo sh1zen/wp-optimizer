@@ -131,7 +131,7 @@ class Mod_Widget extends Module
         </table>
         <br>
         <div class="wps-row">
-            <a class="button button-primary button-large"
+            <a class="wps wps-button wpopt-btn is-info"
                href="<?php echo admin_url('admin.php?page=sysinfo') ?>"><?php _e('View all', 'wpopt') ?></a>
         </div>
         <?php

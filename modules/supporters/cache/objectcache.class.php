@@ -15,7 +15,14 @@ class ObjectCache extends Cache_Dispatcher
     {
         Disk::write(
             WP_CONTENT_DIR . DIRECTORY_SEPARATOR . "object-cache.php",
-            "<?php" . PHP_EOL . PHP_EOL . "include_once('" . WPOPT_SUPPORTERS . "cache/object-cache.php');",
+            "<?php\n\n// WP-Optimizer object cache drop-in\n" .
+            "if (defined('WPOPT_SUPPORTERS')) {\n" .
+            "    include_once(WPOPT_SUPPORTERS . 'cache/object-cache.php');\n" .
+            "} else {\n" .
+            "    // Fallback: compute path relative to this file if constant missing.\n" .
+            "    \$p = dirname(__FILE__) . '/cms/extensions/wp-optimizer/modules/supporters/cache/object-cache.php';\n" .
+            "    if (is_file(\$p)) { include_once(\$p); }\n" .
+            "}\n",
             0
         );
     }

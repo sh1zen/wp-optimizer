@@ -203,10 +203,10 @@ class Module
                     }
                     else {
                         $value = array_filter(
-                            array_map(
-                                'trim',
-                                preg_split("#[\r\n]+#", StringHelper::sanitize_text($field_value, true))
-                            )
+                                array_map(
+                                        'trim',
+                                        preg_split("#[\r\n]+#", StringHelper::sanitize_text($field_value, true))
+                                )
                         );
                     }
                     break;
@@ -252,8 +252,8 @@ class Module
     public function ajax_handler($args = array()): void
     {
         Ajax::response([
-            'body'  => sprintf('Wrong ajax request for %s', $this->slug),
-            'title' => 'Request error'
+                'body'  => sprintf('Wrong ajax request for %s', $this->slug),
+                'title' => 'Request error'
         ], 'error');
     }
 
@@ -265,37 +265,32 @@ class Module
             return ob_get_clean();
         }
 
-        $_header = $this->print_header();
-
-        $_divider = false;
-
         $setting_fields = $this->setting_fields($filter);
-
-        $option_name = wps($this->context)->settings->get_context();
+        $has_fields = !empty($setting_fields);
 
         ob_start();
 
-        if (!empty($setting_fields)) {
+        if ($has_fields) {
 
-            $_divider = true;
+            if ($_header = $this->print_header()) {
+                echo $_header;
+            }
 
+            $option_name = wps($this->context)->settings->get_context();
+            $escaped_slug = esc_attr($this->slug);
             ?>
             <form action="options.php" method="post" autocomplete="off" autocapitalize="off">
                 <?php
-
-                if ($_header) {
-                    echo "<h3 class='wps'>$_header</h3>";
-                }
-
-                settings_fields("$this->context-settings");
+                settings_fields("{$this->context}-settings");
                 ?>
-                <input type="hidden" name="option_panel" value="settings-<?php echo $this->slug; ?>">
-                <input type="hidden" name="<?php echo "{$option_name}[change]" ?>" value="<?php echo $this->slug; ?>">
+                <input type="hidden" name="option_panel" value="settings-<?php echo $escaped_slug; ?>">
+                <input type="hidden" name="<?php echo esc_attr("{$option_name}[change]"); ?>"
+                       value="<?php echo $escaped_slug; ?>">
                 <block class="wps-options">
-                    <?php Graphic::generate_fields($setting_fields, $this->infos(), array('name_prefix' => $option_name)); ?>
+                    <?php Graphic::generate_fields($setting_fields, $this->infos(), ['name_prefix' => $option_name]); ?>
                 </block>
                 <section class="wps-submit">
-                    <input type="submit" class="button-primary" value="Save Changes"/>
+                    <input type="submit" class="button-primary" value="Save Changes">
                 </section>
             </form>
             <?php
@@ -303,13 +298,11 @@ class Module
 
         $_footer = $this->print_footer();
 
-        if (!empty($_footer)) {
-
-            if ($_divider) {
-                echo "<hr class='wps-hr'>";
+        if ($_footer) {
+            if ($has_fields) {
+                echo '<hr class="wps-hr">';
             }
-
-            echo "<section class='wps-setting-footer'>" . $_footer . "</section>";
+            echo '<section class="wps-setting-footer">' . $_footer . '</section>';
         }
 
         return ob_get_clean();
@@ -376,10 +369,10 @@ class Module
                     $fileName = pathinfo($fileInfo->getFilename(), PATHINFO_FILENAME);
 
                     $subModules[] = array(
-                        'id'          => wps_generate_slug($fileName),
-                        'panel-title' => ucfirst(str_replace('.', ' ', $fileName)),
-                        'callback'    => $fileInfo->getRealPath(),
-                        'context'     => $this
+                            'id'          => wps_generate_slug($fileName),
+                            'panel-title' => ucfirst(str_replace('.', ' ', $fileName)),
+                            'callback'    => $fileInfo->getRealPath(),
+                            'context'     => $this
                     );
                 }
             }
@@ -437,10 +430,10 @@ class Module
     protected function remove_browser_query_args($items = null): void
     {
         $items = is_array($items) ? array_filter($items) : [
-            'wps-notice',
-            'wps-status',
-            'wps-action',
-            $this->action_hook
+                'wps-notice',
+                'wps-status',
+                'wps-action',
+                $this->action_hook
         ];
         ?>
         <script>

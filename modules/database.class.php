@@ -89,9 +89,9 @@ class Mod_Database extends Module
                 </tr>
                 <tr class="wps-centered">
                     <td>
-                        <input type="submit" name="button" value="<?php _e('Run', 'wpopt'); ?>" class="button"
+                        <input type="submit" name="button" value="<?php _e('Run', 'wpopt'); ?>" class="wps wps-button wpopt-btn is-warning"
                                data-action="exec-sql"/>
-                        <input type="button" name="cancel" value="<?php _e('Clear', 'wpopt'); ?>" class="button"
+                        <input type="button" name="cancel" value="<?php _e('Clear', 'wpopt'); ?>" class="wps wps-button wpopt-btn is-neutral"
                                onclick='document.getElementById("sql_query").value = ""'/>
                     </td>
                 </tr>
@@ -213,11 +213,11 @@ class Mod_Database extends Module
                     <tr>
                         <td colspan="6" class="wps-centered wps-actions">
                             <input type="submit" name="action" value="<?php _e('Download', 'wpopt'); ?>"
-                                   class="button" data-action="download"/>
+                                   class="wps wps-button wpopt-btn is-info" data-action="download"/>
                             <input type="submit" name="action" value="<?php _e('Restore', 'wpopt'); ?>"
                                    onclick="return confirm('<?php _e('Are you sure to restore selected backup?\nAny data inserted after the backup date will be lost.\n\nThis action is not reversible.', 'wpopt'); ?>')"
-                                   class="button" data-action="restore"/>
-                            <input type="submit" data-action="delete" class="button" name="action"
+                                   class="wps wps-button wpopt-btn is-warning" data-action="restore"/>
+                            <input type="submit" data-action="delete" class="wps wps-button wpopt-btn is-danger" name="action"
                                    value="<?php _e('Delete', 'wpopt'); ?>"
                                    onclick="return confirm('<?php _e('Are you sure to delete selected backup?', 'wpopt'); ?>')"/>&nbsp;&nbsp;
                         </td>
@@ -270,8 +270,8 @@ class Mod_Database extends Module
                         <td colspan="2" class="wps-centered wps-actions">
                             <input data-action="backup" type="submit" name="action"
                                    value="<?php _e('Backup now', 'wpopt'); ?>"
-                                   class="button"/>
-                            <a class="button"
+                                   class="wps wps-button wpopt-btn is-success"/>
+                            <a class="wps wps-button wpopt-btn is-neutral"
                                href="<?php echo wps_module_setting_url('wpopt', 'database') ?>">Settings</a>
                         </td>
                     </tr>
@@ -666,11 +666,11 @@ class Mod_Database extends Module
                                     <button data-action="sweep"
                                             data-args="<?php echo $data; ?>"
                                             data-nonce="<?php echo $nonce; ?>"
-                                            class="button button-primary wpopt-sweep"><?php _e('Sweep', 'wpopt'); ?></button>
+                                            class="wps wps-button wpopt-btn is-warning wpopt-sweep"><?php _e('Sweep', 'wpopt'); ?></button>
                                     <button data-action="sweep_details"
                                             data-args="<?php echo $data; ?>"
                                             data-nonce="<?php echo $nonce; ?>"
-                                            class="button wpopt-sweep-details"><?php _e('Details', 'wpopt'); ?></button>
+                                            class="wps wps-button wpopt-btn is-info wpopt-sweep-details"><?php _e('Details', 'wpopt'); ?></button>
                                 <?php else :
                                     _e('None', 'wpopt');
                                 endif;
@@ -732,3 +732,4 @@ class Mod_Database extends Module
 }
 
 return __NAMESPACE__;
+

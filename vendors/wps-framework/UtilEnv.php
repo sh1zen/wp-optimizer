@@ -430,95 +430,72 @@ class UtilEnv
         return $temp[0];
     }
 
-    public static function get_server_load($now = true): float
+    public static function get_server_load(bool $now = true): float
     {
-        if ($now and function_exists('sys_getloadavg')) {
-            $r = sys_getloadavg();
-            return is_array($r) ? round($r[0], 2) : 0;
-        }
+        $load = 0.0;
 
-        $server_load = 0;
-
-        if (stristr(PHP_OS, "win")) {
-            $cmd = "wmic cpu get loadpercentage /all";
-            @exec($cmd, $output);
-
-            if ($output) {
-                foreach ($output as $line) {
-                    if ($line && preg_match("/^[0-9]+\$/", $line)) {
-                        $server_load = $line;
-                        break;
-                    }
-                }
+        // Fast path for Unix-like systems
+        if (stristr(PHP_OS, 'win') === false) {
+            if ($now && function_exists('sys_getloadavg')) {
+                $avg = sys_getloadavg();
+                return is_array($avg) ? round((float)$avg[0], 2) : 0.0;
             }
-        }
-        else {
-            if (@is_readable("/proc/stat")) {
 
-                // Collect 2 samples - each with 1 second period
-                // See: https://de.wikipedia.org/wiki/Load#Der_Load_Average_auf_Unix-Systemen
-                $stats = @file_get_contents("/proc/stat");
-
-                if ($stats !== false) {
-                    // Remove double spaces to make it easier to extract values with explode()
-                    $stats = preg_replace("/[[:blank:]]+/", " ", $stats);
-
-                    // Separate lines
-                    $stats = preg_replace("#\n+#", "\n", str_replace("\r", "\n", $stats));
-                    $stats = explode("\n", $stats);
-
-                    // Separate values and find line for main CPU load
-                    foreach ($stats as $statLine) {
-
-                        $statLine = trim($statLine);
-
-                        if (!str_starts_with($statLine, 'cpu')) {
-                            continue;
-                        }
-
-                        $statLineData = explode(" ", trim($statLine));
-
-                        if (isset($statLineData[4])) {
-
-                            // Sum up the 4 values for User, Nice, System and Idle and calculate
-                            // the percentage of idle time (which is part of the 4 values!)
-                            $cpuTime = (int)$statLineData[1] + (int)$statLineData[2] + (int)$statLineData[3] + (int)$statLineData[4];
-
-                            // Invert percentage to get CPU time, not idle time
-                            $server_load = 100 - ((int)$statLineData[4] * 100 / $cpuTime);
-                            break;
+            // Read /proc/stat once
+            if (is_readable('/proc/stat')) {
+                $line = strtok(file_get_contents('/proc/stat'), "\n"); // first line only
+                if ($line && str_starts_with($line, 'cpu ')) {
+                    $parts = preg_split('/\s+/', trim($line));
+                    if (count($parts) >= 5) {
+                        $user   = (int)$parts[1];
+                        $nice   = (int)$parts[2];
+                        $system = (int)$parts[3];
+                        $idle   = (int)$parts[4];
+                        $total  = $user + $nice + $system + $idle;
+                        if ($total > 0) {
+                            $load = 100.0 * ($total - $idle) / $total;
+                            return round($load, 2);
                         }
                     }
                 }
             }
 
-            if (!$server_load) {
-                if (@file_exists('/proc/loadavg')) {
-
-                    if ($fh = @fopen('/proc/loadavg', 'r')) {
-                        $data = @fread($fh, 6);
-                        @fclose($fh);
-                        $load_avg = explode(" ", $data);
-                        $server_load = trim($load_avg[0]);
+            // fallback to /proc/loadavg (fast read)
+            if (is_readable('/proc/loadavg')) {
+                $data = file_get_contents('/proc/loadavg', false, null, 0, 8); // read only first few bytes
+                if ($data !== false) {
+                    $parts = explode(' ', trim($data));
+                    if (isset($parts[0])) {
+                        return round((float)$parts[0] * 100.0, 2);
                     }
                 }
-                elseif (function_exists('system')) {
-                    $data = @system('uptime');
-                    preg_match('/(.*):(.*)/', $data, $matches);
-                    $load_arr = explode(',', $matches[2]);
-                    $server_load = trim($load_arr[0]);
+            }
+
+            // minimal fallback: avoid exec if possible
+            if (function_exists('exec')) {
+                $uptime = @exec('uptime');
+                if ($uptime !== false && preg_match('/load average[s]?:\s*([0-9.]+)/i', $uptime, $matches) && isset($matches[1])) {
+                    return round((float)$matches[1] * 100.0, 2);
                 }
-                else {
-                    $server_load = 0;
+            }
+
+            return 0.0;
+        }
+
+        // Windows: WMIC query (fastest available)
+        @exec('wmic cpu get loadpercentage /value', $output);
+        if ($output) {
+            foreach ($output as $line) {
+                if (str_contains($line, 'LoadPercentage=')) {
+                    $parts = explode('=', $line);
+                    if (isset($parts[1])) {
+                        return round((float)$parts[1], 2);
+                    }
                 }
             }
         }
 
-        if (empty($server_load)) {
-            $server_load = 0;
-        }
-
-        return round((int)$server_load, 2);
+        return 0.0;
     }
 
     public static function size2bytes($val): int

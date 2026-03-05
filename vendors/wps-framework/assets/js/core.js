@@ -7,495 +7,292 @@
 "use strict";
 
 (function ($, window, noGlobal) {
+    if (!$) return null;
 
-    if (!$ || typeof $ === 'undefined' || typeof $ === undefined) {
-        return null;
-    }
+    let guid = 1,
+        semaphoreList = {},
+        cacheKeys = [],
+        wpsCore = {ux: {}, options: {}, cache: {}};
 
-    let guid = 1, semaphoreList = {}, wpsCore = {};
+    const toString = Object.prototype.toString,
+        hasOwn = Object.prototype.hasOwnProperty;
 
-    // Define a local copy of wps
-    let wps = function (selector, context) {
-
-        // The wps object is actually just the init constructor 'enhanced'
-        // Need init if wps is called (just allow error to be thrown if not included)
+    const wps = function (selector, context) {
         return new wps.fn.init(selector, context);
     };
 
     let locales = {};
 
     wps.locale = {
-
-        add: function ($locale = {}) {
-            wps.parse_args(locales, wps.json.parse($locale))
-        },
-
-        get: function ($locale, $default = '') {
-            if (!$locale) {
-                return locales;
-            }
-            return locales[$locale] || $default;
-        },
-    }
+        add: ($locale = {}) => wps.parse_args(locales, wps.json.parse($locale)),
+        get: ($locale, $default = '') => $locale ? (locales[$locale] || $default) : locales
+    };
 
     wps.fn = $.fn;
     wps.prototype = $.prototype;
     wps.extend = wps.fn.extend = $.extend;
 
     wps.extend(wpsCore, {
-
-        ux: {},
-        options: {},
-        cache: {},
-
         setup: function () {
-
+            const matchLandscape = window.matchMedia("(orientation: landscape)");
             wps.addUX({
-                'is-landscape': function () {
-                    return window.matchMedia("(orientation: landscape)").matches
+                'is-landscape': () => matchLandscape.matches,
+                'is-mobile': () => {
+                    const w = screen.availWidth, h = screen.availHeight;
+                    return wps.getUX('is-landscape') ? (w <= 1366 || h <= 1024) : (w <= 1024 || h <= 1366);
                 },
-                'is-mobile': function () {
-                    return wps.getUX('is-landscape') ? (screen.availWidth <= 1366) || (screen.availHeight <= 1024) : (screen.availWidth <= 1024) || (screen.availHeight <= 1366);
-                },
-                'is-phone': function () {
-                    return (screen.availWidth <= 480) || (screen.availHeight <= 480)
-                },
-                'is-tablet': function () {
-                    return wps.getUX('is-mobile') && !wps.getUX('is-phone')
-                },
-                'is-laptop': function () {
-                    return !wps.getUX('is-mobile')
-                }
+                'is-phone': () => (screen.availWidth <= 480 || screen.availHeight <= 480),
+                'is-tablet': () => wps.getUX('is-mobile') && !wps.getUX('is-phone'),
+                'is-laptop': () => !wps.getUX('is-mobile')
             });
         }
     });
 
     wps.cache = {
-
-        add: function (key, value) {
-            // Use (key + " ") to avoid collision with native prototype properties
-            if (wpsCore.cache.push(key + " ") > 250) {
-
-                // Only keep the most recent entries
-                delete [wpsCore.cache.shift()];
+        add(key, value) {
+            const cacheKey = key + " ";
+            if (cacheKeys.push(cacheKey) > 250) {
+                delete wpsCore.cache[cacheKeys.shift()];
             }
-
-            return (wpsCore.cache[key + " "] = value);
+            return (wpsCore.cache[cacheKey] = value);
         },
-        remove: function (key) {
-
-            delete [wpsCore.cache[key + " "]];
-        },
-        get: function (key, default_ = false) {
-
-            if (typeof wpsCore.cache[key + " "] !== "undefined") {
-                return wpsCore.cache[key + " "];
+        remove(key) {
+            const cacheKey = key + " ", idx = cacheKeys.indexOf(cacheKey);
+            if (idx > -1) {
+                cacheKeys.splice(idx, 1);
+                delete wpsCore.cache[cacheKey];
             }
-
-            return default_;
         },
-    }
-
-    wps.fn = $.fn;
-    wps.prototype = $.prototype;
-    wps.extend = wps.fn.extend = $.extend;
+        get: (key, default_ = false) => {
+            const cacheKey = key + " ";
+            return hasOwn.call(wpsCore.cache, cacheKey) ? wpsCore.cache[cacheKey] : default_;
+        }
+    };
 
     wps.extend({
-
-        getUID: function () {
-            return guid++;
-        },
-
-        isDefined: function (value, not = false) {
-            return !(value === null || typeof value === 'undefined' || typeof value === undefined) ? (not === false ? true : value) : not;
-        },
-
+        getUID: () => guid++,
+        isDefined: (value, not = false) => value !== null && value !== undefined ? (not === false || value) : not,
         isArray: function (item, not = false) {
-            return this.isDefined(item) && (typeof item === 'object' && Array.isArray(item)) ? (not === false ? true : item) : not
+            return this.isDefined(item) && Array.isArray(item) ? (not === false || item) : not;
         },
-
         isObject: function (item, not = false) {
-            return this.isDefined(item) && (typeof item === 'object' && !Array.isArray(item)) ? (not === false ? true : item) : not
+            return this.isDefined(item) && toString.call(item) === '[object Object]' ? (not === false || item) : not;
         },
+        isFunction: $.isFunction,
+        isjQuery: o => !!(o && o instanceof jQuery),
+        isNode: o => !!(o && (o.nodeType === 1 || o.nodeType === 9 || o.nodeType === 11)),
+        isElement: o => !!(o && o.nodeType === 1),
 
-        isFunction: function (obj) {
-            return $.isFunction(obj)
-        },
-
-        isjQuery: function (o) {
-            return (
-                typeof !!o && typeof o === "object" && o instanceof jQuery
-            );
-        },
-
-        isNode: function (o) {
-            return (
-                typeof Node === "object" ? o instanceof Node :
-                    !!o && typeof o === "object" && typeof o.nodeType === "number" && typeof o.nodeName === "string"
-            );
-        },
-
-        isElement: function isElement(o) {
-            return (
-                typeof HTMLElement === "object" ? o instanceof HTMLElement : //DOM2
-                    !!o && typeof o === "object" && o.nodeType === 1 && typeof o.nodeName === "string"
-            );
-        },
-
-        booleanize: function (string, strict = false) {
-
-            if (!string) {
-                return false;
-            }
-
+        booleanize(string, strict = false) {
+            if (!string) return false;
             if (typeof string === 'string') {
-                string = string.toLowerCase().trim();
-            }
-
-            switch (string) {
-                case "true":
-                case "yes":
-                case "1":
-                case "on":
-                    return true;
-                case "false":
-                case "no":
-                case "0":
-                case "off":
-                case null:
-                    return false;
-
-                default:
-                    return strict ? string === true : Boolean(string);
-            }
-        },
-
-        removeEmpty: function (item, deFault = null, strict = false) {
-            let res = null;
-
-            if (this.isDefined(item)) {
-
-                if (this.isObject(item) && !$.isEmptyObject(item)) {
-
-                    for (let propName in item) {
-
-                        item[propName] = wps.removeEmpty(item[propName], null, strict);
-
-                        if (!this.isDefined(item[propName])) {
-                            delete item[propName];
-                        }
-                    }
-
-                    if (!$.isEmptyObject(item)) {
-                        res = item;
-                    }
-
-                } else if (this.isArray(item)) {
-                    if (item.length > 0) {
-
-                        res = item.map(function (el) {
-                            return wps.removeEmpty(el, null, strict);
-                        }).filter(function (el) {
-                            return wps.isDefined(el) && (wps.isArray(el) ? el.length > 0 : true);
-                        });
-
-                    }
-                    //} else if (strict ? this.booleanize(item) : item !== false) {
-                } else if (!strict || (strict && this.booleanize(item))) {
-                    res = item;
+                switch (string.toLowerCase().trim()) {
+                    case "true":
+                    case "yes":
+                    case "1":
+                    case "on":
+                        return true;
+                    case "false":
+                    case "no":
+                    case "0":
+                    case "off":
+                        return false;
                 }
             }
-
-            return wps.isDefined(res, deFault);
+            return strict ? string === true : Boolean(string);
         },
 
-
-        parse_args_deep: function (deFault, ...sources) {
-            if (!sources.length) return deFault;
-            const source = sources.shift();
-
-            if (this.isObject(deFault) && this.isObject(source)) {
-                for (const key in source) {
-                    if (this.isObject(source[key])) {
-                        deFault[key] = this.parse_args_deep(deFault[key] || {}, source[key]);
-                    } else {
-                        Object.assign(deFault, {[key]: source[key]});
+        removeEmpty(item, deFault = null, strict = false) {
+            if (!this.isDefined(item)) return deFault;
+            if (this.isObject(item)) {
+                if ($.isEmptyObject(item)) return deFault;
+                for (const propName in item) {
+                    if (hasOwn.call(item, propName)) {
+                        item[propName] = this.removeEmpty(item[propName], null, strict);
+                        if (!this.isDefined(item[propName])) delete item[propName];
                     }
                 }
+                return $.isEmptyObject(item) ? deFault : item;
             }
-
-            return this.parse_args_deep(deFault, ...sources);
+            if (this.isArray(item)) {
+                if (!item.length) return deFault;
+                const filtered = item
+                    .map(el => this.removeEmpty(el, null, strict))
+                    .filter(el => this.isDefined(el) && (!this.isArray(el) || el.length > 0));
+                return filtered.length ? filtered : deFault;
+            }
+            return (!strict || this.booleanize(item)) ? item : deFault;
         },
 
-        parse_args: function (deFault, ...sources) {
-            if (!sources.length) return deFault;
-            const source = sources.shift();
-
-            if (this.isObject(deFault) && this.isObject(source)) {
-                Object.assign(deFault, source);
-            }
-
-            return this.parse_args(deFault, ...sources);
-        },
-
-        filter_args_deep: function (deFault, ...sources) {
-            if (!sources.length) return deFault;
-            const source = sources.shift();
-
-            if (this.isObject(deFault) && this.isObject(source)) {
-                for (const key in source) {
-                    if (key in deFault) {
-                        if (this.isObject(deFault[key])) {
-                            if (!source[key])
-                                Object.assign(source, {[key]: {}});
-                            this.filter_args_deep(deFault[key], source[key]);
-                        } else {
-                            Object.assign(deFault, {[key]: source[key]});
+        parse_args_deep(deFault, ...sources) {
+            for (const source of sources) {
+                if (this.isObject(deFault) && this.isObject(source)) {
+                    for (const key in source) {
+                        if (hasOwn.call(source, key)) {
+                            deFault[key] = this.isObject(source[key])
+                                ? this.parse_args_deep(deFault[key] || {}, source[key])
+                                : source[key];
                         }
                     }
                 }
             }
-
-            return this.filter_args_deep(deFault, ...sources);
-        },
-
-        filter_args: function (deFault, ...sources) {
-
-            if (!this.isObject(deFault))
-                return Object.assign({}, ...sources);
-
-            let merged = Object.assign({}, ...sources);
-
-            for (const key in deFault) {
-                if (key in merged) {
-                    Object.assign(deFault, {[key]: merged[key]});
-                }
-            }
-
             return deFault;
         },
 
-        delete: function (array, position = 0) {
-            delete array[position];
-            return array;
+        parse_args: function (deFault, ...sources) {
+            return this.isObject(deFault) ? Object.assign(deFault, ...sources.filter(s => this.isObject(s))) : deFault;
         },
 
-        maybe_exec: function (item, runtime_args = null, context = null, asFilter = false) {
-
-            if (wps.isFunction(item)) {
-                return item.call(context, runtime_args);
+        filter_args_deep(deFault, ...sources) {
+            for (const source of sources) {
+                if (this.isObject(deFault) && this.isObject(source)) {
+                    for (const key in source) {
+                        if (hasOwn.call(deFault, key)) {
+                            deFault[key] = this.isObject(deFault[key])
+                                ? this.filter_args_deep(deFault[key], source[key] || {})
+                                : source[key];
+                        }
+                    }
+                }
             }
+            return deFault;
+        },
 
-            if (wps.isObject(item) && wps.isFunction(item.callback)) {
-                // context used for this, runtime args, static args
-                return item.callback.call(context, item.args, runtime_args)
+        filter_args(deFault, ...sources) {
+            if (!this.isObject(deFault)) return Object.assign({}, ...sources);
+            const merged = Object.assign({}, ...sources);
+            for (const key in deFault) {
+                if (hasOwn.call(merged, key)) deFault[key] = merged[key];
             }
+            return deFault;
+        },
 
+        delete: (array, position = 0) => (delete array[position], array),
+
+        maybe_exec(item, runtime_args = null, context = null, asFilter = false) {
+            if (this.isFunction(item)) return item.call(context, runtime_args);
+            if (this.isObject(item) && this.isFunction(item.callback)) {
+                return item.callback.call(context, item.args, runtime_args);
+            }
             return asFilter ? runtime_args : item;
         },
 
-        serialize: function (obj, prefix) {
-            let str = [],
-                p;
-            for (p in obj) {
-                if (obj.hasOwnProperty(p)) {
-                    let k = prefix ? prefix + "[" + p + "]" : p,
-                        v = obj[p];
-                    str.push((v !== null && typeof v === "object") ?
-                        this.serialize(v, k) :
-                        encodeURIComponent(k) + "=" + encodeURIComponent(v));
+        serialize(obj, prefix) {
+            const str = [];
+            for (const p in obj) {
+                if (hasOwn.call(obj, p)) {
+                    const k = prefix ? `${prefix}[${p}]` : p, v = obj[p];
+                    str.push(v !== null && typeof v === "object"
+                        ? this.serialize(v, k)
+                        : `${encodeURIComponent(k)}=${encodeURIComponent(v)}`);
                 }
             }
             return str.join("&");
         },
 
-        domPath: function (elem, path) {
-            // convert indexes to properties
-            // strip a leading dot
-            path = path.replace(/\[(\w+)]/g, '.$1').replace(/^\./, '').split('.');
-            let k, i;
-            for (i = 0; i < path.length; i++) {
-                k = path[i];
-                if (k in elem) {
-                    elem = elem[k];
-                } else {
-                    return;
-                }
+        domPath(elem, path) {
+            const parts = path.replace(/\[(\w+)]/g, '.$1').replace(/^\./, '').split('.');
+            for (const k of parts) {
+                if (!(k in elem)) return undefined;
+                elem = elem[k];
             }
             return elem;
         },
 
-        addUX: function (ux) {
-            wps.extend(wpsCore.ux, ux);
-        },
-
-        getUX: function (item, default_ = '', args = null) {
-
-            if (typeof wpsCore.ux[item] === "undefined")
-                return default_;
-
-            return wps.maybe_exec(wpsCore.ux[item], args)
-        },
-
-        removeUX: function (item) {
-
-            if (typeof wpsCore.ux[item] === "undefined")
-                return false;
-
+        addUX: ux => wps.extend(wpsCore.ux, ux),
+        getUX: (item, default_ = '', args = null) => hasOwn.call(wpsCore.ux, item) ? wps.maybe_exec(wpsCore.ux[item], args) : default_,
+        removeUX(item) {
+            if (!hasOwn.call(wpsCore.ux, item)) return false;
             delete wpsCore.ux[item];
+            return true;
         },
 
         json: {
             stringify: JSON.stringify,
-
-            parse: function (data, deFault) {
-
-                if (wps.isObject(data))
-                    return data;
-
-                let parsed = deFault;
-
-                if (data) {
-                    try {
-                        parsed = JSON.parse(data);
-                    } catch (e) {
-                        parsed = data;
-                    }
+            parse(data, deFault) {
+                if (wps.isObject(data)) return data;
+                if (!data) return deFault;
+                try {
+                    return JSON.parse(data);
+                } catch {
+                    return data || deFault;
                 }
-
-                return parsed || deFault;
             }
         },
 
         storage: {
-            add: function (key, value, limit = null) {
-
+            add(key, value, limit = null) {
                 if (limit !== null) {
-
-                    let items = this.get(key, []);
-
+                    const items = this.get(key, []);
                     items.unshift(value);
-
-                    while (items.length > limit)
-                        items.pop();
-
+                    if (items.length > limit) items.length = limit;
                     value = items;
                 }
-
                 localStorage.setItem(key, wps.json.stringify(value));
             },
-            get: function (key, deFault = {}) {
-                return wps.json.parse(localStorage.getItem(key), deFault);
-            },
-            remove: function (key, index = null) {
-
-                let storage = this.get(key, []);
-
+            get: (key, deFault = {}) => wps.json.parse(localStorage.getItem(key), deFault),
+            remove(key, index = null) {
+                const storage = this.get(key, []);
                 if (index !== null) {
-                    let removed = storage.splice(index, 1);
+                    const removed = storage.splice(index, 1);
                     this.add(key, storage);
                     return removed;
                 }
-
                 localStorage.removeItem(key);
-
                 return storage;
-            },
+            }
         },
 
-        hash: function (string, length = 12) {
-
-            let dictionary = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789",
-                hash = [], i, seed = 0x1539,
-                stringLength = string.length;
-
-            if (stringLength) {
-
-                let stringLength2 = Math.floor(stringLength / 2)
-
-                seed = (((seed << 5) - seed) + stringLength + string.charCodeAt(0)) | 0;
-
-                for (i = 0; i < stringLength2; i++) {
-
-                    seed = ((seed << 5) - seed) + string.charCodeAt(i) - string.charCodeAt(stringLength - i - 1);
+        hash(string, length = 12) {
+            const dictionary = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+            const hash = new Array(length);
+            let seed = 0x1539;
+            const len = string.length;
+            if (len) {
+                const half = len >> 1;
+                seed = ((seed << 5) - seed + len + string.charCodeAt(0)) | 0;
+                for (let i = 0; i < half; i++) {
+                    seed = ((seed << 5) - seed) + string.charCodeAt(i) - string.charCodeAt(len - i - 1);
                 }
             }
-
-            for (i = 0; i < length; i++) {
+            for (let i = 0; i < length; i++) {
                 seed = (214013 * seed + 2531011) >>> 2;
                 hash[i] = dictionary[seed % 62];
             }
-
             return hash.join('');
         },
 
         semaphore: {
-
-            release: function (context = 'core') {
+            release: (context = 'core') => {
                 semaphoreList[context] = false;
             },
-
-            lock: function (context = 'core') {
+            lock: (context = 'core') => {
                 semaphoreList[context] = true;
             },
-
-            is_locked: function (context = 'core') {
-                return semaphoreList[context] || false;
-
-            },
+            is_locked: (context = 'core') => semaphoreList[context] || false
         },
 
-        ajaxHandler: function (options) {
-
-            let defaults = {
-                mod: 'none',
-                mod_action: 'none',
-                mod_nonce: '',
-                mod_args: '',
-                mod_form: '',
-                use_loading: false,
-                callback: null
-            };
-
-            options = wps.parse_args(defaults, options);
+        ajaxHandler(options) {
+            options = wps.parse_args({
+                mod: 'none', mod_action: 'none', mod_nonce: '', mod_args: '', mod_form: '',
+                use_loading: false, callback: null
+            }, options);
 
             wps.semaphore.lock(options.mod_action);
+            if (options.use_loading) options.use_loading.addClass("wps-loader");
 
-            if (options.use_loading) {
-                options.use_loading.addClass("wps-loader");
-            }
-
-            jQuery.ajax({
-                url: ajaxurl,
-                type: "GET",
-                dataType: "json",
-                global: false,
-                cache: false,
+            $.ajax({
+                url: ajaxurl, type: "GET", dataType: "json", global: false, cache: false,
                 data: {
-                    action: 'wps',
-                    mod: options.mod,
-                    mod_action: options.mod_action,
-                    mod_nonce: options.mod_nonce,
-                    mod_args: options.mod_args,
-                    mod_form: options.mod_form,
+                    action: 'wps', mod: options.mod, mod_action: options.mod_action,
+                    mod_nonce: options.mod_nonce, mod_args: options.mod_args, mod_form: options.mod_form
                 },
-                complete: function (jqXHR, status) {
-
+                complete(jqXHR) {
                     if (typeof options.callback === "function") {
-
-                        let res = wps.json.parse(jqXHR.responseText);
-
-                        if (!res) {
-                            res = jqXHR.responseText;
-                        }
-
-                        setTimeout(options.callback(res.data, res.status), 100);
+                        const res = wps.json.parse(jqXHR.responseText) || jqXHR.responseText;
+                        setTimeout(() => options.callback(res.data, res.status), 100);
                     }
-
-                    if (options.use_loading) {
-                        options.use_loading.removeClass("wps-loader");
-                    }
-
+                    if (options.use_loading) options.use_loading.removeClass("wps-loader");
                     wps.semaphore.release(options.mod_action);
                 }
             });
@@ -503,773 +300,604 @@
     });
 
     wps.fn.extend({
-
-        remove_query_arg: function (paramKey) {
-
-            let url = new URL(window.location.href);
-
-            const keysToRemove = Array.from(url.searchParams.keys()).filter(key => key.replace(/\[.*]/g, "") === paramKey);
-
-            keysToRemove.forEach(key => url.searchParams.delete(key));
-
+        remove_query_arg(paramKey) {
+            const url = new URL(window.location.href);
+            const keysToRemove = [...url.searchParams.keys()].filter(key => key.replace(/\[.*]/g, "") === paramKey);
             if (keysToRemove.length) {
-                // Update the browser history without triggering a redirect
+                keysToRemove.forEach(key => url.searchParams.delete(key));
                 window.history.replaceState({}, document.title, url.href);
             }
         },
 
-        addNotice: function (response, status) {
-
-            let $this = $(this), text = response.text || response;
-
-            if (typeof text !== 'string') {
-                text = wps.locale.get(status, 'Request processed.');
-            }
-
-            $this.append("<p class='" + status + "'>" + text + "</p>");
-
+        addNotice(response, status) {
+            const $this = $(this);
+            let text = response.text || response;
+            if (typeof text !== 'string') text = wps.locale.get(status, 'Request processed.');
+            $this.append(`<p class="${status}">${text}</p>`);
             if (response.list) {
-                for (let data of response.list) {
-                    $this.append("<p class='" + data.status + "'>" + data.text + "</p>");
-                }
+                const fragment = document.createDocumentFragment();
+                response.list.forEach(data => {
+                    const p = document.createElement('p');
+                    p.className = data.status;
+                    p.textContent = data.text;
+                    fragment.appendChild(p);
+                });
+                $this.append(fragment);
             }
         },
 
-        TextBoxHighlighter: function (options) {
+        TextBoxHighlighter(options) {
             return this.each(function () {
-                let $this = $(this),
-                    plugin = $this.data(wps.ui.textBoxHighLighter.id);
-
-                if (plugin) {
-                    plugin.destroy();
-                }
-
+                const $this = $(this);
+                let plugin = $this.data(wps.ui.textBoxHighLighter.id);
+                if (plugin) plugin.destroy();
                 plugin = wps.ui.textBoxHighLighter.init($this, options);
-
-                if (plugin.isGenerated) {
-                    $this.data(wps.ui.textBoxHighLighter.id, plugin);
-                }
-
+                if (plugin.isGenerated) $this.data(wps.ui.textBoxHighLighter.id, plugin);
             });
         }
     });
 
     wps.ui = {
-
         textBoxHighLighter: {
-
             id: 'hwt',
-
-            init: function ($el, config) {
+            init($el, config) {
                 this.$el = $el;
-
-                // backwards compatibility with v1 (deprecated)
-                if (this.getType(config) === 'function') {
-                    config = {highlight: config};
-                }
-
+                if (this.getType(config) === 'function') config = {highlight: config};
                 if (this.getType(config) === 'custom') {
                     this.highlight = config;
                     this.generate();
-                } else {
-                    console.error('valid config object not provided');
                 }
                 return this;
             },
-
-            // returns identifier strings that aren't necessarily "real" JavaScript types
-            getType: function (instance) {
-                let type = typeof instance;
-                if (!instance) {
-                    return 'falsey';
-                } else if (Array.isArray(instance)) {
-                    if (instance.length === 2 && typeof instance[0] === 'number' && typeof instance[1] === 'number') {
-                        return 'range';
-                    } else {
-                        return 'array';
-                    }
-                } else if (type === 'object') {
-                    if (instance instanceof RegExp) {
-                        return 'regexp';
-                    } else if (instance.hasOwnProperty('highlight')) {
-                        return 'custom';
-                    }
-                } else if (type === 'function' || type === 'string') {
-                    return type;
+            getType(instance) {
+                if (!instance) return 'falsey';
+                if (Array.isArray(instance)) {
+                    return (instance.length === 2 && typeof instance[0] === 'number' && typeof instance[1] === 'number') ? 'range' : 'array';
                 }
-
-                return 'other';
+                const type = typeof instance;
+                if (type === 'object') {
+                    if (instance instanceof RegExp) return 'regexp';
+                    if (hasOwn.call(instance, 'highlight')) return 'custom';
+                }
+                return (type === 'function' || type === 'string') ? type : 'other';
             },
-
-            generate: function () {
-                this.$el
-                    .addClass(wps.ui.textBoxHighLighter.id + '-input ' + wps.ui.textBoxHighLighter.id + '-content')
-                    .on('input.' + wps.ui.textBoxHighLighter.id, this.handleInput.bind(this))
-                    .on('scroll.' + wps.ui.textBoxHighLighter.id, this.handleScroll.bind(this));
-
-                this.$highlights = $('<div>', {class: wps.ui.textBoxHighLighter.id + '-highlights ' + wps.ui.textBoxHighLighter.id + '-content'});
-
-                this.$backdrop = $('<div>', {class: wps.ui.textBoxHighLighter.id + '-backdrop'})
-                    .append(this.$highlights);
-
-                this.$container = $('<div>', {class: wps.ui.textBoxHighLighter.id + '-container'})
-                    .insertAfter(this.$el)
-                    .append(this.$backdrop, this.$el) // moves $el into $container
+            generate() {
+                const id = this.id;
+                this.$el.addClass(`${id}-input ${id}-content`)
+                    .on(`input.${id}`, this.handleInput.bind(this))
+                    .on(`scroll.${id}`, this.handleScroll.bind(this));
+                this.$highlights = $('<div>', {class: `${id}-highlights ${id}-content`});
+                this.$backdrop = $('<div>', {class: `${id}-backdrop`}).append(this.$highlights);
+                this.$container = $('<div>', {class: `${id}-container`})
+                    .insertAfter(this.$el).append(this.$backdrop, this.$el)
                     .on('scroll', this.blockContainerScroll.bind(this));
-
                 this.browser = this.detectBrowser();
-                switch (this.browser) {
-                    case 'firefox':
-                        this.fixFirefox();
-                        break;
-                    case 'ios':
-                        this.fixIOS();
-                        break;
-                }
-
-                // plugin function checks this for success
+                if (this.browser === 'firefox') this.fixFirefox();
+                else if (this.browser === 'ios') this.fixIOS();
                 this.isGenerated = true;
-
-                // trigger input event to highlight any existing input
                 this.handleInput();
             },
-
-            // browser sniffing sucks, but there are browser-specific quirks to handle
-            // that are not a matter of feature detection
-            detectBrowser: function () {
-                let ua = window.navigator.userAgent.toLowerCase();
-                if (ua.indexOf('firefox') !== -1) {
-                    return 'firefox';
-                } else if (!!ua.match(/msie|trident\/7|edge/)) {
-                    return 'ie';
-                } else if (!!ua.match(/ipad|iphone|ipod/) && ua.indexOf('windows phone') === -1) {
-                    // Windows Phone flags itself as "like iPhone", thus the extra check
-                    return 'ios';
-                } else {
-                    return 'other';
-                }
+            detectBrowser() {
+                const ua = navigator.userAgent.toLowerCase();
+                if (ua.includes('firefox')) return 'firefox';
+                if (/msie|trident\/7|edge/.test(ua)) return 'ie';
+                if (/ipad|iphone|ipod/.test(ua) && !ua.includes('windows phone')) return 'ios';
+                return 'other';
             },
-
-            // Firefox doesn't show text that scrolls into the padding of a textarea, so
-            // rearrange a couple box models to make highlights behave the same way
-            fixFirefox: function () {
-                // take padding and border pixels from highlights div
-                let padding = this.$highlights.css([
-                    'padding-top', 'padding-right', 'padding-bottom', 'padding-left'
-                ]);
-                let border = this.$highlights.css([
-                    'border-top-width', 'border-right-width', 'border-bottom-width', 'border-left-width'
-                ]);
-                this.$highlights.css({
-                    'padding': '0',
-                    'border-width': '0'
-                });
-
-                this.$backdrop
-                    .css({
-                        // give padding pixels to backdrop div
-                        'margin-top': '+=' + padding['padding-top'],
-                        'margin-right': '+=' + padding['padding-right'],
-                        'margin-bottom': '+=' + padding['padding-bottom'],
-                        'margin-left': '+=' + padding['padding-left'],
-                    })
-                    .css({
-                        // give border pixels to backdrop div
-                        'margin-top': '+=' + border['border-top-width'],
-                        'margin-right': '+=' + border['border-right-width'],
-                        'margin-bottom': '+=' + border['border-bottom-width'],
-                        'margin-left': '+=' + border['border-left-width'],
-                    });
-            },
-
-            // iOS adds 3px of (unremovable) padding to the left and right of a textarea,
-            // so adjust highlights div to match
-            fixIOS: function () {
-                this.$highlights.css({
-                    'padding-left': '+=3px',
-                    'padding-right': '+=3px'
+            fixFirefox() {
+                const p = this.$highlights.css(['padding-top', 'padding-right', 'padding-bottom', 'padding-left']);
+                const b = this.$highlights.css(['border-top-width', 'border-right-width', 'border-bottom-width', 'border-left-width']);
+                this.$highlights.css({padding: 0, 'border-width': 0});
+                this.$backdrop.css({
+                    'margin-top': `+=${p['padding-top']}`, 'margin-right': `+=${p['padding-right']}`,
+                    'margin-bottom': `+=${p['padding-bottom']}`, 'margin-left': `+=${p['padding-left']}`
+                }).css({
+                    'margin-top': `+=${b['border-top-width']}`, 'margin-right': `+=${b['border-right-width']}`,
+                    'margin-bottom': `+=${b['border-bottom-width']}`, 'margin-left': `+=${b['border-left-width']}`
                 });
             },
-
-            handleInput: function () {
-                let input = this.$el.val();
-                let ranges = this.getRanges(input, this.highlight);
-                let unstaggeredRanges = this.removeStaggeredRanges(ranges);
-                let boundaries = this.getBoundaries(unstaggeredRanges);
-                this.renderMarks(boundaries);
+            fixIOS() {
+                this.$highlights.css({'padding-left': '+=3px', 'padding-right': '+=3px'});
             },
-
-            getRanges: function (input, highlight) {
-                let type = this.getType(highlight);
-                switch (type) {
-                    case 'array':
-                        return this.getArrayRanges(input, highlight);
-                    case 'function':
-                        return this.getFunctionRanges(input, highlight);
-                    case 'regexp':
-                        return this.getRegExpRanges(input, highlight);
-                    case 'string':
-                        return this.getStringRanges(input, highlight);
-                    case 'range':
-                        return this.getRangeRanges(input, highlight);
-                    case 'custom':
-                        return this.getCustomRanges(input, highlight);
-                    default:
-                        if (!highlight) {
-                            // do nothing for falsey values
-                            return [];
-                        } else {
-                            console.error('unrecognized highlight type');
+            handleInput() {
+                const input = this.$el.val();
+                const ranges = this.getRanges(input, this.highlight);
+                const unstaggered = this.removeStaggeredRanges(ranges);
+                this.renderMarks(this.getBoundaries(unstaggered));
+            },
+            getRanges(input, highlight) {
+                const type = this.getType(highlight);
+                const handlers = {
+                    array: () => highlight.flatMap(h => this.getRanges(input, h)),
+                    function: () => this.getRanges(input, highlight(input)),
+                    regexp: () => {
+                        const ranges = [];
+                        let match;
+                        while ((match = highlight.exec(input)) !== null) {
+                            ranges.push([match.index, match.index + match[0].length]);
+                            if (!highlight.global) break;
                         }
-                }
-            },
-
-            getArrayRanges: function (input, arr) {
-                let ranges = arr.map(this.getRanges.bind(this, input));
-                return Array.prototype.concat.apply([], ranges);
-            },
-
-            getFunctionRanges: function (input, func) {
-                return this.getRanges(input, func(input));
-            },
-
-            getRegExpRanges: function (input, regex) {
-                let ranges = [];
-                let match;
-                while (match = regex.exec(input), match !== null) {
-                    ranges.push([match.index, match.index + match[0].length]);
-                    if (!regex.global) {
-                        // non-global regexes do not increase lastIndex, causing an infinite loop,
-                        // but we can just break manually after the first match
-                        break;
-                    }
-                }
-                return ranges;
-            },
-
-            getStringRanges: function (input, str) {
-                let ranges = [];
-                let inputLower = input.toLowerCase();
-                let strLower = str.toLowerCase();
-                let index = 0;
-                while (index = inputLower.indexOf(strLower, index), index !== -1) {
-                    ranges.push([index, index + strLower.length]);
-                    index += strLower.length;
-                }
-                return ranges;
-            },
-
-            getRangeRanges: function (input, range) {
-                return [range];
-            },
-
-            getCustomRanges: function (input, custom) {
-                let ranges = this.getRanges(input, custom.highlight);
-                if (custom.className) {
-                    ranges.forEach(function (range) {
-                        // persist class name as a property of the array
-                        if (range.className) {
-                            range.className = custom.className + ' ' + range.className;
-                        } else {
-                            range.className = custom.className;
+                        return ranges;
+                    },
+                    string: () => {
+                        const ranges = [], inputLower = input.toLowerCase(), strLower = highlight.toLowerCase();
+                        let idx = 0;
+                        while ((idx = inputLower.indexOf(strLower, idx)) !== -1) {
+                            ranges.push([idx, idx + strLower.length]);
+                            idx += strLower.length;
                         }
-                    });
-                }
-                return ranges;
-            },
-
-            // prevent staggered overlaps (clean nesting is fine)
-            removeStaggeredRanges: function (ranges) {
-                let unstaggeredRanges = [];
-                ranges.forEach(function (range) {
-                    let isStaggered = unstaggeredRanges.some(function (unstaggeredRange) {
-                        let isStartInside = range[0] > unstaggeredRange[0] && range[0] < unstaggeredRange[1];
-                        let isStopInside = range[1] > unstaggeredRange[0] && range[1] < unstaggeredRange[1];
-                        return isStartInside !== isStopInside; // xor
-                    });
-                    if (!isStaggered) {
-                        unstaggeredRanges.push(range);
+                        return ranges;
+                    },
+                    range: () => [highlight],
+                    custom: () => {
+                        const ranges = this.getRanges(input, highlight.highlight);
+                        if (highlight.className) {
+                            ranges.forEach(r => r.className = r.className ? `${highlight.className} ${r.className}` : highlight.className);
+                        }
+                        return ranges;
                     }
-                });
-                return unstaggeredRanges;
+                };
+                return handlers[type]?.() || [];
             },
-
-            getBoundaries: function (ranges) {
-                let boundaries = [];
-                ranges.forEach(function (range) {
-                    boundaries.push({
-                        type: 'start',
-                        index: range[0],
-                        className: range.className
+            removeStaggeredRanges(ranges) {
+                const unstaggered = [];
+                ranges.forEach(range => {
+                    const isStaggered = unstaggered.some(ur => {
+                        const startIn = range[0] > ur[0] && range[0] < ur[1];
+                        const stopIn = range[1] > ur[0] && range[1] < ur[1];
+                        return startIn !== stopIn;
                     });
-                    boundaries.push({
-                        type: 'stop',
-                        index: range[1]
-                    });
+                    if (!isStaggered) unstaggered.push(range);
                 });
-
-                this.sortBoundaries(boundaries);
+                return unstaggered;
+            },
+            getBoundaries(ranges) {
+                const boundaries = [];
+                ranges.forEach(r => {
+                    boundaries.push({type: 'start', index: r[0], className: r.className});
+                    boundaries.push({type: 'stop', index: r[1]});
+                });
+                boundaries.sort((a, b) => {
+                    if (a.index !== b.index) return b.index - a.index;
+                    if (a.type === 'stop' && b.type === 'start') return 1;
+                    if (a.type === 'start' && b.type === 'stop') return -1;
+                    return 0;
+                });
                 return boundaries;
             },
-
-            sortBoundaries: function (boundaries) {
-                // backwards sort (since marks are inserted right to left)
-                boundaries.sort(function (a, b) {
-                    if (a.index !== b.index) {
-                        return b.index - a.index;
-                    } else if (a.type === 'stop' && b.type === 'start') {
-                        return 1;
-                    } else if (a.type === 'start' && b.type === 'stop') {
-                        return -1;
-                    } else {
-                        return 0;
-                    }
-                });
-            },
-
-            renderMarks: function (boundaries) {
+            renderMarks(boundaries) {
                 let input = this.$el.val();
-                boundaries.forEach(function (boundary, index) {
-                    let markup;
-                    if (boundary.type === 'start') {
-                        markup = '{{hwt-mark-start|' + index + '}}';
-                    } else {
-                        markup = '{{hwt-mark-stop}}';
-                    }
-                    input = input.slice(0, boundary.index) + markup + input.slice(boundary.index);
+                boundaries.forEach((b, i) => {
+                    const markup = b.type === 'start' ? `{{hwt-mark-start|${i}}}` : '{{hwt-mark-stop}}';
+                    input = input.slice(0, b.index) + markup + input.slice(b.index);
                 });
-
-                // this keeps scrolling aligned when input ends with a newline
-                input = input.replace(/\n(\{\{hwt-mark-stop}})?$/, '\n\n$1');
-
-                // encode HTML entities
-                input = input.replace(/</g, '&lt;').replace(/>/g, '&gt;');
-
-                if (this.browser === 'ie') {
-                    // IE/Edge wraps whitespace differently in a div vs textarea, this fixes it
-                    input = input.replace(/ /g, ' <wbr>');
-                }
-
-                // replace start tokens with opening <mark> tags with class name
-                input = input.replace(/\{\{hwt-mark-start\|(\d+)}}/g, function (match, submatch) {
-                    let className = boundaries[+submatch].className;
-                    if (className) {
-                        return '<mark class="' + className + '">';
-                    } else {
-                        return '<mark>';
-                    }
-                });
-
-                // replace stop tokens with closing </mark> tags
-                input = input.replace(/\{\{hwt-mark-stop}}/g, '</mark>');
-
+                input = input.replace(/\n(\{\{hwt-mark-stop}})?$/, '\n\n$1').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                if (this.browser === 'ie') input = input.replace(/ /g, ' <wbr>');
+                input = input
+                    .replace(/\{\{hwt-mark-start\|(\d+)}}/g, (_, idx) => {
+                        const cn = boundaries[+idx].className;
+                        return cn ? `<mark class="${cn}">` : '<mark>';
+                    })
+                    .replace(/\{\{hwt-mark-stop}}/g, '</mark>');
                 this.$highlights.html(input);
             },
-
-            handleScroll: function () {
-                let scrollTop = this.$el.scrollTop();
-                this.$backdrop.scrollTop(scrollTop);
-
-                // Chrome and Safari won't break long strings of spaces, which can cause
-                // horizontal scrolling, this compensates by shifting highlights by the
-                // horizontally scrolled amount to keep things aligned
-                let scrollLeft = this.$el.scrollLeft();
-                this.$backdrop.css('transform', (scrollLeft > 0) ? 'translateX(' + -scrollLeft + 'px)' : '');
+            handleScroll() {
+                this.$backdrop.scrollTop(this.$el.scrollTop());
+                const scrollLeft = this.$el.scrollLeft();
+                this.$backdrop.css('transform', scrollLeft > 0 ? `translateX(${-scrollLeft}px)` : '');
             },
-
-            // in Chrome, page up/down in the textarea will shift stuff within the
-            // container (despite the CSS), this immediately reverts the shift
-            blockContainerScroll: function () {
+            blockContainerScroll() {
                 this.$container.scrollLeft(0);
             },
-
-            destroy: function () {
+            destroy() {
+                const id = this.id;
                 this.$backdrop.remove();
-                this.$el
-                    .unwrap()
-                    .removeClass(wps.ui.textBoxHighLighter.id + '-text ' + wps.ui.textBoxHighLighter.id + '-input')
-                    .off(wps.ui.textBoxHighLighter.id)
-                    .removeData(wps.ui.textBoxHighLighter.id);
-            },
+                this.$el.unwrap().removeClass(`${id}-text ${id}-input`).off(id).removeData(id);
+            }
         },
 
         popup: {
-            close: function (elem, options = {}) {
-
-                options = wps.parse_args({
-                    remove: true,
-                    restore: false,
-                    beforeClose: null
-                }, options);
-
+            close(elem, options = {}) {
+                options = wps.parse_args({remove: true, restore: false, beforeClose: null}, options);
                 wps.maybe_exec(options.beforeClose, null, elem);
-
-                let $elem = $(elem);
-
-                $elem.closest('.wps-modalWrapper').fadeOut(400, function () {
-
-                    if (options.restore) {
-                        $elem.find('.wps-modal__content').children().detach().appendTo(options.restore);
-                    }
-
-                    if (options.remove) {
-                        $elem.remove();
-                    }
-
+                $(elem).closest('.wps-modalWrapper').fadeOut(400, function () {
+                    const $this = $(this);
+                    if (options.restore) $this.find('.wps-modal__content').children().detach().appendTo(options.restore);
+                    if (options.remove) $this.remove();
                     $('body').removeClass('sw-notScrollable');
                 });
             },
-
-            render: function (options) {
-
+            render(options) {
                 options = wps.parse_args({
-                    title: false,
-                    body: false, //callable object args + function
-                    restore: true,
-                    parseElement: false,
-                    beforeAppend: null,
-                    afterAppend: null,
-                    beforeClose: null,
-                    afterClose: null,
-                    size: 'small', //medium large
-                    message: false,
-                    remove: true
+                    title: false, body: false, restore: true, parseElement: false,
+                    beforeAppend: null, afterAppend: null, beforeClose: null, afterClose: null,
+                    size: 'small', message: false, remove: true
                 }, options);
-
                 if (options.message) {
                     alert(options.message);
                     return;
                 }
 
-                let modal_id = 'swModal' + wps.getUID(), bodyContent, detached = false, restoreContainer = false;
+                const modal_id = 'swModal' + wps.getUID();
+                let bodyContent, detached = false, restoreContainer = false;
 
                 if (wps.isjQuery(options.body)) {
                     if (options.parseElement) {
                         bodyContent = $.parseHTML(options.body.html(), document, true);
                     } else {
                         bodyContent = '';
-
-                        if (options.restore)
-                            restoreContainer = options.body.parent();
-
+                        if (options.restore) restoreContainer = options.body.parent();
                         detached = options.body.detach();
                     }
                 } else {
-                    bodyContent = wps.maybe_exec(options.body, null, this)
+                    bodyContent = wps.maybe_exec(options.body, null, this);
                 }
 
-                let modal_form = '<section class="wps-modalWrapper">' +
-                    '<section id="' + modal_id + '" class="wps-modal wps-modal--' + options.size + '" style="display: none">' +
-                    '<span class="wps-modal__close" role="button">&times;</span>' +
-                    (options.title ? '<div class="wps-modal__header">' + '<h4 class="wps-modal__title">' + options.title + '</h4>' + '</div>' : '') +
-                    '<div class="wps-modal__content">' + bodyContent + '</div>' +
-                    (options.bottom ? '<div class="wps-modal__bottom">' + wps.maybe_exec(options.bottom, null, this) + '</div>' : '') +
-                    '</section></section>';
+                let modal_form = `<section class="wps-modalWrapper">
+                    <section id="${modal_id}" class="wps-modal wps-modal--${options.size}" style="display: none">
+                        <span class="wps-modal__close" role="button">&times;</span>
+                        ${options.title ? `<div class="wps-modal__header"><h4 class="wps-modal__title">${options.title}</h4></div>` : ''}
+                        <div class="wps-modal__content">${bodyContent}</div>
+                        ${options.bottom ? `<div class="wps-modal__bottom">${wps.maybe_exec(options.bottom, null, this)}</div>` : ''}
+                    </section></section>`;
 
-                if (options.beforeAppend) {
-                    modal_form = wps.maybe_exec(options.beforeAppend, modal_form, this)
-                }
+                if (options.beforeAppend) modal_form = wps.maybe_exec(options.beforeAppend, modal_form, this);
 
                 $('body').append(modal_form).addClass('sw-notScrollable');
-
-                let current_modal = $("#" + modal_id);
-
-                if (detached) {
-                    current_modal.find('.wps-modal__content').append(detached);
-                }
-
+                const current_modal = $('#' + modal_id);
+                if (detached) current_modal.find('.wps-modal__content').append(detached);
                 current_modal.fadeIn(300);
-
-                if (options.afterAppend) {
-                    wps.maybe_exec(options.afterAppend, current_modal, this)
-                }
+                if (options.afterAppend) wps.maybe_exec(options.afterAppend, current_modal, this);
 
                 current_modal.one('click', '.wps-modal__close', function () {
-
-                    wpsUI.popup.close(current_modal, {
-                        restore: restoreContainer,
-                        remove: options.remove,
-                        beforeClose: {
-                            callback: options.beforeClose,
-                            args: current_modal
-                        }
+                    wps.ui.popup.close(current_modal, {
+                        restore: restoreContainer, remove: options.remove,
+                        beforeClose: {callback: options.beforeClose, args: current_modal}
                     });
-
-                    wps.maybe_exec({
-                        callback: options.beforeClose,
-                        args: current_modal
-                    }, null, current_modal);
-
                     current_modal.off();
                 });
-
                 return modal_id;
             }
         },
 
-        circleChart: function (percent, color, size, stroke) {
-            return `<svg class="wps-progressbarCircle__chart" viewbox="0 0 36 36" width="${size}" height="${size}" xmlns="http://www.w3.org/2000/svg">
-        <path class="wps-progressbarCircle__bg" stroke="#eeeeee" stroke-width="${stroke * 0.5}" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"/>
-        <path class="wps-progressbarCircle__stroke" stroke="${color}" stroke-width="${stroke}" stroke-dasharray="${percent},100" stroke-linecap="round" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-        <text class="wps-progressbarCircle__info" x="50%" y="50%" alignment-baseline="central" text-anchor="middle" font-size="8">${percent}%</text></svg>`;
-        }
-    }
+        circleChart: (percent, color, size, stroke) => `
+            <svg class="wps-progressbarCircle__chart" viewbox="0 0 36 36" width="${size}" height="${size}" xmlns="http://www.w3.org/2000/svg">
+                <path class="wps-progressbarCircle__bg" stroke="#eeeeee" stroke-width="${stroke * 0.5}" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"/>
+                <path class="wps-progressbarCircle__stroke" stroke="${color}" stroke-width="${stroke}" stroke-dasharray="${percent},100" stroke-linecap="round" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"/>
+                <text class="wps-progressbarCircle__info" x="50%" y="50%" alignment-baseline="central" text-anchor="middle" font-size="8">${percent}%</text>
+            </svg>`
+    };
 
     wps.clipboard = {
-
-        write: function (value = window.location.href) {
-            let inputDump = document.createElement('input'), hrefText = value;
-            document.body.appendChild(inputDump);
-            inputDump.value = hrefText;
-            inputDump.select();
-            document.execCommand('copy');
-            document.body.removeChild(inputDump);
+        write(value = window.location.href) {
+            if (navigator.clipboard?.writeText) {
+                navigator.clipboard.writeText(value).catch(() => this._legacyWrite(value));
+            } else {
+                this._legacyWrite(value);
+            }
         },
+        _legacyWrite(value) {
+            const input = document.createElement('input');
+            document.body.appendChild(input);
+            input.value = value;
+            input.select();
+            document.execCommand('copy');
+            document.body.removeChild(input);
+        },
+        read: () => navigator.clipboard?.readText() ?? Promise.reject('Clipboard API not available')
+    };
 
-        read: async function () {
-            return await navigator.clipboard.readText();
-        }
-    }
-
-    let wpsUtil = wps.utility, wpsUI = wps.ui;
-
-    // Expose wps
-    if (typeof noGlobal === "undefined") {
-        window.wps = wps;
-    }
-
+    if (typeof noGlobal === "undefined") window.wps = wps;
     return wps;
 
 })(jQuery, typeof window !== "undefined" ? window : this);
 
+// Document ready
 (function ($) {
+    let $window, $body, media_uploader;
+    let wpoptAutosaveNonce = null;
 
-    let $window = $(window),
-        $document = $('document');
+    function wpoptStatusText(key, fallback) {
+        return wps.locale.get(key, fallback);
+    }
+
+    function ensureWpoptToastHost() {
+        let $host = $("#wpopt-toast-host");
+        if ($host.length) return $host;
+
+        $host = $("<div/>", {
+            id: "wpopt-toast-host",
+            "aria-live": "polite",
+            "aria-atomic": "true"
+        });
+
+        $("body").append($host);
+        return $host;
+    }
+
+    function showWpoptToast(state, text) {
+        const $host = ensureWpoptToastHost();
+        const $toast = $("<div/>", {
+            "class": "wpopt-toast is-" + state,
+            text: text
+        });
+
+        $host.append($toast);
+
+        window.setTimeout(function () {
+            $toast.addClass("is-visible");
+        }, 10);
+
+        window.setTimeout(function () {
+            $toast.removeClass("is-visible");
+            window.setTimeout(function () {
+                $toast.remove();
+            }, 220);
+        }, 1800);
+    }
+
+    function initWpoptAutosaveForm(form) {
+        const $form = $(form);
+
+        if (!wpoptAutosaveNonce) return;
+        if ($form.data("wpopt-autosave-init")) return;
+
+        $form.data("wpopt-autosave-init", true);
+
+        let lastSaved = $form.serialize();
+        let timer = null;
+        let inFlight = false;
+        let queued = false;
+
+        const $submit = $form.find(".wps-submit");
+        $submit.find("input[type='submit'], button[type='submit'], .button-primary").remove();
+        if (!$submit.find("*").length && !$submit.text().trim()) {
+            $submit.hide();
+        }
+
+        const doSave = function () {
+            const snapshot = $form.serialize();
+
+            if (snapshot === lastSaved) return;
+            if (inFlight) {
+                queued = true;
+                return;
+            }
+
+            inFlight = true;
+
+            wps.ajaxHandler({
+                mod: "settings",
+                mod_action: "autosave_settings",
+                mod_nonce: wpoptAutosaveNonce,
+                mod_form: snapshot,
+                callback(data, state) {
+                    inFlight = false;
+
+                    if (state === "success") {
+                        lastSaved = snapshot;
+                        showWpoptToast("success", data?.text || wpoptStatusText("autosaved", "All changes saved"));
+                    } else {
+                        showWpoptToast("error", data?.text || wpoptStatusText("autosave_failed", "Autosave failed"));
+                    }
+
+                    if (queued) {
+                        queued = false;
+                        doSave();
+                    }
+                }
+            });
+        };
+
+        const debounceSave = function () {
+            clearTimeout(timer);
+            timer = setTimeout(doSave, 700);
+        };
+
+        $form.on("change input", ":input:not([type='submit']):not([type='button']):not([type='hidden'])", debounceSave);
+        $form.on("submit", function (e) {
+            e.preventDefault();
+            doSave();
+        });
+    }
+
+    function animateTabPanel(panelId) {
+        if (!panelId) return;
+
+        const $panel = $("#" + panelId);
+        if (!$panel.length) return;
+
+        $panel.removeClass("wpopt-tab-animate");
+        window.requestAnimationFrame(function () {
+            $panel.addClass("wpopt-tab-animate");
+        });
+    }
 
     function handleDependent($parent, visible = true, deep = true) {
+        const parent = $parent.attr('id');
+        if (!parent) return;
 
-        let parent = $parent.attr('id');
+        const escaped = parent.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const parentRegex = new RegExp('(^|:)!?' + escaped + '(:|$)');
+        const negateRegex = new RegExp('(^|:)!' + escaped + '(:|$)');
 
-        $('.wps *[data-parent*="' + parent + '"]').each(function () {
-            let $this = $(this),
-                parents = $this.data('parent'),
-                cntx = $this,
-                visibleAction = parents.substr(parents.indexOf(parent) - 1, 1) === "!" ? !visible : visible;
+        $('[data-parent]').filter(function () {
+            return parentRegex.test(String($(this).data('parent')));
+        }).each(function () {
+            const $this = $(this);
+            const parents = String($this.data('parent'));
+            const visibleAction = negateRegex.test(parents) ? !visible : visible;
 
-            if (!$this.is('row')) {
-                cntx = $this.closest('row');
-            }
+            const $dropdown = $this.closest('dropdown');
+            const $context = $dropdown.length
+                ? $dropdown.closest('.wps-row, .wps-row-title')
+                : $this.closest('.wps-row, .wps-row-title');
 
-            if ($this.is('input')) {
-                $this.prop("readonly", !visibleAction);
-            }
-
-            if (visibleAction) {
-                cntx.removeClass('wps-disabled-blur');
-            } else {
-                cntx.addClass('wps-disabled-blur');
-            }
-
+            if ($this.is('input')) $this.prop("readonly", !visibleAction);
+            if ($context.length) $context.toggleClass('wps-disabled-blur', !visibleAction);
             if (deep && $this.is(':checkbox')) {
-                handleDependent($this, visible ? $this.prop('checked') : false, deep)
+                handleDependent($this, visibleAction && $this.prop('checked'), deep);
             }
         });
     }
 
-    $document.ready(function () {
+    $(function () {
+        $window = $(window);
+        $body = $('body');
+        wpoptAutosaveNonce = wps.locale.get("wpopt_ajax_nonce", "");
 
-        let media_uploader;
-
-        /**
-         * handle wp media uploader
-         */
-        $(".wps-uploader__init").on('click', function (e) {
+        // Event delegation
+        $body.on('click', '.wps-uploader__init', function (e) {
             e.preventDefault();
-            let btn_uploader = $(this);
-            if (media_uploader) {
-                media_uploader.open();
-                return;
+            const btn = $(this);
+            if (!media_uploader) {
+                media_uploader = wp.media({
+                    title: 'Upload media',
+                    library: {type: btn.data('type') || 'image'},
+                    multiple: false
+                }).on('select', function () {
+                    btn.parent().find('input').val(media_uploader.state().get('selection').first().toJSON().url);
+                });
             }
-            media_uploader = wp.media({
-                title: 'Upload media',
-                library: {type: btn_uploader.data('type') || 'image'},
-                multiple: false
-            }).on('select', function (e) {
-                // This will return the selected media from the Media Uploader, the result is an object
-                let uploaded_media = media_uploader.state().get('selection').first();
-                // Convert uploaded_media to a JSON object to make accessing it easier
-                let media_url = uploaded_media.toJSON().url;
-                // Assign the url value to the input field
-                btn_uploader.parent().find('input').val(media_url);
-            }).open();
-        });
-
-        $('.wps-progressbarCircle').each((i, chart) => {
-            let $chart = $(chart);
-            let percent = $chart.data("percent") || 0,
-                color = $chart.data("color") || "var(--main-dark-color)",
-                size = $chart.data("size") || 100,
-                stroke = $chart.data("stroke") || 1;
-
-            $chart.html(wps.ui.circleChart(percent, color, size, stroke));
+            media_uploader.open();
         })
-
-        $(".wps-collapse-handler").on("click", function () {
-            let $this = $(this);
-            $this.children('.wps-collapse-icon').toggleClass('wps-collapse-icon-close');
-            $this.next().toggle(300);
-        });
-
-        $(".wps-dropdown__opener").on("click", function (event) {
-
-            event.preventDefault();
-
-            let $dropDown = $(this).closest(".wps-dropdown");
-
-            $dropDown.find(".wps-multiselect__wrapper").slideToggle();
-            $dropDown.toggleClass("is-open");
-
-            $dropDown.off("click", "li");
-            $dropDown.on("click", "li", function (e) {
-                e.stopPropagation();
-                let $selectedLI = $(this);
-
-                let input = $dropDown.find("input");
-
-                input.val($selectedLI.data('value'));
-                $dropDown.find("[data-input='" + input.attr('id') + "']").text($selectedLI.text())
-
-                $dropDown.find(".wps-multiselect__wrapper").slideToggle();
-                $dropDown.toggleClass("is-open");
-            });
-        });
-
-        $('.wps-ar-tabs').each(function () {
-
-            let has_selected = false, $tab = $(this);
-
-            let $all_tab_links = $tab.find("li[aria-controls]"),
-                $all_tab_contents = $tab.find(".wps-ar-tabcontent");
-
-            $tab.find("ul").on("click", "li[aria-controls]:not([aria-disabled='true'])", function (event) {
-
-                let $this = $(this),
-                    $hash_to_update = $this.attr("aria-controls"),
-                    $tab_content_linked = $("#" + $this.attr("aria-controls"));
-
-                // aria selected false on all links
-                $all_tab_links.attr({"aria-selected": "false"});
-
-                // add aria-hidden on all tabs contents
-                $all_tab_contents.attr("aria-hidden", "true");
-
-                // add aria selected on $this
-                $this.attr({"aria-selected": "true"});
-
-                // remove aria-hidden on tab linked
-                $tab_content_linked.attr("aria-hidden", "false");
-
-                history.pushState(null, null, location.pathname + location.search + '#' + $hash_to_update)
-
-                event.preventDefault();
-            });
-
-            $tab.find(".wps-ar-tabcontent").each(function () {
-
-                let attrs = {}, $this = $(this), $this_id = $this.attr("id");
-
-                // search if hash is ON not disabled tab
-                if (window.location.hash.substring(1) === $this_id && $this.attr('aria-disabled') !== 'true') {
-
-                    has_selected = true;
-
-                    $all_tab_links.filter("[aria-controls='" + $this_id + "']").attr("aria-selected", "true");
-
-                    attrs["aria-hidden"] = "false";
-                    attrs["aria-selected"] = "true";
-
-                } else {
-                    attrs["aria-hidden"] = "true";
-                }
-
-                $this.attr(attrs);
-            });
-
-            if (!has_selected) {
-
-                let $first_link = $tab.find('li[aria-controls]:not([aria-disabled="true"]):first');
-
-                $first_link.attr({"aria-selected": "true"});
-
-                $all_tab_contents.filter("#" + $first_link.attr('aria-controls')).attr("aria-hidden", "false");
-            }
-        });
-
-        $(".wps-apple-switch").each(function () {
-
-            if (!$(this).prop('checked')) {
-                handleDependent($(this), false)
-            }
-
-            $(this).on('click', function () {
-
-                let $this = $(this);
-
-                handleDependent($this, $this.prop("checked"))
-            });
-        });
-
-        $('button[data-wps="ajax-action"]').each(function (e) {
-
-            $(this).on('click', function (e) {
-
+            .on('click', '.wps-collapse-handler', function () {
+                const $this = $(this);
+                $this.children('.wps-collapse-icon').toggleClass('wps-collapse-icon-close');
+                $this.next().toggle(300);
+            })
+            .on('click', '.wps-dropdown__opener', function (e) {
                 e.preventDefault();
+                const $dropdown = $(this).closest('.wps-dropdown');
+                $dropdown.find('.wps-multiselect__wrapper').slideToggle();
+                $dropdown.toggleClass('is-open');
+            })
+            .on('click', '.wps-dropdown.is-open li', function (e) {
+                e.stopPropagation();
+                const $dropdown = $(this).closest('.wps-dropdown');
+                const input = $dropdown.find('input');
+                input.val($(this).data('value'));
+                $dropdown.find(`[data-input="${input.attr('id')}"]`).text($(this).text());
+                $dropdown.find('.wps-multiselect__wrapper').slideToggle();
+                $dropdown.toggleClass('is-open');
+            })
+            .on('click', 'icon.wps-option-info-icon', function () {
+                const $icon = $(this);
+                const $info = $icon.closest('row').find('label.wps-option-info');
+                const wasVisible = $info.is(":visible");
 
-                let $this = $(this), $body = $('body');
-                let e_args = {};
+                $info.slideToggle(160, function () {
+                    const isVisible = $info.is(":visible");
+                    $icon.toggleClass("is-active", isVisible);
 
+                    if (!wasVisible && isVisible) {
+                        $info.removeClass("is-entering");
+                        window.requestAnimationFrame(function () {
+                            $info.addClass("is-entering");
+                        });
+                        window.setTimeout(function () {
+                            $info.removeClass("is-entering");
+                        }, 420);
+                    }
+                });
+            })
+            .on('click', 'button[data-wps="ajax-action"]', function (e) {
+                e.preventDefault();
+                const $this = $(this);
+                const e_args = {};
                 if ($this.data('refer')) {
-                    let o = $body.find('[data-referred="' + $this.data('refer') + '"]');
+                    const o = $body.find(`[data-referred="${$this.data('refer')}"]`);
                     e_args[o.attr('name')] = o.val();
                 }
-
                 wps.ajaxHandler({
                     use_loader: $body,
                     mod: $this.data('mod') || $this.data('module'),
                     mod_action: $this.data('action'),
                     mod_nonce: $this.data('nonce'),
                     mod_args: wps.parse_args($this.data('args') || {}, e_args),
-                    callback: function (res, status) {
-
-                        if (typeof res === "undefined") {
-                            res = {
-                                title: 'Error',
-                                body: 'Parsing response error.'
-                            };
-                        }
-
+                    callback(res) {
+                        res = res || {title: 'Error', body: 'Parsing response error.'};
                         wps.ui.popup.render({
-                            title: res.title || "Notice",
-                            body: typeof res === 'string' ? res : (res.body || "Something went wrong."),
+                            title: res.title || 'Notice',
+                            body: typeof res === 'string' ? res : (res.body || 'Something went wrong.'),
                             size: 'small'
                         });
                     }
-                })
+                });
+            })
+            .on('click change', '.wps-apple-switch', function () {
+                handleDependent($(this), this.checked);
+            });
+
+        // Circle charts
+        $('.wps-progressbarCircle').each(function () {
+            const $chart = $(this);
+            $chart.html(wps.ui.circleChart(
+                $chart.data('percent') || 0,
+                $chart.data('color') || 'var(--main-dark-color)',
+                $chart.data('size') || 100,
+                $chart.data('stroke') || 1
+            ));
+        });
+
+        // Tabs
+        $('.wps-ar-tabs').each(function () {
+            const $tab = $(this);
+            const $tabLinks = $tab.find('li[aria-controls]');
+            const $tabContents = $tab.find('.wps-ar-tabcontent');
+            const hash = window.location.hash.substring(1);
+            let hasSelected = false;
+
+            $tabContents.each(function () {
+                const $this = $(this), id = $this.attr('id');
+                if (hash === id && $this.attr('aria-disabled') !== 'true') {
+                    hasSelected = true;
+                    $tabLinks.filter(`[aria-controls="${id}"]`).attr('aria-selected', 'true');
+                    $this.attr({'aria-hidden': 'false', 'aria-selected': 'true'});
+                } else {
+                    $this.attr('aria-hidden', 'true');
+                }
+            });
+
+            if (!hasSelected) {
+                const $first = $tab.find('li[aria-controls]:not([aria-disabled="true"]):first');
+                $first.attr('aria-selected', 'true');
+                $tabContents.filter('#' + $first.attr('aria-controls')).attr('aria-hidden', 'false');
+            }
+
+            $tab.find('ul').on('click', 'li[aria-controls]:not([aria-disabled="true"])', function (e) {
+                e.preventDefault();
+                const $this = $(this), targetId = $this.attr('aria-controls');
+                $tabLinks.attr('aria-selected', 'false');
+                $tabContents.attr('aria-hidden', 'true');
+                $this.attr('aria-selected', 'true');
+                $('#' + targetId).attr('aria-hidden', 'false');
+                history.pushState(null, null, location.pathname + location.search + '#' + targetId);
+                animateTabPanel(targetId);
             });
         });
 
-        $('icon.wps-option-info-icon').on('click', function () {
-            $(this).closest('row').find('label.wps-option-info').slideToggle();
+        if (window.location.hash) {
+            animateTabPanel(window.location.hash.substring(1));
+        }
+
+        $(".wps-ar-tabcontent form[action='options.php']").each(function () {
+            initWpoptAutosaveForm(this);
         });
 
-    });
+        // Init switches
+        $('.wps-apple-switch').each(function () {
+            handleDependent($(this), this.checked);
+        });
 
-    $window.on('beforeunload', function (e) {
-        if ($('body').hasClass('wps-doingAction')) {
-            (e || window.event).returnValue = wps.locale.get('text_close_warning');
-            return wps.locale.get('text_close_warning');
-        }
+        // Beforeunload warning
+        $window.on('beforeunload', function (e) {
+            if ($body?.hasClass('wps-doingAction')) {
+                const msg = wps.locale.get('text_close_warning');
+                (e || window.event).returnValue = msg;
+                return msg;
+            }
+        });
     });
 
 })(jQuery);

@@ -17,7 +17,8 @@ class Graphic
         foreach ($fields_args as $field_args) {
 
             if (isset($field_args[0])) {
-                $output .= "<block class='wps-boxed--light'>" . self::generate_fields($field_args, $infos, $args, false) . "</block>";
+                // Usa wps-block con data-expandable invece di wps-boxed--light
+                $output .= "<wps-block class='wps-boxed--light'>" . self::generate_fields($field_args, $infos, $args, false) . "</wps-block>";
                 continue;
             }
 

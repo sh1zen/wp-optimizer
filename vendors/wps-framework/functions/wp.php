@@ -342,13 +342,22 @@ function wps_multi_mail($to, $subject, $message, $headers = [], $attachments = [
     return wp_mail($to, $subject, $message, $headers, $attachments);
 }
 
-function wps_string_mather($haystack, $needle, $regex)
+function wps_string_mather($haystack, $needle, $regex): bool
 {
     if ($regex) {
-        return preg_match($needle, $haystack);
+        return preg_match($needle, $haystack) == 1;
     }
 
     return str_starts_with($haystack, $needle);
+}
+
+function wps_hook($hook, callable $callback): void
+{
+    if (did_action($hook)) {
+        $callback();
+    } else {
+        add_action($hook, $callback);
+    }
 }
 
 /**

@@ -47,16 +47,15 @@ class WPMails extends \WP_List_Table
 
     public function display_tablenav($which)
     {
-        if ('top' == $which) {
-            $this->search_box(__('Search', 'wpopt'), 'wpopt-mailLog');
-        }
         ?>
         <div class="tablenav <?php echo esc_attr($which); ?>">
             <?php
             $this->extra_tablenav($which);
+            if ('top' == $which) {
+                $this->search_box(__('Search', 'wpopt'), 'wpopt-mailLog');
+            }
             $this->pagination($which);
             ?>
-            <br class="clear"/>
         </div>
         <?php
     }
@@ -141,7 +140,7 @@ class WPMails extends \WP_List_Table
                 <?php endforeach; ?>
             </select>
         </div>
-        <?php echo RequestActions::get_action_button($this->action_hook, 'export', __('Export Data', 'wpopt'), 'button button-primary'); ?>
+        <?php echo RequestActions::get_action_button($this->action_hook, 'export', __('Export Data', 'wpopt'), 'wps wps-button wpopt-btn is-info'); ?>
         <?php
     }
 
@@ -313,3 +312,5 @@ class WPMails extends \WP_List_Table
         _e('No Mails found.', 'wpopt');
     }
 }
+
+

@@ -90,7 +90,7 @@ class Mod_ActivityLog extends Module
                 <row class="wps-inline">
                     <strong>Actions:</strong>
                     <a href="<?php RequestActions::get_url($this->action_hook, 'reset', false, true); ?>"
-                       class="button button-primary">
+                       class="wps wps-button wpopt-btn is-danger">
                         <?php _e('Reset Log', 'wpopt') ?>
                     </a>
                 </row>
@@ -443,6 +443,8 @@ class Mod_ActivityLog extends Module
 
     protected function setting_fields($filter = ''): array
     {
+        $auto_clear_active = (bool)$this->option('auto_clear', false);
+
         return $this->group_setting_fields(
 
             $this->group_setting_fields(
@@ -454,7 +456,14 @@ class Mod_ActivityLog extends Module
 
             $this->group_setting_fields(
                 $this->setting_field(__('Auto clear logs', 'wpopt'), "auto_clear", "checkbox", ['default_value' => false]),
-                $this->setting_field(__('Keeps log for (days)', 'wpopt'), "lifetime", "numeric", ['default_value' => 90, 'parent' => 'auto_clear']),
+                $this->setting_field(
+                    __('Keeps log for (days)', 'wpopt'),
+                    "lifetime",
+                    "numeric",
+                    $auto_clear_active
+                        ? ['default_value' => 90]
+                        : ['default_value' => 90, 'parent' => 'auto_clear']
+                ),
             ),
 
             $this->group_setting_fields(
@@ -490,3 +499,4 @@ class Mod_ActivityLog extends Module
 }
 
 return __NAMESPACE__;
+

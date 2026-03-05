@@ -38,6 +38,18 @@ if (!defined('WPS_FRAMEWORK')) {
     }
 }
 
+if ( ! function_exists('wp_cache_init') ) {
+    $cache_file = ABSPATH . WPINC . '/cache.php';
+    if ( file_exists($cache_file) ) {
+        require_once $cache_file;
+    }
+}
+
+global $wp_object_cache;
+if ( function_exists('wp_cache_init') && ! $wp_object_cache ) {
+    wp_cache_init();
+}
+
 wps(
     'wpopt',
     [

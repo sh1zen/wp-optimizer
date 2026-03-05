@@ -157,20 +157,20 @@ class Mod_Media extends Module
                 <h3><?php _e('Orphaned media scan is running.', 'wpopt'); ?></h3>
             <?php endif; ?>
             <block style="padding-right: 20px">
-                <button class="button button-primary button-large"
+                <button class="wps wps-button wpopt-btn is-info"
                     <?php echo $this->status('orphan-media-scanner') === 'running' ? 'disabled' : '' ?>
                         data-wps="ajax-action" data-mod="media" data-action="scan-orphaned-media"
                         data-nonce="<?php echo $nonce ?>">
                     <?php echo __('Scan now', 'wpopt') ?>
                 </button>
-                <button class="button button-primary button-large"
+                <button class="wps wps-button wpopt-btn is-info"
                     <?php echo $this->status('orphan-media-scanner') === 'running' ? '' : 'disabled' ?>
                         data-wps="ajax-action" data-mod="media" data-action="pause-orphaned-media"
                         data-nonce="<?php echo $nonce ?>">
                     <?php echo __('Pause', 'wpopt') ?>
                 </button>
             </block>
-            <button class="button button-primary button-large"
+            <button class="wps wps-button wpopt-btn is-danger"
                 <?php echo $this->status('orphan-media-scanner') === 'running' ? 'disabled' : '' ?>
                     data-wps="ajax-action" data-mod="media" data-action="reset-orphaned-media"
                     data-nonce="<?php echo $nonce ?>">
@@ -241,20 +241,20 @@ class Mod_Media extends Module
 
                 ?>
                 <block style="padding-right: 30px">
-                    <button class="button button-primary button-large"
+                    <button class="wps wps-button wpopt-btn is-info"
                         <?php echo (!empty($scheduled) or $this->status('optimization') === 'running') ? 'disabled' : '' ?>
                             data-wps="ajax-action" data-mod="media" data-action="start-ipc-posts"
                             data-nonce="<?php echo $nonce; ?>">
                         <?php echo __('Start', 'wpopt') ?>
                     </button>
-                    <button class="button button-primary button-large"
+                    <button class="wps wps-button wpopt-btn is-info"
                         <?php echo $this->status('optimization') === 'running' ? '' : 'disabled' ?>
                             data-wps="ajax-action" data-mod="media" data-action="pause-ipc-posts"
                             data-nonce="<?php echo $nonce; ?>">
                         <?php echo __('Pause', 'wpopt') ?>
                     </button>
                 </block>
-                <button class="button button-primary button-large"
+                <button class="wps wps-button wpopt-btn is-danger"
                     <?php echo $this->status('optimization') === 'running' ? 'disabled' : '' ?>
                         data-wps="ajax-action" data-mod="media" data-action="reset-ipc-posts"
                         data-nonce="<?php echo $nonce; ?>">
@@ -387,7 +387,7 @@ class Mod_Media extends Module
                 </block>
             </notice>
             <block class="wps-row">
-                <button class="button button-primary button-large"
+                <button class="wps wps-button wpopt-btn is-danger"
                     <?php echo $this->status('optimization') === 'running' ? 'disabled' : '' ?>
                         data-wps="ajax-action" data-mod="media" data-action="reset-stats"
                         data-nonce="<?php echo wp_create_nonce('wpopt-ajax-nonce'); ?>">
@@ -469,3 +469,4 @@ class Mod_Media extends Module
 }
 
 return __NAMESPACE__;
+

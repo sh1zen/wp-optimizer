@@ -182,6 +182,7 @@ class Mod_WP_Security extends Module
     protected function infos(): array
     {
         return [
+            'srv_security.active'           => __("Enable server-level security hardening rules for Apache environments.", 'wpopt'),
             'srv_security.listings'         => __("Directory listing is a web server feature that displays the contents of a directory when an index file is not present, potentially exposing sensitive information.", 'wpopt'),
             'srv_security.protect_htaccess' => __("Disabling access to .htaccess files prevents unauthorized modification of server configuration settings, improving website security..", 'wpopt'),
             'srv_security.hsts'             => __("Enabling HTTPS Strict Transport Security (HSTS) enforces secure HTTPS connections, reducing the risk of man-in-the-middle attacks and improving website security.", 'wpopt'),
@@ -191,6 +192,15 @@ class Mod_WP_Security extends Module
             'srv_security.nosniff'          => __("Sending NoSniff header instructs web browsers to prevent MIME type sniffing, improving website security by reducing the risk of content spoofing attacks.", 'wpopt'),
             'srv_security.noreferrer'       => __("Sending no referrer header prevents the browser from sending information about the previous page visited, improving user privacy and security.", 'wpopt'),
             'srv_security.noframe'          => __("Sending no-frame headers prevent website content from being displayed within an iframe, improving website security and preventing clickjacking attacks.", 'wpopt'),
+            'srv_security.signature'        => __("Disable server signature exposure to reduce information disclosure in HTTP responses.", 'wpopt'),
+            'dcl_security.active'           => __("Enable WordPress metadata and version disclosure protections.", 'wpopt'),
+            'dcl_security.nowpversion'      => __("Remove visible WordPress version references to reduce fingerprinting risk.", 'wpopt'),
+            'dcl_security.nowpgenerator'    => __("Remove WordPress generator meta tags from page output and feeds.", 'wpopt'),
+            'dcl_security.hashversion'      => __("Replace static asset version values with hashed values to reduce version disclosure.", 'wpopt'),
+            'dcl_security.hideversion'      => __("Remove version query strings from scripts and styles URLs.", 'wpopt'),
+            'a_api.active'                  => __("Enable admin and API related hardening options.", 'wpopt'),
+            'a_api.nousernum'               => __("Block basic user enumeration techniques via author archive query parameters.", 'wpopt'),
+            'a_api.disable_file_editor'     => __("Disable the built-in plugin and theme file editor in the WordPress admin.", 'wpopt'),
         ];
     }
 }

@@ -67,16 +67,15 @@ class ActivityLog extends \WP_List_Table
 
     public function display_tablenav($which)
     {
-        if ('top' == $which) {
-            $this->search_box(__('Search', 'wpopt'), 'wpopt-activityLog');
-        }
         ?>
         <div class="tablenav <?php echo esc_attr($which); ?>">
             <?php
             $this->extra_tablenav($which);
+            if ('top' == $which) {
+                $this->search_box(__('Search', 'wpopt'), 'wpopt-activityLog');
+            }
             $this->pagination($which);
             ?>
-            <br class="clear"/>
         </div>
         <?php
     }
@@ -178,7 +177,7 @@ class ActivityLog extends \WP_List_Table
                 <?php endforeach; ?>
             </select>
         </div>
-        <?php echo RequestActions::get_action_button($this->action_hook, 'export', __('Export Data', 'wpopt'), 'button button-primary'); ?>
+        <?php echo RequestActions::get_action_button($this->action_hook, 'export', __('Export Data', 'wpopt'), 'wps wps-button wpopt-btn is-info'); ?>
         <?php
     }
 
@@ -441,3 +440,5 @@ class ActivityLog extends \WP_List_Table
         return $columns;
     }
 }
+
+

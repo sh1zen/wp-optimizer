@@ -34,9 +34,9 @@ class Mod_Minify extends Module
         if (apply_filters("wpopt_allow_minify_html", $this->option('html.active'))) {
 
             $buffer = Minify_HTML::minify($buffer, [
-                'comments'   => !$this->option('html.remove_comments', false),
-                'minify_js'  => $this->option('html.minify_js', false),
-                'minify_css' => $this->option('html.minify_css', false),
+                    'comments'   => !$this->option('html.remove_comments', false),
+                    'minify_js'  => $this->option('html.minify_js', false),
+                    'minify_css' => $this->option('html.minify_css', false),
             ]);
         }
 
@@ -146,23 +146,22 @@ class Mod_Minify extends Module
      * Returns true if given $content is considered to be AMP markup.
      * This is far from actual validation against AMP spec, but it'll do for now.
      *
-     * @param string $content Markup to check.
-     *
+     * @param string $content Markup to check
      * @return bool
      */
-    private function is_amp_markup($content)
+    private function is_amp_markup($content): bool
     {
         // Short-circuit if the page is already AMP from the start.
         if (
-            preg_match(
-                sprintf(
-                    '#^(?:<!.*?>|\s+)*+<html(?=\s)[^>]*?\s(%1$s|%2$s|%3$s)(\s|=|>)#is',
-                    'amp',
-                    "\xE2\x9A\xA1", // From \AmpProject\Attribute::AMP_EMOJI.
-                    "\xE2\x9A\xA1\xEF\xB8\x8F" // From \AmpProject\Attribute::AMP_EMOJI_ALT, per https://github.com/ampproject/amphtml/issues/25990.
-                ),
-                $content
-            )
+                preg_match(
+                        sprintf(
+                                '#^(?:<!.*?>|\s+)*+<html(?=\s)[^>]*?\s(%1$s|%2$s|%3$s)(\s|=|>)#is',
+                                'amp',
+                                "\xE2\x9A\xA1", // From \AmpProject\Attribute::AMP_EMOJI.
+                                "\xE2\x9A\xA1\xEF\xB8\x8F" // From \AmpProject\Attribute::AMP_EMOJI_ALT, per https://github.com/ampproject/amphtml/issues/25990.
+                        ),
+                        $content
+                )
         ) {
             return true;
         }
@@ -200,21 +199,20 @@ class Mod_Minify extends Module
     protected function setting_fields($filter = ''): array
     {
         return $this->group_setting_fields(
-
-            $this->group_setting_fields(
-                $this->setting_field(__('Minify HTML', 'wpopt'), "html.active", "checkbox"),
-                $this->setting_field(__('Remove Comments', 'wpopt'), "html.remove_comments", "checkbox", ['parent' => 'html.active']),
-                $this->setting_field(__('Minify inline css', 'wpopt'), "html.minify_css", "checkbox", ['parent' => 'html.active']),
-                $this->setting_field(__('Minify inline js', 'wpopt'), "html.minify_js", "checkbox", ['parent' => 'html.active']),
-            ),
-            $this->group_setting_fields(
-                $this->setting_field(__('Minify JavaScript', 'wpopt'), "js.active", "checkbox"),
-                $this->setting_field(__('Try to combine scripts', 'wpopt'), "js.combine", "checkbox", ['parent' => 'js.active']),
-            ),
-            $this->group_setting_fields(
-                $this->setting_field(__('Minify CSS', 'wpopt'), "css.active", "checkbox"),
-                $this->setting_field(__('Try to combine scripts', 'wpopt'), "css.combine", "checkbox", ['parent' => 'css.active']),
-            )
+                $this->group_setting_fields(
+                        $this->setting_field(__('Minify HTML', 'wpopt'), "html.active", "checkbox"),
+                        $this->setting_field(__('Remove Comments', 'wpopt'), "html.remove_comments", "checkbox", ['parent' => 'html.active']),
+                        $this->setting_field(__('Minify inline css', 'wpopt'), "html.minify_css", "checkbox", ['parent' => 'html.active']),
+                        $this->setting_field(__('Minify inline js', 'wpopt'), "html.minify_js", "checkbox", ['parent' => 'html.active']),
+                ),
+                $this->group_setting_fields(
+                        $this->setting_field(__('Minify JavaScript', 'wpopt'), "js.active", "checkbox"),
+                        $this->setting_field(__('Try to combine scripts', 'wpopt'), "js.combine", "checkbox", ['parent' => 'js.active']),
+                ),
+                $this->group_setting_fields(
+                        $this->setting_field(__('Minify CSS', 'wpopt'), "css.active", "checkbox"),
+                        $this->setting_field(__('Try to combine scripts', 'wpopt'), "css.combine", "checkbox", ['parent' => 'css.active']),
+                )
         );
     }
 
@@ -222,13 +220,15 @@ class Mod_Minify extends Module
     {
         ob_start();
         ?>
-        <block class="wps">
-            <h2><?php _e('Beta version.', 'wpopt'); ?></h2>
-            <p>
-                <?php echo __('This module is under developing.'); ?><br>
-                <?php echo __('Should work fine, but to be safe activate this feature only if you know what to do in case of bugs. ', 'wpopt'); ?>
-            </p>
-        </block>
+        <h3 class="wps">
+            <block class="wps wps-block">
+                <h2><?php _e('Beta version.', 'wpopt'); ?></h2>
+                <p class="wps">
+                    <?php echo __('This module is under developing.'); ?><br>
+                    <?php echo __('Should work fine, but to be safe activate this feature only if you know what to do in case of bugs. ', 'wpopt'); ?>
+                </p>
+            </block>
+        </h3>
         <?php
         return ob_get_clean();
     }

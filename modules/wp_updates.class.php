@@ -134,6 +134,19 @@ class Mod_WP_Updates extends Module
             $this->setting_field(__('Disable WordPress update notices mail', 'wpopt'), "mail-updates", "checkbox")
         );
     }
+
+    protected function infos(): array
+    {
+        return [
+            'core-updates'      => __("Disable WordPress core update checks and background update routines.", 'wpopt'),
+            'plugin-updates'    => __("Disable plugin update checks and automatic plugin updates.", 'wpopt'),
+            'theme-update'      => __("Disable theme update checks and automatic theme updates.", 'wpopt'),
+            'message-updates'   => __("Hide update notifications in the WordPress admin area.", 'wpopt'),
+            'page-updates'      => __("Remove the Updates page from the WordPress admin menu.", 'wpopt'),
+            'automatic-updates' => __("Disable the automatic updater for core, plugins, themes and translations.", 'wpopt'),
+            'mail-updates'      => __("Disable automatic update notification emails sent by WordPress.", 'wpopt'),
+        ];
+    }
 }
 
 return __NAMESPACE__;

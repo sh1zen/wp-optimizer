@@ -133,6 +133,10 @@ class PagesHandler
             'error'              => __('Request fail', 'wpopt'),
             'success'            => __('Request succeed', 'wpopt'),
             'running'            => __('Running', 'wpopt'),
+            'autosaving'         => __('Autosaving...', 'wpopt'),
+            'autosaved'          => __('All changes saved', 'wpopt'),
+            'autosave_failed'    => __('Autosave failed', 'wpopt'),
+            'wpopt_ajax_nonce'   => wp_create_nonce('wpopt-ajax-nonce'),
             'text_close_warning' => __('WP Optimizer is running an action. If you leave now, it may not be completed.', 'wpopt'),
         ]);
     }
@@ -141,9 +145,18 @@ class PagesHandler
     {
         $this->enqueue_scripts();
         ?>
-        <section class="wps wps-wrap">
+        <section class="wps wps-wrap wpopt-faq-shell">
+            <block class="wps wpopt-hero">
+                <section class='wps-header'>
+                    <h1><?php _e('Frequently Asked Questions', 'wpopt'); ?></h1>
+                </section>
+                <p class="wpopt-hero-subtitle"><?php _e('Find quick answers about optimization workflows, privacy, and configuration paths.', 'wpopt'); ?></p>
+                <div class="wpopt-actions">
+                    <a class="wps wps-button wpopt-btn is-info" href="<?php echo admin_url('admin.php?page=wp-optimizer'); ?>"><?php _e('Back to Dashboard', 'wpopt'); ?></a>
+                    <a class="wps wps-button wpopt-btn is-neutral" href="<?php echo admin_url('admin.php?page=wpopt-modules-settings'); ?>"><?php _e('Open Modules Options', 'wpopt'); ?></a>
+                </div>
+            </block>
             <block class="wps">
-                <section class='wps-header'><h1>FAQ</h1></section>
                 <div class="wps-faq-list">
                     <div class="wps-faq-item">
                         <div class="wps-faq-question-wrapper ">
@@ -237,75 +250,98 @@ class PagesHandler
         }
 
         settings_errors();
+
+        $modules = wps('wpopt')->moduleHandler->get_modules(array('excepts' => array('cron', 'modules_handler', 'settings', 'tracking')));
+        $active_modules_count = count($modules);
+        $is_cron_running = wps('wpopt')->settings->get('cron.running', false);
+        $tracking_enabled = wps('wpopt')->settings->get('tracking.errors', true) || wps('wpopt')->settings->get('tracking.usage', true);
+        $persistent_cache = defined('WP_PERSISTENT_CACHE');
+        $server_load = UtilEnv::get_server_load(false);
+        $memory_load = wps_core()->meter->get_memory(true, true);
+        $execution_time = wps_core()->meter->get_time('wp_start', 'now', 3);
         ?>
-        <section class="wps-wrap-flex wps-wrap wps-home">
-            <section class="wps">
+        <section class="wps-wrap-flex wps-wrap wps-home wpopt-shell">
+            <section class="wps wpopt-main">
                 <?php
 
                 if (!empty($data)) {
                     $this->output_results($data);
                 }
                 ?>
-                <block class="wps">
+                <block class="wps wpopt-hero">
                     <block class="wps-header">
                         <h1>WP Optimizer Dashboard</h1>
                     </block>
+                    <p class="wpopt-hero-subtitle"><?php _e('Centralize your optimization workflow with quick actions, live metrics, and direct module access.', 'wpopt'); ?></p>
+                    <div class="wpopt-actions">
+                        <?php echo sprintf(__('<a class="wps wps-button wpopt-btn is-info" href="%s">Manage Modules</a>', 'wpopt'), admin_url('admin.php?page=wpopt-settings#settings-modules_handler')); ?>
+                        <?php echo sprintf(__('<a class="wps wps-button wpopt-btn is-info" href="%s">Configure Modules</a>', 'wpopt'), admin_url('admin.php?page=wpopt-modules-settings')); ?>
+                    </div>
+                </block>
+                <block class="wps">
+                    <h2><?php _e('System overview', 'wpopt'); ?></h2>
+                    <div class="wpopt-scroll-x" role="region" aria-label="<?php esc_attr_e('System overview cards', 'wpopt'); ?>">
+                        <div class="wpopt-kpi-grid">
+                            <div class="wpopt-kpi-card">
+                                <span class="wpopt-kpi-label"><?php _e('Active modules', 'wpopt'); ?></span>
+                                <strong class="wpopt-kpi-value"><?php echo $active_modules_count; ?></strong>
+                            </div>
+                            <div class="wpopt-kpi-card">
+                                <span class="wpopt-kpi-label"><?php _e('Cron status', 'wpopt'); ?></span>
+                                <strong class="wpopt-kpi-value"><?php echo $is_cron_running ? __('Running', 'wpopt') : __('Idle', 'wpopt'); ?></strong>
+                            </div>
+                            <div class="wpopt-kpi-card">
+                                <span class="wpopt-kpi-label"><?php _e('Tracking', 'wpopt'); ?></span>
+                                <strong class="wpopt-kpi-value"><?php echo $tracking_enabled ? __('Enabled', 'wpopt') : __('Disabled', 'wpopt'); ?></strong>
+                            </div>
+                            <div class="wpopt-kpi-card">
+                                <span class="wpopt-kpi-label"><?php _e('Persistent cache', 'wpopt'); ?></span>
+                                <strong class="wpopt-kpi-value"><?php echo $persistent_cache ? __('Enabled', 'wpopt') : __('Not configured', 'wpopt'); ?></strong>
+                            </div>
+                        </div>
+                    </div>
+                </block>
+                <block class="wps">
                     <h2><?php _e('Modules:', 'wpopt'); ?></h2>
                     <?php
                     echo '<b>' . __('Currently WP-Optimizer active modules:', 'wpopt') . '</b><br><br>';
-                    $modules = wps('wpopt')->moduleHandler->get_modules(array('excepts' => array('cron', 'modules_handler', 'settings', 'tracking')));
-                    echo '<div class="wps-gridRow" style="justify-content: flex-start">';
+                    echo '<div class="wps-gridRow wpopt-chip-grid">';
                     foreach ($modules as $module) {
                         echo "<a class='wps-code' target='_blank' href='" . (wps('wpopt')->moduleHandler->get_module_instance($module)->has_panel() ? wps_module_panel_url($module['slug']) : wps_module_setting_url('wpopt', $module['slug'])) . "'>{$module['name']}</a>";
                     }
                     echo '</div>';
                     ?>
-                    <br>
-                    <h2><?php echo __('Handle theme here:', 'wpopt')?></h2>
-                    <block class="wps">
-                        <?php
-                        echo sprintf(__('<a class="button button-primary button-large" href="%s">Manage</a>', 'wpopt'), admin_url('admin.php?page=wpopt-settings#settings-modules_handler'));
-                        ?>
-                        &nbsp;&nbsp;
-                        <?php
-                        echo sprintf(__('<a class="button button-primary button-large" href="%s">Configure</a>', 'wpopt'), admin_url('admin.php?page=wpopt-modules-settings'));
-                        ?>
-                    </block>
-                    <?php
-                    if (wps('wpopt')->settings->get('tracking.errors', true) or wps('wpopt')->settings->get('tracking.usage', true)) {
-                        ?>
-                        <block class="wps">
-                            <strong><?php echo sprintf(__('A tracking option is enabled, see more <a href="%s">here</a>.', 'wpopt'), admin_url('admin.php?page=wpopt-settings#settings-tracking')); ?></strong>
-                            <br><br>
-                            <strong><?php echo __('We will collect any personal data, just errors details about this plugin and if enabled also some anonymous usage statistics (used plugin features).', 'wpopt'); ?></strong>
-                        </block>
-                        <?php
-                    }
-                    else {
-                        ?>
-                        <block class="wps">
-                            <strong><?php echo sprintf(__('If you run in some problem with this plugin, enable <a href="%s">this</a> feature and next time it happens the developer will be notified with same useful info about the issue.', 'wpopt'), admin_url('admin.php?page=wpopt-settings#settings-tracking')); ?></strong>
-                            <br><strong><?php echo __('We will never collect any personal data.', 'wpopt'); ?></strong>
-                        </block>
-                        <?php
-                    }
-                    ?>
                 </block>
+                <?php if ($tracking_enabled): ?>
+                    <block class="wps wpopt-notice-card">
+                        <h2><?php _e('Tracking status', 'wpopt'); ?></h2>
+                        <strong><?php echo sprintf(__('A tracking option is enabled, see more <a href="%s">here</a>.', 'wpopt'), admin_url('admin.php?page=wpopt-settings#settings-tracking')); ?></strong>
+                        <br><br>
+                        <strong><?php echo __('No personal data is collected, only plugin error details and optional anonymous usage statistics.', 'wpopt'); ?></strong>
+                    </block>
+                <?php else: ?>
+                    <block class="wps wpopt-notice-card">
+                        <h2><?php _e('Tracking status', 'wpopt'); ?></h2>
+                        <strong><?php echo sprintf(__('If you run into problems, enable <a href="%s">this</a> feature so the developer can receive useful diagnostics.', 'wpopt'), admin_url('admin.php?page=wpopt-settings#settings-tracking')); ?></strong>
+                        <br><br>
+                        <strong><?php echo __('No personal data will be collected.', 'wpopt'); ?></strong>
+                    </block>
+                <?php endif; ?>
                 <block class="wps">
                     <h2><?php _e('Fast actions:', 'wpopt'); ?></h2>
-                    <h4><?php _e('Run now the Optimization process.', 'wpopt'); ?></h4>
-                    <?php if (wps('wpopt')->settings->get('cron.running', false)): ?>
+                    <h4><?php _e('Run now the optimization process.', 'wpopt'); ?></h4>
+                    <?php if ($is_cron_running): ?>
                         <h4><strong><?php _e('A cron job is running.', 'wpopt'); ?></strong></h4>
                     <?php endif; ?>
-                    <form method="POST">
+                    <form method="POST" class="wpopt-actions wpopt-actions-form">
                         <?php wp_nonce_field('wpopt-nonce'); ?>
                         <input name="wpopt-cron-run" type="submit"
-                               value="<?php _e('Auto optimize now', 'wpopt') ?>" <?php echo wps('wpopt')->settings->get('cron.running', false) ? "disabled" : "" ?>
-                               class="button button-primary button-large">
-                        <?php if (wps('wpopt')->settings->get('cron.running', false)): ?>
+                               value="<?php _e('Auto optimize now', 'wpopt') ?>" <?php echo $is_cron_running ? "disabled" : "" ?>
+                               class="wps wps-button wpopt-btn is-success">
+                        <?php if ($is_cron_running): ?>
                             <input name="wpopt-cron-reset" type="submit"
                                    value="<?php _e('Reset cron status', 'wpopt') ?>"
-                                   class="button button-primary button-large">
+                                   class="wps wps-button wpopt-btn is-danger">
                         <?php endif; ?>
                     </form>
                 </block>
@@ -318,54 +354,23 @@ class PagesHandler
                 <?php endif; ?>
                 <block class="wps">
                     <h2><?php _e('WordPress performances:', 'wpopt'); ?></h2>
-                    <p>
-                        <?php
-                        echo '<div>' . sprintf(__('Server load: %s %%', 'wpopt'), UtilEnv::get_server_load(false)) . '</div><br>';
-                        echo '<div>' . sprintf(__('WordPress memory load: %s', 'wpopt'), wps_core()->meter->get_memory(true, true)) . '</div><br>';
-                        echo '<div>' . sprintf(__('Wordpress execution time: %s s', 'wpopt'), wps_core()->meter->get_time('wp_start', 'now', 3)) . '</div><br>';
-                        ?>
-                    </p>
-                </block>
-            </section>
-            <aside class="wps">
-                <section class="wps-box">
-                    <div class="wps-donation-wrap">
-                        <div
-                                class="wps-donation-title"><?php _e('Support this project, buy me a coffee.', 'wpopt'); ?></div>
-                        <br>
-                        <a href="https://www.paypal.com/donate?business=dev.sh1zen%40outlook.it&item_name=Thank+you+in+advanced+for+the+kind+donations.+You+will+sustain+me+developing+WP-Optimizer.&currency_code=EUR"
-                           target="_blank">
-                            <img src="https://www.paypalobjects.com/en_US/IT/i/btn/btn_donateCC_LG.gif"
-                                 title="PayPal - The safer, easier way to pay online!" alt="Donate with PayPal button"/>
-                        </a>
-                        <div class="wps-donation-hr"></div>
-                        <div class="dn-btc">
-                            <div class="wps-donation-name">BTC:</div>
-                            <p class="wps-donation-value">3QE5CyfTxb5kufKxWtx4QEw4qwQyr9J5eo</p>
+                    <div class="wpopt-metrics-grid">
+                        <div class="wpopt-metric-item">
+                            <span><?php _e('Server load', 'wpopt'); ?></span>
+                            <strong><?php echo sprintf('%s %%', $server_load); ?></strong>
+                        </div>
+                        <div class="wpopt-metric-item">
+                            <span><?php _e('WordPress memory load', 'wpopt'); ?></span>
+                            <strong><?php echo $memory_load; ?></strong>
+                        </div>
+                        <div class="wpopt-metric-item">
+                            <span><?php _e('WordPress execution time', 'wpopt'); ?></span>
+                            <strong><?php echo sprintf('%s s', $execution_time); ?></strong>
                         </div>
                     </div>
-                </section>
-                <section class="wps-box">
-                    <h3><?php _e('Want to support in other ways?', 'wpopt'); ?></h3>
-                    <ul class="wps">
-                        <li>
-                            <a href="https://translate.wordpress.org/projects/wp-plugins/wp-optimizer/"><?php _e('Help me translating', 'wpopt'); ?></a>
-                        </li>
-                        <li>
-                            <a href="https://wordpress.org/support/plugin/wp-optimizer/reviews/?filter=5"><?php _e('Leave a review', 'wpopt'); ?></a>
-                        </li>
-                    </ul>
-                    <h3>WP-Optimizer:</h3>
-                    <ul class="wps">
-                        <li>
-                            <a href="https://github.com/sh1zen/wp-optimizer/"><?php _e('Source code', 'wpopt'); ?></a>
-                        </li>
-                        <li>
-                            <a href="https://sh1zen.github.io/"><?php _e('About me', 'wpopt'); ?></a>
-                        </li>
-                    </ul>
-                </section>
-            </aside>
+                </block>
+            </section>
+            <?php $this->render_sidebar(); ?>
         </section>
         <?php
     }
@@ -384,85 +389,88 @@ class PagesHandler
     private function render_welcome()
     {
         $this->enqueue_scripts();
+
+        $modules = wps('wpopt')->moduleHandler->get_modules(array('excepts' => array('cron', 'modules_handler', 'settings', 'tracking')), false);
         ?>
-        <section class="wps-wrap-flex wps-wrap wps-home">
-            <section class="wps">
-                <block class="wps">
+        <section class="wps-wrap-flex wps-wrap wps-home wpopt-shell">
+            <section class="wps wpopt-main">
+                <block class="wps wpopt-hero">
                     <block class="wps-header">
                         <h1>Welcome to WP Optimizer</h1>
                     </block>
-                    <h4>
-                    <?php
-                    echo '<b>' . __('This plugin is intended to increase WordPress performances and help you to configure your best WordPress experience.', 'wpopt') . '</b><br><br>';
-                    echo '<b>' . __('WP-Optimizer is divided into modules, so you can disable non necessary one to not weigh down WordPress performances.', 'wpopt') . '</b><br>';
-                    ?>
-                    </h4>
+                    <p class="wpopt-hero-subtitle"><?php _e('Build a faster WordPress stack using modular optimization, automation, and targeted performance tools.', 'wpopt'); ?></p>
+                    <div class="wpopt-actions">
+                        <?php
+                        echo sprintf(__('<a class="wps wps-button wpopt-btn is-info" href="%s">Open Dashboard</a>', 'wpopt'), admin_url('admin.php?page=wp-optimizer'));
+                        echo sprintf(__('<a class="wps wps-button wpopt-btn is-info" href="%s">Manage Modules</a>', 'wpopt'), admin_url('admin.php?page=wpopt-settings#settings-modules_handler'));
+                        ?>
+                    </div>
                 </block>
                 <block class="wps">
-                    <?php
-                    echo '<h2>' . __('All available modules:.', 'wpopt') . '</h2><br>';
-                    $modules = wps('wpopt')->moduleHandler->get_modules(array('excepts' => array('cron', 'modules_handler', 'settings', 'tracking')), false);
-                    echo '<div class="wps-gridRow" style="justify-content: flex-start">';
-                    foreach ($modules as $module) {
-                        echo "<span class='wps-code'>{$module['name']}</span>";
-                    }
-                    echo '</div>';
-                    ?>
+                    <h2><?php _e('All available modules', 'wpopt'); ?></h2>
+                    <p class="wpopt-muted"><?php _e('Activate only what you need to keep your stack lean and efficient.', 'wpopt'); ?></p>
+                    <div class="wps-gridRow wpopt-chip-grid">
+                        <?php
+                        foreach ($modules as $module) {
+                            echo "<span class='wps-code'>{$module['name']}</span>";
+                        }
+                        ?>
+                    </div>
                 </block>
                 <block class="wps">
-                    <h2><?php echo __('Try to explore this plugin:', 'wpopt');?></h2>
-                    <?php
-                    echo sprintf(__('<a class="button button-primary button-large" href="%s">Home</a>', 'wpopt'), admin_url('admin.php?page=wp-optimizer'));
-                    echo '&nbsp;';
-                    echo sprintf(__('<a class="button button-primary button-large" href="%s">Manage Modules</a>', 'wpopt'), admin_url('admin.php?page=wpopt-settings#settings-modules_handler'));
-                    echo '&nbsp;';
-                    echo sprintf(__('<a class="button button-primary button-large" href="%s">Configure Modules</a>', 'wpopt'), admin_url('admin.php?page=wpopt-modules-settings'));
-                    echo '&nbsp;';
-                    echo sprintf(__('<a class="button button-primary button-large" href="%s">FAQ</a>', 'wpopt'), admin_url('admin.php?page=wpopt-faqs'));
-                    echo '&nbsp;';
-                    ?>
+                    <h2><?php echo __('Try to explore this plugin:', 'wpopt'); ?></h2>
+                    <div class="wpopt-actions">
+                        <?php
+                        echo sprintf(__('<a class="wps wps-button wpopt-btn is-info" href="%s">Home</a>', 'wpopt'), admin_url('admin.php?page=wp-optimizer'));
+                        echo sprintf(__('<a class="wps wps-button wpopt-btn is-info" href="%s">Manage Modules</a>', 'wpopt'), admin_url('admin.php?page=wpopt-settings#settings-modules_handler'));
+                        echo sprintf(__('<a class="wps wps-button wpopt-btn is-info" href="%s">Configure Modules</a>', 'wpopt'), admin_url('admin.php?page=wpopt-modules-settings'));
+                        echo sprintf(__('<a class="wps wps-button wpopt-btn is-info" href="%s">FAQ</a>', 'wpopt'), admin_url('admin.php?page=wpopt-faqs'));
+                        ?>
+                    </div>
                 </block>
             </section>
-            <aside class="wps">
-                <section class="wps-box">
-                    <div class="wps-donation-wrap">
-                        <div
-                                class="wps-donation-title"><?php _e('Support this project, buy me a coffee.', 'wpopt'); ?></div>
-                        <br>
-                        <a href="https://www.paypal.com/donate?business=dev.sh1zen%40outlook.it&item_name=Thank+you+in+advanced+for+the+kind+donations.+You+will+sustain+me+developing+WP-Optimizer.&currency_code=EUR"
-                           target="_blank">
-                            <img src="https://www.paypalobjects.com/en_US/IT/i/btn/btn_donateCC_LG.gif"
-                                 title="PayPal - The safer, easier way to pay online!" alt="Donate with PayPal button"/>
-                        </a>
-                        <div class="wps-donation-hr"></div>
-                        <div class="dn-btc">
-                            <div class="wps-donation-name">BTC:</div>
-                            <p class="wps-donation-value">3QE5CyfTxb5kufKxWtx4QEw4qwQyr9J5eo</p>
-                        </div>
-                    </div>
-                </section>
-                <section class="wps-box">
-                    <h3><?php _e('Want to support in other ways?', 'wpopt'); ?></h3>
-                    <ul class="wps">
-                        <li>
-                            <a href="https://translate.wordpress.org/projects/wp-plugins/wp-optimizer/"><?php _e('Help me translating', 'wpopt'); ?></a>
-                        </li>
-                        <li>
-                            <a href="https://wordpress.org/support/plugin/wp-optimizer/reviews/?filter=5"><?php _e('Leave a review', 'wpopt'); ?></a>
-                        </li>
-                    </ul>
-                    <h3>WP-Optimizer:</h3>
-                    <ul class="wps">
-                        <li>
-                            <a href="https://github.com/sh1zen/wp-optimizer/"><?php _e('Source code', 'wpopt'); ?></a>
-                        </li>
-                        <li>
-                            <a href="https://sh1zen.github.io/"><?php _e('About me', 'wpopt'); ?></a>
-                        </li>
-                    </ul>
-                </section>
-            </aside>
+            <?php $this->render_sidebar(); ?>
         </section>
         <?php
     }
+
+    private function render_sidebar(): void
+    {
+        ?>
+        <aside class="wps wpopt-sidebar">
+            <section class="wps-box">
+                <div class="wps-donation-wrap">
+                    <div class="wps-donation-title"><?php _e('Support this project, buy me a coffee.', 'wpopt'); ?></div>
+                    <p class="wpopt-muted"><?php _e('Your support helps maintain and improve WP Optimizer.', 'wpopt'); ?></p>
+                    <a href="https://www.paypal.com/donate?business=dev.sh1zen%40outlook.it&item_name=Thank+you+in+advanced+for+the+kind+donations.+You+will+sustain+me+developing+WP-Optimizer.&currency_code=EUR"
+                       target="_blank">
+                        <img src="https://www.paypalobjects.com/en_US/IT/i/btn/btn_donateCC_LG.gif"
+                             title="PayPal - The safer, easier way to pay online!" alt="Donate with PayPal button"/>
+                    </a>
+                </div>
+            </section>
+            <section class="wps-box">
+                <h3><?php _e('Want to support in other ways?', 'wpopt'); ?></h3>
+                <ul class="wps wpopt-link-list">
+                    <li>
+                        <a href="https://translate.wordpress.org/projects/wp-plugins/wp-optimizer/"><?php _e('Help me translating', 'wpopt'); ?></a>
+                    </li>
+                    <li>
+                        <a href="https://wordpress.org/support/plugin/wp-optimizer/reviews/?filter=5"><?php _e('Leave a review', 'wpopt'); ?></a>
+                    </li>
+                </ul>
+                <h3>WP-Optimizer</h3>
+                <ul class="wps wpopt-link-list">
+                    <li>
+                        <a href="https://github.com/sh1zen/wp-optimizer/"><?php _e('Source code', 'wpopt'); ?></a>
+                    </li>
+                    <li>
+                        <a href="https://sh1zen.github.io/"><?php _e('About me', 'wpopt'); ?></a>
+                    </li>
+                </ul>
+            </section>
+        </aside>
+        <?php
+    }
 }
+

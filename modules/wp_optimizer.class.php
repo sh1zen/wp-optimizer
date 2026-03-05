@@ -166,14 +166,27 @@ class Mod_WP_Optimizer extends Module
     {
         return [
             'cron.enhance'                       => __("Prevent WordPress from checking for cron-jobs at each request, instead does it in background every custom time.", 'wpopt'),
+            'cron.timenext'                      => __("Interval in seconds used to trigger background cron checks when cron optimization is enabled.", 'wpopt'),
+            'srv_enhancements.active'            => __("Enable server enhancement directives for Apache.", 'wpopt'),
+            'srv_enhancements.remove_www'        => __("Redirect www URLs to non-www URLs to enforce a single canonical hostname.", 'wpopt'),
+            'srv_enhancements.redirect_https'    => __("Force HTTP requests to redirect to HTTPS.", 'wpopt'),
             'srv_enhancements.keep_alive'        => __("Connection keep-alive is a feature that maintains an open connection between a client and a server, reducing the need to repeatedly establish connections, improving website performance.", 'wpopt'),
             'srv_enhancements.follow_symlinks'   => __("Follow symbolic link is an option that allows a web server to follow symbolic links when serving content, expanding the available content and improving website functionality, but slowing it down.", 'wpopt'),
             'srv_enhancements.pagespeed'         => __("Google PageSpeed PHP module is a server-side module that optimizes web pages and improves website performance, by applying best practices and filters to HTML, CSS, and JavaScript.", 'wpopt'),
             'srv_enhancements.timezone'          => __("Add current timezone as default.", 'wpopt'),
+            'srv_enhancements.default_utf8'      => __("Set UTF-8 as default response charset for supported content types.", 'wpopt'),
+            'srv_compression.active'             => __("Enable server-side compression rules for supported assets.", 'wpopt'),
+            'srv_compression.gzip'               => __("Enable GZIP compression for text-based responses.", 'wpopt'),
             'srv_compression.brotli'             => __("Brotli is a newer compression algorithm that provides better compression rates than Gzip, resulting in smaller file sizes and faster website performance.", 'wpopt'),
+            'srv_browser_cache.active'           => __("Enable browser caching headers for static resources.", 'wpopt'),
             'srv_browser_cache.immutable'        => __("Prevent cached content from being overwritten, reducing the need to revalidate unchanged content.", 'wpopt'),
             'srv_browser_cache.stale_error'      => __("Allow cached content to be served when there is a server error, improving website availability and reducing server load.", 'wpopt'),
             'srv_browser_cache.stale_revalidate' => __("Serve stale content while updating it in the background, improving website performance and reducing the impact of validation delays.", 'wpopt'),
+            'srv_browser_cache.lifetime_default' => __("Default cache lifetime (in seconds) applied when no specific asset rule matches.", 'wpopt'),
+            'srv_browser_cache.lifetime_text'    => __("Cache lifetime (in seconds) for CSS and JavaScript resources.", 'wpopt'),
+            'srv_browser_cache.lifetime_image'   => __("Cache lifetime (in seconds) for image resources.", 'wpopt'),
+            'srv_browser_cache.lifetime_font'    => __("Cache lifetime (in seconds) for font resources.", 'wpopt'),
+            'srv_browser_cache.lifetime_archive' => __("Cache lifetime (in seconds) for archive resources such as compressed files.", 'wpopt'),
         ];
     }
 }

@@ -218,11 +218,11 @@ class Mod_Cache extends Module
             <?php RequestActions::nonce_field($this->action_hook); ?>
 
             <block class="wps-gridRow">
-                <row class="wps-custom-action wps-row">
+                <row class="wps-custom-action">
                     <b style='margin-right: 1em'>
                         <?php _e('Cache size', 'wpopt') ?> : <?php echo wps('wpopt')->storage->get_size(self::$storage_internal) ?>
                     </b>
-                    <?php echo RequestActions::get_action_button($this->action_hook, 'reset_cache', __('Reset Cache', 'wpopt')); ?>
+                    <?php echo RequestActions::get_action_button($this->action_hook, 'reset_cache', __('Reset Cache', 'wpopt'), 'wps wps-button wpopt-btn is-danger'); ?>
                 </row>
             </block>
         </form>
@@ -232,3 +232,4 @@ class Mod_Cache extends Module
 }
 
 return __NAMESPACE__;
+

@@ -177,7 +177,7 @@ class Mod_WP_Mail extends Module
                 <row class="wps-inline">
                     <strong>Actions:</strong>
                     <a href="<?php RequestActions::get_url($this->action_hook, 'reset', false, true); ?>"
-                       class="button button-primary">
+                       class="wps wps-button wpopt-btn is-danger">
                         <?php _e('Reset Log', 'wpopt') ?>
                     </a>
                 </row>
@@ -229,3 +229,4 @@ class Mod_WP_Mail extends Module
 }
 
 return __NAMESPACE__;
+

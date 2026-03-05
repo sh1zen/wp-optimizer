@@ -53,7 +53,7 @@ class Minify
      *
      * @return string
      */
-    protected final function hide_noptimize($markup)
+    protected final function hide_noptimize($markup): string
     {
         return StringHelper::replace_contents_with_marker_if_exists(
             'NOPTIMIZE',
@@ -70,38 +70,9 @@ class Minify
      *
      * @return string
      */
-    protected final function restore_noptimize($markup)
+    protected final function restore_noptimize($markup): string
     {
         return StringHelper::restore_marked_content('NOPTIMIZE', $markup);
-    }
-
-    /**
-     * Hides "iehacks" content.
-     *
-     * @param string $markup Markup to process.
-     *
-     * @return string
-     */
-    protected final function hide_iehacks($markup)
-    {
-        return StringHelper::replace_contents_with_marker_if_exists(
-            'IEHACK', // Marker name...
-            '<!--[if', // Invalid regex, will fallback to search using strpos()...
-            '#<!--\[if.*?\[endif\]-->#is', // Replacement regex...
-            $markup
-        );
-    }
-
-    /**
-     * Restores "hidden" iehacks content.
-     *
-     * @param string $markup Markup to process.
-     *
-     * @return string
-     */
-    protected final function restore_iehacks($markup)
-    {
-        return StringHelper::restore_marked_content('IEHACK', $markup);
     }
 
     /**
@@ -113,7 +84,7 @@ class Minify
      *
      * @return string
      */
-    protected final function hide_comments($markup)
+    protected final function hide_comments($markup): string
     {
         return StringHelper::replace_contents_with_marker_if_exists(
             'COMMENTS',
@@ -131,9 +102,8 @@ class Minify
      *
      * @return string
      */
-    protected final function restore_comments($markup)
+    protected final function restore_comments($markup): string
     {
         return StringHelper::restore_marked_content('COMMENTS', $markup);
     }
-
 }

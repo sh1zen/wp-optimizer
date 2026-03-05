@@ -9,185 +9,204 @@ namespace WPOptimizer\modules\supporters;
 
 class Minify_HTML extends Minify
 {
-    private $isXhtml;
+    private bool $isXhtml;
+    protected bool $keepComments;
+    protected bool $multiProcess;
 
-    private $_replacementHash = null;
-    private $_placeholders = array();
+    private string $_replacementHash;
+    private array $_placeholders = [];
+    private int $_placeholderCount = 0;
 
-    public function __construct($html, $options = [])
+    // Pre-compiled regex patterns (compiled once, reused)
+    private const PATTERN_SCRIPT = '~(\s*)(<script\b[^>]*>)([\s\S]*?)</script>(\s*)~iu';
+    private const PATTERN_STYLE = '~\s*(<style\b[^>]*>)([\s\S]*?)</style>\s*~iu';
+    private const PATTERN_COMMENT = '~<!--([\s\S]*?)-->~u';
+    private const PATTERN_PRE = '~\s*(<pre\b[^>]*>[\s\S]*?</pre>)\s*~iu';
+    private const PATTERN_TEXTAREA = '~\s*(<textarea\b[^>]*>[\s\S]*?</textarea>)\s*~iu';
+    private const PATTERN_DATA_URI = '~(=(["\'])data:.*\2)~Ui';
+    private const PATTERN_TRIM_LINES = '~^\s+|\s+$~mu';
+    private const PATTERN_OUTSIDE_TAG = '~>([^<]+)<~';
+    private const PATTERN_OPEN_TAG = '~(<[a-z-]+)\s+([^>]+>)~iu';
+    private const PATTERN_CDATA_CHECK = '~[<&]|--|]]>~';
+    private const PATTERN_HTML_COMMENT_CSS = '~^\s*<!--|-->\s*$~';
+    private const PATTERN_HTML_COMMENT_JS = '~^\s*<!--\s*|\s*(?://)?\s*-->\s*$~u';
+
+    // Block elements pattern (built once)
+    private const BLOCK_ELEMENTS = 'area|article|aside|basefont|base|blockquote|body|canvas|caption|center|colgroup|col|dd|dir|div|dl|dt|fieldset|figcaption|figure|footer|form|frameset|frame|h[1-6]|head|header|hgroup|hr|html|legend|li|link|main|map|menu|meta|nav|ol|optgroup|option|output|p|param|section|table|tbody|thead|td|th|tr|tfoot|title|ul|video|block|svg';
+    private ?string $blockElementsPattern = null;
+
+    public function __construct(string $html, array $options = [])
     {
-        $options = array_merge([
-            'minify_css' => false,
-            'minify_js'  => false,
-            'comments'   => false
-        ], $options);
+        $options += [
+            'minify_css'    => false,
+            'minify_js'     => false,
+            'comments'      => false,
+            'multi_process' => false
+        ];
 
-        parent::__construct(
-            $html,
-            $options
-        );
+        parent::__construct($html, $options);
 
-        $this->isXhtml = str_contains($this->content, '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML');
+        $this->isXhtml = strpos($this->content, '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML') !== false;
+        $this->keepComments = $options['comments'];
+        $this->multiProcess = $options['multi_process'];
+        $this->_replacementHash = '%MINIFYHTML' . hash('xxh3', $this->content) . '_';
     }
 
-    public function run()
+    public function run(): void
     {
-        $this->_replacementHash = 'MINIFYHTML' . md5($_SERVER['REQUEST_TIME']);
-        $this->_placeholders = array();
+        $this->_placeholders = [];
+        $this->_placeholderCount = 0;
 
-        // Noptimize.
+        // Noptimize
         $this->content = $this->hide_noptimize($this->content);
 
         $this->process();
 
-        // Restore noptimize.
+        // Restore noptimize
         $this->content = $this->restore_noptimize($this->content);
 
-        // fixes for Revslider data attribs
+        // Fixes for Revslider data attribs
         if (apply_filters('wpopt_minify_filter_dataattrib', false)) {
-            $this->content = preg_replace('#\n(data-.*$)\n#Um', ' $1 ', $this->content);
-            $this->content = preg_replace('#<[^>]*(=\"[^"\'<>\s]*\")(\w)#', '$1 $2', $this->content);
+            $this->content = preg_replace(
+                ['~\n(data-.*$)\n~Um', '~<[^>]*(="[^"\'<>\s]*)(\w)~'],
+                [' $1 ', '$1 $2'],
+                $this->content
+            );
         }
     }
 
-    protected function process()
+    protected function process(): void
     {
-        // replace SCRIPTs (and minify) with placeholders
-        $this->content = preg_replace_callback('/(\\s*)(<script\\b[^>]*?>)([\\s\\S]*?)<\\/script>(\\s*)/iu', array($this, '_removeScriptCB'), $this->content);
+        $content = $this->content;
 
-        // replace STYLEs (and minify) with placeholders
-        $this->content = preg_replace_callback('/\\s*(<style\\b[^>]*?>)([\\s\\S]*?)<\\/style>\\s*/iu', array($this, '_removeStyleCB'), $this->content);
+        // Replace SCRIPTs with placeholders
+        $content = preg_replace_callback(self::PATTERN_SCRIPT, [$this, '_removeScriptCB'], $content);
 
-        // remove HTML comments (not containing IE conditional comments).
+        // Replace STYLEs with placeholders
+        $content = preg_replace_callback(self::PATTERN_STYLE, [$this, '_removeStyleCB'], $content);
+
+        // Remove HTML comments (not containing IE conditional comments)
         if (!$this->keepComments) {
-            $this->content = preg_replace_callback('/<!--([\\s\\S]*?)-->/u', array($this, '_commentCB'), $this->content);
+            $content = preg_replace_callback(self::PATTERN_COMMENT, [$this, '_commentCB'], $content);
         }
 
-        // replace PREs with placeholders
-        $this->content = preg_replace_callback('/\\s*(<pre\\b[^>]*?>[\\s\\S]*?<\\/pre>)\\s*/iu', array($this, '_removeCB'), $this->content);
+        // Replace PREs and TEXTAREAs with placeholders
+        $content = preg_replace_callback(self::PATTERN_PRE, [$this, '_removeCB'], $content);
+        $content = preg_replace_callback(self::PATTERN_TEXTAREA, [$this, '_removeCB'], $content);
 
-        // replace TEXTAREAs with placeholders
-        $this->content = preg_replace_callback('/\\s*(<textarea\\b[^>]*?>[\\s\\S]*?<\\/textarea>)\\s*/i', array($this, '_removeCB'), $this->content);
+        // Replace data: URIs with placeholders
+        $content = preg_replace_callback(self::PATTERN_DATA_URI, [$this, '_removeDataURICB'], $content);
 
-        // replace data: URIs with placeholders
-        $this->content = preg_replace_callback('/(=("|\')data:.*\\2)/Ui', array($this, '_removeDataURICB'), $this->content);
+        // Trim each line
+        $content = preg_replace(self::PATTERN_TRIM_LINES, ' ', $content);
 
-        // trim each line.
-        // replace by space instead of '' to avoid newline after opening tag getting zapped
-        $this->content = preg_replace('/^\s+|\s+$/mu', ' ', $this->content);
+        // Remove ws around block elements
+        $content = preg_replace($this->getBlockElementsPattern(), '$1', $content);
 
-        // remove ws around block/undisplayed elements
-        $this->content = preg_replace('/\\s+(<\\/?(?:area|article|aside|base(?:font)?|blockquote|body'
-            . '|canvas|caption|center|col(?:group)?|dd|dir|div|dl|dt|fieldset|figcaption|figure|footer|form'
-            . '|frame(?:set)?|h[1-6]|head|header|hgroup|hr|html|legend|li|link|main|map|menu|meta|nav'
-            . '|ol|opt(?:group|ion)|output|p|param|section|t(?:able|body|head|d|h|r|foot|itle)'
-            . '|ul|video|block|svg)\\b[^>]*>)/iu', '$1', $this->content);
+        // Remove ws outside all elements
+        $content = preg_replace_callback(self::PATTERN_OUTSIDE_TAG, [$this, '_outsideTagCB'], $content);
 
-        // remove ws outside all elements
-        $this->content = preg_replace_callback('/>([^<]+)</', array($this, '_outsideTagCB'), $this->content);
+        // Normalize whitespace in open tags
+        $content = preg_replace(self::PATTERN_OPEN_TAG, '$1 $2', $content);
 
-        // use newlines before 1st attribute in open tags (to limit line lengths)
-        $this->content = preg_replace('/(<[a-z\\-]+)\\s+([^>]+>)/iu', "$1 $2", $this->content);
+        // Restore placeholders (reverse order)
+        if ($this->_placeholders) {
+            $keys = array_keys($this->_placeholders);
+            $values = array_values($this->_placeholders);
 
-        // reverse order while preserving keys to ensure the last replacement is done first, etc ...
-        $this->_placeholders = array_reverse($this->_placeholders, true);
+            // Reverse for correct nesting order
+            $keys = array_reverse($keys);
+            $values = array_reverse($values);
 
-        $this->content = str_replace(array_keys($this->_placeholders), array_values($this->_placeholders), $this->content);
+            $content = str_replace($keys, $values, $content);
 
-        if ($this->multiProcess) {
-            // issue 229: multi-pass to catch scripts that didn't get replaced in text-areas
-            $this->content = str_replace(array_keys($this->_placeholders), array_values($this->_placeholders), $this->content);
+            if ($this->multiProcess) {
+                $content = str_replace($keys, $values, $content);
+            }
         }
+
+        $this->content = $content;
     }
 
-    protected function _commentCB($m)
+    private function getBlockElementsPattern(): string
     {
-        return (str_starts_with($m[1], '[') or str_contains($m[1], '<![')) ? $m[0] : '';
+        return $this->blockElementsPattern ??= '~\s+(</?(?:' . self::BLOCK_ELEMENTS . ')\b[^>]*>)~iu';
     }
 
-    protected function _outsideTagCB($m)
+    protected function _commentCB(array $m): string
     {
-        return '>' . preg_replace('/^\\s+|\\s+$/', ' ', $m[1]) . '<';
+        // Preserve IE conditional comments
+        $comment = $m[1];
+        return ($comment[0] === '[' || strpos($comment, '<![') !== false) ? $m[0] : '';
     }
 
-    protected function _reservePlace($content)
+    protected function _outsideTagCB(array $m): string
     {
-        $placeholder = '%' . $this->_replacementHash . count($this->_placeholders) . '%';
+        return '>' . trim($m[1], " \t\n\r\0\x0B") . '<';
+    }
+
+    protected function _reservePlace(string $content): string
+    {
+        $placeholder = $this->_replacementHash . $this->_placeholderCount++ . '%';
         $this->_placeholders[$placeholder] = $content;
-
         return $placeholder;
     }
 
-    protected function _removeCB($m)
+    protected function _removeCB(array $m): string
     {
         return $this->_reservePlace($m[1]);
     }
 
-    protected function _removeDataURICB($m)
+    protected function _removeDataURICB(array $m): string
     {
         return $this->_reservePlace($m[1]);
     }
 
-    protected function _removeStyleCB($m)
+    protected function _removeStyleCB(array $m): string
     {
         $openStyle = $m[1];
-
         $css = $m[2];
-        // remove HTML comments
-        $css = preg_replace('/(?:^\\s*<!--|-->\\s*$)/', '', $css);
 
-        // remove CDATA section markers
-        $css = $this->_removeCdata($css);
+        // Remove HTML comments
+        $css = preg_replace(self::PATTERN_HTML_COMMENT_CSS, '', $css);
 
-        if ($this->options['minify_css']) {
-            $css = Minify_CSS::minify($css);
-        }
-        else {
-            $css = trim($css);
+        // Remove CDATA section markers
+        if (strpos($css, '<![CDATA[') !== false) {
+            $css = str_replace(['<![CDATA[', ']]>'], '', $css);
         }
 
-        return $this->_reservePlace($this->_needsCdata($css) ? "{$openStyle}/*<![CDATA[*/{$css}/*]]>*/</style>" : "{$openStyle}{$css}</style>");
+        $css = $this->options['minify_css'] ? Minify_CSS::minify($css) : trim($css);
+
+        if ($this->isXhtml && preg_match(self::PATTERN_CDATA_CHECK, $css)) {
+            return $this->_reservePlace("{$openStyle}/*<![CDATA[*/{$css}/*]]>*/</style>");
+        }
+
+        return $this->_reservePlace("{$openStyle}{$css}</style>");
     }
 
-    protected function _removeCdata($str)
+    protected function _removeScriptCB(array $m): string
     {
-        return (str_contains($str, '<![CDATA[')) ? str_replace(array('<![CDATA[', ']]>'), '', $str) : $str;
-    }
-
-    protected function _needsCdata($str)
-    {
-        return ($this->isXhtml and preg_match('/(?:[<&]|--|]]>)/', $str));
-    }
-
-    protected function _removeScriptCB($m)
-    {
+        $ws1 = $m[1] === '' ? '' : ' ';
+        $ws2 = $m[4] === '' ? '' : ' ';
         $openScript = $m[2];
         $js = $m[3];
 
-        // whitespace surrounding? preserve at least one space
-        $ws1 = ($m[1] === '') ? '' : ' ';
-        $ws2 = ($m[4] === '') ? '' : ' ';
-
         if (!$this->keepComments) {
+            // Remove HTML comments
+            $js = preg_replace(self::PATTERN_HTML_COMMENT_JS, '', $js);
 
-            // remove HTML comments (and ending "//" if present)
-            $js = preg_replace('/(?:^\\s*<!--\\s*|\\s*(?:\\/\\/)?\\s*-->\\s*$)/u', '', $js);
-
-            // remove CDATA section markers
-            $js = $this->_removeCdata($js);
+            // Remove CDATA section markers
+            if (strpos($js, '<![CDATA[') !== false) {
+                $js = str_replace(['<![CDATA[', ']]>'], '', $js);
+            }
         }
 
-        if ($this->options['minify_js']) {
-            $js = Minify_JS::minify($js);
-        }
-        else {
-            $js = trim($js);
+        $js = $this->options['minify_js'] ? Minify_JS::minify($js) : trim($js);
+
+        if ($this->isXhtml && preg_match(self::PATTERN_CDATA_CHECK, $js)) {
+            return $this->_reservePlace("{$ws1}{$openScript}/*<![CDATA[*/{$js}/*]]>*/</script>{$ws2}");
         }
 
-        return $this->_reservePlace(
-            $this->_needsCdata($js)
-                ? "{$ws1}{$openScript}/*<![CDATA[*/{$js}/*]]>*/</script>{$ws2}"
-                : "{$ws1}{$openScript}{$js}</script>{$ws2}"
-        );
+        return $this->_reservePlace("{$ws1}{$openScript}{$js}</script>{$ws2}");
     }
 }

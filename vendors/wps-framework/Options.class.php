@@ -40,12 +40,14 @@ class Options
 
         $this->maybe_create_options_table();
 
-        CronActions::schedule("$context-clear-options", 'daily', function () {
-            /**
-             * remove expired values once a day
-             */
-            $this->delete_expired();
-        }, '23:00');
+        wps_hook('init', function () use ($context) {
+            CronActions::schedule("$context-clear-options", 'daily', function () {
+                /**
+                 * remove expired values once a day
+                 */
+                $this->delete_expired();
+            }, '23:00');
+        });
     }
 
     private function maybe_create_options_table(): void
@@ -55,8 +57,6 @@ class Options
         if ($this->table_name and UtilEnv::table_exist($this->table_name)) {
             return;
         }
-
-        var_dump($this->table_name);
 
         UtilEnv::db_create(
             $this->table_name,
