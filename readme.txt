@@ -5,7 +5,7 @@ Donate link: https://www.paypal.com/donate?business=dev.sh1zen%40outlook.it&item
 Requires at least: 5.0.0
 Tested up to: 6.9
 Requires PHP: 7.4
-Stable tag: 2.4.0
+Stable tag: 2.5.0
 License: GPLv2 or later
 
 WordPress performance optimization plugin with cache, minify, image optimization, database cleanup, security hardening and server tuning.
@@ -56,6 +56,7 @@ All optimizations run on your server.
 * **Database:** database cleanup, optimization and backup utilities.
 * **Media:** image optimization/conversion and unused media cleanup.
 * **Minify:** HTML, CSS and JavaScript minification.
+* **Performance Monitor:** request history with charts by request type and slow-request visibility.
 * **Settings:** global settings management (reset, import/export, restore, autosave).
 * **Tracking:** optional anonymous plugin usage/error telemetry controls.
 * **Widget:** dashboard widgets for folder size and server information.
@@ -201,10 +202,17 @@ If needed, open the "Settings" module and run a reset.
 
 == Changelog ==
 
+= 2.5.0 =
+
+* added performance monitor module
+* fixed some bugs in the activity-log
+* fixed ImageProcessor issue on delete images
+* improved UI/UX
+* updated translations
+
 = 2.4.0 =
 
 * added info in some modules
-* extended support to WordPress 7.0
 * improved performances
 * fixed bugs in Minify Modules
 * fixed bugs in cache modules

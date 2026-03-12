@@ -159,12 +159,14 @@ class Mod_WP_Mail extends Module
         require_once WPOPT_SUPPORTERS . 'wp-mails/WPMails_Table.class.php';
 
         $table = new WPMails(['action_hook' => $this->action_hook, 'settings' => $this->option()]);
+        $mail_series = $this->get_mail_daily_series(30);
 
         $table->prepare_items();
         ?>
         <section class="wps-wrap">
             <block class="wps">
                 <section class="wps-header"><h1>WP Mails Log</h1></section>
+                <?php echo $this->render_mail_daily_chart($mail_series); ?>
                 <section class='wps'>
                     <form method="GET" autocapitalize="off" autocomplete="off">
                         <input type="hidden" name="page" value="<?php echo esc_attr($_REQUEST['page']); ?>"/>
@@ -184,6 +186,147 @@ class Mod_WP_Mail extends Module
             </block>
         </section>
         <?php
+    }
+
+    private function get_mail_daily_series(int $days = 30): array
+    {
+        global $wpdb;
+
+        $days = max(1, $days);
+        $start_timestamp = strtotime('-' . ($days - 1) . ' days', current_time('timestamp'));
+        $start_date = wp_date('Y-m-d 00:00:00', $start_timestamp);
+
+        $rows = $wpdb->get_results(
+            $wpdb->prepare(
+                'SELECT DATE(sent_date) AS bucket, COUNT(*) AS total
+                 FROM ' . WPOPT_TABLE_LOG_MAILS . '
+                 WHERE sent_date >= %s
+                 GROUP BY DATE(sent_date)
+                 ORDER BY bucket ASC',
+                $start_date
+            ),
+            ARRAY_A
+        );
+
+        $indexed = array();
+        foreach ((array)$rows as $row) {
+            $indexed[$row['bucket']] = (int)$row['total'];
+        }
+
+        $series = array();
+        for ($i = 0; $i < $days; $i++) {
+            $timestamp = strtotime('+' . $i . ' days', $start_timestamp);
+            $bucket = wp_date('Y-m-d', $timestamp);
+            $series[] = array(
+                'bucket' => $bucket,
+                'label'  => wp_date('d M', $timestamp),
+                'total'  => $indexed[$bucket] ?? 0,
+            );
+        }
+
+        return $series;
+    }
+
+    private function render_mail_daily_chart(array $series): string
+    {
+        if (empty($series)) {
+            return '<div class="wpopt-perf-empty">' . esc_html__('No mail activity available yet.', 'wpopt') . '</div>';
+        }
+
+        $max_value = 1;
+        $total_sent = 0;
+        foreach ($series as $point) {
+            $max_value = max($max_value, (int)$point['total']);
+            $total_sent += (int)$point['total'];
+        }
+
+        $width = 960;
+        $height = 260;
+        $padding_top = 24;
+        $padding_right = 20;
+        $padding_bottom = 42;
+        $padding_left = 42;
+        $plot_width = $width - $padding_left - $padding_right;
+        $plot_height = $height - $padding_top - $padding_bottom;
+        $point_count = max(1, count($series) - 1);
+        $points = array();
+
+        foreach ($series as $index => $point) {
+            $x = $padding_left + (($plot_width / $point_count) * $index);
+            $y = $padding_top + $plot_height - (($plot_height * ((int)$point['total'] / $max_value)));
+            $points[] = round($x, 2) . ',' . round($y, 2);
+        }
+
+        ob_start();
+        ?>
+        <style>
+            .wpopt-mails-chart-wrap { margin: 4px 0 18px; }
+            .wpopt-mails-chart-summary {
+                display:inline-flex;
+                align-items:center;
+                gap:14px;
+                margin:0 0 14px;
+                padding:14px 18px;
+                border:1px solid rgba(15, 23, 42, 0.08);
+                border-radius:16px;
+                background:linear-gradient(135deg, #ecfeff 0%, #f8fafc 100%);
+                color:#0f172a;
+            }
+            .wpopt-mails-chart-total {
+                display:flex;
+                flex-direction:column;
+                min-width:92px;
+            }
+            .wpopt-mails-chart-total strong {
+                font-size:28px;
+                line-height:1;
+                color:#0f766e;
+            }
+            .wpopt-mails-chart-total span {
+                margin-top:4px;
+                font-size:11px;
+                letter-spacing:.08em;
+                text-transform:uppercase;
+                color:#0f766e;
+            }
+            .wpopt-mails-chart-copy {
+                max-width:420px;
+                font-size:13px;
+                color:#334155;
+            }
+            .wpopt-mails-chart-copy b { color:#0f172a; }
+        </style>
+        <div class="wpopt-mails-chart-wrap">
+            <div class="wpopt-mails-chart-summary">
+                <div class="wpopt-mails-chart-total">
+                    <strong><?php echo number_format_i18n($total_sent); ?></strong>
+                    <span><?php _e('Total sent', 'wpopt'); ?></span>
+                </div>
+                <div class="wpopt-mails-chart-copy">
+                    <b><?php _e('Daily email volume', 'wpopt'); ?></b><br>
+                    <?php echo esc_html(sprintf(_n('Mail trend for the last %s day.', 'Mail trend for the last %s days.', count($series), 'wpopt'), number_format_i18n(count($series)))); ?>
+                </div>
+            </div>
+            <svg viewBox="0 0 <?php echo $width; ?> <?php echo $height; ?>" width="100%" height="260" role="img" aria-label="<?php esc_attr_e('Mails sent per day', 'wpopt'); ?>">
+                <line x1="<?php echo $padding_left; ?>" y1="<?php echo $padding_top; ?>" x2="<?php echo $padding_left; ?>" y2="<?php echo $padding_top + $plot_height; ?>" stroke="#cbd5e1" stroke-width="1"/>
+                <line x1="<?php echo $padding_left; ?>" y1="<?php echo $padding_top + $plot_height; ?>" x2="<?php echo $padding_left + $plot_width; ?>" y2="<?php echo $padding_top + $plot_height; ?>" stroke="#cbd5e1" stroke-width="1"/>
+                <text x="10" y="<?php echo $padding_top + 8; ?>" fill="#64748b" font-size="11"><?php echo number_format_i18n($max_value); ?></text>
+                <text x="14" y="<?php echo $padding_top + $plot_height; ?>" fill="#64748b" font-size="11">0</text>
+                <polyline fill="none" stroke="#0f766e" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" points="<?php echo esc_attr(implode(' ', $points)); ?>"></polyline>
+                <?php foreach ($series as $index => $point): ?>
+                    <?php
+                    $x = $padding_left + (($plot_width / $point_count) * $index);
+                    $y = $padding_top + $plot_height - (($plot_height * ((int)$point['total'] / $max_value)));
+                    ?>
+                    <circle cx="<?php echo round($x, 2); ?>" cy="<?php echo round($y, 2); ?>" r="3.5" fill="#0f766e"></circle>
+                    <?php if ($index % max(1, (int)floor(count($series) / 8)) === 0 || $index === count($series) - 1): ?>
+                        <text x="<?php echo round($x, 2); ?>" y="<?php echo $padding_top + $plot_height + 18; ?>" text-anchor="middle" fill="#64748b" font-size="10"><?php echo esc_html($point['label']); ?></text>
+                    <?php endif; ?>
+                <?php endforeach; ?>
+            </svg>
+        </div>
+        <?php
+        return ob_get_clean();
     }
 
     protected function setting_fields($filter = ''): array

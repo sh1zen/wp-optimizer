@@ -4,7 +4,7 @@ msgstr ""
 "Project-Id-Version: wpopt-translation\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/wp-"
 "optimizer/\n"
-"POT-Creation-Date: 2026-03-06 03:23+0100\n"
+"POT-Creation-Date: 2026-03-12 22:42+0100\n"
 "PO-Revision-Date: 2020-05-13 02:34+0200\n"
 "Last-Translator: sh1zen\n"
 "Language-Team: sh1zen\n"
@@ -13,7 +13,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
-"X-Generator: Poedit 3.8\n"
+"X-Generator: Poedit 3.9\n"
 "X-Poedit-Basepath: ..\n"
 "X-Poedit-SourceCharset: UTF-8\n"
 "X-Poedit-KeywordsList: "
@@ -465,86 +465,179 @@ msgstr ""
 msgid "Errors:"
 msgstr ""
 
-#: modules/activitylog.class.php:94 modules/wp_mail.class.php:181
+#: modules/activitylog.class.php:98 modules/wp_mail.class.php:183
 msgid "Reset Log"
 msgstr ""
 
-#: modules/activitylog.class.php:260
+#: modules/activitylog.class.php:397
 msgid "All activities have been successfully deleted."
 msgstr ""
 
-#: modules/activitylog.class.php:451
+#: modules/activitylog.class.php:588
 msgid "Log IP addresses"
 msgstr ""
 
-#: modules/activitylog.class.php:452
+#: modules/activitylog.class.php:589
 msgid "Log User Agent"
 msgstr ""
 
-#: modules/activitylog.class.php:453
+#: modules/activitylog.class.php:590
 msgid "Log REQUEST arguments"
 msgstr ""
 
-#: modules/activitylog.class.php:458
+#: modules/activitylog.class.php:595
 msgid "Auto clear logs"
 msgstr ""
 
-#: modules/activitylog.class.php:460
+#: modules/activitylog.class.php:597
 msgid "Keeps log for (days)"
 msgstr ""
 
-#: modules/activitylog.class.php:470
+#: modules/activitylog.class.php:607
 msgid "User activity log (login, registration, deletion)"
 msgstr ""
 
-#: modules/activitylog.class.php:471
+#: modules/activitylog.class.php:608
 msgid "Posts activity log"
 msgstr ""
 
-#: modules/activitylog.class.php:472
+#: modules/activitylog.class.php:609
 msgid "Terms activity log"
 msgstr ""
 
-#: modules/activitylog.class.php:473
+#: modules/activitylog.class.php:610
 msgid "Attachments activity log"
 msgstr ""
 
-#: modules/activitylog.class.php:478
+#: modules/activitylog.class.php:615
 msgid "Options update log"
 msgstr ""
 
-#: modules/activitylog.class.php:479
+#: modules/activitylog.class.php:616
 msgid "Plugin upgrades/installs log"
 msgstr ""
 
-#: modules/activitylog.class.php:483
+#: modules/activitylog.class.php:620
 msgid "404 log"
 msgstr ""
 
-#: modules/activitylog.class.php:484
+#: modules/activitylog.class.php:621
 msgid "Bad query (maybe info gathering) activity log"
 msgstr ""
 
-#: modules/activitylog.class.php:485
+#: modules/activitylog.class.php:622
 msgid "Try to match xss attempts"
 msgstr ""
 
-#: modules/activitylog.class.php:486
+#: modules/activitylog.class.php:623
 msgid "Try to match sql injections attempts"
 msgstr ""
 
-#: modules/activitylog.class.php:487
+#: modules/activitylog.class.php:624
+msgid "Try to match path traversal attempts"
+msgstr ""
+
+#: modules/activitylog.class.php:625
+msgid "Try to match command injection attempts"
+msgstr ""
+
+#: modules/activitylog.class.php:626
 msgid "Try to match access to inconsistent data"
 msgstr ""
 
-#: modules/activitylog.class.php:488
+#: modules/activitylog.class.php:627
+msgid "Try to match probes and scanner requests"
+msgstr ""
+
+#: modules/activitylog.class.php:628
 msgid "Custom rules (one per line)"
 msgstr ""
 
-#: modules/activitylog.class.php:496
+#: modules/activitylog.class.php:636
+msgid ""
+"Track suspicious shell-style payloads and command execution attempts "
+"in request parameters."
+msgstr ""
+
+#: modules/activitylog.class.php:637
+msgid ""
+"Track requests that look like reconnaissance for sensitive files, "
+"backups or environment dumps."
+msgstr ""
+
+#: modules/activitylog.class.php:638
+msgid ""
+"Track automated probes against common exploit paths and scanner "
+"fingerprints."
+msgstr ""
+
+#: modules/activitylog.class.php:639
 msgid ""
 "Provide a list of custom regexes that you want to use to monitor bad "
 "url."
+msgstr ""
+
+#: modules/activitylog.class.php:640
+msgid ""
+"Track payloads that resemble SQL injection patterns in URLs, query "
+"strings and request bodies."
+msgstr ""
+
+#: modules/activitylog.class.php:641
+msgid ""
+"Track attempts to reach files outside the web root through traversal "
+"patterns and sensitive OS paths."
+msgstr ""
+
+#: modules/activitylog.class.php:642
+msgid ""
+"Track request payloads that resemble inline script injection or DOM-"
+"based XSS vectors."
+msgstr ""
+
+#: modules/activitylog.class.php:793
+msgid "Total logs"
+msgstr ""
+
+#: modules/activitylog.class.php:797
+msgid "Collected contexts"
+msgstr ""
+
+#: modules/activitylog.class.php:801
+msgid "Collected actions"
+msgstr ""
+
+#: modules/activitylog.class.php:856
+msgid "Daily trend"
+msgstr ""
+
+#: modules/activitylog.class.php:857
+msgid "Activity volume by day"
+msgstr ""
+
+#: modules/activitylog.class.php:858
+#, php-format
+msgid "Trend for the last %s day."
+msgstr ""
+
+#: modules/activitylog.class.php:862
+msgid "Last period"
+msgstr ""
+
+#: modules/activitylog.class.php:866
+msgid "Avg/day"
+msgstr ""
+
+#: modules/activitylog.class.php:870
+msgid "Peak day"
+msgstr ""
+
+#: modules/activitylog.class.php:886
+msgid "Activity log trend by day"
+msgstr ""
+
+#: modules/activitylog.class.php:990
+msgid "No activity data available yet."
 msgstr ""
 
 #: modules/cache.class.php:126 modules/settings.class.php:76
@@ -1336,6 +1429,277 @@ msgid ""
 "know what to do in case of bugs. "
 msgstr ""
 
+#: modules/performance_monitor.class.php:36
+msgid "Performance history has been reset."
+msgstr ""
+
+#: modules/performance_monitor.class.php:39
+msgid "Old performance history has been cleaned."
+msgstr ""
+
+#: modules/performance_monitor.class.php:155
+msgid "Enable performance history monitoring"
+msgstr ""
+
+#: modules/performance_monitor.class.php:156
+msgid "Slow request threshold (ms)"
+msgstr ""
+
+#: modules/performance_monitor.class.php:157
+msgid "Sampling rate (%)"
+msgstr ""
+
+#: modules/performance_monitor.class.php:158
+msgid "Keep history for (days)"
+msgstr ""
+
+#: modules/performance_monitor.class.php:161
+msgid "Track REST API endpoints"
+msgstr ""
+
+#: modules/performance_monitor.class.php:162
+msgid "Track admin-ajax requests"
+msgstr ""
+
+#: modules/performance_monitor.class.php:163
+msgid "Track wp-admin requests"
+msgstr ""
+
+#: modules/performance_monitor.class.php:164
+msgid "Track wp-login requests"
+msgstr ""
+
+#: modules/performance_monitor.class.php:165
+msgid "Track XML-RPC requests"
+msgstr ""
+
+#: modules/performance_monitor.class.php:173
+msgid ""
+"Requests at or above this threshold are marked as slow in the "
+"dashboard."
+msgstr ""
+
+#: modules/performance_monitor.class.php:174
+msgid ""
+"Use sampling to reduce writes on high-traffic sites. 100 means every "
+"matching request is stored."
+msgstr ""
+
+#: modules/performance_monitor.class.php:175
+msgid "Older rows are removed automatically by a daily cleanup task."
+msgstr ""
+
+#: modules/performance_monitor.class.php:176
+msgid "Store performance history for WordPress REST API routes."
+msgstr ""
+
+#: modules/performance_monitor.class.php:177
+msgid "Store performance history for admin-ajax traffic."
+msgstr ""
+
+#: modules/performance_monitor.class.php:178
+msgid "Store performance history for wp-admin pages."
+msgstr ""
+
+#: modules/performance_monitor.class.php:179
+msgid "Store performance history for wp-login.php requests."
+msgstr ""
+
+#: modules/performance_monitor.class.php:180
+msgid "Store performance history for XML-RPC requests."
+msgstr ""
+
+#: modules/performance_monitor.class.php:239
+msgid "Performance Monitor"
+msgstr ""
+
+#: modules/performance_monitor.class.php:242
+#, php-format
+msgid "Historical request performance split by type for %s."
+msgstr ""
+
+#: modules/performance_monitor.class.php:245
+msgid "Window"
+msgstr ""
+
+#: modules/performance_monitor.class.php:251
+msgid "Apply"
+msgstr ""
+
+#: modules/performance_monitor.class.php:256
+msgid "Requests"
+msgstr ""
+
+#: modules/performance_monitor.class.php:257
+msgid "Average time"
+msgstr ""
+
+#: modules/performance_monitor.class.php:258
+msgid "Peak time"
+msgstr ""
+
+#: modules/performance_monitor.class.php:259
+msgid "Slow requests"
+msgstr ""
+
+#: modules/performance_monitor.class.php:260
+msgid "Average memory peak"
+msgstr ""
+
+#: modules/performance_monitor.class.php:261
+msgid "Average queries"
+msgstr ""
+
+#: modules/performance_monitor.class.php:266
+msgid "Average response time trend"
+msgstr ""
+
+#: modules/performance_monitor.class.php:267
+msgid "No data collected yet for this time window."
+msgstr ""
+
+#: modules/performance_monitor.class.php:270
+msgid "By request type"
+msgstr ""
+
+#: modules/performance_monitor.class.php:271
+msgid ""
+"Visit the site or call an API endpoint to start populating the chart."
+msgstr ""
+
+#: modules/performance_monitor.class.php:276
+msgid "Type snapshots"
+msgstr ""
+
+#: modules/performance_monitor.class.php:282
+msgid "Top request groups"
+msgstr ""
+
+#: modules/performance_monitor.class.php:284
+msgid "No grouped request history available yet."
+msgstr ""
+
+#: modules/performance_monitor.class.php:287
+#: modules/performance_monitor.class.php:321
+msgid "Type"
+msgstr ""
+
+#: modules/performance_monitor.class.php:287
+#: modules/performance_monitor.class.php:321
+msgid "Group"
+msgstr ""
+
+#: modules/performance_monitor.class.php:287
+msgid "Hits"
+msgstr ""
+
+#: modules/performance_monitor.class.php:287
+msgid "Average"
+msgstr ""
+
+#: modules/performance_monitor.class.php:287
+#: modules/performance_monitor.class.php:953
+msgid "Peak"
+msgstr ""
+
+#: modules/performance_monitor.class.php:304
+msgid "Maintenance"
+msgstr ""
+
+#: modules/performance_monitor.class.php:305
+#, php-format
+msgid "Retention is currently set to %s days."
+msgstr ""
+
+#: modules/performance_monitor.class.php:308
+msgid "Run cleanup now"
+msgstr ""
+
+#: modules/performance_monitor.class.php:309
+msgid "Reset history"
+msgstr ""
+
+#: modules/performance_monitor.class.php:310
+msgid "Open settings"
+msgstr ""
+
+#: modules/performance_monitor.class.php:316
+msgid "Latest requests"
+msgstr ""
+
+#: modules/performance_monitor.class.php:318
+msgid "No requests stored in the selected window."
+msgstr ""
+
+#: modules/performance_monitor.class.php:321
+#: modules/supporters/activity-log/ActivityLog_Table.class.php:398
+msgid "Time"
+msgstr ""
+
+#: modules/performance_monitor.class.php:321
+msgid "Method"
+msgstr ""
+
+#: modules/performance_monitor.class.php:321
+#: modules/supporters/database/DB_List_Table.class.php:137
+msgid "Status"
+msgstr ""
+
+#: modules/performance_monitor.class.php:321
+msgid "Duration"
+msgstr ""
+
+#: modules/performance_monitor.class.php:321
+msgid "Memory"
+msgstr ""
+
+#: modules/performance_monitor.class.php:321
+msgid "Queries"
+msgstr ""
+
+#: modules/performance_monitor.class.php:677
+msgid "Last 24 hours"
+msgstr ""
+
+#: modules/performance_monitor.class.php:678
+msgid "Last 7 days"
+msgstr ""
+
+#: modules/performance_monitor.class.php:679
+msgid "Last 30 days"
+msgstr ""
+
+#: modules/performance_monitor.class.php:834
+msgid "Average response time by request type"
+msgstr ""
+
+#: modules/performance_monitor.class.php:850
+#: modules/performance_monitor.class.php:942
+#, php-format
+msgid "%s hit"
+msgstr ""
+
+#: modules/performance_monitor.class.php:851
+#, php-format
+msgid "%s slow"
+msgstr ""
+
+#: modules/performance_monitor.class.php:886
+msgid "Response time trend"
+msgstr ""
+
+#: modules/performance_monitor.class.php:949
+msgid "Avg"
+msgstr ""
+
+#: modules/performance_monitor.class.php:957
+msgid "Slow"
+msgstr ""
+
+#: modules/performance_monitor.class.php:1019
+msgid "Small response time chart"
+msgstr ""
+
 #: modules/settings.class.php:98
 msgid "Cannot detect which module must be saved."
 msgstr ""
@@ -1446,10 +1810,6 @@ msgstr ""
 msgid "%s ago"
 msgstr ""
 
-#: modules/supporters/activity-log/ActivityLog_Table.class.php:398
-msgid "Time"
-msgstr ""
-
 #: modules/supporters/activity-log/ActivityLog_Table.class.php:399
 msgid "User"
 msgstr ""
@@ -1514,10 +1874,6 @@ msgstr ""
 
 #: modules/supporters/database/DB_List_Table.class.php:136
 msgid "Space lost"
-msgstr ""
-
-#: modules/supporters/database/DB_List_Table.class.php:137
-msgid "Status"
 msgstr ""
 
 #: modules/supporters/database/DB_List_Table.class.php:138
@@ -1646,7 +2002,7 @@ msgstr ""
 msgid "No Mails found."
 msgstr ""
 
-#: modules/tracking.class.php:23 modules/wp_mail.class.php:194
+#: modules/tracking.class.php:23 modules/wp_mail.class.php:337
 msgid "General"
 msgstr ""
 
@@ -2320,63 +2676,84 @@ msgstr ""
 msgid "All mails have been successfully deleted."
 msgstr ""
 
-#: modules/wp_mail.class.php:195
+#: modules/wp_mail.class.php:233
+msgid "No mail activity available yet."
+msgstr ""
+
+#: modules/wp_mail.class.php:303
+msgid "Total sent"
+msgstr ""
+
+#: modules/wp_mail.class.php:306
+msgid "Daily email volume"
+msgstr ""
+
+#: modules/wp_mail.class.php:307
+#, php-format
+msgid "Mail trend for the last %s day."
+msgstr ""
+
+#: modules/wp_mail.class.php:310
+msgid "Mails sent per day"
+msgstr ""
+
+#: modules/wp_mail.class.php:338
 msgid "Configuration Override"
 msgstr ""
 
-#: modules/wp_mail.class.php:196
+#: modules/wp_mail.class.php:339
 msgid "Mails logging"
 msgstr ""
 
-#: modules/wp_mail.class.php:197
+#: modules/wp_mail.class.php:340
 msgid "Delete mails older then a week"
 msgstr ""
 
-#: modules/wp_mail.class.php:201
+#: modules/wp_mail.class.php:344
 msgid "Server Conf"
 msgstr ""
 
-#: modules/wp_mail.class.php:202
+#: modules/wp_mail.class.php:345
 msgid "Host"
 msgstr ""
 
-#: modules/wp_mail.class.php:203 modules/wp_mail.class.php:204
+#: modules/wp_mail.class.php:346 modules/wp_mail.class.php:347
 msgid "Port"
 msgstr ""
 
-#: modules/wp_mail.class.php:208
+#: modules/wp_mail.class.php:351
 msgid "SMTP"
 msgstr ""
 
-#: modules/wp_mail.class.php:209
+#: modules/wp_mail.class.php:352
 msgid "Enable"
 msgstr ""
 
-#: modules/wp_mail.class.php:210
+#: modules/wp_mail.class.php:353
 msgid "Username"
 msgstr ""
 
-#: modules/wp_mail.class.php:211
+#: modules/wp_mail.class.php:354
 msgid "Password"
 msgstr ""
 
-#: modules/wp_mail.class.php:212
+#: modules/wp_mail.class.php:355
 msgid "Encryption"
 msgstr ""
 
-#: modules/wp_mail.class.php:213
+#: modules/wp_mail.class.php:356
 msgid "AutoTLS"
 msgstr ""
 
-#: modules/wp_mail.class.php:217
+#: modules/wp_mail.class.php:360
 msgid "SSL"
 msgstr ""
 
-#: modules/wp_mail.class.php:218
+#: modules/wp_mail.class.php:361
 msgid "Allow self signed ssl certificate"
 msgstr ""
 
-#: modules/wp_mail.class.php:226
+#: modules/wp_mail.class.php:369
 msgid ""
 "If enabled allow to inject the below connection specification into "
 "phpmailer of WordPress"
@@ -2867,4 +3244,36 @@ msgstr ""
 
 #: modules/wp_updates.class.php:147
 msgid "Disable automatic update notification emails sent by WordPress."
+msgstr ""
+
+#: vendors/wps-framework/UtilEnv.php:242
+msgid "Year"
+msgstr ""
+
+#: vendors/wps-framework/UtilEnv.php:242
+msgid "Years"
+msgstr ""
+
+#: vendors/wps-framework/UtilEnv.php:243
+msgid "Month"
+msgstr ""
+
+#: vendors/wps-framework/UtilEnv.php:243
+msgid "Months"
+msgstr ""
+
+#: vendors/wps-framework/UtilEnv.php:244
+msgid "Day"
+msgstr ""
+
+#: vendors/wps-framework/UtilEnv.php:244
+msgid "Days"
+msgstr ""
+
+#: vendors/wps-framework/UtilEnv.php:245
+msgid "Hour"
+msgstr ""
+
+#: vendors/wps-framework/UtilEnv.php:245
+msgid "Hours"
 msgstr ""

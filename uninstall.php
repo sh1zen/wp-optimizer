@@ -28,5 +28,6 @@ foreach ($option_names as $option_name) {
 $wpdb->query("DROP TABLE IF EXISTS " . wps('wpopt')->options->table_name());
 $wpdb->query("DROP TABLE IF EXISTS " . WPOPT_TABLE_ACTIVITY_LOG);
 $wpdb->query("DROP TABLE IF EXISTS " . WPOPT_TABLE_LOG_MAILS);
+$wpdb->query("DROP TABLE IF EXISTS " . WPOPT_TABLE_REQUEST_PERFORMANCE);
 
 wps_uninstall();

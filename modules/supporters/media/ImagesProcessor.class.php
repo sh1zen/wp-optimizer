@@ -62,7 +62,7 @@ class ImagesProcessor
         $media = wps('wpopt')->options->get_by_id($media_id);
 
         if ($unlink and $media) {
-            @unlink($media['obj_id']);
+            self::unlink_file_safely($media['obj_id']);
         }
 
         wps('wpopt')->options->remove_by_id($media_id);
@@ -225,7 +225,9 @@ class ImagesProcessor
 
         $image_path_container = UtilEnv::normalize_path(UtilEnv::wp_upload_dir('basedir') . '/' . $sub_path, true);
 
-        if ($this->optimize_image($image_path_container . basename($file), true) === IPC_SUCCESS) {
+        $optimized_main_image = $this->optimize_image($image_path_container . basename($file), true);
+
+        if ($optimized_main_image === IPC_SUCCESS) {
 
             $wpdb->update($wpdb->posts,
                 [
@@ -242,12 +244,18 @@ class ImagesProcessor
 
             update_post_meta($attachment_id, "_wp_attached_file", $metadata['file']);
         }
+        elseif ($optimized_main_image === IPC_MEDIA_NOT_FOUND) {
+            return IPC_MEDIA_NOT_FOUND;
+        }
 
         if (isset($metadata['original_image'])) {
+            $optimized_original_image = $this->optimize_image($image_path_container . $metadata['original_image'], true);
 
-            if ($this->optimize_image($image_path_container . $metadata['original_image'], true) === IPC_SUCCESS) {
-
+            if ($optimized_original_image === IPC_SUCCESS) {
                 $metadata['original_image'] = basename($this->get_metadata('file'));
+            }
+            elseif ($optimized_original_image === IPC_MEDIA_NOT_FOUND) {
+                unset($metadata['original_image']);
             }
         }
 
@@ -272,20 +280,24 @@ class ImagesProcessor
 
                     if (is_numeric($width) and is_numeric($height)) {
                         if ($width > $allowed_width or $height > $allowed_height) {
-                            if (file_exists($image_path_container . $image['file'])) {
-                                @unlink($image_path_container . $image['file']);
-                            }
+                            self::unlink_file_safely($image_path_container . $image['file']);
                             unset($metadata['sizes'][$size]);
+                            continue;
                         }
                     }
                 }
 
-                if ($this->optimize_image($image_path_container . $image['file'], true) === IPC_SUCCESS) {
+                $optimized_size = $this->optimize_image($image_path_container . $image['file'], true);
+
+                if ($optimized_size === IPC_SUCCESS) {
 
                     $new_metadata = $this->get_metadata('', []);
                     $new_metadata['file'] = basename($new_metadata['file']);
 
                     $metadata['sizes'][$size] = array_merge($image, $new_metadata);
+                }
+                elseif ($optimized_size === IPC_MEDIA_NOT_FOUND) {
+                    unset($metadata['sizes'][$size]);
                 }
             }
         }
@@ -301,6 +313,12 @@ class ImagesProcessor
 
         if (UtilEnv::safe_time_limit(3, 60) === false) {
             return IPC_TIME_LIMIT;
+        }
+
+        clearstatcache(true, $image_path);
+
+        if (!is_file($image_path)) {
+            return IPC_MEDIA_NOT_FOUND;
         }
 
         if (!is_writable($image_path)) {
@@ -324,8 +342,10 @@ class ImagesProcessor
             return IPC_FAIL;
         }
 
-        if ($remove_converted and file_exists($image_path)) {
-            @unlink($image_path);
+        $optimized_image_path = UtilEnv::normalize_path($metadata['file']);
+
+        if ($remove_converted and $optimized_image_path !== $image_path) {
+            self::unlink_file_safely($image_path);
         }
 
         if ($save_processed) {
@@ -554,5 +574,30 @@ class ImagesProcessor
             strtolower($getExtension),
             ['php', 'htaccess']
         );
+    }
+
+    private static function unlink_file_safely(string $file_path): bool
+    {
+        $file_path = UtilEnv::normalize_path($file_path);
+
+        if ($file_path === '') {
+            return false;
+        }
+
+        clearstatcache(true, $file_path);
+
+        if (!is_file($file_path)) {
+            return false;
+        }
+
+        set_error_handler(static function ($severity, $message, $file = null, $line = null): bool {
+            return true;
+        });
+
+        try {
+            return unlink($file_path);
+        } finally {
+            restore_error_handler();
+        }
     }
 }

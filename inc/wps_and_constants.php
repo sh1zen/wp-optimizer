@@ -80,6 +80,7 @@ function wpopt_setup_db_table_constants(): void
 
     define('WPOPT_TABLE_LOG_MAILS', "{$wpdb->prefix}wpopt_mails");
     define('WPOPT_TABLE_ACTIVITY_LOG', "{$wpdb->prefix}wpopt_activity_log");
+    define('WPOPT_TABLE_REQUEST_PERFORMANCE', "{$wpdb->prefix}wpopt_performance_monitor");
 
 }
 
