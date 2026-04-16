@@ -275,7 +275,13 @@ class Settings
 
     public function import($import_settings): bool
     {
-        $settings = unserialize(base64_decode($import_settings) ?: '');
+        $decoded_settings = base64_decode((string)$import_settings, true);
+
+        if (!is_string($decoded_settings) || '' === $decoded_settings) {
+            return false;
+        }
+
+        $settings = @unserialize($decoded_settings, ['allowed_classes' => false]);
 
         if (!$settings or !is_array($settings)) {
             return false;

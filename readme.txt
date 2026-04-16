@@ -5,7 +5,7 @@ Donate link: https://www.paypal.com/donate?business=dev.sh1zen%40outlook.it&item
 Requires at least: 5.0.0
 Tested up to: 6.9
 Requires PHP: 7.4
-Stable tag: 2.5.0
+Stable tag: 2.6.0
 License: GPLv2 or later
 
 WordPress performance optimization plugin with cache, minify, image optimization, database cleanup, security hardening and server tuning.
@@ -201,6 +201,14 @@ Deactivate the plugin and reactivate it. If this does not work, uninstall and re
 If needed, open the "Settings" module and run a reset.
 
 == Changelog ==
+
+= 2.6.0 =
+
+* fixed Activity Log authenticated SQL injection vulnerability (CVE-2026-6295) and hardened equivalent WP Mail search handling
+* hardened request actions with mandatory nonce validation and admin-only execution for sensitive actions
+* secured settings import, database action arguments and wpsargs parsing against unsafe deserialization
+* hardened database backup excluded-table handling in mysqldump commands
+* limited WP Mail message preview in the table and added popup view for full content
 
 = 2.5.0 =
 

@@ -82,13 +82,13 @@ class ActivityLog extends \WP_List_Table
 
     public function search_box($text, $input_id)
     {
-        $search_data = isset($_REQUEST['s']) ? sanitize_text_field($_REQUEST['s']) : '';
+        $search_data = $this->get_search_term($_REQUEST);
 
         $input_id = $input_id . '-search-input';
         ?>
         <p class="search-box">
-            <label class="screen-reader-text" for="<?php echo $input_id ?>"><?php echo $text; ?>:</label>
-            <input type="search" id="<?php echo $input_id ?>" name="s" value="<?php echo esc_attr($search_data); ?>"/>
+            <label class="screen-reader-text" for="<?php echo esc_attr($input_id); ?>"><?php echo esc_html($text); ?>:</label>
+            <input type="search" id="<?php echo esc_attr($input_id); ?>" name="s" value="<?php echo esc_attr($search_data); ?>"/>
             <?php submit_button($text, 'button', false, false, array('id' => 'search-submit')); ?>
         </p>
         <?php
@@ -120,7 +120,7 @@ class ActivityLog extends \WP_List_Table
 
         echo '<select name="filter_date" id="hs-filter-date">';
         foreach ($date_options as $key => $value) {
-            printf('<option value="%s" %s>%s</option>', $key, selected($_REQUEST['filter_date'], $key, false), $value);
+            printf('<option value="%s" %s>%s</option>', esc_attr($key), selected($_REQUEST['filter_date'], $key, false), esc_html($value));
         }
         echo '</select>';
 
@@ -135,9 +135,9 @@ class ActivityLog extends \WP_List_Table
             }
 
             echo '<select name="filter_action" id="hs-filter-filter_action">';
-            printf('<option value="">%s</option>', __('All Actions', 'wpopt'));
+            printf('<option value="">%s</option>', esc_html__('All Actions', 'wpopt'));
             foreach ($actions as $action) {
-                printf('<option value="%s"%s>%s</option>', $action, selected($_REQUEST['filter_action'], $action, false), $this->get_action_label($action));
+                printf('<option value="%s"%s>%s</option>', esc_attr((string)$action), selected($_REQUEST['filter_action'], $action, false), esc_html($this->get_action_label($action)));
             }
             echo '</select>';
         }
@@ -150,7 +150,7 @@ class ActivityLog extends \WP_List_Table
 
         foreach ($filters as $filter) {
             if (!empty($_REQUEST[$filter])) {
-                echo '<a href="' . $this->get_filtered_link() . '"><span class="dashicons dashicons-dismiss"></span>' . __('Reset Filters', 'wpopt') . '</a>';
+                echo '<a href="' . esc_url($this->get_filtered_link()) . '"><span class="dashicons dashicons-dismiss"></span>' . esc_html__('Reset Filters', 'wpopt') . '</a>';
                 break;
             }
         }
@@ -197,6 +197,90 @@ class ActivityLog extends \WP_List_Table
         return add_query_arg($name, $value, $base_page_url);
     }
 
+    private function get_search_term($request): string
+    {
+        $search = $request['s'] ?? '';
+
+        if (!is_scalar($search)) {
+            return '';
+        }
+
+        return sanitize_text_field(wp_unslash((string)$search));
+    }
+
+    private function uses_unsafe_like_subquery_pattern(string $search): bool
+    {
+        return '' !== $search && 1 === preg_match('#^[(\s]*SELECT\s+#i', $search);
+    }
+
+    private function filter_items_by_search(array $items, string $search, array $fields): array
+    {
+        if ('' === $search) {
+            return $items;
+        }
+
+        return array_values(array_filter($items, static function ($item) use ($search, $fields) {
+            foreach ($fields as $field) {
+                $value = '';
+
+                if (is_array($item) && isset($item[$field])) {
+                    $value = (string)$item[$field];
+                }
+                elseif (is_object($item) && isset($item->$field)) {
+                    $value = (string)$item->$field;
+                }
+
+                if ('' !== $value && false !== stripos($value, $search)) {
+                    return true;
+                }
+            }
+
+            return false;
+        }));
+    }
+
+    private function render_filter_link(string $name, $value, string $label): string
+    {
+        return sprintf(
+            '<a href="%s">%s</a>',
+            esc_url($this->get_filtered_link($name, (string)$value)),
+            esc_html($label)
+        );
+    }
+
+    private function render_plain_text(string $value): string
+    {
+        return '<span>' . esc_html($value) . '</span>';
+    }
+
+    private function render_serialized_value($value): string
+    {
+        return '<span>' . esc_html(var_export(maybe_unserialize($value), true)) . '</span>';
+    }
+
+    private function get_failed_login_meta($value): array
+    {
+        $user_data = maybe_unserialize($value);
+
+        if (!is_array($user_data)) {
+            $user_data = [];
+        }
+
+        $user_data = array_merge([
+            'username'           => '',
+            'password'           => '',
+            'password_encrypted' => '',
+            'password_present'   => false,
+            'enc_version'        => 0,
+        ], $user_data);
+
+        if ('' === (string)$user_data['password'] && '' !== (string)$user_data['password_encrypted']) {
+            $user_data['password'] = wpopt_decrypt_activity_log_password($user_data);
+        }
+
+        return $user_data;
+    }
+
     public function column_default($item, $column_name)
     {
         $return = false;
@@ -206,14 +290,14 @@ class ActivityLog extends \WP_List_Table
             case 'plugin':
             case 'attachments':
                 if ($column_name == 'meta') {
-                    $return = "<span>" . sanitize_text_field($item->value) . "</span>";
+                    $return = $this->render_plain_text((string)$item->value);
                 }
                 break;
 
             case '404':
                 if ($column_name == 'meta') {
-                    $value = esc_url($item->value);
-                    $return = "<a target='_blank' href='$value'>$value</a>";
+                    $value = esc_url((string)$item->value);
+                    $return = sprintf('<a target="_blank" rel="noopener noreferrer" href="%s">%s</a>', $value, esc_html($value));
                 }
                 break;
 
@@ -223,29 +307,29 @@ class ActivityLog extends \WP_List_Table
 
                     case 'user_id':
                         $user = wps_get_user($item->user_id ?: $item->object_id);
-                        $return = $user ? "<a href='" . $this->get_filtered_link('filter_user', $user->ID) . "'>$user->display_name</a>" : "<span>N/A</span>";
+                        $return = $user ? $this->render_filter_link('filter_user', $user->ID, $user->display_name) : '<span>N/A</span>';
                         break;
 
                     case 'meta':
-                        $user_data = array_merge(['username' => '', 'password' => ''], (array)maybe_unserialize($item->value) ?: []);
+                        $user_data = $this->get_failed_login_meta($item->value);
 
                         $return = $item->object_id ?
-                            "<a href='" . $this->get_filtered_link('filter_object_id', $item->object_id) . "'>" . esc_html($item->value) . "</a>" :
-                            "<span>username: <b>{$user_data['username']}</b></span><br><span>password: <b>{$user_data['password']}</b></span>";
+                            $this->render_filter_link('filter_object_id', $item->object_id, (string)$item->value) :
+                            '<span>username: <b>' . esc_html((string)$user_data['username']) . '</b></span><br><span>password: <b>' . esc_html((string)$user_data['password']) . '</b></span>';
                         break;
                 }
                 break;
 
             case 'post':
                 if ($column_name == 'meta') {
-                    $return = "<a href='" . $this->get_filtered_link('filter_object_id', $item->object_id) . "'>" . esc_html($item->value) . "</a>";
+                    $return = $this->render_filter_link('filter_object_id', $item->object_id, (string)$item->value);
                 }
                 break;
 
             case 'term':
                 if ($column_name == 'meta') {
                     $term_data = array_merge(['taxonomy' => '', 'name' => ''], (array)maybe_unserialize($item->value) ?: []);
-                    $return = "<a href='" . $this->get_filtered_link('filter_object_id', $item->object_id) . "'>{$term_data['taxonomy']} > {$term_data['name']}</a>";
+                    $return = $this->render_filter_link('filter_object_id', $item->object_id, trim($term_data['taxonomy'] . ' > ' . $term_data['name'], ' >'));
                 }
                 break;
         }
@@ -258,35 +342,35 @@ class ActivityLog extends \WP_List_Table
 
             case 'user_id':
                 $user = wps_get_user($item->user_id);
-                $return = $user ? "<a href='" . $this->get_filtered_link('filter_user', $user->ID) . "'>$user->display_name</a>" : "<span>N/A</span>";
+                $return = $user ? $this->render_filter_link('filter_user', $user->ID, $user->display_name) : '<span>N/A</span>';
                 break;
 
             case 'ip':
-                $return = "<a href='" . $this->get_filtered_link('filter_ip', $item->ip) . "'>$item->ip</a>";
+                $return = $this->render_filter_link('filter_ip', $item->ip, (string)$item->ip);
                 break;
 
             case 'action':
-                $return = "<a href='" . $this->get_filtered_link('filter_action', $item->action) . "'>" . $this->get_action_label($item->action) . "</a>";
+                $return = $this->render_filter_link('filter_action', $item->action, $this->get_action_label($item->action));
                 break;
 
             case 'request':
-                $return = "<span>" . var_export(maybe_unserialize($item->request), true) . "</span>";
+                $return = $this->render_serialized_value($item->request);
                 break;
 
             case 'time':
                 $return = sprintf('<strong>' . __('%s ago', 'wpopt') . '</strong>', human_time_diff($item->time, time()));
 
-                $return .= '<br/><a href="' . $this->get_filtered_link('filter_date', wp_date('d/m/Y', $item->time)) . '">' . date_i18n(get_option('date_format'), $item->time) . '</a>';
+                $return .= '<br/><a href="' . esc_url($this->get_filtered_link('filter_date', wp_date('d/m/Y', $item->time))) . '">' . esc_html(date_i18n(get_option('date_format'), $item->time)) . '</a>';
 
-                $return .= '<br/>' . date_i18n(get_option('time_format'), $item->time);
+                $return .= '<br/>' . esc_html(date_i18n(get_option('time_format'), $item->time));
                 break;
 
             case 'meta':
-                $return = '<span>' . esc_html($item->value ?? 'N/B') . '</span>';
+                $return = '<span>' . esc_html((string)($item->value ?? 'N/B')) . '</span>';
                 break;
 
             default:
-                $return = '<span>' . esc_html($item->$column_name ?? 'N/B') . '</span>';
+                $return = '<span>' . esc_html((string)($item->$column_name ?? 'N/B')) . '</span>';
         }
 
         return $return;
@@ -297,6 +381,8 @@ class ActivityLog extends \WP_List_Table
         if (empty($request)) {
             $request = $_REQUEST;
         }
+
+        $search_term = $this->get_search_term($request);
 
         $query = Query::getInstance();
         $query->tables(WPOPT_TABLE_ACTIVITY_LOG);
@@ -340,12 +426,12 @@ class ActivityLog extends \WP_List_Table
             }
         }
 
-        if (!empty($request['s'])) {
+        if ('' !== $search_term && !$this->uses_unsafe_like_subquery_pattern($search_term)) {
             $query->where(
                 [
-                    ['value' => $request['s'], 'compare' => 'LIKE'],
-                    ['user_agent' => $request['s'], 'compare' => 'LIKE'],
-                    ['request' => $request['s'], 'compare' => 'LIKE']
+                    ['value' => $search_term, 'compare' => 'LIKE'],
+                    ['user_agent' => $search_term, 'compare' => 'LIKE'],
+                    ['request' => $search_term, 'compare' => 'LIKE']
                 ],
                 'OR'
             );
@@ -357,13 +443,24 @@ class ActivityLog extends \WP_List_Table
     public function get_items($use_limit = false)
     {
         // get requested order and other filters from _wp_http_referer
-        parse_str(parse_url($_REQUEST['_wp_http_referer'] ?? '', PHP_URL_QUERY), $request);
+        parse_str(parse_url($_REQUEST['_wp_http_referer'] ?? '', PHP_URL_QUERY) ?: '', $request);
+
+        $search_term = $this->get_search_term($request);
+        $use_php_search_filter = $this->uses_unsafe_like_subquery_pattern($search_term);
 
         $query = $this->parse_query($request)->output(ARRAY_A);
 
         $items_per_page = $this->get_items_per_page('edit_wpopt_logs_per_page', 50);
 
         $offset = ($this->get_pagenum() - 1) * $items_per_page;
+
+        if ($use_php_search_filter) {
+            // Keep subquery-shaped input out of the shared query builder.
+            $items = $query->action('select')->columns('*')->query();
+            $items = $this->filter_items_by_search($items, $search_term, ['value', 'user_agent', 'request']);
+
+            return array_slice($items, $offset, $use_limit ? $items_per_page : null);
+        }
 
         if ($use_limit) {
             $query->limit($items_per_page);
@@ -375,15 +472,24 @@ class ActivityLog extends \WP_List_Table
     public function prepare_items()
     {
         $query = $this->parse_query();
+        $search_term = $this->get_search_term($_REQUEST);
+        $use_php_search_filter = $this->uses_unsafe_like_subquery_pattern($search_term);
 
         $items_per_page = $this->get_items_per_page('edit_wpopt_logs_per_page', 50);
         $this->_column_headers = array($this->get_columns(), $this->get_hidden_columns(), $this->get_sortable_columns());
 
         $offset = ($this->get_pagenum() - 1) * $items_per_page;
 
-        $total_items = $query->action('select')->columns('COUNT(*)')->query(true);
-
-        $this->items = $query->limit($items_per_page)->offset($offset)->action('select')->columns('*')->recompile()->query();
+        if ($use_php_search_filter) {
+            $items = $query->action('select')->columns('*')->query();
+            $items = $this->filter_items_by_search($items, $search_term, ['value', 'user_agent', 'request']);
+            $total_items = count($items);
+            $this->items = array_slice($items, $offset, $items_per_page);
+        }
+        else {
+            $total_items = $query->action('select')->columns('COUNT(*)')->query(true);
+            $this->items = $query->limit($items_per_page)->offset($offset)->action('select')->columns('*')->recompile()->query();
+        }
 
         $this->set_pagination_args(array(
             'total_items' => $total_items,

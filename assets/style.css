@@ -412,6 +412,55 @@
     box-shadow: 0 6px 14px rgb(16 24 40 / 12%);
 }
 
+.wps-wrap .wpopt-db-button-row {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 12px;
+}
+
+.wps-wrap .wpopt-db-button-row .wpopt-btn {
+    flex: 0 0 auto;
+    width: auto !important;
+    min-width: 140px;
+    max-width: 100%;
+    white-space: nowrap;
+}
+
+.wpopt-mail-message-cell {
+    min-width: 220px;
+}
+
+.wpopt-mail-message-preview {
+    color: #1d2327;
+    line-height: 1.5;
+    white-space: normal;
+    word-break: break-word;
+}
+
+.wpopt-mail-message-more {
+    display: inline-block;
+    margin-top: 8px;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.wpopt-mail-message-modal-text {
+    max-height: 60vh;
+    overflow: auto;
+    color: #1d2327;
+    line-height: 1.6;
+    word-break: break-word;
+}
+
+.wpopt-mail-message-modal-text p {
+    margin: 0 0 1em;
+}
+
+.wpopt-mail-message-modal-text p:last-child {
+    margin-bottom: 0;
+}
+
 .wpopt-sidebar .wps-box:last-child {
     margin-bottom: 0;
 }
@@ -554,6 +603,15 @@
 
     .wps-wrap .wpopt-settings-import .wpopt-btn {
         width: 100%;
+        min-width: 0;
+    }
+
+    .wps-wrap .wpopt-db-button-row .wpopt-btn {
+        width: 100% !important;
+        min-width: 0;
+    }
+
+    .wpopt-mail-message-cell {
         min-width: 0;
     }
 }

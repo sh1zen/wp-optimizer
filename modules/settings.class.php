@@ -37,6 +37,10 @@ class Mod_Settings extends Module
 
     public function actions(): void
     {
+        if (!is_admin() || !current_user_can('manage_options')) {
+            return;
+        }
+
         RequestActions::request($this->action_hook, function ($action) {
 
             $response = false;

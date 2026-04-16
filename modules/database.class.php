@@ -89,10 +89,12 @@ class Mod_Database extends Module
                 </tr>
                 <tr class="wps-centered">
                     <td>
-                        <input type="submit" name="button" value="<?php _e('Run', 'wpopt'); ?>" class="wps wps-button wpopt-btn is-warning"
-                               data-action="exec-sql"/>
-                        <input type="button" name="cancel" value="<?php _e('Clear', 'wpopt'); ?>" class="wps wps-button wpopt-btn is-neutral"
-                               onclick='document.getElementById("sql_query").value = ""'/>
+                        <div class="wpopt-db-button-row">
+                            <input type="submit" name="button" value="<?php _e('Run', 'wpopt'); ?>" class="wps wps-button wpopt-btn is-warning"
+                                   data-action="exec-sql"/>
+                            <input type="button" name="cancel" value="<?php _e('Clear', 'wpopt'); ?>" class="wps wps-button wpopt-btn is-neutral"
+                                   onclick='document.getElementById("sql_query").value = ""'/>
+                        </div>
                     </td>
                 </tr>
             </table>
@@ -212,14 +214,16 @@ class Mod_Database extends Module
                     </tr>
                     <tr>
                         <td colspan="6" class="wps-centered wps-actions">
-                            <input type="submit" name="action" value="<?php _e('Download', 'wpopt'); ?>"
-                                   class="wps wps-button wpopt-btn is-info" data-action="download"/>
-                            <input type="submit" name="action" value="<?php _e('Restore', 'wpopt'); ?>"
-                                   onclick="return confirm('<?php _e('Are you sure to restore selected backup?\nAny data inserted after the backup date will be lost.\n\nThis action is not reversible.', 'wpopt'); ?>')"
-                                   class="wps wps-button wpopt-btn is-warning" data-action="restore"/>
-                            <input type="submit" data-action="delete" class="wps wps-button wpopt-btn is-danger" name="action"
-                                   value="<?php _e('Delete', 'wpopt'); ?>"
-                                   onclick="return confirm('<?php _e('Are you sure to delete selected backup?', 'wpopt'); ?>')"/>&nbsp;&nbsp;
+                            <div class="wpopt-db-button-row">
+                                <input type="submit" name="action" value="<?php _e('Download', 'wpopt'); ?>"
+                                       class="wps wps-button wpopt-btn is-info" data-action="download"/>
+                                <input type="submit" name="action" value="<?php _e('Restore', 'wpopt'); ?>"
+                                       onclick="return confirm('<?php _e('Are you sure to restore selected backup?\nAny data inserted after the backup date will be lost.\n\nThis action is not reversible.', 'wpopt'); ?>')"
+                                       class="wps wps-button wpopt-btn is-warning" data-action="restore"/>
+                                <input type="submit" data-action="delete" class="wps wps-button wpopt-btn is-danger" name="action"
+                                       value="<?php _e('Delete', 'wpopt'); ?>"
+                                       onclick="return confirm('<?php _e('Are you sure to delete selected backup?', 'wpopt'); ?>')"/>
+                            </div>
                         </td>
                     </tr>
                 </table>
@@ -268,11 +272,13 @@ class Mod_Database extends Module
                     </tr>
                     <tr>
                         <td colspan="2" class="wps-centered wps-actions">
-                            <input data-action="backup" type="submit" name="action"
-                                   value="<?php _e('Backup now', 'wpopt'); ?>"
-                                   class="wps wps-button wpopt-btn is-success"/>
-                            <a class="wps wps-button wpopt-btn is-neutral"
-                               href="<?php echo wps_module_setting_url('wpopt', 'database') ?>">Settings</a>
+                            <div class="wpopt-db-button-row">
+                                <input data-action="backup" type="submit" name="action"
+                                       value="<?php _e('Backup now', 'wpopt'); ?>"
+                                       class="wps wps-button wpopt-btn is-success"/>
+                                <a class="wps wps-button wpopt-btn is-neutral"
+                                   href="<?php echo wps_module_setting_url('wpopt', 'database') ?>">Settings</a>
+                            </div>
                         </td>
                     </tr>
                 </table>
@@ -286,15 +292,27 @@ class Mod_Database extends Module
     {
         $response = false;
 
-        $action_args = empty($args['options']) ? '' : unserialize(base64_decode($args['options']));
+        $action_args = [];
+
+        if (!empty($args['options']) && is_string($args['options'])) {
+            $decoded_options = base64_decode($args['options'], true);
+
+            if (is_string($decoded_options) && '' !== $decoded_options) {
+                $decoded_args = @unserialize($decoded_options, ['allowed_classes' => false]);
+
+                if (is_array($decoded_args)) {
+                    $action_args = $decoded_args;
+                }
+            }
+        }
 
         $form_data = array();
-        parse_str($args['form_data'], $form_data);
+        parse_str((string)($args['form_data'] ?? ''), $form_data);
 
         switch ($args['action']) {
 
             case 'exec-sql':
-                $response = $this->exec_sql($form_data['sql_query']);
+                $response = $this->exec_sql((string)($form_data['sql_query'] ?? ''));
                 break;
 
             case 'delete':
@@ -305,15 +323,24 @@ class Mod_Database extends Module
                 break;
 
             case 'sweep_details':
-                $response = DBSupport::details($action_args['sweep-name']);
+                $sweep_name = (string)($action_args['sweep-name'] ?? '');
+                $response = $sweep_name ? DBSupport::details($sweep_name) : false;
                 break;
 
             case 'sweep':
-                $sweep = DBSupport::sweep($action_args['sweep-name'], $this->option('sweep', array()));
+                $sweep_name = (string)($action_args['sweep-name'] ?? '');
+                $sweep_type = (string)($action_args['sweep-type'] ?? '');
 
-                $count = DBSupport::count($action_args['sweep-name'], $this->option('sweep', array()));
+                if ('' === $sweep_name || '' === $sweep_type) {
+                    $response = false;
+                    break;
+                }
 
-                $total_count = DBSupport::total_count($action_args['sweep-type']);
+                $sweep = DBSupport::sweep($sweep_name, $this->option('sweep', array()));
+
+                $count = DBSupport::count($sweep_name, $this->option('sweep', array()));
+
+                $total_count = DBSupport::total_count($sweep_type);
 
                 $response = array(
                         'sweep'      => $sweep,

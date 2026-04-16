@@ -15,6 +15,7 @@ use WPS\core\Query;
 use WPS\core\RequestActions;
 use WPS\core\Rewriter;
 use WPS\core\StringHelper;
+use WPS\core\UtilEnv;
 use WPS\modules\Module;
 
 class Mod_WP_Mail extends Module
@@ -31,6 +32,10 @@ class Mod_WP_Mail extends Module
             CronActions::schedule("WPOPT-WP-Mails", DAY_IN_SECONDS, function () {
                  Query::getInstance()->delete(['sent_date' => wps_time('mysql', WEEK_IN_SECONDS), 'compare' => '<'], WPOPT_TABLE_LOG_MAILS)->query();
             }, '08:00');
+        }
+
+        if (!is_admin() || !current_user_can('manage_options')) {
+            return;
         }
 
         RequestActions::request($this->action_hook, function ($action) {
@@ -152,6 +157,19 @@ class Mod_WP_Mail extends Module
         if (filter_input(INPUT_GET, 'message') == 'wpopt-wpmails-data-erased') {
             $this->add_notices('success', __('All mails have been successfully deleted.', 'wpopt'));
         }
+    }
+
+    public function enqueue_scripts(): void
+    {
+        parent::enqueue_scripts();
+
+        wp_enqueue_script(
+            'wpopt-mail-log-page',
+            UtilEnv::path_to_url(WPOPT_ABSPATH) . 'modules/supporters/wp-mails/wp-mails.js',
+            array('vendor-wps-js'),
+            WPOPT_VERSION,
+            true
+        );
     }
 
     public function render_sub_modules(): void

@@ -66,6 +66,10 @@ class Mod_Performance_Monitor extends Module
             $this->cleanup_history();
         }, '02:30');
 
+        if (!is_admin() || !current_user_can('manage_options')) {
+            return;
+        }
+
         RequestActions::request($this->action_hook, function ($action) {
             global $wpdb;
 

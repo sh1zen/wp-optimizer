@@ -723,8 +723,12 @@ class DBSupport
         // The file we're saving too
         $cmd .= ' -r ' . escapeshellarg($SQLfilename);
 
-        if (!empty($_excluded_tables)) {
-            $cmd .= implode(' --ignore-table=' . DB_NAME . '.', $_excluded_tables);
+        $excluded_tables = self::filter_existing_table_names((array)$_excluded_tables);
+
+        if (!empty($excluded_tables)) {
+            foreach ($excluded_tables as $table) {
+                $cmd .= ' --ignore-table=' . escapeshellarg(DB_NAME . '.' . $table);
+            }
         }
 
         // The database we're dumping
@@ -750,6 +754,28 @@ class DBSupport
         }
 
         return true;
+    }
+
+    private static function filter_existing_table_names(array $tables): array
+    {
+        global $wpdb;
+
+        $existing_tables = array_flip(array_map('strval', (array)$wpdb->get_col('SHOW TABLES')));
+        $valid_tables = [];
+
+        foreach ($tables as $table) {
+            $table = (string)$table;
+
+            if ('' === $table || !preg_match('/^[A-Za-z0-9_$]+$/', $table)) {
+                continue;
+            }
+
+            if (isset($existing_tables[$table])) {
+                $valid_tables[$table] = $table;
+            }
+        }
+
+        return array_values($valid_tables);
     }
 
     public static function get_mysqlDump_cmd_path($mysqldump_path = '')

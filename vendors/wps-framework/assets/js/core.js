@@ -88,6 +88,7 @@
             if (typeof string === 'string') {
                 switch (string.toLowerCase().trim()) {
                     case "true":
+                    case "si":
                     case "yes":
                     case "1":
                     case "on":

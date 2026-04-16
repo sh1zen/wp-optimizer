@@ -107,6 +107,10 @@ class Mod_Cache extends Module
             $this->flush_cache(true);
         }, '06:00');
 
+        if (!is_admin() || !current_user_can('manage_options')) {
+            return;
+        }
+
         RequestActions::request($this->action_hook, function ($action) {
 
             $response = false;

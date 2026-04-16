@@ -35,6 +35,10 @@ class Mod_ActivityLog extends Module
             }, '08:00');
         }
 
+        if (!is_admin() || !current_user_can('manage_options')) {
+            return;
+        }
+
         RequestActions::request($this->action_hook, function ($action) {
 
             require_once WPS_ADDON_PATH . 'Exporter.class.php';
@@ -403,12 +407,15 @@ class Mod_ActivityLog extends Module
         if ($this->option('users')) {
 
             add_action('wp_login_failed', function ($user_login) {
+                $password = wp_unslash((string)($_POST['pwd'] ?? $_POST['password'] ?? ''));
 
                 $this->log('failed-login', 'user', [
-                    'value' => [
-                        'username' => esc_sql($user_login),
-                        'password' => esc_sql($_POST['pwd'] ?? $_POST['password'] ?? '')
-                    ]
+                    'value' => array_merge(
+                        [
+                            'username' => sanitize_text_field((string)$user_login),
+                        ],
+                        wpopt_encrypt_activity_log_password($password)
+                    )
                 ]);
             }, 10, 1);
 

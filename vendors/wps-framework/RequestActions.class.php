@@ -32,7 +32,9 @@ class RequestActions
             return;
         }
 
-        if (!empty($_REQUEST[self::$nonce_name]) and !UtilEnv::verify_nonce(self::$nonce_action, $_REQUEST[self::$nonce_name])) {
+        $nonce = $_REQUEST[self::$nonce_name] ?? '';
+
+        if (!is_string($nonce) || '' === $nonce || !UtilEnv::verify_nonce(self::$nonce_action, $nonce)) {
 
             if (!wp_doing_ajax()) {
                 return;

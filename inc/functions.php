@@ -82,3 +82,125 @@ function wpopt_minify_javascript($css, $options = [])
     return \WPOptimizer\modules\supporters\Minify_JS::minify($css, $options);
 }
 
+function wpopt_get_activity_log_password_encryption_key(): string
+{
+    static $key = null;
+
+    if (is_string($key)) {
+        return $key;
+    }
+
+    $key_material = implode('|', [
+        wp_salt('auth'),
+        wp_salt('secure_auth'),
+        wp_salt('logged_in'),
+        'wpopt-activity-log-password',
+    ]);
+
+    $key = hash('sha256', $key_material, true);
+
+    return $key;
+}
+
+function wpopt_encrypt_activity_log_password(string $password): array
+{
+    $payload = [
+        'password_encrypted' => '',
+        'password_present'   => '' !== $password,
+        'enc_version'        => 1,
+    ];
+
+    if ('' === $password || !function_exists('openssl_encrypt')) {
+        return $payload;
+    }
+
+    $cipher = 'aes-256-gcm';
+    $iv_length = openssl_cipher_iv_length($cipher);
+
+    if (!is_int($iv_length) || $iv_length <= 0) {
+        return $payload;
+    }
+
+    try {
+        $iv = random_bytes($iv_length);
+    }
+    catch (\Exception $exception) {
+        return $payload;
+    }
+
+    $tag = '';
+    $ciphertext = openssl_encrypt(
+        $password,
+        $cipher,
+        wpopt_get_activity_log_password_encryption_key(),
+        OPENSSL_RAW_DATA,
+        $iv,
+        $tag,
+        'wpopt-activity-log-password-v1'
+    );
+
+    if (!is_string($ciphertext) || '' === $ciphertext || !is_string($tag) || '' === $tag) {
+        return $payload;
+    }
+
+    $encoded_payload = wp_json_encode([
+        'v'   => 1,
+        'iv'  => base64_encode($iv),
+        'tag' => base64_encode($tag),
+        'ct'  => base64_encode($ciphertext),
+    ]);
+
+    if (!is_string($encoded_payload) || '' === $encoded_payload) {
+        return $payload;
+    }
+
+    $payload['password_encrypted'] = base64_encode($encoded_payload);
+
+    return $payload;
+}
+
+function wpopt_decrypt_activity_log_password($payload): string
+{
+    if (!is_array($payload)) {
+        return '';
+    }
+
+    $encrypted_payload = $payload['password_encrypted'] ?? '';
+
+    if (!is_string($encrypted_payload) || '' === $encrypted_payload || !function_exists('openssl_decrypt')) {
+        return '';
+    }
+
+    $decoded_payload = base64_decode($encrypted_payload, true);
+
+    if (!is_string($decoded_payload) || '' === $decoded_payload) {
+        return '';
+    }
+
+    $decoded_payload = json_decode($decoded_payload, true);
+
+    if (!is_array($decoded_payload) || (int)($decoded_payload['v'] ?? 0) !== 1) {
+        return '';
+    }
+
+    $iv = base64_decode((string)($decoded_payload['iv'] ?? ''), true);
+    $tag = base64_decode((string)($decoded_payload['tag'] ?? ''), true);
+    $ciphertext = base64_decode((string)($decoded_payload['ct'] ?? ''), true);
+
+    if (!is_string($iv) || !is_string($tag) || !is_string($ciphertext) || '' === $tag) {
+        return '';
+    }
+
+    $decrypted = openssl_decrypt(
+        $ciphertext,
+        'aes-256-gcm',
+        wpopt_get_activity_log_password_encryption_key(),
+        OPENSSL_RAW_DATA,
+        $iv,
+        $tag,
+        'wpopt-activity-log-password-v1'
+    );
+
+    return is_string($decrypted) ? $decrypted : '';
+}
+
