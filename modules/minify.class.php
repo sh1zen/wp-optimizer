@@ -186,8 +186,19 @@ class Mod_Minify extends Module
         return false;
     }
 
+    private function has_active_minifiers(): bool
+    {
+        return (bool)$this->option('html.active', false)
+            || (bool)$this->option('js.active', false)
+            || (bool)$this->option('css.active', false);
+    }
+
     public function init(): void
     {
+        if (!$this->has_active_minifiers()) {
+            return;
+        }
+
         require_once WPOPT_SUPPORTERS . '/minifier/Minify.class.php';
         require_once WPOPT_SUPPORTERS . '/minifier/Minify_HTML.class.php';
         require_once WPOPT_SUPPORTERS . '/minifier/Minify_CSS.class.php';

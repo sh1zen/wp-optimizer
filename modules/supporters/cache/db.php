@@ -127,6 +127,10 @@ class WPOPT_DB extends wpdb
         $result = $wpopt->storage->get($key, self::get_cache_group());
 
         if (!$result) {
+            if (function_exists('wpopt_record_cache_metric')) {
+                wpopt_record_cache_metric('db', 'miss');
+            }
+
             $this->timer_start();
             $result = parent::get_var($query, $x, $y);
 
@@ -135,6 +139,9 @@ class WPOPT_DB extends wpdb
                     $wpopt->storage->set($result, $key, self::get_cache_group(), WPOPT_CACHE_DB_LIFETIME);
                 }
             }
+        }
+        elseif (function_exists('wpopt_record_cache_metric')) {
+            wpopt_record_cache_metric('db', 'hit');
         }
 
         return $result;
@@ -152,6 +159,10 @@ class WPOPT_DB extends wpdb
         $result = $wpopt->storage->get($key, self::get_cache_group());
 
         if (!$result) {
+            if (function_exists('wpopt_record_cache_metric')) {
+                wpopt_record_cache_metric('db', 'miss');
+            }
+
             $this->timer_start();
             $result = parent::get_results($query, $output);
 
@@ -160,6 +171,9 @@ class WPOPT_DB extends wpdb
                     $wpopt->storage->set($result, $key, self::get_cache_group(), WPOPT_CACHE_DB_LIFETIME);
                 }
             }
+        }
+        elseif (function_exists('wpopt_record_cache_metric')) {
+            wpopt_record_cache_metric('db', 'hit');
         }
 
         return $result;
@@ -177,6 +191,10 @@ class WPOPT_DB extends wpdb
         $result = $wpopt->storage->get($key, self::get_cache_group());
 
         if (!$result) {
+            if (function_exists('wpopt_record_cache_metric')) {
+                wpopt_record_cache_metric('db', 'miss');
+            }
+
             $this->timer_start();
             $result = parent::get_col($query, $x);
 
@@ -185,6 +203,9 @@ class WPOPT_DB extends wpdb
                     $wpopt->storage->set($result, $key, self::get_cache_group(), WPOPT_CACHE_DB_LIFETIME);
                 }
             }
+        }
+        elseif (function_exists('wpopt_record_cache_metric')) {
+            wpopt_record_cache_metric('db', 'hit');
         }
 
         return $result;
@@ -202,6 +223,10 @@ class WPOPT_DB extends wpdb
         $result = $wpopt->storage->get($key, self::get_cache_group());
 
         if (!$result) {
+            if (function_exists('wpopt_record_cache_metric')) {
+                wpopt_record_cache_metric('db', 'miss');
+            }
+
             $this->timer_start();
             $result = parent::get_row($query, $output, $y);
 
@@ -210,6 +235,9 @@ class WPOPT_DB extends wpdb
                     $wpopt->storage->set($result, $key, self::get_cache_group(), WPOPT_CACHE_DB_LIFETIME);
                 }
             }
+        }
+        elseif (function_exists('wpopt_record_cache_metric')) {
+            wpopt_record_cache_metric('db', 'hit');
         }
 
         return $result;

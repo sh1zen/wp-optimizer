@@ -36,6 +36,9 @@ class QueryCache extends Cache_Dispatcher
             $posts = $this->restore_cached_object($cached_data['posts']);
 
             if (!is_null($posts)) {
+                if (function_exists('wpopt_record_cache_metric')) {
+                    wpopt_record_cache_metric('query', 'hit');
+                }
 
                 $wp_query->found_posts = $cached_data['found_posts'] ?? 0;
                 $wp_query->max_num_pages = ceil($cached_data['found_posts'] / $wp_query->get('posts_per_page'));
@@ -43,6 +46,9 @@ class QueryCache extends Cache_Dispatcher
         }
 
         if (is_null($posts)) {
+            if (function_exists('wpopt_record_cache_metric')) {
+                wpopt_record_cache_metric('query', 'miss');
+            }
             $this->data[$wp_query->query_vars_hash] = [];
         }
 

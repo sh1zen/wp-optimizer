@@ -5,7 +5,7 @@ Donate link: https://www.paypal.com/donate?business=dev.sh1zen%40outlook.it&item
 Requires at least: 5.0.0
 Tested up to: 6.9
 Requires PHP: 7.4
-Stable tag: 2.6.0
+Stable tag: 2.6.5
 License: GPLv2 or later
 
 WordPress performance optimization plugin with cache, minify, image optimization, database cleanup, security hardening and server tuning.
@@ -166,41 +166,65 @@ WordPress plugin.
 
 == Frequently Asked Questions ==
 
-= Why use WP Optimizer for database optimization? =
+= What should I enable first on a live site? =
 
-* **Overview:** the plugin gives visibility on unused and orphaned database items that should be cleaned.
-* **Auto optimize:** you can define what to clean, optimize, or repair automatically.
-* **Backup manager:** helps manage database backups.
-* **Benefits:** database cleanup reduces bloat, improves speed, and makes backups faster.
+Start with lower-risk optimizations first:
 
-= Why use WP Optimizer for image optimization? =
+* Browser cache and compression
+* Media optimization for new uploads
+* A database backup before cleanup tasks
 
-* **Privacy:** optimization runs on your server using PHP modules such as Imagick or GD.
-* **Quality handling:** optimize images while preserving visual quality.
-* **Auto optimize:** process uploaded images automatically.
-* **Save space:** reduce media file size and improve loading speed.
-* **Benefits:** faster pages, lower storage usage, cleaner media library.
+After that, enable cache and minify one option at a time and test the front end after each change.
 
-= Why does speed matter? =
+= Can cache or minify break my layout? =
 
-Search engines like Google use speed and user experience signals in ranking systems. Faster websites usually improve usability, conversions, and crawl efficiency.
+Yes. Minification and aggressive caching can expose theme or plugin conflicts.
 
-Speed is one of the most relevant success factors for modern websites.
+* Enable HTML, CSS, and JavaScript minification separately
+* Clear cache after each change
+* If something breaks, disable the last option you enabled first
 
-Some common consequences of poor performance are:
+= Why are image optimization jobs not starting? =
 
-* Lower perceived credibility and quality
-* Increased user frustration
-* Reduced conversion rates
-* Increased exit rates
-* Lower content discoverability
+Bulk media optimization runs in background, so it depends on your scheduler and PHP image libraries.
 
-= What to do if I run in some issues after upgrade? =
+* WP-Cron or a real server cron must be working
+* Imagick or GD must be available in PHP
+* Large media libraries can take time to finish
+* Review media settings before launching a full scan
 
-Deactivate the plugin and reactivate it. If this does not work, uninstall and reinstall it.
-If needed, open the "Settings" module and run a reset.
+= Do I need Redis or Memcached for object cache? =
+
+Only for the object cache feature. Browser cache, static cache, database/query cache, compression, and minify can still be used without Redis or Memcached.
+
+= How can I clean the database safely? =
+
+Create a fresh backup first, then clean up in small steps.
+
+* Back up the database before removing revisions, transients, or orphaned data
+* Avoid cleanup during migrations, imports, or major plugin/theme updates
+* Restore the backup instead of guessing if the result is not what you expected
+
+= Can I export or restore plugin settings? =
+
+Yes. The Settings module can export, import, reset, and restore plugin options. This is useful before testing aggressive tuning or when moving the same configuration between staging and production.
+
+= Does WP Optimizer work on multisite? =
+
+Yes. The plugin supports multisite and can be network activated. Each subsite may still have different themes, plugins, and traffic patterns, so test cache, minify, and security changes gradually.
+
+= What should I do if something looks wrong after an update or settings change? =
+
+Disable the last module or option you enabled, clear cache, and test again. If the issue started after an update, deactivate and reactivate the plugin first.
+
+If needed, open the Settings module to restore or reset options, then re-enable features one by one.
 
 == Changelog ==
+
+= 2.6.5 =
+
+* added to PerformanceMonitor SQL monitor, Cache hit/miss, plugin time and memory footprint
+* improved core security hardening
 
 = 2.6.0 =
 

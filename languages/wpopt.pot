@@ -4,7 +4,7 @@ msgstr ""
 "Project-Id-Version: wpopt-translation\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/wp-"
 "optimizer/\n"
-"POT-Creation-Date: 2026-04-16 13:48+0200\n"
+"POT-Creation-Date: 2026-04-22 22:35+0200\n"
 "PO-Revision-Date: 2020-05-13 02:34+0200\n"
 "Last-Translator: sh1zen\n"
 "Language-Team: sh1zen\n"
@@ -21,187 +21,263 @@ msgstr ""
 "X-Poedit-SearchPath-0: .\n"
 "X-Poedit-SearchPathExcluded-0: languages\n"
 
-#: admin/PagesHandler.class.php:45
-#, php-format
-msgid ""
-"Buy me a coffe <a target='_blank' href='%s'>here</a> or leave a review "
-"<a target='_blank' href='%s'>here</a>."
+#: admin/PagesHandler.class.php:47
+msgid "Enjoying WP Optimizer?"
 msgstr ""
 
-#: admin/PagesHandler.class.php:46
+#: admin/PagesHandler.class.php:48
+msgid ""
+"If the plugin is saving you time or improving site performance, a "
+"donation helps fund maintenance and new features. A 5-star review "
+"helps more users discover it."
+msgstr ""
+
+#: admin/PagesHandler.class.php:50
+msgid "Support development"
+msgstr ""
+
+#: admin/PagesHandler.class.php:51 admin/PagesHandler.class.php:561
+msgid "Leave a 5-star review"
+msgstr ""
+
+#: admin/PagesHandler.class.php:52
 msgid "Dismiss"
 msgstr ""
 
-#: admin/PagesHandler.class.php:74
+#: admin/PagesHandler.class.php:80
 msgid "WPOPT Modules Options"
 msgstr ""
 
-#: admin/PagesHandler.class.php:74
+#: admin/PagesHandler.class.php:80
 msgid "Modules"
 msgstr ""
 
-#: admin/PagesHandler.class.php:79
+#: admin/PagesHandler.class.php:85
 msgid "WPOPT Settings"
 msgstr ""
 
-#: admin/PagesHandler.class.php:79 admin/PluginInit.class.php:209
+#: admin/PagesHandler.class.php:85 admin/PluginInit.class.php:209
 msgid "Settings"
 msgstr ""
 
-#: admin/PagesHandler.class.php:84
+#: admin/PagesHandler.class.php:90
 msgid "WPOPT FAQ"
 msgstr ""
 
-#: admin/PagesHandler.class.php:84
+#: admin/PagesHandler.class.php:90
 msgid "FAQ"
 msgstr ""
 
-#: admin/PagesHandler.class.php:131 modules/wp_info.class.php:123
+#: admin/PagesHandler.class.php:142 modules/wp_info.class.php:123
 #: modules/wp_info.class.php:189
 msgid "N/A"
 msgstr ""
 
-#: admin/PagesHandler.class.php:132
+#: admin/PagesHandler.class.php:143
 msgid "Settings Saved"
 msgstr ""
 
-#: admin/PagesHandler.class.php:133
+#: admin/PagesHandler.class.php:144
 msgid "Request fail"
 msgstr ""
 
-#: admin/PagesHandler.class.php:134
+#: admin/PagesHandler.class.php:145
 msgid "Request succeed"
 msgstr ""
 
-#: admin/PagesHandler.class.php:135 admin/PagesHandler.class.php:291
+#: admin/PagesHandler.class.php:146 admin/PagesHandler.class.php:403
 msgid "Running"
 msgstr ""
 
-#: admin/PagesHandler.class.php:136
+#: admin/PagesHandler.class.php:147
 msgid "Autosaving..."
 msgstr ""
 
-#: admin/PagesHandler.class.php:137
+#: admin/PagesHandler.class.php:148
 msgid "All changes saved"
 msgstr ""
 
-#: admin/PagesHandler.class.php:138
+#: admin/PagesHandler.class.php:149
 msgid "Autosave failed"
 msgstr ""
 
-#: admin/PagesHandler.class.php:140
+#: admin/PagesHandler.class.php:151
 msgid ""
 "WP Optimizer is running an action. If you leave now, it may not be "
 "completed."
 msgstr ""
 
-#: admin/PagesHandler.class.php:151
+#: admin/PagesHandler.class.php:162
 msgid "Frequently Asked Questions"
 msgstr ""
 
-#: admin/PagesHandler.class.php:153
+#: admin/PagesHandler.class.php:164
 msgid ""
 "Find quick answers about optimization workflows, privacy, and "
 "configuration paths."
 msgstr ""
 
-#: admin/PagesHandler.class.php:155
+#: admin/PagesHandler.class.php:166
 msgid "Back to Dashboard"
 msgstr ""
 
-#: admin/PagesHandler.class.php:156
+#: admin/PagesHandler.class.php:167
 msgid "Open Modules Options"
 msgstr ""
 
-#: admin/PagesHandler.class.php:164
-msgid "What this plugin can do and how does it work?"
-msgstr ""
-
-#: admin/PagesHandler.class.php:169
-msgid ""
-"This plugin is privacy oriented: every data stay on your server, is "
-"not necessary to send data to other servers."
-msgstr ""
-
-#: admin/PagesHandler.class.php:171
-msgid ""
-"WPOPT has been designed to improve the performance of your site, "
-"covering many aspects (if actived):"
-msgstr ""
-
-#: admin/PagesHandler.class.php:173
-msgid ""
-"Server enhancements: from basic .htaccess rules media compression "
-"(gzip, brotli)."
-msgstr ""
-
-#: admin/PagesHandler.class.php:174
-msgid ""
-"Cron enhancements: can reduce the WordPres cron execution to custom "
-"intervals."
-msgstr ""
-
 #: admin/PagesHandler.class.php:175
-msgid "Database enhancements: from query caching to session storage."
-msgstr ""
-
-#: admin/PagesHandler.class.php:176
-msgid "Security enhancements: from WordPress api to HTTP requests."
-msgstr ""
-
-#: admin/PagesHandler.class.php:177
-msgid "Browser caching system."
-msgstr ""
-
-#: admin/PagesHandler.class.php:178
-msgid ""
-"Server caching: supporting query caching, static pages caching and "
-"database caching."
-msgstr ""
-
-#: admin/PagesHandler.class.php:179
-msgid "Media (CSS, JavaScript, HTML) minification."
+msgid "What can this plugin do and how does it work?"
 msgstr ""
 
 #: admin/PagesHandler.class.php:180
-msgid "Local image compression and resizing, with custom specs."
-msgstr ""
-
-#: admin/PagesHandler.class.php:181
-msgid "Some most requested WordPress customizations."
+msgid ""
+"This plugin is privacy-oriented: optimization runs on your server and "
+"does not require sending your site data to third-party services."
 msgstr ""
 
 #: admin/PagesHandler.class.php:182
-msgid "WordPress and plugins updates blocker."
+msgid ""
+"WP Optimizer is modular, so you can enable only the features you need "
+"to keep the plugin overhead low."
+msgstr ""
+
+#: admin/PagesHandler.class.php:184
+msgid ""
+"Server enhancements such as compression, browser caching, "
+"and .htaccess rules."
 msgstr ""
 
 #: admin/PagesHandler.class.php:185
 msgid ""
-"This plugin has been developed in modules so that you can activate "
-"only essential ones based on your necessity to reduce the overload of "
-"the plugin itself."
+"Caching layers for queries, database results, objects, and static "
+"pages."
+msgstr ""
+
+#: admin/PagesHandler.class.php:186
+msgid "Minification for HTML, CSS, and JavaScript."
+msgstr ""
+
+#: admin/PagesHandler.class.php:187
+msgid "Local image optimization and conversion workflows."
+msgstr ""
+
+#: admin/PagesHandler.class.php:188
+msgid "Database cleanup, optimization, and backups."
+msgstr ""
+
+#: admin/PagesHandler.class.php:189
+msgid "Security hardening and WordPress behavior toggles."
+msgstr ""
+
+#: admin/PagesHandler.class.php:190
+msgid "Update controls, diagnostics, logs, and admin utilities."
 msgstr ""
 
 #: admin/PagesHandler.class.php:192
-msgid "Where can I configure optimization parameters?"
+msgid ""
+"Because modules can affect different parts of WordPress, the safest "
+"approach is to enable one feature at a time and test the front end "
+"after each change."
 msgstr ""
 
-#: admin/PagesHandler.class.php:196
-#, php-format
-msgid ""
-"Any module option is configurable in <a href=\"%s\">Modules Options "
-"panel</a>."
+#: admin/PagesHandler.class.php:199
+msgid "What should I enable first on a live site?"
 msgstr ""
 
 #: admin/PagesHandler.class.php:203
-msgid "How media optimizer works?"
+msgid ""
+"Start with lower-risk optimizations, then move to the more aggressive "
+"ones only after testing."
+msgstr ""
+
+#: admin/PagesHandler.class.php:205
+#, php-format
+msgid ""
+"Begin with <a href=\"%s\">browser cache and compression settings</a> "
+"because they usually improve delivery without changing page logic."
+msgstr ""
+
+#: admin/PagesHandler.class.php:206
+#, php-format
+msgid ""
+"Configure <a href=\"%s\">media optimization</a> for new uploads before "
+"launching large bulk jobs."
 msgstr ""
 
 #: admin/PagesHandler.class.php:207
-msgid "Media optimizer works in two different ways:"
+#, php-format
+msgid ""
+"Create a <a href=\"%s\">database backup</a> before cleanup tasks or "
+"bigger tuning sessions."
 msgstr ""
 
-#: admin/PagesHandler.class.php:209
+#: admin/PagesHandler.class.php:208
+#, php-format
+msgid ""
+"Add <a href=\"%s\">cache</a> and <a href=\"%s\">minify</a> last, "
+"enabling one option at a time and verifying the front end after each "
+"step."
+msgstr ""
+
+#: admin/PagesHandler.class.php:216
+msgid "Where can I configure optimization parameters?"
+msgstr ""
+
+#: admin/PagesHandler.class.php:220
+#, php-format
+msgid ""
+"Most optimization options are configurable in the <a "
+"href=\"%s\">Modules Options panel</a>."
+msgstr ""
+
+#: admin/PagesHandler.class.php:221
+#, php-format
+msgid ""
+"Global tasks such as cron, module activation, telemetry, reset, "
+"export, and restore are available from the <a href=\"%s\">Settings "
+"page</a>."
+msgstr ""
+
+#: admin/PagesHandler.class.php:228
+msgid "Can cache or minify break my layout?"
+msgstr ""
+
+#: admin/PagesHandler.class.php:232
+msgid ""
+"Yes. Aggressive caching and front-end minification can expose "
+"conflicts in themes or plugins that rely on specific asset order, "
+"inline scripts, or dynamic output."
+msgstr ""
+
+#: admin/PagesHandler.class.php:234
+#, php-format
+msgid ""
+"Enable <a href=\"%s\">minify</a> gradually: HTML, CSS, and JavaScript "
+"do not need to be turned on all at once."
+msgstr ""
+
+#: admin/PagesHandler.class.php:235
+#, php-format
+msgid ""
+"After each change, clear or reset <a href=\"%s\">cache</a> and test "
+"important pages while logged out as well."
+msgstr ""
+
+#: admin/PagesHandler.class.php:236
+msgid ""
+"If something breaks, disable the last option you enabled first. That "
+"is usually the fastest way to isolate the conflict."
+msgstr ""
+
+#: admin/PagesHandler.class.php:244
+msgid "How does the media optimizer work?"
+msgstr ""
+
+#: admin/PagesHandler.class.php:248
+msgid "Media optimizer works in three different ways:"
+msgstr ""
+
+#: admin/PagesHandler.class.php:250
 #, php-format
 msgid ""
 "By a scheduled event it's able to collect and optimize any media "
@@ -209,235 +285,353 @@ msgid ""
 "related settings."
 msgstr ""
 
-#: admin/PagesHandler.class.php:210
+#: admin/PagesHandler.class.php:251
 msgid ""
 "By a specific path scanner, Media optimizer will run a background "
 "activity to optimize all images present in the input path."
 msgstr ""
 
-#: admin/PagesHandler.class.php:211
+#: admin/PagesHandler.class.php:252
 msgid ""
 "By a whole database scanner, Media optimizer will run a background "
 "activity to check all images saved in your WordPress library "
 "optimizing each image and every thumbnail associated."
 msgstr ""
 
-#: admin/PagesHandler.class.php:213
+#: admin/PagesHandler.class.php:254
 #, php-format
 msgid ""
 "Any image optimization will be run following your settings set <a "
 "href=\"%s\">Here</a>."
 msgstr ""
 
-#: admin/PagesHandler.class.php:275
+#: admin/PagesHandler.class.php:261
+msgid "Why are image optimization jobs not starting?"
+msgstr ""
+
+#: admin/PagesHandler.class.php:265
+msgid ""
+"Bulk image optimization runs in background, so it depends on the "
+"plugin scheduler and on image libraries available on the server."
+msgstr ""
+
+#: admin/PagesHandler.class.php:267
+#, php-format
+msgid ""
+"Verify that <a href=\"%s\">cron is active</a>; background jobs will "
+"not progress if scheduled tasks are not running."
+msgstr ""
+
+#: admin/PagesHandler.class.php:268
+msgid ""
+"Check that Imagick or GD is available in PHP. Imagick gives the best "
+"coverage, but GD can still handle basic processing."
+msgstr ""
+
+#: admin/PagesHandler.class.php:269
+#, php-format
+msgid ""
+"Review your <a href=\"%s\">media settings</a> before starting a full-"
+"library scan so the job uses the correct quality and format options."
+msgstr ""
+
+#: admin/PagesHandler.class.php:277
+msgid "Do I need Redis or Memcached for object cache?"
+msgstr ""
+
+#: admin/PagesHandler.class.php:281
+msgid ""
+"Only the object cache feature requires Redis or Memcached. The other "
+"optimization modules can still be used without them."
+msgstr ""
+
+#: admin/PagesHandler.class.php:283
+#, php-format
+msgid ""
+"If your server does not provide Redis or Memcached, leave <a "
+"href=\"%s\">object cache</a> disabled."
+msgstr ""
+
+#: admin/PagesHandler.class.php:284
+msgid ""
+"Static page cache, database/query cache, browser cache, compression, "
+"and minify do not depend on an external object cache server."
+msgstr ""
+
+#: admin/PagesHandler.class.php:292
+msgid "How can I clean the database safely?"
+msgstr ""
+
+#: admin/PagesHandler.class.php:296
+msgid ""
+"Database cleanup is most useful when you do it conservatively and with "
+"a rollback path ready."
+msgstr ""
+
+#: admin/PagesHandler.class.php:298
+#, php-format
+msgid ""
+"Create a fresh <a href=\"%s\">database backup</a> before deleting "
+"revisions, transients, orphaned data, or other leftovers."
+msgstr ""
+
+#: admin/PagesHandler.class.php:299
+#, php-format
+msgid ""
+"Run cleanup tasks from the <a href=\"%s\">Database module</a> when the "
+"site is stable and no import, migration, or major update is running."
+msgstr ""
+
+#: admin/PagesHandler.class.php:300
+msgid ""
+"If the result is not what you expected, restore the backup first "
+"instead of guessing which rows changed."
+msgstr ""
+
+#: admin/PagesHandler.class.php:308
+msgid "Can I export settings before major changes?"
+msgstr ""
+
+#: admin/PagesHandler.class.php:312
+#, php-format
+msgid ""
+"Yes. The <a href=\"%s\">Settings page</a> lets you export, import, "
+"reset, or restore plugin options."
+msgstr ""
+
+#: admin/PagesHandler.class.php:313
+msgid ""
+"Use an export before testing aggressive cache, minify, or security "
+"changes so you can quickly return to a known-good configuration."
+msgstr ""
+
+#: admin/PagesHandler.class.php:320
+msgid "Does WP Optimizer work on multisite?"
+msgstr ""
+
+#: admin/PagesHandler.class.php:324
+msgid "Yes. The plugin supports multisite and can be network-activated."
+msgstr ""
+
+#: admin/PagesHandler.class.php:325
+#, php-format
+msgid ""
+"Even on multisite, test optimization changes gradually from the <a "
+"href=\"%s\">module settings</a> because each subsite may use different "
+"themes, plugins, and traffic patterns."
+msgstr ""
+
+#: admin/PagesHandler.class.php:387
 msgid ""
 "Centralize your optimization workflow with quick actions, live "
 "metrics, and direct module access."
 msgstr ""
 
-#: admin/PagesHandler.class.php:277 admin/PagesHandler.class.php:405
-#: admin/PagesHandler.class.php:425
+#: admin/PagesHandler.class.php:389 admin/PagesHandler.class.php:517
+#: admin/PagesHandler.class.php:537
 #, php-format
 msgid ""
 "<a class=\"wps wps-button wpopt-btn is-info\" href=\"%s\">Manage "
 "Modules</a>"
 msgstr ""
 
-#: admin/PagesHandler.class.php:278 admin/PagesHandler.class.php:426
+#: admin/PagesHandler.class.php:390 admin/PagesHandler.class.php:538
 #, php-format
 msgid ""
 "<a class=\"wps wps-button wpopt-btn is-info\" href=\"%s\">Configure "
 "Modules</a>"
 msgstr ""
 
-#: admin/PagesHandler.class.php:282
+#: admin/PagesHandler.class.php:394
 msgid "System overview"
 msgstr ""
 
-#: admin/PagesHandler.class.php:283
+#: admin/PagesHandler.class.php:395
 msgid "System overview cards"
 msgstr ""
 
-#: admin/PagesHandler.class.php:286
+#: admin/PagesHandler.class.php:398
 msgid "Active modules"
 msgstr ""
 
-#: admin/PagesHandler.class.php:290
+#: admin/PagesHandler.class.php:402
 msgid "Cron status"
 msgstr ""
 
-#: admin/PagesHandler.class.php:291
+#: admin/PagesHandler.class.php:403
 msgid "Idle"
 msgstr ""
 
-#: admin/PagesHandler.class.php:294
+#: admin/PagesHandler.class.php:406
 msgid "Tracking"
 msgstr ""
 
-#: admin/PagesHandler.class.php:295 admin/PagesHandler.class.php:299
+#: admin/PagesHandler.class.php:407 admin/PagesHandler.class.php:411
 #: modules/wp_info.class.php:122 modules/wp_info.class.php:131
 msgid "Enabled"
 msgstr ""
 
-#: admin/PagesHandler.class.php:295 modules/wp_info.class.php:122
+#: admin/PagesHandler.class.php:407 modules/wp_info.class.php:122
 #: modules/wp_info.class.php:131
 msgid "Disabled"
 msgstr ""
 
-#: admin/PagesHandler.class.php:298
+#: admin/PagesHandler.class.php:410
 msgid "Persistent cache"
 msgstr ""
 
-#: admin/PagesHandler.class.php:299
+#: admin/PagesHandler.class.php:411
 msgid "Not configured"
 msgstr ""
 
-#: admin/PagesHandler.class.php:305
+#: admin/PagesHandler.class.php:417
 msgid "Modules:"
 msgstr ""
 
-#: admin/PagesHandler.class.php:307
+#: admin/PagesHandler.class.php:419
 msgid "Currently WP-Optimizer active modules:"
 msgstr ""
 
-#: admin/PagesHandler.class.php:317 admin/PagesHandler.class.php:324
+#: admin/PagesHandler.class.php:429 admin/PagesHandler.class.php:436
 msgid "Tracking status"
 msgstr ""
 
-#: admin/PagesHandler.class.php:318
+#: admin/PagesHandler.class.php:430
 #, php-format
 msgid "A tracking option is enabled, see more <a href=\"%s\">here</a>."
 msgstr ""
 
-#: admin/PagesHandler.class.php:320
+#: admin/PagesHandler.class.php:432
 msgid ""
 "No personal data is collected, only plugin error details and optional "
 "anonymous usage statistics."
 msgstr ""
 
-#: admin/PagesHandler.class.php:325
+#: admin/PagesHandler.class.php:437
 #, php-format
 msgid ""
 "If you run into problems, enable <a href=\"%s\">this</a> feature so "
 "the developer can receive useful diagnostics."
 msgstr ""
 
-#: admin/PagesHandler.class.php:327
+#: admin/PagesHandler.class.php:439
 msgid "No personal data will be collected."
 msgstr ""
 
-#: admin/PagesHandler.class.php:331
+#: admin/PagesHandler.class.php:443
 msgid "Fast actions:"
 msgstr ""
 
-#: admin/PagesHandler.class.php:332
+#: admin/PagesHandler.class.php:444
 msgid "Run now the optimization process."
 msgstr ""
 
-#: admin/PagesHandler.class.php:334
+#: admin/PagesHandler.class.php:446
 msgid "A cron job is running."
 msgstr ""
 
-#: admin/PagesHandler.class.php:339
+#: admin/PagesHandler.class.php:451
 msgid "Auto optimize now"
 msgstr ""
 
-#: admin/PagesHandler.class.php:343
+#: admin/PagesHandler.class.php:455
 msgid "Reset cron status"
 msgstr ""
 
-#: admin/PagesHandler.class.php:350
+#: admin/PagesHandler.class.php:462
 msgid "Persistent cache:"
 msgstr ""
 
-#: admin/PagesHandler.class.php:351
+#: admin/PagesHandler.class.php:463
 msgid "WP-Optimizer supports <b>Redis</b> and <b>Memcached</b> systems."
 msgstr ""
 
-#: admin/PagesHandler.class.php:352
+#: admin/PagesHandler.class.php:464
 msgid ""
 "To activate persistent cache for your site copy this "
 "<b>define('WP_PERSISTENT_CACHE', true);</b> in wp-config.php"
 msgstr ""
 
-#: admin/PagesHandler.class.php:356
+#: admin/PagesHandler.class.php:468
 msgid "WordPress performances:"
 msgstr ""
 
-#: admin/PagesHandler.class.php:359
+#: admin/PagesHandler.class.php:471
 msgid "Server load"
 msgstr ""
 
-#: admin/PagesHandler.class.php:363
+#: admin/PagesHandler.class.php:475
 msgid "WordPress memory load"
 msgstr ""
 
-#: admin/PagesHandler.class.php:367
+#: admin/PagesHandler.class.php:479
 msgid "WordPress execution time"
 msgstr ""
 
-#: admin/PagesHandler.class.php:401
+#: admin/PagesHandler.class.php:513
 msgid ""
 "Build a faster WordPress stack using modular optimization, automation, "
 "and targeted performance tools."
 msgstr ""
 
-#: admin/PagesHandler.class.php:404
+#: admin/PagesHandler.class.php:516
 #, php-format
 msgid ""
 "<a class=\"wps wps-button wpopt-btn is-info\" href=\"%s\">Open "
 "Dashboard</a>"
 msgstr ""
 
-#: admin/PagesHandler.class.php:410
+#: admin/PagesHandler.class.php:522
 msgid "All available modules"
 msgstr ""
 
-#: admin/PagesHandler.class.php:411
+#: admin/PagesHandler.class.php:523
 msgid ""
 "Activate only what you need to keep your stack lean and efficient."
 msgstr ""
 
-#: admin/PagesHandler.class.php:421
+#: admin/PagesHandler.class.php:533
 msgid "Try to explore this plugin:"
 msgstr ""
 
-#: admin/PagesHandler.class.php:424
+#: admin/PagesHandler.class.php:536
 #, php-format
 msgid ""
 "<a class=\"wps wps-button wpopt-btn is-info\" href=\"%s\">Home</a>"
 msgstr ""
 
-#: admin/PagesHandler.class.php:427
+#: admin/PagesHandler.class.php:539
 #, php-format
 msgid "<a class=\"wps wps-button wpopt-btn is-info\" href=\"%s\">FAQ</a>"
 msgstr ""
 
-#: admin/PagesHandler.class.php:443
-msgid "Support this project, buy me a coffee."
+#: admin/PagesHandler.class.php:557
+msgid "WP Optimizer saving you time?"
 msgstr ""
 
-#: admin/PagesHandler.class.php:444
-msgid "Your support helps maintain and improve WP Optimizer."
+#: admin/PagesHandler.class.php:558
+msgid ""
+"Support maintenance, fixes, and new features with a donation, or help "
+"more users discover the plugin with a 5-star review."
 msgstr ""
 
-#: admin/PagesHandler.class.php:453
+#: admin/PagesHandler.class.php:560
+msgid "Donate with PayPal"
+msgstr ""
+
+#: admin/PagesHandler.class.php:566
 msgid "Want to support in other ways?"
 msgstr ""
 
-#: admin/PagesHandler.class.php:456
+#: admin/PagesHandler.class.php:569
 msgid "Help me translating"
 msgstr ""
 
-#: admin/PagesHandler.class.php:459
-msgid "Leave a review"
-msgstr ""
-
-#: admin/PagesHandler.class.php:465
+#: admin/PagesHandler.class.php:575
 msgid "Source code"
 msgstr ""
 
-#: admin/PagesHandler.class.php:468
+#: admin/PagesHandler.class.php:578
 msgid "About me"
 msgstr ""
 
@@ -1105,6 +1299,7 @@ msgid ""
 msgstr ""
 
 #: modules/database.class.php:660 modules/database.class.php:700
+#: modules/performance_monitor.class.php:3543
 msgid "Details"
 msgstr ""
 
@@ -1387,316 +1582,754 @@ msgid ""
 "reducing file size and improving website performance."
 msgstr ""
 
-#: modules/minify.class.php:203
+#: modules/minify.class.php:214
 msgid "Minify HTML"
 msgstr ""
 
-#: modules/minify.class.php:204
+#: modules/minify.class.php:215
 msgid "Remove Comments"
 msgstr ""
 
-#: modules/minify.class.php:205
+#: modules/minify.class.php:216
 msgid "Minify inline css"
 msgstr ""
 
-#: modules/minify.class.php:206
+#: modules/minify.class.php:217
 msgid "Minify inline js"
 msgstr ""
 
-#: modules/minify.class.php:209
+#: modules/minify.class.php:220
 msgid "Minify JavaScript"
 msgstr ""
 
-#: modules/minify.class.php:210 modules/minify.class.php:214
+#: modules/minify.class.php:221 modules/minify.class.php:225
 msgid "Try to combine scripts"
 msgstr ""
 
-#: modules/minify.class.php:213
+#: modules/minify.class.php:224
 msgid "Minify CSS"
 msgstr ""
 
-#: modules/minify.class.php:225
+#: modules/minify.class.php:236
 msgid "Beta version."
 msgstr ""
 
-#: modules/minify.class.php:227
+#: modules/minify.class.php:238
 msgid "This module is under developing."
 msgstr ""
 
-#: modules/minify.class.php:228
+#: modules/minify.class.php:239
 msgid ""
 "Should work fine, but to be safe activate this feature only if you "
 "know what to do in case of bugs. "
 msgstr ""
 
-#: modules/performance_monitor.class.php:36
+#: modules/performance_monitor.class.php:76
 msgid "Performance history has been reset."
 msgstr ""
 
-#: modules/performance_monitor.class.php:39
+#: modules/performance_monitor.class.php:79
 msgid "Old performance history has been cleaned."
 msgstr ""
 
-#: modules/performance_monitor.class.php:159
-msgid "Enable performance history monitoring"
+#: modules/performance_monitor.class.php:501
+msgid "Collected data"
 msgstr ""
 
-#: modules/performance_monitor.class.php:160
+#: modules/performance_monitor.class.php:502
+msgid "Collect request history and show Overview"
+msgstr ""
+
+#: modules/performance_monitor.class.php:503
+msgid "Collect cache hit / miss metrics"
+msgstr ""
+
+#: modules/performance_monitor.class.php:504
+msgid "Collect plugins & themes profiling"
+msgstr ""
+
+#: modules/performance_monitor.class.php:507
+msgid "Shared request capture"
+msgstr ""
+
+#: modules/performance_monitor.class.php:508
+msgid "Request capture sample rate (%)"
+msgstr ""
+
+#: modules/performance_monitor.class.php:509
 msgid "Slow request threshold (ms)"
 msgstr ""
 
-#: modules/performance_monitor.class.php:161
-msgid "Sampling rate (%)"
+#: modules/performance_monitor.class.php:510
+msgid "Fast request persistence rate (%)"
 msgstr ""
 
-#: modules/performance_monitor.class.php:162
-msgid "Keep history for (days)"
+#: modules/performance_monitor.class.php:511
+msgid "Stored request URI max length"
 msgstr ""
 
-#: modules/performance_monitor.class.php:165
-msgid "Track REST API endpoints"
+#: modules/performance_monitor.class.php:514
+msgid "Tracked request types"
 msgstr ""
 
-#: modules/performance_monitor.class.php:166
-msgid "Track admin-ajax requests"
+#: modules/performance_monitor.class.php:515
+msgid "Capture REST API requests"
 msgstr ""
 
-#: modules/performance_monitor.class.php:167
-msgid "Track wp-admin requests"
+#: modules/performance_monitor.class.php:516
+msgid "Capture admin-ajax requests"
 msgstr ""
 
-#: modules/performance_monitor.class.php:168
-msgid "Track wp-login requests"
+#: modules/performance_monitor.class.php:517
+msgid "Capture wp-admin requests"
 msgstr ""
 
-#: modules/performance_monitor.class.php:169
-msgid "Track XML-RPC requests"
+#: modules/performance_monitor.class.php:518
+msgid "Capture wp-login requests"
 msgstr ""
 
-#: modules/performance_monitor.class.php:177
+#: modules/performance_monitor.class.php:519
+msgid "Capture XML-RPC requests"
+msgstr ""
+
+#: modules/performance_monitor.class.php:522
+msgid "Slow SQL"
+msgstr ""
+
+#: modules/performance_monitor.class.php:523
+msgid "Collect and show Slow SQL queries"
+msgstr ""
+
+#: modules/performance_monitor.class.php:524
+msgid "Duplicate request context in each SQL sample"
+msgstr ""
+
+#: modules/performance_monitor.class.php:525
+msgid "Store SQL caller backtrace"
+msgstr ""
+
+#: modules/performance_monitor.class.php:526
+msgid "Stored SQL caller backtrace max length"
+msgstr ""
+
+#: modules/performance_monitor.class.php:534
 msgid ""
-"Requests at or above this threshold are marked as slow in the "
-"dashboard."
+"When disabled, Performance Monitor stops collecting request history "
+"and the Overview tab has no data source."
 msgstr ""
 
-#: modules/performance_monitor.class.php:178
+#: modules/performance_monitor.class.php:535
 msgid ""
-"Use sampling to reduce writes on high-traffic sites. 100 means every "
-"matching request is stored."
+"When disabled, Performance Monitor stops collecting cache hit / miss "
+"metrics and the related tab is not populated."
 msgstr ""
 
-#: modules/performance_monitor.class.php:179
-msgid "Older rows are removed automatically by a daily cleanup task."
+#: modules/performance_monitor.class.php:536
+msgid ""
+"When disabled, callback and component profiling stop in background and "
+"the related tab is not populated."
 msgstr ""
 
-#: modules/performance_monitor.class.php:180
-msgid "Store performance history for WordPress REST API routes."
+#: modules/performance_monitor.class.php:537
+msgid ""
+"When disabled, slow SQL capture is fully turned off: no SQL samples "
+"are captured, stored or shown."
 msgstr ""
 
-#: modules/performance_monitor.class.php:181
-msgid "Store performance history for admin-ajax traffic."
+#: modules/performance_monitor.class.php:538
+msgid ""
+"Keep this disabled for lower write overhead. Enable it only if you "
+"want request context duplicated inside every saved SQL sample."
 msgstr ""
 
-#: modules/performance_monitor.class.php:182
-msgid "Store performance history for wp-admin pages."
+#: modules/performance_monitor.class.php:539
+msgid ""
+"Keep this disabled for lower overhead. Enable it only if you need the "
+"SQL caller backtrace for debugging."
 msgstr ""
 
-#: modules/performance_monitor.class.php:183
-msgid "Store performance history for wp-login.php requests."
+#: modules/performance_monitor.class.php:540
+msgid ""
+"Maximum stored caller backtrace length when SQL caller capture is "
+"enabled."
 msgstr ""
 
-#: modules/performance_monitor.class.php:184
-msgid "Store performance history for XML-RPC requests."
+#: modules/performance_monitor.class.php:541
+msgid ""
+"Shared setting. Sampling is applied before any enabled feature stores "
+"request data. 100 means every eligible request is captured."
 msgstr ""
 
-#: modules/performance_monitor.class.php:243
+#: modules/performance_monitor.class.php:542
+msgid ""
+"Shared setting. Requests at or above this threshold are treated as "
+"slow. This affects request history and Slow SQL retention."
+msgstr ""
+
+#: modules/performance_monitor.class.php:543
+msgid ""
+"Shared setting. Percent of non-slow requests persisted by enabled "
+"request-based collectors. Use 0 to skip fast requests entirely."
+msgstr ""
+
+#: modules/performance_monitor.class.php:544
+msgid ""
+"Shared storage limit for saved request URIs. Applies to request "
+"history and to inline Slow SQL request context when that option is "
+"enabled."
+msgstr ""
+
+#: modules/performance_monitor.class.php:545
+msgid ""
+"Shared capture scope. If disabled, no Performance Monitor feature "
+"collects WordPress REST API requests."
+msgstr ""
+
+#: modules/performance_monitor.class.php:546
+msgid ""
+"Shared capture scope. If disabled, no Performance Monitor feature "
+"collects admin-ajax requests."
+msgstr ""
+
+#: modules/performance_monitor.class.php:547
+msgid ""
+"Shared capture scope. If disabled, no Performance Monitor feature "
+"collects wp-admin page requests."
+msgstr ""
+
+#: modules/performance_monitor.class.php:548
+msgid ""
+"Shared capture scope. If disabled, no Performance Monitor feature "
+"collects wp-login.php requests."
+msgstr ""
+
+#: modules/performance_monitor.class.php:549
+msgid ""
+"Shared capture scope. If disabled, no Performance Monitor feature "
+"collects XML-RPC requests."
+msgstr ""
+
+#: modules/performance_monitor.class.php:714
+msgid "Overview"
+msgstr ""
+
+#: modules/performance_monitor.class.php:722
+#: modules/performance_monitor.class.php:886
+msgid "Slow SQL queries"
+msgstr ""
+
+#: modules/performance_monitor.class.php:730
+msgid "Cache hit / miss"
+msgstr ""
+
+#: modules/performance_monitor.class.php:738
+msgid "Plugins & themes"
+msgstr ""
+
+#: modules/performance_monitor.class.php:746
+#: modules/performance_monitor.class.php:976
+msgid "Maintenance"
+msgstr ""
+
+#: modules/performance_monitor.class.php:754
 msgid "Performance Monitor"
 msgstr ""
 
-#: modules/performance_monitor.class.php:246
+#: modules/performance_monitor.class.php:760
+msgid "No sections enabled"
+msgstr ""
+
+#: modules/performance_monitor.class.php:761
+msgid ""
+"Enable at least one Performance Monitor section from settings to show "
+"data here."
+msgstr ""
+
+#: modules/performance_monitor.class.php:762
+#: modules/performance_monitor.class.php:981
+msgid "Open settings"
+msgstr ""
+
+#: modules/performance_monitor.class.php:792
 #, php-format
-msgid "Historical request performance split by type for %s."
+msgid ""
+"Performance data is limited to %s and older entries are cleaned "
+"automatically."
 msgstr ""
 
-#: modules/performance_monitor.class.php:249
-msgid "Window"
-msgstr ""
-
-#: modules/performance_monitor.class.php:255
-msgid "Apply"
-msgstr ""
-
-#: modules/performance_monitor.class.php:260
+#: modules/performance_monitor.class.php:796
+#: modules/performance_monitor.class.php:3537
 msgid "Requests"
 msgstr ""
 
-#: modules/performance_monitor.class.php:261
+#: modules/performance_monitor.class.php:797
 msgid "Average time"
 msgstr ""
 
-#: modules/performance_monitor.class.php:262
+#: modules/performance_monitor.class.php:798
 msgid "Peak time"
 msgstr ""
 
-#: modules/performance_monitor.class.php:263
+#: modules/performance_monitor.class.php:799
 msgid "Slow requests"
 msgstr ""
 
-#: modules/performance_monitor.class.php:264
+#: modules/performance_monitor.class.php:800
 msgid "Average memory peak"
 msgstr ""
 
-#: modules/performance_monitor.class.php:265
+#: modules/performance_monitor.class.php:801
 msgid "Average queries"
 msgstr ""
 
-#: modules/performance_monitor.class.php:270
+#: modules/performance_monitor.class.php:806
 msgid "Average response time trend"
 msgstr ""
 
-#: modules/performance_monitor.class.php:271
+#: modules/performance_monitor.class.php:807
 msgid "No data collected yet for this time window."
 msgstr ""
 
-#: modules/performance_monitor.class.php:274
+#: modules/performance_monitor.class.php:810
 msgid "By request type"
 msgstr ""
 
-#: modules/performance_monitor.class.php:275
+#: modules/performance_monitor.class.php:811
 msgid ""
 "Visit the site or call an API endpoint to start populating the chart."
 msgstr ""
 
-#: modules/performance_monitor.class.php:280
+#: modules/performance_monitor.class.php:816
 msgid "Type snapshots"
 msgstr ""
 
-#: modules/performance_monitor.class.php:286
+#: modules/performance_monitor.class.php:821
 msgid "Top request groups"
 msgstr ""
 
-#: modules/performance_monitor.class.php:288
+#: modules/performance_monitor.class.php:823
 msgid "No grouped request history available yet."
 msgstr ""
 
-#: modules/performance_monitor.class.php:291
-#: modules/performance_monitor.class.php:325
+#: modules/performance_monitor.class.php:826
+#: modules/performance_monitor.class.php:848
 msgid "Type"
 msgstr ""
 
-#: modules/performance_monitor.class.php:291
-#: modules/performance_monitor.class.php:325
+#: modules/performance_monitor.class.php:826
+#: modules/performance_monitor.class.php:848
 msgid "Group"
 msgstr ""
 
-#: modules/performance_monitor.class.php:291
+#: modules/performance_monitor.class.php:826
+#: modules/performance_monitor.class.php:3187
+#: modules/performance_monitor.class.php:3260
+#: modules/performance_monitor.class.php:3334
 msgid "Hits"
 msgstr ""
 
-#: modules/performance_monitor.class.php:291
+#: modules/performance_monitor.class.php:826
 msgid "Average"
 msgstr ""
 
-#: modules/performance_monitor.class.php:291
-#: modules/performance_monitor.class.php:957
+#: modules/performance_monitor.class.php:826
+#: modules/performance_monitor.class.php:3636
+#: modules/performance_monitor.class.php:3772
 msgid "Peak"
 msgstr ""
 
-#: modules/performance_monitor.class.php:308
-msgid "Maintenance"
-msgstr ""
-
-#: modules/performance_monitor.class.php:309
-#, php-format
-msgid "Retention is currently set to %s days."
-msgstr ""
-
-#: modules/performance_monitor.class.php:312
-msgid "Run cleanup now"
-msgstr ""
-
-#: modules/performance_monitor.class.php:313
-msgid "Reset history"
-msgstr ""
-
-#: modules/performance_monitor.class.php:314
-msgid "Open settings"
-msgstr ""
-
-#: modules/performance_monitor.class.php:320
+#: modules/performance_monitor.class.php:843
 msgid "Latest requests"
 msgstr ""
 
-#: modules/performance_monitor.class.php:322
+#: modules/performance_monitor.class.php:845
 msgid "No requests stored in the selected window."
 msgstr ""
 
-#: modules/performance_monitor.class.php:325
+#: modules/performance_monitor.class.php:848
 #: modules/supporters/activity-log/ActivityLog_Table.class.php:504
 msgid "Time"
 msgstr ""
 
-#: modules/performance_monitor.class.php:325
+#: modules/performance_monitor.class.php:848
 msgid "Method"
 msgstr ""
 
-#: modules/performance_monitor.class.php:325
+#: modules/performance_monitor.class.php:848
 #: modules/supporters/database/DB_List_Table.class.php:137
 msgid "Status"
 msgstr ""
 
-#: modules/performance_monitor.class.php:325
+#: modules/performance_monitor.class.php:848
+#: modules/performance_monitor.class.php:3714
 msgid "Duration"
 msgstr ""
 
-#: modules/performance_monitor.class.php:325
+#: modules/performance_monitor.class.php:848
 msgid "Memory"
 msgstr ""
 
-#: modules/performance_monitor.class.php:325
+#: modules/performance_monitor.class.php:848
 msgid "Queries"
 msgstr ""
 
-#: modules/performance_monitor.class.php:681
+#: modules/performance_monitor.class.php:882
+#, php-format
+msgid ""
+"Slow SQL samples captured in %s. Showing up to the %d slowest captured "
+"queries in the selected window."
+msgstr ""
+
+#: modules/performance_monitor.class.php:887
+msgid "No slow SQL queries captured yet in the selected window."
+msgstr ""
+
+#: modules/performance_monitor.class.php:905
+msgid ""
+"Cumulative cache counters collected since the last reset. Metrics are "
+"merged from Database cache and WP_Query cache without storing extra "
+"per-request cache rows."
+msgstr ""
+
+#: modules/performance_monitor.class.php:909
+msgid ""
+"No cache hits or misses recorded yet. Enable Database cache or "
+"WP_Query cache and browse the site to populate this tab."
+msgstr ""
+
+#: modules/performance_monitor.class.php:914
+msgid "Cumulative hit / miss distribution"
+msgstr ""
+
+#: modules/performance_monitor.class.php:920
+msgid "Cache layers"
+msgstr ""
+
+#: modules/performance_monitor.class.php:941
+#, php-format
+msgid ""
+"Average plugin and theme footprint per sampled request across %s. Sort "
+"the list alphabetically, by observed time or by memory footprint."
+msgstr ""
+
+#: modules/performance_monitor.class.php:945
+msgid ""
+"No plugin or theme footprint has been recorded yet. Generate a few "
+"requests after the upgrade to populate this tab."
+msgstr ""
+
+#: modules/performance_monitor.class.php:948
+msgid "Components"
+msgstr ""
+
+#: modules/performance_monitor.class.php:949
+msgid "Plugins"
+msgstr ""
+
+#: modules/performance_monitor.class.php:950
+msgid "Themes"
+msgstr ""
+
+#: modules/performance_monitor.class.php:951
+#: modules/performance_monitor.class.php:3406
+#: modules/performance_monitor.class.php:3531
+msgid "Avg observed time"
+msgstr ""
+
+#: modules/performance_monitor.class.php:952
+#: modules/performance_monitor.class.php:3411
+#: modules/performance_monitor.class.php:3535
+msgid "Avg peak memory"
+msgstr ""
+
+#: modules/performance_monitor.class.php:953
+#: modules/performance_monitor.class.php:3412
+#: modules/performance_monitor.class.php:3581
+msgid "Avg queries"
+msgstr ""
+
+#: modules/performance_monitor.class.php:957
+msgid "Component explorer"
+msgstr ""
+
+#: modules/performance_monitor.class.php:972
+msgid ""
+"Cleanup and reset tools for the fixed 24-hour Performance Monitor "
+"retention window."
+msgstr ""
+
+#: modules/performance_monitor.class.php:977
+msgid ""
+"Only the latest 24 hours are kept. Older performance and slow-query "
+"records are removed automatically."
+msgstr ""
+
+#: modules/performance_monitor.class.php:980
+msgid "Reset history"
+msgstr ""
+
+#: modules/performance_monitor.class.php:1550
 msgid "Last 24 hours"
 msgstr ""
 
-#: modules/performance_monitor.class.php:682
-msgid "Last 7 days"
+#: modules/performance_monitor.class.php:1794
+msgid "Database cache"
 msgstr ""
 
-#: modules/performance_monitor.class.php:683
-msgid "Last 30 days"
+#: modules/performance_monitor.class.php:1799
+msgid "WP DB drop-in results reused from storage."
 msgstr ""
 
-#: modules/performance_monitor.class.php:838
+#: modules/performance_monitor.class.php:1802
+msgid "WP_Query cache"
+msgstr ""
+
+#: modules/performance_monitor.class.php:1807
+msgid "Cached post query results served before SQL execution."
+msgstr ""
+
+#: modules/performance_monitor.class.php:2299
+msgid "Unknown component"
+msgstr ""
+
+#: modules/performance_monitor.class.php:3069
 msgid "Average response time by request type"
 msgstr ""
 
-#: modules/performance_monitor.class.php:854
-#: modules/performance_monitor.class.php:946
+#: modules/performance_monitor.class.php:3085
+#: modules/performance_monitor.class.php:3761
 #, php-format
 msgid "%s hit"
 msgstr ""
 
-#: modules/performance_monitor.class.php:855
+#: modules/performance_monitor.class.php:3086
 #, php-format
 msgid "%s slow"
 msgstr ""
 
-#: modules/performance_monitor.class.php:890
+#: modules/performance_monitor.class.php:3121
 msgid "Response time trend"
 msgstr ""
 
-#: modules/performance_monitor.class.php:953
+#: modules/performance_monitor.class.php:3173
+msgid "Cumulative cache ratio"
+msgstr ""
+
+#: modules/performance_monitor.class.php:3180
+msgid "Hit ratio"
+msgstr ""
+
+#: modules/performance_monitor.class.php:3191
+#: modules/performance_monitor.class.php:3261
+#: modules/performance_monitor.class.php:3338
+msgid "Misses"
+msgstr ""
+
+#: modules/performance_monitor.class.php:3195
+msgid "Tracked requests"
+msgstr ""
+
+#: modules/performance_monitor.class.php:3199
+msgid "Operations"
+msgstr ""
+
+#: modules/performance_monitor.class.php:3204
+msgid ""
+"The ratio is computed from cumulative cache reads that returned a "
+"saved result versus reads that had to fall back to origin work."
+msgstr ""
+
+#: modules/performance_monitor.class.php:3211
+#, php-format
+msgid "Since %s"
+msgstr ""
+
+#: modules/performance_monitor.class.php:3215
+#, php-format
+msgid "Last update %s"
+msgstr ""
+
+#: modules/performance_monitor.class.php:3231
+msgid "Overall cache"
+msgstr ""
+
+#: modules/performance_monitor.class.php:3262
+msgid "Relative operations volume"
+msgstr ""
+
+#: modules/performance_monitor.class.php:3264
+msgid "Cumulative cache hits and misses by layer"
+msgstr ""
+
+#: modules/performance_monitor.class.php:3289
+#, php-format
+msgid "%1$s ops | %2$s hit ratio"
+msgstr ""
+
+#: modules/performance_monitor.class.php:3293
+#, php-format
+msgid "Hits: %s"
+msgstr ""
+
+#: modules/performance_monitor.class.php:3298
+#, php-format
+msgid "Misses: %s"
+msgstr ""
+
+#: modules/performance_monitor.class.php:3342
+msgid "Ops"
+msgstr ""
+
+#: modules/performance_monitor.class.php:3358
+msgid "No plugin or theme data available yet."
+msgstr ""
+
+#: modules/performance_monitor.class.php:3377
+msgid "Sort by time"
+msgstr ""
+
+#: modules/performance_monitor.class.php:3378
+msgid "Sort A-Z"
+msgstr ""
+
+#: modules/performance_monitor.class.php:3379
+msgid "Sort by memory"
+msgstr ""
+
+#: modules/performance_monitor.class.php:3413
+#: modules/widget.class.php:178
+msgid "Files"
+msgstr ""
+
+#: modules/performance_monitor.class.php:3528
+msgid ""
+"Average load time, callback time, SQL time and memory footprint per "
+"sampled request for this component within the last 24 hours. Values "
+"are delta-based for the component, not cumulative from request start."
+msgstr ""
+
+#: modules/performance_monitor.class.php:3532
+msgid "Avg load time"
+msgstr ""
+
+#: modules/performance_monitor.class.php:3533
+msgid "Avg callback time"
+msgstr ""
+
+#: modules/performance_monitor.class.php:3534
+msgid "Avg SQL time"
+msgstr ""
+
+#: modules/performance_monitor.class.php:3536
+msgid "Avg allocated"
+msgstr ""
+
+#: modules/performance_monitor.class.php:3542
+msgid "Component profile"
+msgstr ""
+
+#: modules/performance_monitor.class.php:3547
+#: modules/wp_info.class.php:94 modules/wp_info.class.php:109
+#: modules/wp_info.class.php:232
+msgid "Version"
+msgstr ""
+
+#: modules/performance_monitor.class.php:3548
+#: modules/performance_monitor.class.php:3552
+msgid "Not available"
+msgstr ""
+
+#: modules/performance_monitor.class.php:3551
+#: modules/wp_info.class.php:233
+msgid "Author"
+msgstr ""
+
+#: modules/performance_monitor.class.php:3556
+msgid "Site"
+msgstr ""
+
+#: modules/performance_monitor.class.php:3562
+msgid "Author site"
+msgstr ""
+
+#: modules/performance_monitor.class.php:3568
+msgid "Description"
+msgstr ""
+
+#: modules/performance_monitor.class.php:3576
+msgid "Runtime footprint"
+msgstr ""
+
+#: modules/performance_monitor.class.php:3577
+msgid "Observed workload"
+msgstr ""
+
+#: modules/performance_monitor.class.php:3585
+msgid "Avg callback calls"
+msgstr ""
+
+#: modules/performance_monitor.class.php:3589
+msgid "Loaded PHP files"
+msgstr ""
+
+#: modules/performance_monitor.class.php:3593
+msgid "PHP size on disk"
+msgstr ""
+
+#: modules/performance_monitor.class.php:3641
+msgid "sample"
+msgstr ""
+
+#: modules/performance_monitor.class.php:3642
+#: modules/performance_monitor.class.php:3768
 msgid "Avg"
 msgstr ""
 
-#: modules/performance_monitor.class.php:961
+#: modules/performance_monitor.class.php:3709
+msgid "Selected Query"
+msgstr ""
+
+#: modules/performance_monitor.class.php:3711
+msgid "Inspect the selected captured SQL sample and its request context."
+msgstr ""
+
+#: modules/performance_monitor.class.php:3715
+msgid "Fingerprint"
+msgstr ""
+
+#: modules/performance_monitor.class.php:3716
+msgid "Captured"
+msgstr ""
+
+#: modules/performance_monitor.class.php:3717
+msgid "Observed"
+msgstr ""
+
+#: modules/performance_monitor.class.php:3717
+msgid "Unavailable"
+msgstr ""
+
+#: modules/performance_monitor.class.php:3721
+msgid "Example request"
+msgstr ""
+
+#: modules/performance_monitor.class.php:3726
+msgid "Query fingerprint"
+msgstr ""
+
+#: modules/performance_monitor.class.php:3730
+msgid "Captured SQL sample"
+msgstr ""
+
+#: modules/performance_monitor.class.php:3735
+msgid "Caller"
+msgstr ""
+
+#: modules/performance_monitor.class.php:3776
 msgid "Slow"
 msgstr ""
 
-#: modules/performance_monitor.class.php:1023
+#: modules/performance_monitor.class.php:3838
 msgid "Small response time chart"
 msgstr ""
 
@@ -1805,7 +2438,7 @@ msgid "Export Data"
 msgstr ""
 
 #: modules/supporters/activity-log/ActivityLog_Table.class.php:361
-#: modules/supporters/wp-mails/WPMails_Table.class.php:271
+#: modules/supporters/wp-mails/WPMails_Table.class.php:317
 #, php-format
 msgid "%s ago"
 msgstr ""
@@ -1974,35 +2607,35 @@ msgstr ""
 msgid "mails"
 msgstr ""
 
-#: modules/supporters/wp-mails/WPMails_Table.class.php:235
+#: modules/supporters/wp-mails/WPMails_Table.class.php:281
 msgid "View more"
 msgstr ""
 
-#: modules/supporters/wp-mails/WPMails_Table.class.php:401
+#: modules/supporters/wp-mails/WPMails_Table.class.php:447
 msgid "N"
 msgstr ""
 
-#: modules/supporters/wp-mails/WPMails_Table.class.php:402
+#: modules/supporters/wp-mails/WPMails_Table.class.php:448
 msgid "To"
 msgstr ""
 
-#: modules/supporters/wp-mails/WPMails_Table.class.php:403
+#: modules/supporters/wp-mails/WPMails_Table.class.php:449
 msgid "Subject"
 msgstr ""
 
-#: modules/supporters/wp-mails/WPMails_Table.class.php:404
+#: modules/supporters/wp-mails/WPMails_Table.class.php:450
 msgid "Message"
 msgstr ""
 
-#: modules/supporters/wp-mails/WPMails_Table.class.php:405
+#: modules/supporters/wp-mails/WPMails_Table.class.php:451
 msgid "Attachments"
 msgstr ""
 
-#: modules/supporters/wp-mails/WPMails_Table.class.php:406
+#: modules/supporters/wp-mails/WPMails_Table.class.php:452
 msgid "Date"
 msgstr ""
 
-#: modules/supporters/wp-mails/WPMails_Table.class.php:425
+#: modules/supporters/wp-mails/WPMails_Table.class.php:471
 msgid "No Mails found."
 msgstr ""
 
@@ -2080,10 +2713,6 @@ msgstr ""
 
 #: modules/widget.class.php:135
 msgid "View all"
-msgstr ""
-
-#: modules/widget.class.php:178
-msgid "Files"
 msgstr ""
 
 #: modules/widget.class.php:179
@@ -2483,11 +3112,6 @@ msgstr ""
 msgid "GD Version"
 msgstr ""
 
-#: modules/wp_info.class.php:94 modules/wp_info.class.php:109
-#: modules/wp_info.class.php:232
-msgid "Version"
-msgstr ""
-
 #: modules/wp_info.class.php:96
 msgid "Post Max Size"
 msgstr ""
@@ -2666,10 +3290,6 @@ msgstr ""
 
 #: modules/wp_info.class.php:231
 msgid "name"
-msgstr ""
-
-#: modules/wp_info.class.php:233
-msgid "Author"
 msgstr ""
 
 #: modules/wp_info.class.php:234
@@ -3248,36 +3868,4 @@ msgstr ""
 
 #: modules/wp_updates.class.php:147
 msgid "Disable automatic update notification emails sent by WordPress."
-msgstr ""
-
-#: vendors/wps-framework/UtilEnv.php:242
-msgid "Year"
-msgstr ""
-
-#: vendors/wps-framework/UtilEnv.php:242
-msgid "Years"
-msgstr ""
-
-#: vendors/wps-framework/UtilEnv.php:243
-msgid "Month"
-msgstr ""
-
-#: vendors/wps-framework/UtilEnv.php:243
-msgid "Months"
-msgstr ""
-
-#: vendors/wps-framework/UtilEnv.php:244
-msgid "Day"
-msgstr ""
-
-#: vendors/wps-framework/UtilEnv.php:244
-msgid "Days"
-msgstr ""
-
-#: vendors/wps-framework/UtilEnv.php:245
-msgid "Hour"
-msgstr ""
-
-#: vendors/wps-framework/UtilEnv.php:245
-msgid "Hours"
 msgstr ""

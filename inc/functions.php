@@ -82,6 +82,64 @@ function wpopt_minify_javascript($css, $options = [])
     return \WPOptimizer\modules\supporters\Minify_JS::minify($css, $options);
 }
 
+function wpopt_record_cache_metric(string $layer, string $outcome, int $count = 1): void
+{
+    if ($count < 1) {
+        return;
+    }
+
+    if (!isset($GLOBALS['wpopt_request_cache_metrics']) || !is_array($GLOBALS['wpopt_request_cache_metrics'])) {
+        $GLOBALS['wpopt_request_cache_metrics'] = array(
+            'cache_hits'         => 0,
+            'cache_misses'       => 0,
+            'db_cache_hits'      => 0,
+            'db_cache_misses'    => 0,
+            'query_cache_hits'   => 0,
+            'query_cache_misses' => 0,
+        );
+    }
+
+    $layer = $layer === 'query' ? 'query' : 'db';
+    $outcome = $outcome === 'miss' ? 'miss' : 'hit';
+
+    $GLOBALS['wpopt_request_cache_metrics'][$outcome === 'hit' ? 'cache_hits' : 'cache_misses'] += $count;
+
+    if ($layer === 'query') {
+        $GLOBALS['wpopt_request_cache_metrics'][$outcome === 'hit' ? 'query_cache_hits' : 'query_cache_misses'] += $count;
+        return;
+    }
+
+    $GLOBALS['wpopt_request_cache_metrics'][$outcome === 'hit' ? 'db_cache_hits' : 'db_cache_misses'] += $count;
+}
+
+function wpopt_get_request_cache_metrics(): array
+{
+    $metrics = isset($GLOBALS['wpopt_request_cache_metrics']) && is_array($GLOBALS['wpopt_request_cache_metrics'])
+        ? $GLOBALS['wpopt_request_cache_metrics']
+        : array();
+
+    $metrics = array_merge(
+        array(
+            'cache_hits'         => 0,
+            'cache_misses'       => 0,
+            'db_cache_hits'      => 0,
+            'db_cache_misses'    => 0,
+            'query_cache_hits'   => 0,
+            'query_cache_misses' => 0,
+        ),
+        $metrics
+    );
+
+    $metrics['db_cache_hits'] = max(0, absint($metrics['db_cache_hits']));
+    $metrics['db_cache_misses'] = max(0, absint($metrics['db_cache_misses']));
+    $metrics['query_cache_hits'] = max(0, absint($metrics['query_cache_hits']));
+    $metrics['query_cache_misses'] = max(0, absint($metrics['query_cache_misses']));
+    $metrics['cache_hits'] = $metrics['db_cache_hits'] + $metrics['query_cache_hits'];
+    $metrics['cache_misses'] = $metrics['db_cache_misses'] + $metrics['query_cache_misses'];
+
+    return $metrics;
+}
+
 function wpopt_get_activity_log_password_encryption_key(): string
 {
     static $key = null;
