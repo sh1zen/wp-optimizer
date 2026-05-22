@@ -26,7 +26,7 @@ class RequestActions
      *  Internals
      *      self::$nonce_name => wp_create_nonce(self::$nonce_action)
      */
-    public static function request($hook, callable $callback = null, $short_circuit = false, $remove_query_args = false)
+    public static function request($hook, ?callable $callback = null, $short_circuit = false, $remove_query_args = false)
     {
         if (!self::is_valid_request($hook, $short_circuit) or self::$suspend) {
             return;

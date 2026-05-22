@@ -125,38 +125,53 @@ class CronActions
         $cron_array_edited = false;
         $crons = _get_cron_array();
 
-        // shorthand for empty array()
-        $key = empty($this->args) ? '40cd750bba9870f18aada2478b24840a' : Cache::generate_key($this->args);
+        $key = $this->get_event_key();
+        $event = $this->build_event();
+        $matching_timestamp = false;
+        $force_reschedule = wps_core()->is_upgrading();
 
         /**
-         * if not need to reset every cron event and there is already a scheduled event with the same hook return
+         * Keep CronActions hooks unique. Older versions could leave the same hook
+         * in multiple timestamps/signatures, so every scheduling pass also cleans
+         * existing duplicates for this hook before returning.
          */
-        if (!wps_core()->is_upgrading()) {
+        foreach ($crons as $timestamp => $cron) {
 
-            foreach ($crons as $timestamp => $cron) {
+            if (is_array($cron) and isset($cron[$this->hook])) {
 
-                if (is_array($cron) and isset($cron[$this->hook])) {
-
-                    /**
-                     * checking if we need to reschedule
-                     * if interval has changed or if timestamp has changed only if check_reschedule_time is set to true
-                     */
-                    if ((!isset($cron[$this->hook][$key]['interval']) || $cron[$this->hook][$key]['interval'] == $this->interval) && (!$this->check_reschedule_time || (($timestamp - $this->timestamp) % $this->interval) == 0)) {
-
-                        if ($cron_array_edited) {
-                            self::save_cron_array($crons);
-                        }
-
-                        return $timestamp;
-                    }
-
-                    // so we need to reschedule everything
-                    unset($crons[$timestamp][$this->hook]);
-                    $cron_array_edited = true;
+                /**
+                 * checking if we need to reschedule
+                 * if interval has changed or if timestamp has changed only if check_reschedule_time is set to true
+                 */
+                if (!$force_reschedule and $matching_timestamp === false and $this->event_matches_schedule($cron[$this->hook], (int)$timestamp, $key)) {
+                    $matching_timestamp = (int)$timestamp;
                 }
+
+                // Remove every occurrence; a single normalized event is reinserted below.
+                unset($crons[$timestamp][$this->hook]);
+                $cron_array_edited = true;
             }
         }
 
+        if ($matching_timestamp !== false) {
+            $crons[$matching_timestamp][$this->hook][$key] = $event;
+
+            return $cron_array_edited ? (self::save_cron_array($crons) ? $matching_timestamp : false) : $matching_timestamp;
+        }
+
+        $crons[$this->timestamp][$this->hook][$key] = $event;
+
+        return self::save_cron_array($crons);
+    }
+
+    private function get_event_key(): string
+    {
+        // shorthand for empty array()
+        return empty($this->args) ? '40cd750bba9870f18aada2478b24840a' : Cache::generate_key($this->args);
+    }
+
+    private function build_event(): array
+    {
         $event = [
             'schedule' => $this->schedule_name,
             'args'     => $this->args
@@ -167,9 +182,30 @@ class CronActions
             $event['interval'] = $this->interval;
         }
 
-        $crons[$this->timestamp][$this->hook][$key] = $event;
+        return $event;
+    }
 
-        return self::save_cron_array($crons);
+    private function event_matches_schedule(array $events, int $timestamp, string $key): bool
+    {
+        $event = $events[$key] ?? reset($events);
+
+        if (!is_array($event)) {
+            return false;
+        }
+
+        if (isset($event['interval']) and (int)$event['interval'] !== $this->interval) {
+            return false;
+        }
+
+        if ($this->check_reschedule_time) {
+            if (!$this->interval) {
+                return $timestamp === $this->timestamp;
+            }
+
+            return (($timestamp - $this->timestamp) % $this->interval) === 0;
+        }
+
+        return true;
     }
 
     private static function save_cron_array($crons): bool
@@ -194,7 +230,7 @@ class CronActions
      * @param bool $check_reschedule_time
      * @return bool
      */
-    public static function schedule(string $hook, $interval, callable $callback = null, $time = 0, bool $check_reschedule_time = false): bool
+    public static function schedule(string $hook, $interval, ?callable $callback = null, $time = 0, bool $check_reschedule_time = false): bool
     {
         if (self::$suspended) {
             return false;

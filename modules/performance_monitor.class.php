@@ -70,15 +70,27 @@ class Mod_Performance_Monitor extends Module
 
     private bool $component_profiler_enabled = false;
 
+    private array $runtime_option_cache = array();
+
+    private array $sql_fingerprint_cache = array();
+
+    private ?string $request_uri_cache = null;
+
+    private ?string $request_path_cache = null;
+
     protected function init(): void
     {
         $message = sanitize_key((string)($_GET['message'] ?? ''));
 
         if ($message === 'wpopt-performance-history-reset') {
-            $this->add_notices('success', __('Performance history has been reset.', 'wpopt'));
+            add_action('admin_notices', function () {
+                $this->add_notices('success', __('Performance history has been reset.', 'wpopt'));
+            }, 0);
         }
         elseif ($message === 'wpopt-performance-history-cleaned') {
-            $this->add_notices('success', __('Old performance history has been cleaned.', 'wpopt'));
+            add_action('admin_notices', function () {
+                $this->add_notices('success', __('Old performance history has been cleaned.', 'wpopt'));
+            }, 0);
         }
 
         if (!$this->has_enabled_monitor_collectors() || !$this->should_capture_request()) {
@@ -96,8 +108,11 @@ class Mod_Performance_Monitor extends Module
             $this->enable_query_capture();
         }
 
-        if ($this->query_capture_enabled) {
+        if ($this->query_capture_enabled && $this->component_profile_supported) {
             add_filter('log_query_custom_data', array($this, 'filter_query_custom_data'), 10, 5);
+        }
+
+        if ($this->query_capture_enabled) {
             add_action('shutdown', array($this, 'snapshot_query_log'), 0, 0);
         }
 
@@ -279,7 +294,6 @@ class Mod_Performance_Monitor extends Module
         $query_start = (float)$query_start;
 
         if (!$this->component_profiler_enabled) {
-            $this->capture_query_entry($query, $query_time, (string)$query_callstack_raw, $query_start, $query_data);
             return $query_data;
         }
 
@@ -355,11 +369,13 @@ class Mod_Performance_Monitor extends Module
     {
         parent::enqueue_scripts();
 
+        $script_asset = UtilEnv::resolve_asset(WPOPT_ABSPATH, 'modules/supporters/performance-monitor/performance-monitor.js', wps_core()->online);
+
         wp_enqueue_script(
             'wpopt-performance-monitor-page',
-            UtilEnv::path_to_url(WPOPT_ABSPATH) . 'modules/supporters/performance-monitor/performance-monitor.js',
+            $script_asset['url'],
             array('vendor-wps-js'),
-            WPOPT_VERSION,
+            $script_asset['version'] ?: WPOPT_VERSION,
             true
         );
     }
@@ -378,7 +394,6 @@ class Mod_Performance_Monitor extends Module
             return;
         }
 
-        $this->detach_response_for_background_work();
         $persistence_plan = $this->build_request_persistence_plan();
 
         if (
@@ -390,6 +405,7 @@ class Mod_Performance_Monitor extends Module
             return;
         }
 
+        $this->detach_response_for_background_work();
         $this->flush_request_persistence($persistence_plan);
     }
 
@@ -405,6 +421,18 @@ class Mod_Performance_Monitor extends Module
             ? $this->collect_slow_query_samples($duration_ms, $slow_threshold)
             : array();
         $should_persist_request = $is_slow_request || !empty($slow_queries) || $persist_fast_request;
+
+        if (!$should_persist_request) {
+            return array(
+                'request_data'    => array(),
+                'request_row'     => array(),
+                'request_formats' => array(),
+                'slow_queries'    => array(),
+                'cache_metrics'   => array(),
+                'cleanup_history' => false,
+            );
+        }
+
         $collect_cache_metrics = $this->is_cache_panel_enabled() && $should_persist_request;
         $collect_components = $this->is_components_panel_enabled() && $this->component_profile_supported && $should_persist_request;
         $cache_metrics = $collect_cache_metrics && function_exists('wpopt_get_request_cache_metrics')
@@ -516,7 +544,7 @@ class Mod_Performance_Monitor extends Module
             ),
             $this->group_setting_fields(
                 $this->setting_field(__('Shared request capture', 'wpopt'), false, 'separator'),
-                $this->setting_field(__('Request capture sample rate (%)', 'wpopt'), 'monitor.sample_rate', 'numeric', array('default_value' => 100)),
+                $this->sample_rate_setting_field(),
                 $this->setting_field(__('Slow request threshold (ms)', 'wpopt'), 'monitor.slow_request_ms', 'numeric', array('default_value' => 1500)),
                 $this->setting_field(__('Fast request persistence rate (%)', 'wpopt'), 'monitor.fast_request_sample_rate', 'numeric', array('default_value' => 10)),
                 $this->setting_field(__('Stored request URI max length', 'wpopt'), 'monitor.request_uri_max_length', 'numeric', array('default_value' => 1024))
@@ -536,6 +564,35 @@ class Mod_Performance_Monitor extends Module
                 $this->setting_field(__('Store SQL caller backtrace', 'wpopt'), 'monitor.slow_query_store_callers', 'checkbox', array('default_value' => false, 'parent' => 'monitor.sections.slow_queries')),
                 $this->setting_field(__('Stored SQL caller backtrace max length', 'wpopt'), 'monitor.slow_query_caller_max_length', 'numeric', array('default_value' => 600, 'parent' => 'monitor.slow_query_store_callers'))
             )
+        );
+    }
+
+    private function sample_rate_setting_field(): array
+    {
+        $value = min(100, max(1, absint($this->option('monitor.sample_rate', 100))));
+        $fill_percent = round((($value - 1) / 99) * 100, 4);
+
+        return array(
+            'type'    => 'number',
+            'name'    => __('Request capture sample rate (%)', 'wpopt'),
+            'id'      => 'monitor.sample_rate',
+            'value'   => $value,
+            'classes' => 'wpopt-sample-rate-range',
+            'before'  => sprintf(
+                '<span id="wpopt-monitor-sample-rate-value" style="display:inline-block;min-width:48px;margin-right:12px;font-weight:600;color:#1d2327;">%d%%</span>',
+                $value
+            ),
+            'props'   => array(
+                'type'          => 'range',
+                'min'           => '1',
+                'max'           => '100',
+                'step'          => '1',
+                'aria-valuemin' => '1',
+                'aria-valuemax' => '100',
+                'aria-valuenow' => (string)$value,
+                'style'         => sprintf('--wpopt-range-fill:%s%%;width:calc(100%% - 72px);max-width:620px;min-width:180px;vertical-align:middle;', $fill_percent),
+                'oninput'       => "var v=parseInt(this.value,10)||1;var f=((v-1)/99)*100;document.getElementById('wpopt-monitor-sample-rate-value').textContent=v+'%';this.setAttribute('aria-valuenow',v);this.style.setProperty('--wpopt-range-fill',f+'%');",
+            ),
         );
     }
 
@@ -599,7 +656,13 @@ class Mod_Performance_Monitor extends Module
 
     private function is_monitor_section_enabled(string $section, bool $default = true): bool
     {
-        return (bool)$this->option('monitor.sections.' . $section, $default);
+        $cache_key = 'section:' . $section;
+
+        if (!array_key_exists($cache_key, $this->runtime_option_cache)) {
+            $this->runtime_option_cache[$cache_key] = (bool)$this->option('monitor.sections.' . $section, $default);
+        }
+
+        return $this->runtime_option_cache[$cache_key];
     }
 
     private function is_overview_panel_enabled(): bool
@@ -657,7 +720,11 @@ class Mod_Performance_Monitor extends Module
 
     private function get_fast_request_sample_rate(): int
     {
-        return min(100, max(0, absint($this->option('monitor.fast_request_sample_rate', 10))));
+        if (!array_key_exists('fast_request_sample_rate', $this->runtime_option_cache)) {
+            $this->runtime_option_cache['fast_request_sample_rate'] = min(100, max(0, absint($this->option('monitor.fast_request_sample_rate', 10))));
+        }
+
+        return $this->runtime_option_cache['fast_request_sample_rate'];
     }
 
     private function should_persist_fast_request_sample(): bool
@@ -692,7 +759,11 @@ class Mod_Performance_Monitor extends Module
 
     private function get_request_uri_max_length(): int
     {
-        return min(4096, max(128, absint($this->option('monitor.request_uri_max_length', 1024))));
+        if (!array_key_exists('request_uri_max_length', $this->runtime_option_cache)) {
+            $this->runtime_option_cache['request_uri_max_length'] = min(4096, max(128, absint($this->option('monitor.request_uri_max_length', 1024))));
+        }
+
+        return $this->runtime_option_cache['request_uri_max_length'];
     }
 
     private function get_slow_query_sql_max_length(): int
@@ -702,17 +773,29 @@ class Mod_Performance_Monitor extends Module
 
     private function should_store_slow_query_request_context(): bool
     {
-        return (bool)$this->option('monitor.slow_query_store_request_context', false);
+        if (!array_key_exists('slow_query_store_request_context', $this->runtime_option_cache)) {
+            $this->runtime_option_cache['slow_query_store_request_context'] = (bool)$this->option('monitor.slow_query_store_request_context', false);
+        }
+
+        return $this->runtime_option_cache['slow_query_store_request_context'];
     }
 
     private function should_store_slow_query_callers(): bool
     {
-        return (bool)$this->option('monitor.slow_query_store_callers', false);
+        if (!array_key_exists('slow_query_store_callers', $this->runtime_option_cache)) {
+            $this->runtime_option_cache['slow_query_store_callers'] = (bool)$this->option('monitor.slow_query_store_callers', false);
+        }
+
+        return $this->runtime_option_cache['slow_query_store_callers'];
     }
 
     private function get_slow_query_caller_max_length(): int
     {
-        return min(4000, max(128, absint($this->option('monitor.slow_query_caller_max_length', 600))));
+        if (!array_key_exists('slow_query_caller_max_length', $this->runtime_option_cache)) {
+            $this->runtime_option_cache['slow_query_caller_max_length'] = min(4000, max(128, absint($this->option('monitor.slow_query_caller_max_length', 600))));
+        }
+
+        return $this->runtime_option_cache['slow_query_caller_max_length'];
     }
 
     protected function render_sub_modules(): void
@@ -760,7 +843,7 @@ class Mod_Performance_Monitor extends Module
         }
 
         ?>
-        <section class="wps-wrap">
+        <section class="wps-wrap wpopt-performance-monitor-page">
             <block class="wps">
                 <section class="wps-header"><h1><?php _e('Performance Monitor', 'wpopt'); ?></h1></section>
                 <?php
@@ -776,12 +859,21 @@ class Mod_Performance_Monitor extends Module
                     <?php
                 }
                 else {
-                    echo Graphic::generateHTML_tabs_panels($panels);
+                    echo Graphic::generateHTML_tabs_panels($panels, array(), $this->render_monitor_overhead_notice());
                 }
                 ?>
             </block>
         </section>
         <?php
+    }
+
+    private function render_monitor_overhead_notice(): string
+    {
+        return sprintf(
+            '<div class="wpopt-perf-notice"><strong>%s</strong><span>%s</span></div>',
+            esc_html__('Monitoring overhead', 'wpopt'),
+            esc_html__('Performance Monitor collects timing, memory, query and component data while requests are running. This adds a small but real overhead, so the site can be slightly slower while monitoring is enabled and WP Optimizer itself may appear slower in these results because it is doing the measurement work.', 'wpopt')
+        );
     }
 
     public function render_monitor_overview_panel(): string
@@ -1003,7 +1095,11 @@ class Mod_Performance_Monitor extends Module
             return false;
         }
 
-        $sample_rate = min(100, max(1, absint($this->option('monitor.sample_rate', 100))));
+        if (!array_key_exists('sample_rate', $this->runtime_option_cache)) {
+            $this->runtime_option_cache['sample_rate'] = min(100, max(1, absint($this->option('monitor.sample_rate', 100))));
+        }
+
+        $sample_rate = $this->runtime_option_cache['sample_rate'];
         if ($sample_rate < 100 && mt_rand(1, 100) > $sample_rate) {
             return false;
         }
@@ -1113,14 +1209,21 @@ class Mod_Performance_Monitor extends Module
 
     private function sanitize_request_uri(): string
     {
+        if (is_string($this->request_uri_cache)) {
+            return $this->request_uri_cache;
+        }
+
         $uri = wp_unslash((string)($_SERVER['REQUEST_URI'] ?? '/'));
         $uri = trim($uri);
 
         if ($uri === '') {
-            return '/';
+            $this->request_uri_cache = '/';
+            return $this->request_uri_cache;
         }
 
-        return substr($uri, 0, $this->get_request_uri_max_length());
+        $this->request_uri_cache = substr($uri, 0, $this->get_request_uri_max_length());
+
+        return $this->request_uri_cache;
     }
 
     private function detect_request_profile(): array
@@ -1167,7 +1270,9 @@ class Mod_Performance_Monitor extends Module
             return array('type' => 'search', 'label' => 'search');
         }
 
-        if (is_feed()) {
+        global $wp_query;
+
+        if ($wp_query instanceof \WP_Query && $wp_query->is_feed()) {
             return array('type' => 'feed', 'label' => 'feed');
         }
 
@@ -1244,6 +1349,10 @@ class Mod_Performance_Monitor extends Module
 
     private function get_request_path(): string
     {
+        if (is_string($this->request_path_cache)) {
+            return $this->request_path_cache;
+        }
+
         $uri = wp_parse_url($this->sanitize_request_uri(), PHP_URL_PATH);
         $uri = is_string($uri) ? $uri : '/';
 
@@ -1255,7 +1364,9 @@ class Mod_Performance_Monitor extends Module
             $path = ltrim(substr($path, strlen($base_path)), '/');
         }
 
-        return '/' . $path;
+        $this->request_path_cache = '/' . $path;
+
+        return $this->request_path_cache;
     }
 
     private function limit_route_segments(string $route): string
@@ -1335,6 +1446,7 @@ class Mod_Performance_Monitor extends Module
             return array();
         }
 
+        $collect_all_queries = $duration_ms >= $slow_threshold;
         $all_queries = array();
         $threshold_hits = array();
         $capture_threshold = $this->get_slow_query_capture_threshold_ms($slow_threshold);
@@ -1356,8 +1468,16 @@ class Mod_Performance_Monitor extends Module
                 continue;
             }
 
-            $caller = trim((string)($entry[2] ?? ''));
-            $caller = preg_replace('/\s+/', ' ', $caller);
+            if (!$collect_all_queries && $capture_threshold > 0 && $query_time_ms < $capture_threshold) {
+                continue;
+            }
+
+            $caller = '';
+            if ($store_callers) {
+                $caller = trim((string)($entry[2] ?? ''));
+                $caller = preg_replace('/\s+/', ' ', $caller);
+            }
+
             $fingerprint = $this->fingerprint_sql_query($query);
 
             $sample = array(
@@ -1368,14 +1488,15 @@ class Mod_Performance_Monitor extends Module
                 'query_caller'    => $store_callers ? $this->limit_string((string)$caller, $caller_limit) : '',
             );
 
-            $this->push_slow_query_sample($all_queries, $sample, $sample_limit, $per_signature_limit);
-
-            if ($capture_threshold <= 0 || $query_time_ms >= $capture_threshold) {
+            if ($collect_all_queries) {
+                $this->push_slow_query_sample($all_queries, $sample, $sample_limit, $per_signature_limit);
+            }
+            else {
                 $this->push_slow_query_sample($threshold_hits, $sample, $sample_limit, $per_signature_limit);
             }
         }
 
-        if ($duration_ms >= $slow_threshold) {
+        if ($collect_all_queries) {
             return $all_queries;
         }
 
@@ -1445,6 +1566,12 @@ class Mod_Performance_Monitor extends Module
 
     private function fingerprint_sql_query(string $query): string
     {
+        $cache_key = md5($query);
+
+        if (isset($this->sql_fingerprint_cache[$cache_key])) {
+            return $this->sql_fingerprint_cache[$cache_key];
+        }
+
         $fingerprint = preg_replace("/'[^'\\\\]*(?:\\\\.[^'\\\\]*)*'/", '?', $query);
         $fingerprint = preg_replace('/"[^"\\\\]*(?:\\\\.[^"\\\\]*)*"/', '?', (string)$fingerprint);
         $fingerprint = preg_replace('/\b0x[0-9a-f]+\b/i', '?', (string)$fingerprint);
@@ -1452,17 +1579,23 @@ class Mod_Performance_Monitor extends Module
         $fingerprint = preg_replace('/\(\s*(?:\?\s*,\s*)+\?\s*\)/', '(?)', (string)$fingerprint);
         $fingerprint = preg_replace('/\s+/', ' ', trim((string)$fingerprint));
 
-        return $this->limit_string((string)$fingerprint, 1500);
+        $this->sql_fingerprint_cache[$cache_key] = $this->limit_string((string)$fingerprint, 1500);
+
+        return $this->sql_fingerprint_cache[$cache_key];
     }
 
     private function should_ignore_monitored_query(string $query): bool
     {
-        $tables = array(
-            defined('WPOPT_TABLE_REQUEST_PERFORMANCE') ? WPOPT_TABLE_REQUEST_PERFORMANCE : '',
-            defined('WPOPT_TABLE_SLOW_QUERIES') ? WPOPT_TABLE_SLOW_QUERIES : '',
-        );
+        static $tables = null;
 
-        foreach (array_filter($tables) as $table) {
+        if (!is_array($tables)) {
+            $tables = array_filter(array(
+                defined('WPOPT_TABLE_REQUEST_PERFORMANCE') ? WPOPT_TABLE_REQUEST_PERFORMANCE : '',
+                defined('WPOPT_TABLE_SLOW_QUERIES') ? WPOPT_TABLE_SLOW_QUERIES : '',
+            ));
+        }
+
+        foreach ($tables as $table) {
             if (stripos($query, $table) !== false) {
                 return true;
             }
@@ -2216,7 +2349,7 @@ class Mod_Performance_Monitor extends Module
 
     private function capture_query_entry(string $query, float $query_time, string $query_callstack, float $query_start, array $query_data = array()): void
     {
-        if (!$this->query_capture_enabled) {
+        if (!$this->query_capture_enabled || !$this->component_profiler_enabled) {
             return;
         }
 
@@ -2280,7 +2413,7 @@ class Mod_Performance_Monitor extends Module
         $previous_files = is_array($this->component_load_checkpoint['files'] ?? null)
             ? $this->component_load_checkpoint['files']
             : array();
-        $new_files = array_values(array_diff($current_files, $previous_files));
+        $new_files = $this->diff_normalized_file_sets($current_files, $previous_files);
         $current_memory = memory_get_usage(true);
         $current_peak = memory_get_peak_usage(true);
         $started_at = (float)($this->component_load_checkpoint['started_at'] ?? microtime(true));
@@ -2349,6 +2482,28 @@ class Mod_Performance_Monitor extends Module
         }
 
         return array_values(array_unique($files));
+    }
+
+    private function diff_normalized_file_sets(array $current_files, array $previous_files): array
+    {
+        if (empty($current_files)) {
+            return array();
+        }
+
+        if (empty($previous_files)) {
+            return array_values($current_files);
+        }
+
+        $previous_lookup = array_fill_keys($previous_files, true);
+        $new_files = array();
+
+        foreach ($current_files as $file) {
+            if (!isset($previous_lookup[$file])) {
+                $new_files[] = $file;
+            }
+        }
+
+        return $new_files;
     }
 
     private function sum_file_sizes(array $files): int

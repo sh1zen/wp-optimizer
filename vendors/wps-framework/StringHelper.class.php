@@ -197,7 +197,7 @@ class StringHelper
      *
      * @return string
      */
-    public static function build_marker(string $name, string $data, string $hash = null): string
+    public static function build_marker(string $name, string $data, ?string $hash = null): string
     {
         // Start the marker, add the data.
         $marker = '%%' . $name . self::$REPLACER_HASH . '%%' . base64_encode($data);
@@ -281,7 +281,7 @@ class StringHelper
      * @return int|false
      */
 
-    public static function strpos(string $haystack, string $needle, int $offset = 0, string $encoding = null)
+    public static function strpos(string $haystack, string $needle, int $offset = 0, ?string $encoding = null)
     {
         if (self::mbstring_available()) {
             return (null === $encoding) ? \mb_strpos($haystack, $needle, $offset) : \mb_strpos($haystack, $needle, $offset, $encoding);
@@ -298,7 +298,7 @@ class StringHelper
      *
      * @return bool
      */
-    public static function mbstring_available(bool $override = null): bool
+    public static function mbstring_available(?bool $override = null): bool
     {
         static $available = null;
 
@@ -327,7 +327,7 @@ class StringHelper
      *
      * @return string
      */
-    public static function substr_replace(string $string, string $replacement, int $start, int $length = null, string $encoding = null): string
+    public static function substr_replace(string $string, string $replacement, int $start, ?int $length = null, ?string $encoding = null): string
     {
         if (self::mbstring_available()) {
             $strlen = self::strlen($string, $encoding);
@@ -383,7 +383,7 @@ class StringHelper
      * @return int Number of characters or bytes in given $string
      *             (characters if/when supported, bytes otherwise).
      */
-    public static function strlen(string $string, string $encoding = null): int
+    public static function strlen(string $string, ?string $encoding = null): int
     {
         if (self::mbstring_available()) {
             return (null === $encoding) ? \mb_strlen($string) : \mb_strlen($string, $encoding);

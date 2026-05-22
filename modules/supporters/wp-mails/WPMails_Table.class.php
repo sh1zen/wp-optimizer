@@ -68,7 +68,7 @@ class WPMails extends \WP_List_Table
         ?>
         <p class="search-box">
             <label class="screen-reader-text" for="<?php echo esc_attr($input_id); ?>"><?php echo esc_html($text); ?>:</label>
-            <input type="search" id="<?php echo esc_attr($input_id); ?>" name="s" value="<?php echo esc_attr($search_data); ?>"/>
+            <input type="search" id="<?php echo esc_attr($input_id); ?>" name="s" value="<?php echo esc_attr($search_data); ?>" placeholder="<?php esc_attr_e('Search mails...', 'wpopt'); ?>"/>
             <?php submit_button($text, 'button', false, false, array('id' => 'search-submit')); ?>
         </p>
         <?php

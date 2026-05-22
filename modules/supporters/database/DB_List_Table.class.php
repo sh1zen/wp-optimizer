@@ -165,25 +165,27 @@ class DB_List_Table extends \WP_List_Table
     {
         global $wpdb;
 
-        if (!$this->current_action())
+        if (!$this->current_action() || ($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST')
             return;
 
         // security check!
-        if (!UtilEnv::verify_nonce('bulk-' . $this->_args['plural'], $_POST['_wpnonce'])) {
+        if (empty($_POST['_wpnonce']) || !UtilEnv::verify_nonce('bulk-' . $this->_args['plural'], $_POST['_wpnonce'])) {
             wp_die('Security check failed!');
         }
 
         wps('wpopt')->options->remove_all('cache', "get_tables_data");
 
         if (empty($_POST['bulk-tables'])) {
-            $tables = $wpdb->get_col('SHOW TABLES');
-        }
-        else {
-            $tables = filter_input(INPUT_POST, 'bulk-tables', FILTER_DEFAULT, FILTER_REQUIRE_ARRAY);
+            $this->response_type = 'notice notice-warning';
+            $this->response_message = __('Select at least one database table before applying a bulk action.', 'wpopt');
 
-            if (!$tables) {
-                return;
-            }
+            return;
+        }
+
+        $tables = filter_input(INPUT_POST, 'bulk-tables', FILTER_DEFAULT, FILTER_REQUIRE_ARRAY);
+
+        if (!$tables) {
+            return;
         }
 
         $processed = DBSupport::manage_tables($this->current_action(), $tables);
@@ -286,15 +288,6 @@ class DB_List_Table extends \WP_List_Table
 
     protected function extra_tablenav($which)
     {
-        if ($which == "top") : ?>
-            <div class="alignleft" style="background: #66b2e8; padding: 6px 1em;">
-                <p style="margin: 0">
-                    <strong>
-                        <?php _e('If no tables are selected, the action will run on all database tables. Be careful!', 'wpopt'); ?>
-                    </strong>
-                </p>
-            </div>
-        <?php endif;
     }
 }
 

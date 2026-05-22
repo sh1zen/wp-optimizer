@@ -151,7 +151,8 @@ class Mod_WP_Customizer extends Module
             if ('post' === $screen_base or 'edit' === $screen_base) {
 
                 add_action('admin_enqueue_scripts', function () use ($screen_base) {
-                    wp_enqueue_script('wpopt-admin-script', UtilEnv::path_to_url(__DIR__, true) . '/supporters/filter-categories.js', array('jquery'), WPOPT_VERSION, true);
+                    $script_asset = UtilEnv::resolve_asset(__DIR__, 'supporters/filter-categories.js', wps_core()->online);
+                    wp_enqueue_script('wpopt-admin-script', $script_asset['url'], array('jquery'), $script_asset['version'] ?: WPOPT_VERSION, true);
                     wp_localize_script('wpopt-admin-script', 'fc_plugin', array(
                         'placeholder' => esc_html__('Filter %s', 'wpopt'),
                         'screenName'  => $screen_base

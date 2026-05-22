@@ -77,7 +77,9 @@ class Mod_WP_Security extends Module
     {
         if (is_admin()) {
             if (!is_writable(ABSPATH . '.htaccess')) {
-                $this->add_notices('error', sprintf(__("<b><i>'%s'</i> is not writable.</b><br>Modify (<b>run chmod 774</b>) it's group permission to allow WP-Security to make changes automatically.", 'wpopt'), ABSPATH . '.htaccess'));
+                add_action('admin_notices', function () {
+                    $this->add_notices('error', sprintf(__("<b><i>'%s'</i> is not writable.</b><br>Modify (<b>run chmod 774</b>) it's group permission to allow WP-Security to make changes automatically.", 'wpopt'), ABSPATH . '.htaccess'));
+                }, 0);
             }
         }
 

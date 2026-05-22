@@ -74,29 +74,31 @@ class wps_wrapper
 
     public function setup(): void
     {
-        if ($this->components['cache']) {
+        if ($this->components['cache'] and is_null($this->cache)) {
             $this->cache = new Cache($this->context, defined('WP_PERSISTENT_CACHE') and WP_PERSISTENT_CACHE);
         }
 
-        if ($this->components['storage']) {
+        if ($this->components['storage'] and is_null($this->storage)) {
             $this->storage = new Storage($this->context);
         }
 
-        if ($this->components['options'] and !empty($this->args['table_name'])) {
+        if ($this->components['options'] and !empty($this->args['table_name']) and is_null($this->options)) {
             $this->options = new Options($this->context, $this->args['table_name']);
         }
 
-        $this->settings = new Settings($this->context);
+        if (is_null($this->settings)) {
+            $this->settings = new Settings($this->context);
+        }
 
-        if ($this->components['moduleHandler'] and !empty($this->args['modules_path'])) {
+        if ($this->components['moduleHandler'] and !empty($this->args['modules_path']) and is_null($this->moduleHandler)) {
             $this->moduleHandler = new ModuleHandler($this->context, $this->args['modules_path']);
         }
 
-        if ($this->components['ajax'] and wp_doing_ajax()) {
+        if ($this->components['ajax'] and wp_doing_ajax() and is_null($this->ajax)) {
             $this->ajax = new Ajax($this->context);
         }
 
-        if ($this->components['cron']) {
+        if ($this->components['cron'] and is_null($this->cron)) {
             $this->cron = new CronForModules($this->context);
         }
     }

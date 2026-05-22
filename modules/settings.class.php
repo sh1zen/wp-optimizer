@@ -71,7 +71,17 @@ class Mod_Settings extends Module
                     break;
 
                 case 'import_options':
-                    $response = wps('wpopt')->settings->import($_REQUEST['conf_data']);
+                    $response = false;
+                    $uploaded_file = $_FILES['conf_file'] ?? null;
+
+                    if (is_array($uploaded_file) && (int)($uploaded_file['error'] ?? UPLOAD_ERR_NO_FILE) === UPLOAD_ERR_OK) {
+                        $tmp_name = (string)($uploaded_file['tmp_name'] ?? '');
+
+                        if ($tmp_name !== '' && is_uploaded_file($tmp_name)) {
+                            $response = wps('wpopt')->settings->import((string)file_get_contents($tmp_name));
+                        }
+                    }
+
                     $response &= wps('wpopt')->moduleHandler->upgrade();
                     break;
             }
@@ -134,12 +144,12 @@ class Mod_Settings extends Module
     {
         ob_start();
         ?>
-        <form method="POST" autocapitalize="off" autocomplete="off">
+        <form method="POST" autocapitalize="off" autocomplete="off" enctype="multipart/form-data">
 
             <?php RequestActions::nonce_field($this->action_hook); ?>
 
-            <block class="wps-gridRow wpopt-settings-setup">
-                <row class="wps-custom-action wpopt-settings-actions">
+            <block class="wps-gridRow wps-settings-setup wpopt-settings-transfer">
+                <row class="wps-custom-action wps-settings-actions">
                     <?php
 
                     echo RequestActions::get_action_button($this->action_hook, 'reset_options', __('Reset Plugin options', 'wpopt'), 'wps wps-button wpopt-btn is-danger');
@@ -150,19 +160,16 @@ class Mod_Settings extends Module
 
                     ?>
                 </row>
-                <row class="wps-custom-action wpopt-settings-import">
-                    <?php
-
-                    Graphic::generate_field(array(
-                        'id'      => 'conf_data',
-                        'type'    => 'textarea',
-                        'classes' => 'wpopt-import-field',
-                        'context' => 'block'
-                    ));
-
-                    echo RequestActions::get_action_button($this->action_hook, 'import_options', __('Import Plugin options', 'wpopt'), 'wps wps-button wpopt-btn is-info');
-
-                    ?>
+                <row class="wps-custom-action wps-settings-import">
+                    <label class="wps-import-dropzone" for="wpopt-conf-file">
+                        <span class="wps-import-dropzone-icon"><?php echo Graphic::icon('external'); ?></span>
+                        <span class="wps-import-dropzone-copy">
+                            <strong><?php esc_html_e('Drop configuration file here', 'wpopt'); ?></strong>
+                            <small><?php esc_html_e('or choose the exported .conf file from your computer.', 'wpopt'); ?></small>
+                        </span>
+                        <input id="wpopt-conf-file" class="wps-import-file" type="file" name="conf_file" accept=".conf,text/plain">
+                    </label>
+                    <?php echo RequestActions::get_action_button($this->action_hook, 'import_options', __('Import Plugin options', 'wpopt'), 'wps wps-button wpopt-btn is-info'); ?>
                 </row>
             </block>
         </form>

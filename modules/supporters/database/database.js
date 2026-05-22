@@ -23,130 +23,186 @@
             });
         };
 
-        $("button.wpopt-sweep-details").each(function () {
+        let load_lazy_panel = function ($panel) {
+            let $lazy = $('.wpopt-db-lazy-panel', $panel).first();
 
-            let $this = $(this);
+            if (!$lazy.length || $lazy.data('loading') || $lazy.data('loaded')) {
+                return;
+            }
 
-            $this.on('click', function (e) {
+            $lazy.data('loading', true);
 
-                e.preventDefault();
+            wps.ajaxHandler({
+                mod: 'database',
+                mod_action: 'render_panel',
+                mod_nonce: $lazy.data('nonce'),
+                mod_args: {
+                    panel: $lazy.data('panel')
+                },
+                use_loading: $panel,
+                callback: function (res, status) {
+                    $lazy.data('loading', false);
 
-                let $table = $this.parents("table");
-                let $row = $this.parents('tr');
-                let $details = $('.sweep-details', $row);
-
-                if ($details.children().length > 0) {
-                    $details.toggle("slow");
-                    return;
-                }
-
-                let callback_fn = function (details, success) {
-
-                    if (!success) return;
-
-                    if (details.length > 0) {
-                        let html = '';
-                        $.each(details, function (i, n) {
-                            html += '<li>' + n + '</li>';
-                        });
-                        $('.sweep-details', $row).append('<ol class="wps-gridRow">' + html + '</ol>').toggle("slow");
-                    }
-                }
-
-                database_ajax_request($this, $table, callback_fn);
-            });
-        });
-
-        $("button.wpopt-sweep").each(function () {
-
-            let $this = $(this);
-
-            $this.on('click', function (e) {
-
-                if ($this.data('explicit')) return;
-
-                e.preventDefault();
-
-                let $table = $this.parents("table");
-                let $row = $this.parents('tr');
-
-                let callback_fn = function (sweep, success) {
-
-                    if (!success) {
+                    if (status === 'success' && res && res.html) {
+                        $lazy.data('loaded', true).replaceWith(res.html);
                         return;
                     }
 
-                    $('.sweep-count', $row).text('0');
-                    $('.sweep-percentage', $row).text('0');
-
-                    if (sweep.count === 0) {
-                        $this.parent('td').html(wps.locale.get('text_na'));
-                    }
-
-                    $('.sweep-details', $row).html('').toggle("slow");
+                    $lazy.addClass('is-error').html('<strong>' + wps.locale.get('error', 'Error') + '</strong><p>' + (res && res.text ? res.text : 'Unable to load this section.') + '</p>');
                 }
-
-                database_ajax_request($this, $table, callback_fn);
             });
+        };
+
+        let schedule_lazy_panel = function ($panel) {
+            let $lazy = $('.wpopt-db-lazy-panel', $panel).first();
+
+            if (!$lazy.length || $lazy.data('loading') || $lazy.data('loaded') || $lazy.data('scheduled')) {
+                return;
+            }
+
+            $lazy.data('scheduled', true);
+
+            let runner = function () {
+                $lazy.data('scheduled', false);
+                load_lazy_panel($panel);
+            };
+
+            if (window.requestIdleCallback) {
+                window.requestIdleCallback(runner, {timeout: 700});
+                return;
+            }
+
+            window.requestAnimationFrame(function () {
+                window.setTimeout(runner, 0);
+            });
+        };
+
+        $('.wpopt-db-manager-page .wps-ar-tabcontent[aria-hidden="false"]').each(function () {
+            schedule_lazy_panel($(this));
         });
 
-        $("form.wpopt-ajax-db").each(function (e) {
+        $(document).on('click', '.wpopt-db-manager-page .wps-ar-tab[aria-controls]', function () {
+            let panel_id = $(this).attr('aria-controls');
 
-            $(this).on('submit', function (e) {
+            window.setTimeout(function () {
+                load_lazy_panel($('#' + panel_id));
+            }, 0);
+        });
 
-                let $this = $(this);
+        $(document).on('click', 'button.wpopt-sweep-details', function (e) {
 
-                let $submitter = $(e.originalEvent.submitter);
+            e.preventDefault();
 
-                if ($submitter.data('explicit')) return;
+            let $this = $(this);
+            let $table = $this.parents("table");
+            let $row = $this.parents('tr');
+            let $details = $('.sweep-details', $row);
 
-                e.preventDefault();
+            if ($details.children().length > 0) {
+                $details.toggle("slow");
+                return;
+            }
 
-                let action = $submitter.data('action');
+            let callback_fn = function (details, success) {
 
-                wp.heartbeat.suspend = true;
+                if (!success) return;
 
-                wps.ajaxHandler({
-                    use_loader: $this,
-                    mod: 'database',
-                    mod_action: action,
-                    mod_nonce: $this.data('nonce'),
-                    mod_args: $submitter.data('args'),
-                    mod_form: $this.serialize(),
-                    callback: function (res, status) {
+                if (details.length > 0) {
+                    let html = '';
+                    $.each(details, function (i, n) {
+                        html += '<li>' + n + '</li>';
+                    });
+                    $('.sweep-details', $row).append('<ol class="wps-gridRow">' + html + '</ol>').toggle("slow");
+                }
+            }
 
-                        let $mex_viewer = $("#wpopt-ajax-message");
-                        $mex_viewer.empty();
+            database_ajax_request($this, $table, callback_fn);
+        });
 
-                        wp.heartbeat.suspend = false;
+        $(document).on('click', 'button.wpopt-sweep', function (e) {
 
-                        switch (action) {
+            let $this = $(this);
 
-                            case 'download':
-                                let a = document.createElement('a');
-                                a.style.display = 'none';
-                                document.body.appendChild(a);
-                                let blob = new Blob([res], {type: 'octet/stream'});
-                                let url = URL.createObjectURL(blob);
-                                a.href = url;
-                                a.download = $("input[name=file]:checked", $this).val();
-                                a.click();
-                                URL.revokeObjectURL(url);
-                                return;
+            if ($this.data('explicit')) return;
 
-                            case 'backup':
-                                location.reload();
-                                return;
+            e.preventDefault();
 
-                            case 'delete':
-                                $("input[name=file]:checked", $this).parents('tr').fadeOut();
-                                break;
-                        }
+            let $table = $this.parents("table");
+            let $row = $this.parents('tr');
 
-                        $mex_viewer.addNotice(res, status);
+            let callback_fn = function (sweep, success) {
+
+                if (!success) {
+                    return;
+                }
+
+                $('.sweep-count', $row).text('0');
+                $('.sweep-percentage', $row).text('0');
+
+                if (sweep.count === 0) {
+                    $this.parent('td').html(wps.locale.get('text_na'));
+                }
+
+                $('.sweep-details', $row).html('').toggle("slow");
+            }
+
+            database_ajax_request($this, $table, callback_fn);
+        });
+
+        $(document).on('submit', 'form.wpopt-ajax-db', function (e) {
+
+            let $this = $(this);
+
+            let $submitter = $(e.originalEvent.submitter);
+
+            if ($submitter.data('explicit')) return;
+
+            e.preventDefault();
+
+            let action = $submitter.data('action');
+
+            wp.heartbeat.suspend = true;
+
+            wps.ajaxHandler({
+                use_loader: $this,
+                mod: 'database',
+                mod_action: action,
+                mod_nonce: $this.data('nonce'),
+                mod_args: $submitter.data('args'),
+                mod_form: $this.serialize(),
+                callback: function (res, status) {
+
+                    let $mex_viewer = $("#wpopt-ajax-message");
+                    $mex_viewer.empty();
+
+                    wp.heartbeat.suspend = false;
+
+                    switch (action) {
+
+                        case 'download':
+                            let a = document.createElement('a');
+                            a.style.display = 'none';
+                            document.body.appendChild(a);
+                            let blob = new Blob([res], {type: 'octet/stream'});
+                            let url = URL.createObjectURL(blob);
+                            a.href = url;
+                            a.download = $("input[name=file]:checked", $this).val();
+                            a.click();
+                            URL.revokeObjectURL(url);
+                            return;
+
+                        case 'backup':
+                            location.reload();
+                            return;
+
+                        case 'delete':
+                            $("input[name=file]:checked", $this).parents('tr').fadeOut();
+                            break;
                     }
-                })
-            });
+
+                    $mex_viewer.addNotice(res, status);
+                }
+            })
         });
     });
 })(jQuery);

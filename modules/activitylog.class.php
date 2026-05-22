@@ -10,6 +10,7 @@ namespace WPOptimizer\modules;
 use WPS\core\RequestActions;
 use WPS\core\addon\Exporter;
 use WPS\core\CronActions;
+use WPS\core\Graphic;
 use WPS\core\Query;
 use WPS\core\Rewriter;
 use WPS\modules\Module;
@@ -82,12 +83,12 @@ class Mod_ActivityLog extends Module
 
         $table->prepare_items();
         ?>
-        <section class="wps-wrap">
+        <section class="wps-wrap wpopt-activity-log-page">
             <block class="wps">
                 <section class="wps-header"><h1>Activity Log</h1></section>
                 <?php echo $this->render_activity_charts($daily_series, $summary); ?>
                 <section class='wps'>
-                    <form method="GET" autocapitalize="off" autocomplete="off">
+                    <form method="GET" class="wps-list-table-form" autocapitalize="off" autocomplete="off">
                         <input type="hidden" name="page" value="<?php echo esc_attr($_REQUEST['page']); ?>"/>
                         <?php $table->display(); ?>
                         <?php RequestActions::nonce_field($this->action_hook); ?>
@@ -398,7 +399,9 @@ class Mod_ActivityLog extends Module
         $this->log_generator();
 
         if (filter_input(INPUT_GET, 'message') == 'wpopt-actlog-data-erased') {
-            $this->add_notices('success', __('All activities have been successfully deleted.', 'wpopt'));
+            add_action('admin_notices', function () {
+                $this->add_notices('success', __('All activities have been successfully deleted.', 'wpopt'));
+            }, 0);
         }
     }
 
@@ -776,37 +779,28 @@ class Mod_ActivityLog extends Module
     {
         ob_start();
         ?>
-        <style>
-            .wpopt-activity-shell { margin: 4px 0 18px; }
-            .wpopt-activity-kpis { display:grid; grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:12px; margin-bottom:16px; }
-            .wpopt-activity-kpi { padding:14px 16px; border:1px solid rgba(15, 23, 42, 0.08); border-radius:16px; background:linear-gradient(135deg, #f8fafc 0%, #ffffff 100%); }
-            .wpopt-activity-kpi span { display:block; font-size:11px; letter-spacing:.08em; text-transform:uppercase; color:#64748b; margin-bottom:6px; }
-            .wpopt-activity-kpi strong { font-size:26px; color:#0f172a; }
-            .wpopt-activity-daily { margin-bottom:16px; padding:18px; border:1px solid rgba(15, 23, 42, 0.08); border-radius:18px; background:linear-gradient(180deg, #ffffff 0%, #f8fafc 100%); }
-            .wpopt-activity-legend { display:flex; flex-wrap:wrap; gap:8px; margin:12px 0 2px; }
-            .wpopt-activity-legend-item { display:inline-flex; align-items:center; gap:8px; padding:6px 10px; border-radius:999px; background:#ffffff; border:1px solid rgba(15, 23, 42, 0.08); font-size:12px; color:#334155; }
-            .wpopt-activity-legend-swatch { width:10px; height:10px; border-radius:999px; display:inline-block; }
-            .wpopt-activity-grid { display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:16px; }
-            .wpopt-activity-chart { padding:16px; border:1px solid rgba(15, 23, 42, 0.08); border-radius:16px; background:linear-gradient(180deg, #ffffff 0%, #f8fafc 100%); }
-            .wpopt-activity-chart h3 { margin:0 0 12px; }
-            .wpopt-activity-empty { padding:18px; border:1px dashed #cbd5e1; border-radius:12px; color:#64748b; background:#f8fafc; }
-            @media (max-width: 980px) {
-                .wpopt-activity-grid { grid-template-columns:1fr; }
-            }
-        </style>
         <div class="wpopt-activity-shell">
             <div class="wpopt-activity-kpis">
                 <div class="wpopt-activity-kpi">
-                    <span><?php _e('Total logs', 'wpopt'); ?></span>
-                    <strong><?php echo number_format_i18n($summary['total_logs']); ?></strong>
+                    <span class="wpopt-activity-kpi-icon"><?php echo Graphic::icon('list'); ?></span>
+                    <div>
+                        <span><?php _e('Total logs', 'wpopt'); ?></span>
+                        <strong><?php echo number_format_i18n($summary['total_logs']); ?></strong>
+                    </div>
                 </div>
                 <div class="wpopt-activity-kpi">
-                    <span><?php _e('Collected contexts', 'wpopt'); ?></span>
-                    <strong><?php echo number_format_i18n($summary['total_contexts']); ?></strong>
+                    <span class="wpopt-activity-kpi-icon"><?php echo Graphic::icon('database'); ?></span>
+                    <div>
+                        <span><?php _e('Collected contexts', 'wpopt'); ?></span>
+                        <strong><?php echo number_format_i18n($summary['total_contexts']); ?></strong>
+                    </div>
                 </div>
                 <div class="wpopt-activity-kpi">
-                    <span><?php _e('Collected actions', 'wpopt'); ?></span>
-                    <strong><?php echo number_format_i18n($summary['total_actions']); ?></strong>
+                    <span class="wpopt-activity-kpi-icon"><?php echo Graphic::icon('check'); ?></span>
+                    <div>
+                        <span><?php _e('Collected actions', 'wpopt'); ?></span>
+                        <strong><?php echo number_format_i18n($summary['total_actions']); ?></strong>
+                    </div>
                 </div>
             </div>
             <div class="wpopt-activity-daily">
@@ -820,21 +814,17 @@ class Mod_ActivityLog extends Module
     private function render_activity_daily_chart(array $series): string
     {
         $daily_rows = $series['series'] ?? [];
-        $contexts = $series['contexts'] ?? [];
-        $colors = $series['colors'] ?? [];
 
         if (empty($daily_rows)) {
             return $this->render_activity_empty();
         }
 
-        $max_value = 1;
         $total = 0;
         $peak_total = 0;
         $peak_label = '';
 
         foreach ($daily_rows as $point) {
             $value = (int)$point['total'];
-            $max_value = max($max_value, $value);
             $total += $value;
 
             if ($value >= $peak_total) {
@@ -844,82 +834,81 @@ class Mod_ActivityLog extends Module
         }
 
         $average = $total > 0 ? round($total / max(1, count($daily_rows)), 1) : 0;
-        $width = 960;
-        $height = 260;
-        $padding_top = 26;
-        $padding_right = 20;
-        $padding_bottom = 42;
-        $padding_left = 42;
+        $axis_max = max(1, (int)ceil($peak_total * 1.25));
+        if ($peak_total <= 1) {
+            $axis_max = 2;
+        }
+
+        $width = 1120;
+        $height = 250;
+        $padding_top = 20;
+        $padding_right = 16;
+        $padding_bottom = 34;
+        $padding_left = 44;
         $plot_width = $width - $padding_left - $padding_right;
         $plot_height = $height - $padding_top - $padding_bottom;
         $count = max(1, count($daily_rows));
-        $column_gap = 4;
-        $column_width = max(8, (($plot_width - ($column_gap * ($count - 1))) / $count));
+        $step_x = $count > 1 ? $plot_width / ($count - 1) : 0;
+        $points = array();
+
+        foreach ($daily_rows as $index => $point) {
+            $x = $padding_left + ($step_x * $index);
+            $y = $padding_top + $plot_height - ($plot_height * ((int)$point['total'] / $axis_max));
+            $points[] = round($x, 2) . ',' . round($y, 2);
+        }
 
         ob_start();
         ?>
-        <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:16px; flex-wrap:wrap; margin-bottom:14px;">
-            <div>
-                <div style="font-size:11px; letter-spacing:.08em; text-transform:uppercase; color:#64748b; margin-bottom:6px;"><?php _e('Daily trend', 'wpopt'); ?></div>
-                <div style="font-size:20px; font-weight:600; color:#0f172a;"><?php _e('Activity volume by day', 'wpopt'); ?></div>
-                <div style="font-size:13px; color:#64748b; margin-top:4px;"><?php echo esc_html(sprintf(_n('Trend for the last %s day.', 'Trend for the last %s days.', count($daily_rows), 'wpopt'), number_format_i18n(count($daily_rows)))); ?></div>
+        <div class="wpopt-activity-daily-head">
+            <div class="wpopt-activity-daily-title">
+                <h2><?php _e('Activity volume by day', 'wpopt'); ?></h2>
+                <p><?php echo esc_html(sprintf(_n('Trend for the last %s day.', 'Trend for the last %s days.', count($daily_rows), 'wpopt'), number_format_i18n(count($daily_rows)))); ?></p>
+                <div class="wpopt-activity-legend">
+                    <span class="wpopt-activity-legend-item">
+                        <i class="wpopt-activity-legend-swatch"></i>
+                        <?php _e('Logs collected', 'wpopt'); ?>
+                    </span>
+                </div>
             </div>
-            <div style="display:flex; gap:10px; flex-wrap:wrap;">
-                <div style="min-width:120px; padding:12px 14px; border-radius:14px; background:linear-gradient(135deg, #0f766e 0%, #115e59 100%); color:#f8fafc;">
-                    <span style="display:block; font-size:10px; letter-spacing:.08em; text-transform:uppercase; opacity:.75;"><?php _e('Last period', 'wpopt'); ?></span>
-                    <strong style="display:block; font-size:24px; line-height:1.1;"><?php echo number_format_i18n($total); ?></strong>
+            <div class="wpopt-activity-stat-grid">
+                <div class="wpopt-activity-stat-card is-primary">
+                    <span><?php _e('Last period', 'wpopt'); ?></span>
+                    <strong><?php echo number_format_i18n($total); ?></strong>
+                    <small><?php echo esc_html(sprintf(_n('(Last %s day)', '(Last %s days)', count($daily_rows), 'wpopt'), number_format_i18n(count($daily_rows)))); ?></small>
                 </div>
-                <div style="min-width:120px; padding:12px 14px; border-radius:14px; background:#f8fafc; border:1px solid rgba(15, 23, 42, 0.08); color:#0f172a;">
-                    <span style="display:block; font-size:10px; letter-spacing:.08em; text-transform:uppercase; color:#64748b;"><?php _e('Avg/day', 'wpopt'); ?></span>
-                    <strong style="display:block; font-size:24px; line-height:1.1;"><?php echo number_format_i18n($average, 1); ?></strong>
+                <div class="wpopt-activity-stat-card is-average">
+                    <span><?php _e('Avg/day', 'wpopt'); ?></span>
+                    <strong><?php echo number_format_i18n($average, 1); ?></strong>
+                    <small><?php _e('Logs/day', 'wpopt'); ?></small>
                 </div>
-                <div style="min-width:120px; padding:12px 14px; border-radius:14px; background:#fff7ed; border:1px solid rgba(234, 88, 12, 0.12); color:#9a3412;">
-                    <span style="display:block; font-size:10px; letter-spacing:.08em; text-transform:uppercase; opacity:.7;"><?php _e('Peak day', 'wpopt'); ?></span>
-                    <strong style="display:block; font-size:24px; line-height:1.1;"><?php echo number_format_i18n($peak_total); ?></strong>
-                    <small style="font-size:12px;"><?php echo esc_html($peak_label); ?></small>
+                <div class="wpopt-activity-stat-card is-peak">
+                    <span><?php _e('Peak day', 'wpopt'); ?></span>
+                    <strong><?php echo number_format_i18n($peak_total); ?></strong>
+                    <small><?php echo esc_html($peak_label); ?></small>
                 </div>
             </div>
         </div>
-        <?php if (!empty($contexts)): ?>
-            <div class="wpopt-activity-legend">
-                <?php foreach ($contexts as $context): ?>
-                    <span class="wpopt-activity-legend-item">
-                        <i class="wpopt-activity-legend-swatch" style="background:<?php echo esc_attr($colors[$context] ?? '#0f766e'); ?>"></i>
-                        <?php echo esc_html($this->format_activity_context_label($context)); ?>
-                    </span>
-                <?php endforeach; ?>
-            </div>
-        <?php endif; ?>
-        <svg viewBox="0 0 <?php echo $width; ?> <?php echo $height; ?>" width="100%" height="260" role="img" aria-label="<?php esc_attr_e('Activity log trend by day', 'wpopt'); ?>">
+        <svg class="wpopt-activity-line-chart" viewBox="0 0 <?php echo $width; ?> <?php echo $height; ?>" width="100%" height="250" role="img" aria-label="<?php esc_attr_e('Activity log trend by day', 'wpopt'); ?>">
             <?php for ($step = 0; $step <= 4; $step++): ?>
                 <?php $y = $padding_top + (($plot_height / 4) * $step); ?>
-                <line x1="<?php echo $padding_left; ?>" y1="<?php echo round($y, 2); ?>" x2="<?php echo $padding_left + $plot_width; ?>" y2="<?php echo round($y, 2); ?>" stroke="#e2e8f0" stroke-width="1"></line>
+                <?php $tick_value = $axis_max - (($axis_max / 4) * $step); ?>
+                <line x1="<?php echo $padding_left; ?>" y1="<?php echo round($y, 2); ?>" x2="<?php echo $padding_left + $plot_width; ?>" y2="<?php echo round($y, 2); ?>" class="wpopt-activity-grid-line"></line>
+                <text x="12" y="<?php echo round($y + 4, 2); ?>" class="wpopt-activity-axis-label"><?php echo esc_html(number_format_i18n($tick_value, $axis_max <= 4 ? 1 : 0)); ?></text>
             <?php endfor; ?>
-            <line x1="<?php echo $padding_left; ?>" y1="<?php echo $padding_top; ?>" x2="<?php echo $padding_left; ?>" y2="<?php echo $padding_top + $plot_height; ?>" stroke="#cbd5e1" stroke-width="1"></line>
-            <line x1="<?php echo $padding_left; ?>" y1="<?php echo $padding_top + $plot_height; ?>" x2="<?php echo $padding_left + $plot_width; ?>" y2="<?php echo $padding_top + $plot_height; ?>" stroke="#cbd5e1" stroke-width="1"></line>
-            <text x="10" y="<?php echo $padding_top + 8; ?>" fill="#64748b" font-size="11"><?php echo number_format_i18n($max_value); ?></text>
-            <text x="14" y="<?php echo $padding_top + $plot_height; ?>" fill="#64748b" font-size="11">0</text>
+            <line x1="<?php echo $padding_left; ?>" y1="<?php echo $padding_top; ?>" x2="<?php echo $padding_left; ?>" y2="<?php echo $padding_top + $plot_height; ?>" class="wpopt-activity-axis-line"></line>
+            <line x1="<?php echo $padding_left; ?>" y1="<?php echo $padding_top + $plot_height; ?>" x2="<?php echo $padding_left + $plot_width; ?>" y2="<?php echo $padding_top + $plot_height; ?>" class="wpopt-activity-axis-line"></line>
+            <polyline points="<?php echo esc_attr(implode(' ', $points)); ?>" class="wpopt-activity-line"></polyline>
             <?php foreach ($daily_rows as $index => $point): ?>
                 <?php
-                $x = $padding_left + (($column_width + $column_gap) * $index);
-                $cursor_y = $padding_top + $plot_height;
+                $x = $padding_left + ($step_x * $index);
+                $y = $padding_top + $plot_height - ($plot_height * ((int)$point['total'] / $axis_max));
                 ?>
-                <?php foreach ($contexts as $context): ?>
-                    <?php
-                    $segment_total = (int)($point['segments'][$context] ?? 0);
-                    if ($segment_total < 1) {
-                        continue;
-                    }
-                    $segment_height = $plot_height * ($segment_total / $max_value);
-                    $cursor_y -= $segment_height;
-                    ?>
-                    <rect x="<?php echo round($x, 2); ?>" y="<?php echo round($cursor_y, 2); ?>" width="<?php echo round($column_width, 2); ?>" height="<?php echo round($segment_height, 2); ?>" fill="<?php echo esc_attr($colors[$context] ?? '#0f766e'); ?>" opacity="0.92"></rect>
-                <?php endforeach; ?>
+                <circle cx="<?php echo round($x, 2); ?>" cy="<?php echo round($y, 2); ?>" r="3.2" class="wpopt-activity-point"></circle>
                 <?php if ($point['total'] > 0): ?>
-                    <text x="<?php echo round($x + ($column_width / 2), 2); ?>" y="<?php echo max(14, round($cursor_y - 6, 2)); ?>" text-anchor="middle" fill="#334155" font-size="10"><?php echo number_format_i18n($point['total']); ?></text>
+                    <text x="<?php echo round($x, 2); ?>" y="<?php echo max(12, round($y - 8, 2)); ?>" class="wpopt-activity-value-label"><?php echo number_format_i18n($point['total']); ?></text>
                 <?php endif; ?>
                 <?php if ($index % max(1, (int)floor(count($daily_rows) / 8)) === 0 || $index === count($daily_rows) - 1): ?>
-                    <text x="<?php echo round($x + ($column_width / 2), 2); ?>" y="<?php echo $padding_top + $plot_height + 18; ?>" text-anchor="middle" fill="#64748b" font-size="10"><?php echo esc_html($point['label']); ?></text>
+                    <text x="<?php echo round($x, 2); ?>" y="<?php echo $padding_top + $plot_height + 22; ?>" class="wpopt-activity-date-label"><?php echo esc_html($point['label']); ?></text>
                 <?php endif; ?>
             <?php endforeach; ?>
         </svg>

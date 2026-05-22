@@ -213,7 +213,21 @@ class Module
 
                 case 'number':
                 case 'numeric':
+                case 'range':
                     $value = intval($field_value);
+
+                    if ($field['type'] === 'range') {
+                        $min = isset($field['props']['min']) ? intval($field['props']['min']) : null;
+                        $max = isset($field['props']['max']) ? intval($field['props']['max']) : null;
+
+                        if ($min !== null) {
+                            $value = max($min, $value);
+                        }
+
+                        if ($max !== null) {
+                            $value = min($max, $value);
+                        }
+                    }
                     break;
 
                 default:
@@ -287,6 +301,11 @@ class Module
                 <input type="hidden" name="<?php echo esc_attr("{$option_name}[change]"); ?>"
                        value="<?php echo $escaped_slug; ?>">
                 <block class="wps-options">
+                    <?php
+                    if ($_before_fields = $this->print_before_settings_fields()) {
+                        echo $_before_fields;
+                    }
+                    ?>
                     <?php Graphic::generate_fields($setting_fields, $this->infos(), ['name_prefix' => $option_name]); ?>
                 </block>
                 <section class="wps-submit">
@@ -321,6 +340,11 @@ class Module
     }
 
     protected function print_header(): string
+    {
+        return '';
+    }
+
+    protected function print_before_settings_fields(): string
     {
         return '';
     }

@@ -23,7 +23,7 @@ class PluginInit
      */
     private string $plugin_basename;
 
-    public ?PagesHandler $pages_handler;
+    public ?PagesHandler $pages_handler = null;
 
     private function __construct()
     {
@@ -34,7 +34,12 @@ class PluginInit
             $this->do_welcome();
         }
 
-        $this->load_textdomain();
+        if (did_action('init')) {
+            $this->load_textdomain();
+        }
+        else {
+            add_action('init', array($this, 'load_textdomain'), 0);
+        }
 
         wps_maybe_upgrade('wpopt', WPOPT_VERSION, WPOPT_ADMIN . "upgrades/");
     }
@@ -52,7 +57,7 @@ class PluginInit
     /**
      * Loads text domain for the plugin.
      */
-    private function load_textdomain(): void
+    public function load_textdomain(): void
     {
         $locale = apply_filters('wpopt_plugin_locale', get_locale(), 'wpopt');
 
@@ -76,7 +81,19 @@ class PluginInit
 
     public static function Initialize(): PluginInit
     {
+        if (isset(self::$_instance)) {
+            return self::$_instance;
+        }
+
         self::$_instance = new static();
+        self::$_instance->setup_modules_for_current_request();
+
+        return self::$_instance;
+    }
+
+    private function setup_modules_for_current_request(): void
+    {
+        $module_handler = wps('wpopt')->moduleHandler;
 
         /**
          * Keep Ajax requests fast:
@@ -87,14 +104,14 @@ class PluginInit
             /**
              * Instancing all modules that need to interact in the Ajax process
              */
-            wps('wpopt')->moduleHandler->setup_modules('ajax');
+            $module_handler->setup_modules('ajax');
         }
         elseif (wp_doing_cron()) {
 
             /**
              * Instancing all modules that need to interact in the cron process
              */
-            wps('wpopt')->moduleHandler->setup_modules('cron');
+            $module_handler->setup_modules('cron');
         }
         elseif (is_admin()) {
 
@@ -108,22 +125,20 @@ class PluginInit
             /**
              * Instancing all modules that need to interact in admin area
              */
-            wps('wpopt')->moduleHandler->setup_modules('admin');
+            $module_handler->setup_modules('admin');
         }
         else {
 
             /**
              * Instancing all modules that need to interact only on the web-view
              */
-            wps('wpopt')->moduleHandler->setup_modules('web-view');
+            $module_handler->setup_modules('web-view');
         }
 
         /**
          * Instancing all modules that need to be always loaded
          */
-        wps('wpopt')->moduleHandler->setup_modules('autoload');
-
-        return self::$_instance;
+        $module_handler->setup_modules('autoload');
     }
 
     /**

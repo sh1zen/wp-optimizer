@@ -349,6 +349,43 @@ class UtilEnv
         return site_url(str_replace($base_dir, '', self::normalize_path($path, !$file)));
     }
 
+    public static function resolve_asset($base_path, string $relative_file, ?bool $prefer_minified = null): array
+    {
+        $base_path = self::normalize_path($base_path, true);
+        $relative_file = ltrim(self::normalize_path($relative_file, false), '/');
+
+        if ($prefer_minified === null) {
+            $prefer_minified = function_exists('wps_core') && wps_core()->online && !wps_core()->debug;
+        }
+
+        $unminified_file = preg_replace('/\.min(?=\.[^.]+$)/', '', $relative_file);
+        $minified_file = preg_replace('/(?=\.[^.]+$)/', '.min', $unminified_file, 1);
+
+        $candidates = $prefer_minified
+            ? [$minified_file, $unminified_file, $relative_file]
+            : [$unminified_file, $relative_file];
+
+        $candidates = array_values(array_unique($candidates));
+        $selected_file = $candidates[0];
+
+        foreach ($candidates as $candidate) {
+            if (file_exists($base_path . $candidate)) {
+                $selected_file = $candidate;
+                break;
+            }
+        }
+
+        $path = $base_path . $selected_file;
+
+        return [
+            'path'     => $path,
+            'url'      => self::path_to_url($path, true),
+            'file'     => $selected_file,
+            'version'  => file_exists($path) ? filemtime($path) : false,
+            'minified' => strpos(basename($selected_file), '.min.') !== false,
+        ];
+    }
+
     /**
      * Get the attachment absolute path from its url
      * @param string $url the attachment url to get its absolute path
@@ -782,7 +819,12 @@ class UtilEnv
          * We only buffer the frontend requests (and then only if not a feed
          * and not turned off explicitly and not when being previewed in Customizer)!
          */
-        return (!\is_admin() and !\is_feed() and !\is_embed() and !$noOptimize and !$is_customize_preview);
+        global $wp_query;
+
+        $is_feed = $wp_query instanceof \WP_Query && $wp_query->is_feed();
+        $is_embed = $wp_query instanceof \WP_Query && $wp_query->is_embed();
+
+        return (!\is_admin() and !$is_feed and !$is_embed and !$noOptimize and !$is_customize_preview);
     }
 
     /**

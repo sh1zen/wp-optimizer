@@ -155,7 +155,9 @@ class Mod_WP_Mail extends Module
 
 
         if (filter_input(INPUT_GET, 'message') == 'wpopt-wpmails-data-erased') {
-            $this->add_notices('success', __('All mails have been successfully deleted.', 'wpopt'));
+            add_action('admin_notices', function () {
+                $this->add_notices('success', __('All mails have been successfully deleted.', 'wpopt'));
+            }, 0);
         }
     }
 
@@ -163,11 +165,13 @@ class Mod_WP_Mail extends Module
     {
         parent::enqueue_scripts();
 
+        $script_asset = UtilEnv::resolve_asset(WPOPT_ABSPATH, 'modules/supporters/wp-mails/wp-mails.js', wps_core()->online);
+
         wp_enqueue_script(
             'wpopt-mail-log-page',
-            UtilEnv::path_to_url(WPOPT_ABSPATH) . 'modules/supporters/wp-mails/wp-mails.js',
+            $script_asset['url'],
             array('vendor-wps-js'),
-            WPOPT_VERSION,
+            $script_asset['version'] ?: WPOPT_VERSION,
             true
         );
     }
@@ -186,7 +190,7 @@ class Mod_WP_Mail extends Module
                 <section class="wps-header"><h1>WP Mails Log</h1></section>
                 <?php echo $this->render_mail_daily_chart($mail_series); ?>
                 <section class='wps'>
-                    <form method="GET" autocapitalize="off" autocomplete="off">
+                    <form method="GET" class="wps-list-table-form wpopt-mail-log-form" autocapitalize="off" autocomplete="off">
                         <input type="hidden" name="page" value="<?php echo esc_attr($_REQUEST['page']); ?>"/>
                         <?php $table->display(); ?>
                         <?php RequestActions::nonce_field($this->action_hook); ?>
@@ -258,7 +262,7 @@ class Mod_WP_Mail extends Module
             $total_sent += (int)$point['total'];
         }
 
-        $width = 960;
+        $width = 1600;
         $height = 260;
         $padding_top = 24;
         $padding_right = 20;
@@ -278,7 +282,7 @@ class Mod_WP_Mail extends Module
         ob_start();
         ?>
         <style>
-            .wpopt-mails-chart-wrap { margin: 4px 0 18px; }
+            .wpopt-mails-chart-wrap { width:90.909%; margin:4px auto 26px; zoom:1.1; }
             .wpopt-mails-chart-summary {
                 display:inline-flex;
                 align-items:center;
@@ -313,6 +317,7 @@ class Mod_WP_Mail extends Module
                 color:#334155;
             }
             .wpopt-mails-chart-copy b { color:#0f172a; }
+            .wpopt-mails-chart-wrap svg { display:block; width:min(100%, 1540px); max-width:100%; margin:0 auto; }
         </style>
         <div class="wpopt-mails-chart-wrap">
             <div class="wpopt-mails-chart-summary">

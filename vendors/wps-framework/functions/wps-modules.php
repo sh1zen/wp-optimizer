@@ -9,12 +9,11 @@ use WPS\core\UtilEnv;
 
 function wps_admin_enqueue_scripts(): void
 {
-    $wps_assets_url = UtilEnv::path_to_url(dirname(__DIR__));
+    $style_asset = UtilEnv::resolve_asset(dirname(__DIR__), 'assets/css/style.css');
+    $script_asset = UtilEnv::resolve_asset(dirname(__DIR__), 'assets/js/core.js');
 
-    $min = (wps_core()->online and !wps_core()->debug) ? '.min' : '';
-
-    wp_register_style('vendor-wps-css', "{$wps_assets_url}assets/css/style{$min}.css", [], wps_core()->debug ? time() : WPS_VERSION);
-    wp_register_script('vendor-wps-js', "{$wps_assets_url}assets/js/core{$min}.js", ['jquery'], wps_core()->debug ? time() : WPS_VERSION);
+    wp_register_style('vendor-wps-css', $style_asset['url'], [], wps_core()->debug ? time() : ($style_asset['version'] ?: WPS_VERSION));
+    wp_register_script('vendor-wps-js', $script_asset['url'], ['jquery'], wps_core()->debug ? time() : ($script_asset['version'] ?: WPS_VERSION));
 
     wps_localize([
         'text_close_warning' => 'Are you sure you want to leave?'

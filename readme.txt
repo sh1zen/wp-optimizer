@@ -3,9 +3,9 @@ Contributors: sh1zen
 Tags: wordpress optimization, performance, cache, minify, image optimization
 Donate link: https://www.paypal.com/donate?business=dev.sh1zen%40outlook.it&item_name=Thank+you+in+advanced+for+the+kind+donations.+You+will+sustain+me+developing+WP-Optimizer.&currency_code=EUR
 Requires at least: 5.0.0
-Tested up to: 6.9
+Tested up to: 7.0.0
 Requires PHP: 7.4
-Stable tag: 2.6.5
+Stable tag: 2.7.0
 License: GPLv2 or later
 
 WordPress performance optimization plugin with cache, minify, image optimization, database cleanup, security hardening and server tuning.
@@ -220,6 +220,13 @@ Disable the last module or option you enabled, clear cache, and test again. If t
 If needed, open the Settings module to restore or reset options, then re-enable features one by one.
 
 == Changelog ==
+
+= 2.7.0 =
+
+* added Cron module to manage scheduled tasks
+* extended support to WordPress 7.0
+* improved plugin/module initialization and lazy dependency loading to reduce unnecessary work during requests
+* updated UI/UX
 
 = 2.6.5 =
 

@@ -12,6 +12,7 @@ use WPS\core\UtilEnv;
 class DBSupport
 {
     private static DBSupport $_Instance;
+    private const COUNT_CACHE_TTL = 300;
 
     private function __construct()
     {
@@ -26,6 +27,13 @@ class DBSupport
     public static function total_count($name)
     {
         global $wpdb;
+
+        $cache_key = self::count_cache_key('total', $name);
+        $cached = get_transient($cache_key);
+
+        if ($cached !== false) {
+            return (int)$cached;
+        }
 
         $count = 0;
 
@@ -65,7 +73,9 @@ class DBSupport
                 break;
         }
 
-        return $count;
+        set_transient($cache_key, (int)$count, self::COUNT_CACHE_TTL);
+
+        return (int)$count;
     }
 
     /**
@@ -78,6 +88,13 @@ class DBSupport
     public static function count($name, $args = array())
     {
         global $wpdb;
+
+        $cache_key = self::count_cache_key('sweep', $name);
+        $cached = get_transient($cache_key);
+
+        if ($cached !== false) {
+            return (int)$cached;
+        }
 
         $count = 0;
 
@@ -150,7 +167,25 @@ class DBSupport
                 break;
         }
 
-        return $count;
+        set_transient($cache_key, (int)$count, self::COUNT_CACHE_TTL);
+
+        return (int)$count;
+    }
+
+    public static function clear_count_cache(array $sweep_names = array(), array $total_names = array()): void
+    {
+        foreach ($sweep_names as $name) {
+            delete_transient(self::count_cache_key('sweep', (string)$name));
+        }
+
+        foreach ($total_names as $name) {
+            delete_transient(self::count_cache_key('total', (string)$name));
+        }
+    }
+
+    private static function count_cache_key(string $scope, string $name): string
+    {
+        return 'wpopt_db_' . $scope . '_' . md5(DB_NAME . ':' . $name);
     }
 
     /**

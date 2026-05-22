@@ -19,6 +19,16 @@ class ModuleHandler
 
     private string $context;
 
+    private array $filtered_modules_cache = [];
+
+    private array $module_scope_cache = [];
+
+    private array $module_method_cache = [];
+
+    private array $class_vars_cache = [];
+
+    private array $setup_modules_cache = [];
+
     public function __construct($context, $load_path)
     {
         $this->context = $context;
@@ -143,10 +153,18 @@ class ModuleHandler
      */
     public function setup_modules(string $scope, bool $only_active = true)
     {
+        $cache_key = $scope . ':' . ($only_active ? '1' : '0');
+
+        if (isset($this->setup_modules_cache[$cache_key])) {
+            return;
+        }
+
         foreach ($this->get_modules($scope, $only_active) as $module) {
 
             $this->get_module_instance($module['slug']);
         }
+
+        $this->setup_modules_cache[$cache_key] = true;
     }
 
     /**
@@ -172,6 +190,12 @@ class ModuleHandler
             $filters['scopes'] = 'all';
         }
 
+        $cache_key = md5(serialize([$filters, $only_active]));
+
+        if (isset($this->filtered_modules_cache[$cache_key])) {
+            return $this->filtered_modules_cache[$cache_key];
+        }
+
         foreach ($this->modules as $module) {
 
             if ($only_active and !$this->module_is_active($module['slug'])) {
@@ -189,6 +213,8 @@ class ModuleHandler
                 $modules[] = $module;
             }
         }
+
+        $this->filtered_modules_cache[$cache_key] = $modules;
 
         return $modules;
     }
@@ -210,14 +236,19 @@ class ModuleHandler
      */
     public function module_has_scope($module, $scope, $compare = 'AND'): bool
     {
-        $cache_Key = $module['slug'] . maybe_serialize($scope) . $compare;
-
-        if (!is_null($found = wps($this->context)->cache->get($cache_Key, 'module_has_scope', null))) {
-            return $found;
-        }
-
         if (is_null($module) or empty($scope)) {
             return false;
+        }
+
+        $cache_Key = $module['slug'] . maybe_serialize($scope) . $compare;
+
+        if (isset($this->module_scope_cache[$cache_Key])) {
+            return $this->module_scope_cache[$cache_Key];
+        }
+
+        if (!is_null($found = wps($this->context)->cache->get($cache_Key, 'module_has_scope', null))) {
+            $this->module_scope_cache[$cache_Key] = $found;
+            return $found;
         }
 
         if (!is_array($scope)) {
@@ -228,9 +259,15 @@ class ModuleHandler
             return false;
         }
 
-        $found = array_intersect($scope, get_class_vars($class)['scopes']);
+        if (!isset($this->class_vars_cache[$class])) {
+            $this->class_vars_cache[$class] = get_class_vars($class);
+        }
+
+        $found = array_intersect($scope, $this->class_vars_cache[$class]['scopes']);
 
         $res = ($compare === 'AND') ? (count($found) === count($scope)) : !empty($found);
+
+        $this->module_scope_cache[$cache_Key] = $res;
 
         wps($this->context)->cache->set($cache_Key, $res, 'module_has_scope', true, DAY_IN_SECONDS);
 
@@ -274,6 +311,12 @@ class ModuleHandler
      */
     public function module_has_method($module, $method, $compare = 'AND'): bool
     {
+        $cache_key = self::module_slug($module, true) . maybe_serialize($method) . $compare;
+
+        if (isset($this->module_method_cache[$cache_key])) {
+            return $this->module_method_cache[$cache_key];
+        }
+
         if (is_null($module) or empty($method)) {
             return false;
         }
@@ -288,6 +331,10 @@ class ModuleHandler
 
         $methods = array_intersect($method, get_class_methods($class));
 
-        return ($compare === 'AND') ? (count($methods) === count($method)) : !empty($methods);
+        $res = ($compare === 'AND') ? (count($methods) === count($method)) : !empty($methods);
+
+        $this->module_method_cache[$cache_key] = $res;
+
+        return $res;
     }
 }

@@ -26,8 +26,23 @@ class Mod_Database extends Module
 
     protected string $context = 'wpopt';
 
+    private bool $dependencies_loaded = false;
+
+    private function load_dependencies(): void
+    {
+        if ($this->dependencies_loaded) {
+            return;
+        }
+
+        require_once WPOPT_SUPPORTERS . '/database/DBSupport.class.php';
+
+        $this->dependencies_loaded = true;
+    }
+
     public function cron_handler($args = array())
     {
+        $this->load_dependencies();
+
         DBSupport::cron_job();
     }
 
@@ -56,7 +71,7 @@ class Mod_Database extends Module
         }
 
         ?>
-        <form method="post" action="<?php echo wps_module_panel_url("database", "db-tables"); ?>">
+        <form class="wps-list-table-form wpopt-db-tables-form" method="post" action="<?php echo wps_module_panel_url("database", "db-tables"); ?>">
             <?php $table_list_obj->search_box('Search', 'search'); ?>
             <?php $table_list_obj->display(); ?>
         </form>
@@ -117,9 +132,11 @@ class Mod_Database extends Module
     {
         global $wpdb;
 
+        $this->load_dependencies();
+
         ob_start();
         ?>
-        <section>
+        <section class="wpopt-db-backup-panel">
             <?php _e('Checking Backup Folder', 'wpopt'); ?>
             <span>(<strong><?php echo self::BACKUP_PATH; ?></strong>)</span> ...
             <?php
@@ -134,7 +151,7 @@ class Mod_Database extends Module
             ?>
         </section>
         <section>
-            <form class="wpopt-ajax-db" method="post" data-module="<?php echo $this->slug ?>"
+            <form class="wpopt-ajax-db wpopt-db-backup-form" method="post" data-module="<?php echo $this->slug ?>"
                   data-nonce="<?php echo wp_create_nonce('wpopt-ajax-nonce') ?>"
                   action="<?php echo wps_module_panel_url('database', 'db-backup'); ?>">
                 <?php wp_nonce_field('wpopt-db-backup-manage'); ?>
@@ -228,7 +245,7 @@ class Mod_Database extends Module
                     </tr>
                 </table>
             </form>
-            <form class="wpopt-ajax-db" method="post" data-module="<?php echo $this->slug ?>"
+            <form class="wpopt-ajax-db wpopt-db-backup-form" method="post" data-module="<?php echo $this->slug ?>"
                   data-nonce="<?php echo wp_create_nonce('wpopt-ajax-nonce') ?>"
                   action="<?php echo wps_module_panel_url('database', 'db-backup'); ?>">
                 <h3><?php _e('Backup Database', 'wpopt'); ?></h3>
@@ -290,7 +307,20 @@ class Mod_Database extends Module
 
     public function ajax_handler($args = array()): void
     {
+        $this->load_dependencies();
+
         $response = false;
+
+        if (($args['action'] ?? '') === 'render_panel') {
+            $panel_id = $this->get_requested_panel_id($args['options'] ?? '');
+            $html = $this->render_database_panel_content($panel_id);
+
+            if ($html !== '') {
+                Ajax::response(array('html' => $html), 'success');
+            }
+
+            Ajax::response(array('text' => __('Invalid database panel.', 'wpopt')), 'error');
+        }
 
         $action_args = [];
 
@@ -337,6 +367,8 @@ class Mod_Database extends Module
                 }
 
                 $sweep = DBSupport::sweep($sweep_name, $this->option('sweep', array()));
+
+                DBSupport::clear_count_cache(array($sweep_name), array($sweep_type));
 
                 $count = DBSupport::count($sweep_name, $this->option('sweep', array()));
 
@@ -514,44 +546,59 @@ class Mod_Database extends Module
     public function enqueue_scripts(): void
     {
         parent::enqueue_scripts();
-        wp_enqueue_script('wpopt-db-sweep', UtilEnv::path_to_url(WPOPT_ABSPATH) . 'modules/supporters/database/database.js', array('vendor-wps-js'), WPOPT_VERSION);
+        $script_asset = UtilEnv::resolve_asset(WPOPT_ABSPATH, 'modules/supporters/database/database.js', wps_core()->online);
+        wp_enqueue_script('wpopt-db-sweep', $script_asset['url'], array('vendor-wps-js'), $script_asset['version'] ?: WPOPT_VERSION);
     }
 
     public function render_sub_modules(): void
     {
-        UtilEnv::rise_time_limit(WPOPT_DEBUG ? 120 : 60);
         ?>
-        <section class="wps-wrap">
+        <section class="wps-wrap wpopt-db-manager-page">
             <div id="wpopt-ajax-message" class="wps-notice"></div>
-            <block class="wps">
-                <section class='wps-header'><h1>Database Manager</h1></section>
+            <block class="wps wpopt-db-shell">
+                <section class="wps-header wpopt-db-hero">
+                    <span class="wpopt-db-hero-icon dashicons dashicons-database"></span>
+                    <div class="wpopt-db-hero-copy">
+                        <h1>Database Manager</h1>
+                        <p><?php _e('Pulisci e ottimizza il tuo database WordPress in modo sicuro ed efficiente.', 'wpopt'); ?></p>
+                    </div>
+                    <span class="wpopt-db-hero-art" aria-hidden="true"></span>
+                </section>
                 <?php
                 echo Graphic::generateHTML_tabs_panels(array(
                         array(
                                 'id'          => 'db-sweeper',
                                 'tab-title'   => __('Database sweeper', 'wpopt'),
                                 'panel-title' => __('Database Sweeper', 'wpopt'),
-                                'callback'    => array($this, 'render_sweeper_panel'),
+                                'panel-icon'  => 'broom',
+                                'panel-description' => __('Rimuovi dati inutili e ottimizza il database del tuo sito.', 'wpopt'),
+                                'callback'    => array($this, 'render_lazy_panel_placeholder'),
+                                'args'        => array('db-sweeper')
                         ),
                         array(
                                 'id'          => 'db-tables',
                                 'tab-title'   => __('Tables', 'wpopt'),
                                 'panel-title' => __('Database tables', 'wpopt'),
-                                'callback'    => array($this, 'render_tablesList_panel')
+                                'panel-icon'  => 'grid',
+                                'callback'    => array($this, 'render_lazy_panel_placeholder'),
+                                'args'        => array('db-tables')
                         ),
 
                         array(
                                 'id'          => 'db-backup',
                                 'tab-title'   => __('Backup Manager', 'wpopt'),
                                 'panel-title' => __('Backup your database', 'wpopt'),
-                                'callback'    => array($this, 'render_backup_panel'),
-                                'args'        => array($this->option('backup', array()))
+                                'panel-icon'  => 'database',
+                                'callback'    => array($this, 'render_lazy_panel_placeholder'),
+                                'args'        => array('db-backup')
                         ),
                         array(
                                 'id'          => 'db-runsql',
                                 'tab-title'   => __('Run SQL Query', 'wpopt'),
                                 'panel-title' => __('Run SQL Query', 'wpopt'),
-                                'callback'    => array($this, 'render_execSQL_panel'),
+                                'panel-icon'  => 'settings',
+                                'callback'    => array($this, 'render_lazy_panel_placeholder'),
+                                'args'        => array('db-runsql')
                         )
                 ));
                 ?>
@@ -560,8 +607,49 @@ class Mod_Database extends Module
         <?php
     }
 
+    public function render_lazy_panel_placeholder(string $panel_id): string
+    {
+        return sprintf(
+                '<div class="wpopt-db-lazy-panel" data-panel="%1$s" data-nonce="%2$s"><strong>%3$s</strong></div>',
+                esc_attr($panel_id),
+                esc_attr(wp_create_nonce('wpopt-ajax-nonce')),
+                esc_html__('Caricamento sezione...', 'wpopt')
+        );
+    }
+
+    private function get_requested_panel_id($options): string
+    {
+        if (is_array($options)) {
+            return sanitize_key((string)($options['panel'] ?? ''));
+        }
+
+        return sanitize_key((string)$options);
+    }
+
+    private function render_database_panel_content(string $panel_id): string
+    {
+        switch ($panel_id) {
+            case 'db-sweeper':
+                UtilEnv::rise_time_limit(WPOPT_DEBUG ? 120 : 60);
+                return $this->render_sweeper_panel();
+
+            case 'db-tables':
+                return $this->render_tablesList_panel();
+
+            case 'db-backup':
+                return $this->render_backup_panel($this->option('backup', array()));
+
+            case 'db-runsql':
+                return $this->render_execSQL_panel();
+        }
+
+        return '';
+    }
+
     public function render_sweeper_panel()
     {
+        $this->load_dependencies();
+
         $sweepers = array(
                 array('title'  => __('Posts', 'wpopt'),
                       'type'   => 'posts',
@@ -632,11 +720,28 @@ class Mod_Database extends Module
 
         ob_start();
         ?>
-        <p><?php echo sprintf(__('If you click Details will be shown only %s items.', 'wpopt'), number_format_i18n($this->ajax_limit)); ?></p>
-        <p>
-            <strong><?php _e('Before doing any sweep it\'s recommended to make a backup of whole database.', 'wpopt'); ?></strong>
-        </p>
-        <br>
+        <section class="wpopt-db-sweeper">
+            <div class="wpopt-db-notice">
+                <span class="dashicons dashicons-info-outline" aria-hidden="true"></span>
+                <div>
+                    <strong><?php _e('Prima di procedere, fai sempre un backup del database.', 'wpopt'); ?></strong>
+                    <p><?php _e('Lo strumento rimuove dati non necessari e ottimizza le tabelle per migliorare le prestazioni del sito.', 'wpopt'); ?></p>
+                    <small><?php echo sprintf(__('I dettagli mostrano al massimo %s elementi per ogni controllo.', 'wpopt'), number_format_i18n($this->ajax_limit)); ?></small>
+                </div>
+                <a class="wps wps-button wpopt-btn is-neutral" href="<?php echo esc_url(wps_module_panel_url('database', 'db-backup')); ?>">
+                    <span class="dashicons dashicons-shield-alt"></span><?php _e('Crea backup ora', 'wpopt'); ?>
+                </a>
+            </div>
+
+            <div class="wpopt-db-sweeper-toolbar">
+                <div>
+                    <strong><?php _e('Database Sweeper', 'wpopt'); ?></strong>
+                    <p><?php _e('Rimuovi dati inutili e ottimizza il database del tuo sito.', 'wpopt'); ?></p>
+                </div>
+                <button type="button" class="wps wps-button wpopt-btn is-neutral">
+                    <?php _e('Espandi tutto', 'wpopt'); ?><span class="dashicons dashicons-arrow-down-alt2"></span>
+                </button>
+            </div>
         <?php
 
         $nonce = wp_create_nonce('wpopt-ajax-nonce');
@@ -647,11 +752,13 @@ class Mod_Database extends Module
             if (!$total)
                 continue;
             ?>
-            <section class="list-tables">
+            <section class="list-tables wpopt-db-sweep-card">
                 <pre-table>
+                    <span class="wpopt-db-sweep-icon dashicons dashicons-media-document"></span>
                     <?php
                     echo "<h3>{$sweeper['title']}</h3>";
-                    echo "<p>" . sprintf(__('There are a total of <strong class="attention"><span>%1$s</span></strong> ' . $sweeper['type'] . '.', 'wpopt'), number_format_i18n($total)) . "</p>";
+                    echo "<p>" . sprintf(__('Totale: <strong class="attention"><span>%1$s</span></strong> ' . $sweeper['type'] . '.', 'wpopt'), number_format_i18n($total)) . "</p>";
+                    echo "<span class='wpopt-db-sweep-count'>" . sprintf(_n('%s elemento', '%s elementi', $total, 'wpopt'), number_format_i18n($total)) . "</span>";
                     ?>
                 </pre-table>
                 <table class="widefat table-sweep">
@@ -713,6 +820,9 @@ class Mod_Database extends Module
             </section>
             <?php
         }
+        ?>
+        </section>
+        <?php
 
         return ob_get_clean();
     }
@@ -742,18 +852,19 @@ class Mod_Database extends Module
 
     protected function init(): void
     {
-        require_once WPOPT_SUPPORTERS . '/database/DBSupport.class.php';
     }
 
     protected function setting_fields($filter = ''): array
     {
         return $this->group_setting_fields(
-
-                $this->setting_field(__('Sweeper:', 'wpopt'), false, "separator"),
-                $this->setting_field(__('Check for duplicate postmeta?', 'wpopt'), "sweeper.duplicated_postmeta", "checkbox", ['default_value' => false]),
-
-                $this->setting_field(__('Backups:', 'wpopt'), false, "separator"),
+            $this->group_setting_fields(
+                $this->setting_field(__('Sweeper', 'wpopt'), false, "separator"),
+                $this->setting_field(__('Check for duplicate postmeta?', 'wpopt'), "sweeper.duplicated_postmeta", "checkbox", ['default_value' => false])
+            ),
+            $this->group_setting_fields(
+                $this->setting_field(__('Backups', 'wpopt'), false, "separator"),
                 $this->setting_field(__('Excluded Tables (one per line)', 'wpopt'), "backup.excluded_tables", "textarea_array", ['value' => implode("\n", $this->option('backup.excluded_tables', []))])
+            )
         );
     }
 }

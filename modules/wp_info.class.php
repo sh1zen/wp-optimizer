@@ -21,47 +21,51 @@ class Mod_WP_Info extends Module
     protected function render_sub_modules(): void
     {
         ?>
-        <section class="wps-wrap">
-            <section class='wps-header'><h1>System Info</h1></section>
-            <?php foreach ($this->get_info() as $name => $table) : ?>
-                <block class="wps" id="<?php echo strtolower($name); ?>">
-                    <h2 class="sysinfo-title"><?php echo $name; ?></h2>
-                    <table class="widefat wps">
-                        <thead>
-                        <tr>
-                            <th><?php _e('Name', 'wpopt'); ?></th>
-                            <th><?php _e('Value', 'wpopt'); ?></th>
-                            <th><?php _e('Name', 'wpopt'); ?></th>
-                            <th><?php _e('Value', 'wpopt'); ?></th>
-                        </tr>
-                        </thead>
-                        <tbody>
-                        <?php
+        <section class="wps-wrap wpopt-system-info">
+            <block class="wps wpopt-system-info-shell">
+                <section class='wps-header'><h1>System Info</h1></section>
+                <section class="wpopt-system-info-list">
+                    <?php foreach ($this->get_info() as $name => $table) : ?>
+                        <section class="wpopt-system-info-card" id="<?php echo esc_attr(sanitize_title($name)); ?>">
+                            <h2 class="sysinfo-title"><?php echo $name; ?></h2>
+                            <table class="widefat wps wpopt-system-info-table">
+                                <thead>
+                                <tr>
+                                    <th><?php _e('Name', 'wpopt'); ?></th>
+                                    <th><?php _e('Value', 'wpopt'); ?></th>
+                                    <th><?php _e('Name', 'wpopt'); ?></th>
+                                    <th><?php _e('Value', 'wpopt'); ?></th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                <?php
 
-                        $iter = 1;
-                        $output = $alternate = $line = '';
-                        foreach ($table as $_name => $value) {
+                                $iter = 1;
+                                $output = $alternate = $line = '';
+                                foreach ($table as $_name => $value) {
 
-                            $line .= "<td class='width15'><b>" . $_name . ":</b></td><td class='width35'>" . $value . "</td>";
+                                    $line .= "<td class='width15'><b>" . $_name . ":</b></td><td class='width35'>" . $value . "</td>";
 
-                            if ($iter % 2 == 0) {
-                                $output .= "<tr {$alternate}>" . $line . "</tr>";
-                                $alternate = $alternate == '' ? "class='alternate'" : '';
-                                $line = '';
-                            }
-                            $iter++;
-                        }
+                                    if ($iter % 2 == 0) {
+                                        $output .= "<tr {$alternate}>" . $line . "</tr>";
+                                        $alternate = $alternate == '' ? "class='alternate'" : '';
+                                        $line = '';
+                                    }
+                                    $iter++;
+                                }
 
-                        if (!empty($line))
-                            $output .= "<tr {$alternate}>" . $line . "<td class='width15'></td><td class='width35'></td></tr>";
+                                if (!empty($line))
+                                    $output .= "<tr {$alternate}>" . $line . "<td class='width15'></td><td class='width35'></td></tr>";
 
-                        echo $output;
+                                echo $output;
 
-                        ?>
-                        </tbody>
-                    </table>
-                </block>
-            <?php endforeach; ?>
+                                ?>
+                                </tbody>
+                            </table>
+                        </section>
+                    <?php endforeach; ?>
+                </section>
+            </block>
         </section>
         <?php
     }

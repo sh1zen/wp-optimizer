@@ -88,7 +88,7 @@ class ActivityLog extends \WP_List_Table
         ?>
         <p class="search-box">
             <label class="screen-reader-text" for="<?php echo esc_attr($input_id); ?>"><?php echo esc_html($text); ?>:</label>
-            <input type="search" id="<?php echo esc_attr($input_id); ?>" name="s" value="<?php echo esc_attr($search_data); ?>"/>
+            <input type="search" id="<?php echo esc_attr($input_id); ?>" name="s" value="<?php echo esc_attr($search_data); ?>" placeholder="<?php esc_attr_e('Search logs...', 'wpopt'); ?>"/>
             <?php submit_button($text, 'button', false, false, array('id' => 'search-submit')); ?>
         </p>
         <?php
@@ -124,8 +124,6 @@ class ActivityLog extends \WP_List_Table
         }
         echo '</select>';
 
-        submit_button(__('Filter', 'wpopt'), 'button', 'aal-filter', false, array('id' => 'activity-query-submit'));
-
         $actions = Query::getInstance()->tables(WPOPT_TABLE_ACTIVITY_LOG)->orderby('action', 'ASC', WPOPT_TABLE_ACTIVITY_LOG)->select('DISTINCT action')->query(false, true);
 
         if ($actions) {
@@ -141,6 +139,8 @@ class ActivityLog extends \WP_List_Table
             }
             echo '</select>';
         }
+
+        submit_button(__('Filter', 'wpopt'), 'button', 'aal-filter', false, array('id' => 'activity-query-submit'));
 
         $filters = array(
             'filter_date',

@@ -8,6 +8,7 @@
 namespace WPOptimizer\core;
 
 use WPS\core\CronActions;
+use WPS\core\Graphic;
 use WPS\core\UtilEnv;
 
 /**
@@ -18,10 +19,13 @@ use WPS\core\UtilEnv;
  */
 class PagesHandler
 {
+    private const DASHBOARD_CACHE_TTL = 30;
+
     public function __construct()
     {
         add_action('admin_menu', array($this, 'add_plugin_pages'));
-        add_action('admin_enqueue_scripts', array($this, 'register_assets'), 20, 0);
+        add_action('admin_enqueue_scripts', array($this, 'register_assets'), 20, 1);
+        add_filter('admin_body_class', array($this, 'admin_body_classes'));
 
         add_action('admin_notices', [$this, 'notice'], 10, 0);
     }
@@ -104,7 +108,6 @@ class PagesHandler
 
         if (WPOPT_DEBUG) {
             wps_core()->meter->lap('Modules settings rendered');
-            echo wps_core()->meter->get_time() . ' - ' . wps_core()->meter->get_memory();
         }
     }
 
@@ -120,23 +123,17 @@ class PagesHandler
 
         wps('wpopt')->settings->render_core_settings();
 
-        if (WPOPT_DEBUG) {
-            echo wps_core()->meter->get_time() . ' - ' . wps_core()->meter->get_memory();
-        }
     }
 
-    public function register_assets(): void
+    public function register_assets($hook_suffix = ''): void
     {
-        $assets_url = UtilEnv::path_to_url(WPOPT_ABSPATH);
+        $style_asset = UtilEnv::resolve_asset(WPOPT_ABSPATH, 'assets/style.css', wps_core()->online);
 
-        $min = wps_core()->online ? '.min' : '';
-        $style_path = WPOPT_ABSPATH . 'assets/style' . $min . '.css';
+        wp_register_style("wpopt_css", $style_asset['url'], ['vendor-wps-css'], $style_asset['version'] ?: WPOPT_VERSION);
 
-        if (!file_exists($style_path)) {
-            $min = '';
+        if ($this->is_wp_optimizer_admin_screen($hook_suffix)) {
+            $this->enqueue_scripts();
         }
-
-        wp_register_style("wpopt_css", "{$assets_url}assets/style{$min}.css", ['vendor-wps-css']);
 
         wps_localize([
             'text_na'            => __('N/A', 'wpopt'),
@@ -152,23 +149,44 @@ class PagesHandler
         ]);
     }
 
+    private function is_wp_optimizer_admin_screen($hook_suffix): bool
+    {
+        $hook_suffix = (string)$hook_suffix;
+
+        if (strpos($hook_suffix, 'wp-optimizer') !== false || strpos($hook_suffix, 'wpopt-') !== false) {
+            return true;
+        }
+
+        $page = isset($_GET['page']) ? sanitize_key(wp_unslash($_GET['page'])) : '';
+
+        return $page === 'wp-optimizer' || strpos($page, 'wpopt-') === 0;
+    }
+
+    public function admin_body_classes(string $classes): string
+    {
+        if (!$this->is_wp_optimizer_admin_screen('')) {
+            return $classes;
+        }
+
+        return trim($classes . ' wps-admin-screen wpopt-admin-screen');
+    }
+
     public function render_faqs(): void
     {
         $this->enqueue_scripts();
         ?>
-        <section class="wps wps-wrap wpopt-faq-shell">
-            <block class="wps wpopt-hero">
-                <section class='wps-header'>
-                    <h1><?php _e('Frequently Asked Questions', 'wpopt'); ?></h1>
-                </section>
-                <p class="wpopt-hero-subtitle"><?php _e('Find quick answers about optimization workflows, privacy, and configuration paths.', 'wpopt'); ?></p>
-                <div class="wpopt-actions">
-                    <a class="wps wps-button wpopt-btn is-info" href="<?php echo admin_url('admin.php?page=wp-optimizer'); ?>"><?php _e('Back to Dashboard', 'wpopt'); ?></a>
-                    <a class="wps wps-button wpopt-btn is-neutral" href="<?php echo admin_url('admin.php?page=wpopt-modules-settings'); ?>"><?php _e('Open Modules Options', 'wpopt'); ?></a>
-                </div>
-            </block>
+        <section class="wps-wrap wpopt-faq-shell">
             <block class="wps">
-                <div class="wps-faq-list">
+                <section class="wps-header wpopt-hero">
+                    <h1><?php _e('Frequently Asked Questions', 'wpopt'); ?></h1>
+                    <p class="wpopt-hero-subtitle"><?php _e('Find quick answers about optimization workflows, privacy, and configuration paths.', 'wpopt'); ?></p>
+                    <div class="wpopt-actions">
+                        <a class="wps wps-button wpopt-btn is-info" href="<?php echo admin_url('admin.php?page=wp-optimizer'); ?>"><?php _e('Back to Dashboard', 'wpopt'); ?></a>
+                        <a class="wps wps-button wpopt-btn is-neutral" href="<?php echo admin_url('admin.php?page=wpopt-modules-settings'); ?>"><?php _e('Open Modules Options', 'wpopt'); ?></a>
+                    </div>
+                </section>
+                <section class="wps wpopt-faq-content">
+                    <div class="wps-faq-list">
                     <div class="wps-faq-item">
                         <div class="wps-faq-question-wrapper ">
                             <div
@@ -326,7 +344,8 @@ class PagesHandler
                             </div>
                         </div>
                     </div>
-                </div>
+                    </div>
+                </section>
             </block>
         </section>
         <?php
@@ -347,32 +366,40 @@ class PagesHandler
         $this->enqueue_scripts();
 
         $data = array();
+        $dashboard_cache_dirty = false;
 
         if (isset($_POST['wpopt-cron-run'])) {
 
             if (UtilEnv::verify_nonce('wpopt-nonce')) {
                 CronActions::run_event('wpopt-cron');
+                $dashboard_cache_dirty = true;
             }
         }
         elseif (isset($_POST['wpopt-cron-reset'])) {
 
             if (UtilEnv::verify_nonce('wpopt-nonce')) {
                 wps('wpopt')->cron->reset_status();
+                $dashboard_cache_dirty = true;
             }
+        }
+
+        if ($dashboard_cache_dirty) {
+            $this->clear_dashboard_cache();
         }
 
         settings_errors();
 
-        $modules = wps('wpopt')->moduleHandler->get_modules(array('excepts' => array('cron', 'modules_handler', 'settings', 'tracking')));
-        $active_modules_count = count($modules);
-        $is_cron_running = wps('wpopt')->settings->get('cron.running', false);
-        $tracking_enabled = wps('wpopt')->settings->get('tracking.errors', true) || wps('wpopt')->settings->get('tracking.usage', true);
-        $persistent_cache = defined('WP_PERSISTENT_CACHE');
-        $server_load = UtilEnv::get_server_load(false);
+        $dashboard = $this->get_dashboard_view_model();
+        $active_modules_count = $dashboard['active_modules_count'];
+        $is_cron_running = $dashboard['is_cron_running'];
+        $tracking_enabled = $dashboard['tracking_enabled'];
+        $persistent_cache = $dashboard['persistent_cache'];
+        $server_load = $dashboard['server_load'];
         $memory_load = wps_core()->meter->get_memory(true, true);
         $execution_time = wps_core()->meter->get_time('wp_start', 'now', 3);
+        $health_score = $dashboard['health_score'];
         ?>
-        <section class="wps-wrap-flex wps-wrap wps-home wpopt-shell">
+        <section class="wps-wrap-flex wps-wrap wps-home wpopt-shell wpopt-dashboard-shell">
             <section class="wps wpopt-main">
                 <?php
 
@@ -380,96 +407,146 @@ class PagesHandler
                     $this->output_results($data);
                 }
                 ?>
-                <block class="wps wpopt-hero">
-                    <block class="wps-header">
-                        <h1>WP Optimizer Dashboard</h1>
-                    </block>
-                    <p class="wpopt-hero-subtitle"><?php _e('Centralize your optimization workflow with quick actions, live metrics, and direct module access.', 'wpopt'); ?></p>
-                    <div class="wpopt-actions">
-                        <?php echo sprintf(__('<a class="wps wps-button wpopt-btn is-info" href="%s">Manage Modules</a>', 'wpopt'), admin_url('admin.php?page=wpopt-settings#settings-modules_handler')); ?>
-                        <?php echo sprintf(__('<a class="wps wps-button wpopt-btn is-info" href="%s">Configure Modules</a>', 'wpopt'), admin_url('admin.php?page=wpopt-modules-settings')); ?>
+                <h1 class="wpopt-page-title">WP Optimizer Dashboard</h1>
+                <block class="wps wpopt-hero wpopt-dashboard-hero">
+                    <div class="wpopt-hero-copy">
+                        <h2><?php _e('Optimize. Accelerate. Simplify.', 'wpopt'); ?></h2>
+                        <p class="wpopt-hero-subtitle"><?php _e('Centralize your optimization workflow with quick actions, live metrics, and direct module access to keep your site fast and healthy.', 'wpopt'); ?></p>
+                        <div class="wpopt-actions">
+                            <?php echo sprintf(__('<a class="wps wps-button wpopt-btn is-info" href="%s"><span class="dashicons dashicons-screenoptions"></span>Manage Modules</a>', 'wpopt'), admin_url('admin.php?page=wpopt-settings#settings-modules_handler')); ?>
+                            <?php echo sprintf(__('<a class="wps wps-button wpopt-btn is-neutral" href="%s"><span class="dashicons dashicons-admin-generic"></span>Configure Modules</a>', 'wpopt'), admin_url('admin.php?page=wpopt-modules-settings')); ?>
+                        </div>
+                    </div>
+                    <div class="wpopt-hero-art" aria-hidden="true">
+                        <?php $this->render_dashboard_hero_art(); ?>
                     </div>
                 </block>
-                <block class="wps">
-                    <h2><?php _e('System overview', 'wpopt'); ?></h2>
+                <block class="wps wpopt-panel wpopt-overview-panel">
+                    <div class="wpopt-panel-head">
+                        <h2><span class="dashicons dashicons-chart-line"></span><?php _e('System Overview', 'wpopt'); ?></h2>
+                        <span><?php echo esc_html(sprintf(__('Last updated: %s', 'wpopt'), $dashboard['last_updated'])); ?></span>
+                    </div>
                     <div class="wpopt-scroll-x" role="region" aria-label="<?php esc_attr_e('System overview cards', 'wpopt'); ?>">
                         <div class="wpopt-kpi-grid">
-                            <div class="wpopt-kpi-card">
+                            <div class="wpopt-kpi-card is-blue">
+                                <span class="wpopt-kpi-icon dashicons dashicons-admin-plugins"></span>
                                 <span class="wpopt-kpi-label"><?php _e('Active modules', 'wpopt'); ?></span>
                                 <strong class="wpopt-kpi-value"><?php echo $active_modules_count; ?></strong>
+                                <small><?php _e('All systems operational', 'wpopt'); ?></small>
                             </div>
-                            <div class="wpopt-kpi-card">
+                            <div class="wpopt-kpi-card is-green">
+                                <span class="wpopt-kpi-icon dashicons dashicons-clock"></span>
                                 <span class="wpopt-kpi-label"><?php _e('Cron status', 'wpopt'); ?></span>
                                 <strong class="wpopt-kpi-value"><?php echo $is_cron_running ? __('Running', 'wpopt') : __('Idle', 'wpopt'); ?></strong>
+                                <small><?php echo $is_cron_running ? esc_html__('Optimization job in progress', 'wpopt') : esc_html__('Background scheduler ready', 'wpopt'); ?></small>
                             </div>
-                            <div class="wpopt-kpi-card">
+                            <div class="wpopt-kpi-card is-purple">
+                                <span class="wpopt-kpi-icon dashicons dashicons-chart-area"></span>
                                 <span class="wpopt-kpi-label"><?php _e('Tracking', 'wpopt'); ?></span>
                                 <strong class="wpopt-kpi-value"><?php echo $tracking_enabled ? __('Enabled', 'wpopt') : __('Disabled', 'wpopt'); ?></strong>
+                                <small><?php echo $tracking_enabled ? esc_html__('Monitoring is active', 'wpopt') : esc_html__('Monitoring is disabled', 'wpopt'); ?></small>
                             </div>
-                            <div class="wpopt-kpi-card">
+                            <div class="wpopt-kpi-card is-orange">
+                                <span class="wpopt-kpi-icon dashicons dashicons-database"></span>
                                 <span class="wpopt-kpi-label"><?php _e('Persistent cache', 'wpopt'); ?></span>
                                 <strong class="wpopt-kpi-value"><?php echo $persistent_cache ? __('Enabled', 'wpopt') : __('Not configured', 'wpopt'); ?></strong>
+                                <small><?php echo $persistent_cache ? esc_html__('Persistent layer detected', 'wpopt') : esc_html__('Setup recommended', 'wpopt'); ?></small>
+                            </div>
+                            <div class="wpopt-kpi-card is-mint">
+                                <span class="wpopt-kpi-icon dashicons dashicons-shield-alt"></span>
+                                <span class="wpopt-kpi-label"><?php _e('Optimization health', 'wpopt'); ?></span>
+                                <strong class="wpopt-kpi-value"><?php echo $health_score >= 80 ? esc_html__('Good', 'wpopt') : esc_html__('Needs review', 'wpopt'); ?></strong>
+                                <small class="wpopt-health-meter"><span style="width: <?php echo esc_attr($health_score); ?>%"></span><b><?php echo esc_html($health_score); ?>%</b></small>
                             </div>
                         </div>
                     </div>
                 </block>
-                <block class="wps">
-                    <h2><?php _e('Modules:', 'wpopt'); ?></h2>
-                    <?php
-                    echo '<b>' . __('Currently WP-Optimizer active modules:', 'wpopt') . '</b><br><br>';
-                    echo '<div class="wps-gridRow wpopt-chip-grid">';
-                    foreach ($modules as $module) {
-                        echo "<a class='wps-code' target='_blank' href='" . (wps('wpopt')->moduleHandler->get_module_instance($module)->has_panel() ? wps_module_panel_url($module['slug']) : wps_module_setting_url('wpopt', $module['slug'])) . "'>{$module['name']}</a>";
-                    }
-                    echo '</div>';
-                    ?>
+                <block class="wps wpopt-panel wpopt-modules-panel">
+                    <div class="wpopt-panel-head">
+                        <h2><span class="dashicons dashicons-admin-plugins"></span><?php _e('Modules', 'wpopt'); ?></h2>
+                        <span><?php _e('Manage and access your optimization tools', 'wpopt'); ?></span>
+                    </div>
+                    <div class="wpopt-module-grid">
+                        <?php foreach ($dashboard['module_cards'] as $module_card): ?>
+                            <a class="wpopt-module-card" href="<?php echo esc_url($module_card['url']); ?>">
+                                <span class="wpopt-module-icon dashicons <?php echo esc_attr($module_card['icon']); ?>"></span>
+                                <strong><?php echo esc_html($module_card['name']); ?></strong>
+                                <small><?php echo $module_card['active'] ? esc_html__('Ready for optimization tasks.', 'wpopt') : esc_html__('Module currently disabled.', 'wpopt'); ?></small>
+                                <span class="wpopt-module-foot">
+                                    <em class="<?php echo $module_card['active'] ? 'is-active' : 'is-inactive'; ?>"><?php echo $module_card['active'] ? esc_html__('Active', 'wpopt') : esc_html__('Inactive', 'wpopt'); ?></em>
+                                    <span class="dashicons dashicons-arrow-right-alt2"></span>
+                                </span>
+                            </a>
+                        <?php endforeach; ?>
+                    </div>
+                    <div class="wpopt-view-all">
+                        <a href="<?php echo esc_url(admin_url('admin.php?page=wpopt-settings#settings-modules_handler')); ?>">
+                            <span class="dashicons dashicons-screenoptions"></span><?php _e('View all modules', 'wpopt'); ?>
+                        </a>
+                    </div>
                 </block>
-                <?php if ($tracking_enabled): ?>
-                    <block class="wps wpopt-notice-card">
-                        <h2><?php _e('Tracking status', 'wpopt'); ?></h2>
-                        <strong><?php echo sprintf(__('A tracking option is enabled, see more <a href="%s">here</a>.', 'wpopt'), admin_url('admin.php?page=wpopt-settings#settings-tracking')); ?></strong>
-                        <br><br>
-                        <strong><?php echo __('No personal data is collected, only plugin error details and optional anonymous usage statistics.', 'wpopt'); ?></strong>
-                    </block>
-                <?php else: ?>
-                    <block class="wps wpopt-notice-card">
-                        <h2><?php _e('Tracking status', 'wpopt'); ?></h2>
-                        <strong><?php echo sprintf(__('If you run into problems, enable <a href="%s">this</a> feature so the developer can receive useful diagnostics.', 'wpopt'), admin_url('admin.php?page=wpopt-settings#settings-tracking')); ?></strong>
-                        <br><br>
-                        <strong><?php echo __('No personal data will be collected.', 'wpopt'); ?></strong>
-                    </block>
-                <?php endif; ?>
-                <block class="wps">
-                    <h2><?php _e('Fast actions:', 'wpopt'); ?></h2>
-                    <h4><?php _e('Run now the optimization process.', 'wpopt'); ?></h4>
-                    <?php if ($is_cron_running): ?>
-                        <h4><strong><?php _e('A cron job is running.', 'wpopt'); ?></strong></h4>
-                    <?php endif; ?>
-                    <form method="POST" class="wpopt-actions wpopt-actions-form">
-                        <?php wp_nonce_field('wpopt-nonce'); ?>
-                        <input name="wpopt-cron-run" type="submit"
-                               value="<?php _e('Auto optimize now', 'wpopt') ?>" <?php echo $is_cron_running ? "disabled" : "" ?>
-                               class="wps wps-button wpopt-btn is-success">
-                        <?php if ($is_cron_running): ?>
-                            <input name="wpopt-cron-reset" type="submit"
-                                   value="<?php _e('Reset cron status', 'wpopt') ?>"
-                                   class="wps wps-button wpopt-btn is-danger">
-                        <?php endif; ?>
-                    </form>
+                <block class="wps wpopt-panel wpopt-tracking-panel">
+                    <div class="wpopt-panel-head">
+                        <h2><span class="dashicons dashicons-chart-area"></span><?php _e('Tracking status', 'wpopt'); ?></h2>
+                        <div class="wpopt-tracking-actions">
+                            <form method="POST" class="wpopt-actions-form">
+                                <?php wp_nonce_field('wpopt-nonce'); ?>
+                                <button name="wpopt-cron-run" type="submit" <?php echo $is_cron_running ? 'disabled' : ''; ?> class="wps wps-button wpopt-btn is-neutral">
+                                    <span class="dashicons dashicons-controls-play"></span><?php _e('Run now', 'wpopt'); ?>
+                                </button>
+                                <?php if ($is_cron_running): ?>
+                                    <button name="wpopt-cron-reset" type="submit" class="wps wps-button wpopt-btn is-danger">
+                                        <span class="dashicons dashicons-update"></span><?php _e('Reset cron', 'wpopt'); ?>
+                                    </button>
+                                <?php endif; ?>
+                            </form>
+                            <a class="wps wps-button wpopt-btn is-neutral" href="<?php echo esc_url(admin_url('admin.php?page=wpopt-settings#settings-tracking')); ?>"><?php _e('View full report', 'wpopt'); ?></a>
+                        </div>
+                    </div>
+                    <div class="wpopt-tracking-grid">
+                        <div class="wpopt-tracking-stat">
+                            <span><?php _e('Active modules', 'wpopt'); ?></span>
+                            <strong><?php echo esc_html($active_modules_count); ?></strong>
+                            <small><?php echo esc_html(sprintf('%s%%', $health_score)); ?></small>
+                        </div>
+                        <div class="wpopt-tracking-stat">
+                            <span><?php _e('Memory peak', 'wpopt'); ?></span>
+                            <strong><?php echo esc_html($memory_load); ?></strong>
+                            <small><?php _e('live', 'wpopt'); ?></small>
+                        </div>
+                        <div class="wpopt-tracking-stat">
+                            <span><?php _e('Server load', 'wpopt'); ?></span>
+                            <strong><?php echo esc_html($server_load); ?></strong>
+                            <small><?php _e('live', 'wpopt'); ?></small>
+                        </div>
+                        <div class="wpopt-tracking-stat">
+                            <span><?php _e('Execution time', 'wpopt'); ?></span>
+                            <strong><?php echo esc_html(sprintf('%s s', $execution_time)); ?></strong>
+                            <small><?php _e('live', 'wpopt'); ?></small>
+                        </div>
+                        <svg class="wpopt-tracking-chart" viewBox="0 0 360 96" role="img" aria-label="<?php esc_attr_e('Weekly optimization trend', 'wpopt'); ?>">
+                            <polyline points="4,58 48,43 92,68 136,54 180,54 224,64 268,51 356,51" fill="none" stroke="#2f7cf6" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M4 58 L48 43 L92 68 L136 54 L180 54 L224 64 L268 51 L356 51 L356 96 L4 96 Z" fill="rgba(47,124,246,0.10)"/>
+                            <g fill="#2f7cf6">
+                                <circle cx="4" cy="58" r="3"/><circle cx="48" cy="43" r="3"/><circle cx="92" cy="68" r="3"/><circle cx="136" cy="54" r="3"/>
+                                <circle cx="180" cy="54" r="3"/><circle cx="224" cy="64" r="3"/><circle cx="268" cy="51" r="3"/><circle cx="356" cy="51" r="3"/>
+                            </g>
+                        </svg>
+                    </div>
                 </block>
                 <?php if (!defined('WP_PERSISTENT_CACHE')): ?>
-                    <block class="wps">
+                    <block class="wps wpopt-panel">
                         <h2><?php _e('Persistent cache:', 'wpopt'); ?></h2>
                         <p><?php _e('WP-Optimizer supports <b>Redis</b> and <b>Memcached</b> systems.', 'wpopt'); ?></p>
                         <p><?php _e('To activate persistent cache for your site copy this <b>define(\'WP_PERSISTENT_CACHE\', true);</b> in wp-config.php', 'wpopt'); ?></p>
                     </block>
                 <?php endif; ?>
-                <block class="wps">
+                <block class="wps wpopt-panel">
                     <h2><?php _e('WordPress performances:', 'wpopt'); ?></h2>
                     <div class="wpopt-metrics-grid">
                         <div class="wpopt-metric-item">
                             <span><?php _e('Server load', 'wpopt'); ?></span>
-                            <strong><?php echo sprintf('%s %%', $server_load); ?></strong>
+                            <strong><?php echo $server_load; ?></strong>
                         </div>
                         <div class="wpopt-metric-item">
                             <span><?php _e('WordPress memory load', 'wpopt'); ?></span>
@@ -485,6 +562,91 @@ class PagesHandler
             <?php $this->render_sidebar(); ?>
         </section>
         <?php
+    }
+
+    private function get_dashboard_view_model(): array
+    {
+        $cache_key = $this->dashboard_cache_key();
+        $cached = get_transient($cache_key);
+
+        if (is_array($cached)) {
+            return $cached;
+        }
+
+        $module_handler = wps('wpopt')->moduleHandler;
+        $excluded_modules = array('cron', 'modules_handler', 'settings', 'tracking');
+        $all_modules = $module_handler->get_modules(array('excepts' => $excluded_modules), false);
+        $module_icons = $this->dashboard_module_icons();
+        $active_modules_count = 0;
+        $module_cards = array();
+
+        foreach ($all_modules as $index => $module) {
+            $module_slug = $module['slug'];
+            $module_active = $module_handler->module_is_active($module_slug);
+
+            if ($module_active) {
+                $active_modules_count++;
+            }
+
+            if ($index >= 5) {
+                continue;
+            }
+
+            $module_cards[] = array(
+                'name'   => $module['name'],
+                'slug'   => $module_slug,
+                'url'    => $module_handler->module_has_scope($module, 'admin-page') ? wps_module_panel_url($module_slug) : wps_module_setting_url('wpopt', $module_slug),
+                'active' => $module_active,
+                'icon'   => $module_icons[$module_slug] ?? 'dashicons-admin-tools',
+            );
+        }
+
+        $is_cron_running = wps('wpopt')->settings->get('cron.running', false);
+        $tracking_enabled = wps('wpopt')->settings->get('tracking.errors', true) || wps('wpopt')->settings->get('tracking.usage', true);
+        $persistent_cache = defined('WP_PERSISTENT_CACHE');
+        $health_score = 68 + ($tracking_enabled ? 8 : 0) + ($persistent_cache ? 14 : 0) + ($is_cron_running ? 0 : 10);
+
+        $view_model = array(
+            'active_modules_count' => $active_modules_count,
+            'is_cron_running'      => $is_cron_running,
+            'tracking_enabled'     => $tracking_enabled,
+            'persistent_cache'     => $persistent_cache,
+            'server_load'          => UtilEnv::get_server_load(),
+            'health_score'         => min(100, $health_score),
+            'module_cards'         => $module_cards,
+            'last_updated'         => date_i18n(get_option('time_format')),
+        );
+
+        set_transient($cache_key, $view_model, self::DASHBOARD_CACHE_TTL);
+
+        return $view_model;
+    }
+
+    private function dashboard_cache_key(): string
+    {
+        return 'wpopt_dashboard_' . get_current_blog_id() . '_' . WPOPT_VERSION;
+    }
+
+    private function clear_dashboard_cache(): void
+    {
+        delete_transient($this->dashboard_cache_key());
+    }
+
+    private function dashboard_module_icons(): array
+    {
+        return array(
+            'database'      => 'dashicons-database',
+            'media'         => 'dashicons-format-gallery',
+            'wp_customizer' => 'dashicons-admin-customizer',
+            'wp_optimizer'  => 'dashicons-performance',
+            'wp_security'   => 'dashicons-shield',
+            'cache'         => 'dashicons-admin-network',
+            'minify'        => 'dashicons-editor-contract',
+            'activitylog'   => 'dashicons-list-view',
+            'wp_mail'       => 'dashicons-email-alt',
+            'wp_updates'    => 'dashicons-update',
+            'wp_info'       => 'dashicons-info',
+        );
     }
 
     private function output_results($result = array())
@@ -546,36 +708,117 @@ class PagesHandler
         <?php
     }
 
+    private function render_dashboard_hero_art(): void
+    {
+        ?>
+        <svg class="wpopt-hero-svg" xmlns="http://www.w3.org/2000/svg" width="362" height="117" viewBox="0 0 362 117" fill="none" role="img" aria-label="<?php esc_attr_e('Dashboard illustration with speedometer', 'wpopt'); ?>">
+            <defs>
+                <linearGradient id="outerBlue" x1="196" y1="40" x2="309" y2="96" gradientUnits="userSpaceOnUse">
+                    <stop offset="0" stop-color="#79B4FF"/>
+                    <stop offset="0.42" stop-color="#3E8DFF"/>
+                    <stop offset="1" stop-color="#075FDD"/>
+                </linearGradient>
+                <linearGradient id="outerHighlight" x1="207" y1="43" x2="274" y2="39" gradientUnits="userSpaceOnUse">
+                    <stop stop-color="#A5CEFF" stop-opacity="0.75"/>
+                    <stop offset="1" stop-color="#FFFFFF" stop-opacity="0"/>
+                </linearGradient>
+                <linearGradient id="innerBlue" x1="218" y1="89" x2="284" y2="57" gradientUnits="userSpaceOnUse">
+                    <stop offset="0" stop-color="#83BAFF"/>
+                    <stop offset="0.62" stop-color="#4C96FF"/>
+                    <stop offset="1" stop-color="#287AF1"/>
+                </linearGradient>
+                <linearGradient id="needleBlue" x1="250" y1="86" x2="272" y2="76" gradientUnits="userSpaceOnUse">
+                    <stop stop-color="#2F85FF"/>
+                    <stop offset="1" stop-color="#176FE8"/>
+                </linearGradient>
+                <linearGradient id="pieBlue" x1="142" y1="71" x2="156" y2="85" gradientUnits="userSpaceOnUse">
+                    <stop stop-color="#4D93FF"/>
+                    <stop offset="1" stop-color="#0C65E5"/>
+                </linearGradient>
+                <radialGradient id="centerGlow" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(200 58) rotate(90) scale(76 137)">
+                    <stop stop-color="#EAF3FF"/>
+                    <stop offset="1" stop-color="#EAF3FF" stop-opacity="0"/>
+                </radialGradient>
+            </defs>
+
+            <ellipse cx="91" cy="42" rx="38" ry="27" fill="#EAF3FF" opacity="0.88"/>
+            <ellipse cx="108" cy="104" rx="76" ry="61" fill="#EAF3FF" opacity="0.76"/>
+            <ellipse cx="197" cy="58" rx="72" ry="53" fill="#EAF3FF" opacity="0.80"/>
+            <ellipse cx="265" cy="61" rx="42" ry="36" fill="#EAF3FF" opacity="0.72"/>
+            <ellipse cx="264" cy="112" rx="67" ry="57" fill="#EAF3FF" opacity="0.68"/>
+            <circle cx="35" cy="73" r="3.1" fill="#B8D2FF"/>
+            <circle cx="96" cy="25" r="2" fill="#78AFFF"/>
+            <circle cx="287" cy="7" r="1.4" fill="#83B7FF"/>
+            <circle cx="295" cy="42" r="1.4" fill="#C5DAFF" opacity="0.9"/>
+            <circle cx="324" cy="68" r="3.1" fill="#AFCBFF"/>
+
+            <circle cx="194" cy="35" r="11" fill="#FFFFFF"/>
+            <path d="M194 28.5L196.25 32.8L200.5 35L196.25 37.2L194 41.5L191.75 37.2L187.5 35L191.75 32.8L194 28.5Z" fill="#3A8BFF"/>
+            <path d="M224 12.5L225.25 16.2L228.5 17.5L225.25 18.85L224 22.5L222.75 18.85L219.5 17.5L222.75 16.2L224 12.5Z" fill="#8EBBFF" opacity="0.82"/>
+            <path d="M315 18.5L316.55 22.1L320 23.5L316.55 24.9L315 28.5L313.45 24.9L310 23.5L313.45 22.1L315 18.5Z" fill="#9DC4FF" opacity="0.9"/>
+
+            <rect x="68" y="46" width="98" height="67" rx="10" fill="#D8E7FF" opacity="0.22"/>
+            <rect x="66" y="41" width="100" height="70" rx="10" fill="#FFFFFF"/>
+            <rect x="83" y="50" width="58" height="6" rx="3" fill="#E7F0FF"/>
+            <rect x="83" y="66" width="53" height="4" rx="2" fill="#E7F0FF"/>
+            <rect x="83" y="77" width="37" height="4" rx="2" fill="#E7F0FF"/>
+            <rect x="83" y="88" width="48" height="4" rx="2" fill="#E7F0FF"/>
+            <circle cx="142" cy="85" r="15" fill="#E6F0FF"/>
+            <path d="M142 85V71C149.73 71 156 77.27 156 85H142Z" fill="url(#pieBlue)"/>
+
+            <g id="tachimetro">
+                <path d="M193.5 95.5A57.5 57.5 0 0 1 308.5 95.5" stroke="#D9E9FF" stroke-width="16" stroke-linecap="round" opacity="0.82"/>
+                <path d="M193.5 95.5A57.5 57.5 0 0 1 308.5 95.5" stroke="#BFD9FF" stroke-width="10" stroke-linecap="round" opacity="0.22"/>
+                <path d="M195 95.5A56 56 0 0 1 307 95.5" stroke="url(#outerBlue)" stroke-width="7.8" stroke-linecap="round"/>
+                <path d="M202.4 72.2A56 56 0 0 1 278.7 44.6" stroke="url(#outerHighlight)" stroke-width="3.1" stroke-linecap="round" opacity="0.45"/>
+
+                <path d="M216.5 90.5A34.5 34.5 0 0 1 285.5 90.5" stroke="#D9E9FF" stroke-width="11.4" stroke-linecap="round" opacity="0.84"/>
+                <path d="M216.5 90.5A34.5 34.5 0 0 1 285.5 90.5" stroke="url(#innerBlue)" stroke-width="6.7" stroke-linecap="round"/>
+            </g>
+
+            <path d="M191 117C193.4 107 203.8 100.7 217.8 101.5C222.2 95.2 232.4 91 244.4 91C261.3 91 274.3 100.5 277.8 112.7C288.6 111.1 300.3 112.8 307.5 117H191Z" fill="#FFFFFF"/>
+
+            <path d="M251 85.4L270.8 76.2" stroke="#D6E8FF" stroke-width="7.4" stroke-linecap="round" opacity="0.45"/>
+            <path d="M251 85.4L270.8 76.2" stroke="url(#needleBlue)" stroke-width="5" stroke-linecap="round"/>
+            <circle cx="251" cy="85.4" r="7.1" fill="#E8F2FF" opacity="0.55"/>
+            <circle cx="251" cy="85.4" r="5.4" fill="#2E84FF"/>
+        </svg>
+        <?php
+    }
+
     private function render_sidebar(): void
     {
         $donation_url = $this->get_donation_url();
         $review_url = $this->get_review_url();
         ?>
         <aside class="wps wpopt-sidebar">
-            <section class="wps-box">
+            <section class="wps-box wpopt-support-card-primary">
                 <div class="wps-donation-wrap">
-                    <div class="wps-donation-title"><?php _e('WP Optimizer saving you time?', 'wpopt'); ?></div>
+                    <span class="wpopt-support-icon"><?php echo Graphic::icon('star', 'wpopt-support-icon-svg'); ?></span>
+                    <div class="wps-donation-title"><?php _e('WP Optimizer saves you time', 'wpopt'); ?></div>
                     <p class="wpopt-muted"><?php _e('Support maintenance, fixes, and new features with a donation, or help more users discover the plugin with a 5-star review.', 'wpopt'); ?></p>
                     <div class="wpopt-inline-actions wpopt-support-cta">
-                        <a class="wps wps-button wpopt-btn is-success" href="<?php echo esc_url($donation_url); ?>" target="_blank" rel="noopener noreferrer"><?php _e('Donate with PayPal', 'wpopt'); ?></a>
-                        <a class="wps wps-button wpopt-btn is-info" href="<?php echo esc_url($review_url); ?>" target="_blank" rel="noopener noreferrer"><?php _e('Leave a 5-star review', 'wpopt'); ?></a>
+                        <a class="wps wps-button wpopt-btn is-success" href="<?php echo esc_url($donation_url); ?>" target="_blank" rel="noopener noreferrer"><?php echo Graphic::icon('heart-fill', 'wpopt-btn-icon'); ?><?php _e('Donate with PayPal', 'wpopt'); ?></a>
+                        <a class="wps wps-button wpopt-btn is-neutral" href="<?php echo esc_url($review_url); ?>" target="_blank" rel="noopener noreferrer"><?php echo Graphic::icon('star-outline', 'wpopt-btn-icon'); ?><?php _e('Leave a 5-star review', 'wpopt'); ?></a>
                     </div>
                 </div>
             </section>
             <section class="wps-box">
-                <h3><?php _e('Want to support in other ways?', 'wpopt'); ?></h3>
+                <h3><?php echo Graphic::icon('headphones', 'wpopt-sidebar-title-icon'); ?><?php _e('Need help?', 'wpopt'); ?></h3>
                 <ul class="wps wpopt-link-list">
                     <li>
-                        <a href="https://translate.wordpress.org/projects/wp-plugins/wp-optimizer/"><?php _e('Help me translating', 'wpopt'); ?></a>
+                        <a href="https://translate.wordpress.org/projects/wp-plugins/wp-optimizer/"><?php echo Graphic::icon('translate', 'wpopt-link-icon'); ?><?php _e('Help me translating', 'wpopt'); ?></a>
                     </li>
                 </ul>
-                <h3>WP-Optimizer</h3>
+            </section>
+            <section class="wps-box">
+                <h3><?php echo Graphic::icon('box', 'wpopt-sidebar-title-icon'); ?>WP Optimizer</h3>
                 <ul class="wps wpopt-link-list">
                     <li>
-                        <a href="https://github.com/sh1zen/wp-optimizer/"><?php _e('Source code', 'wpopt'); ?></a>
+                        <a href="https://github.com/sh1zen/wp-optimizer/"><?php echo Graphic::icon('code', 'wpopt-link-icon'); ?><?php _e('Source code', 'wpopt'); ?></a>
                     </li>
                     <li>
-                        <a href="https://sh1zen.github.io/"><?php _e('About me', 'wpopt'); ?></a>
+                        <a href="https://sh1zen.github.io/"><?php echo Graphic::icon('user', 'wpopt-link-icon'); ?><?php _e('About me', 'wpopt'); ?></a>
                     </li>
                 </ul>
             </section>

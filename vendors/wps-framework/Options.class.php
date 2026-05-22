@@ -259,7 +259,19 @@ class Options
             return $default;
         }
 
-        $rows = $wpdb->get_results($wpdb->prepare("SELECT * FROM " . $this->table_name() . " WHERE item = %s AND context = %s " . ($limiter ? "LIMIT $limiter" : "") . " OFFSET {$offset}", $option, $context));
+        $limit = $limiter ? max(0, intval($limiter)) : 0;
+        $offset = max(0, intval($offset));
+        $pagination = '';
+
+        if ($limit > 0) {
+            $pagination = " LIMIT {$limit}";
+        }
+
+        if ($offset > 0) {
+            $pagination .= $limit > 0 ? " OFFSET {$offset}" : " LIMIT 18446744073709551615 OFFSET {$offset}";
+        }
+
+        $rows = $wpdb->get_results($wpdb->prepare("SELECT * FROM " . $this->table_name() . " WHERE item = %s AND context = %s" . $pagination, $option, $context));
 
         if (!$rows) {
             return $default;

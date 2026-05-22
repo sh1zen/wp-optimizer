@@ -15,9 +15,26 @@ class StaticCache extends Cache_Dispatcher
     // fix child invoking
     protected static ?Cache_Dispatcher $_Instance;
 
+    private string $current_rule_id = '';
+    private string $current_request_path = '';
+
     protected static function get_cache_group(): string
     {
         return "cache/static";
+    }
+
+    public static function get_static_cache_group(): string
+    {
+        return static::get_cache_group();
+    }
+
+    public static function flush($lifetime = false, $blog_id = 0): void
+    {
+        parent::flush($lifetime, $blog_id);
+
+        if (!$lifetime) {
+            StaticCacheRules::clear_all_entries();
+        }
     }
 
     public function cache_handler(\WP_Query $wp_query)
@@ -28,7 +45,8 @@ class StaticCache extends Cache_Dispatcher
 
         $this->check_cacheability($wp_query);
 
-        $this->cache_key = $this->generate_key(Rewriter::getInstance()->get_request_path() . $wp_query->query_vars_hash);
+        $this->current_request_path = Rewriter::getInstance()->get_request_path();
+        $this->cache_key = $this->generate_key($this->current_request_path . $wp_query->query_vars_hash);
 
         $this->maybe_render_cache();
     }
@@ -48,6 +66,8 @@ class StaticCache extends Cache_Dispatcher
                 }
             }
         }
+
+        $this->check_rule_cacheability();
 
         if (is_user_logged_in()) {
             $this->is_cacheable = false;
@@ -71,6 +91,24 @@ class StaticCache extends Cache_Dispatcher
         $this->is_cacheable = apply_filters('wpopt_allow_static_cache', $this->is_cacheable, $wp_query);
     }
 
+    private function check_rule_cacheability(): void
+    {
+        $this->current_rule_id = '';
+
+        $rules = StaticCacheRules::get_active_rules(Settings::get_option($this->options, 'rules', []));
+        if (empty($rules)) {
+            return;
+        }
+
+        $matched_rule = StaticCacheRules::match_rule($rules, Rewriter::getInstance()->get_request_path());
+        if (empty($matched_rule)) {
+            $this->is_cacheable = false;
+            return;
+        }
+
+        $this->current_rule_id = $matched_rule['id'];
+    }
+
     private function maybe_render_cache()
     {
         if (!$this->is_cacheable) {
@@ -79,9 +117,12 @@ class StaticCache extends Cache_Dispatcher
 
         if ($data = parent::cache_get($this->cache_key)) {
             $this->is_cached_content = true;
+            StaticCacheRules::record_hit($this->current_rule_id);
             echo $data;
             exit();
         }
+
+        StaticCacheRules::record_miss($this->current_rule_id);
     }
 
     public function cache_buffer($buffer)
@@ -91,6 +132,7 @@ class StaticCache extends Cache_Dispatcher
         if (!$this->is_cached_content and $this->is_cacheable and !$wp_the_query->is_404) {
 
             parent::cache_set($this->cache_key, $buffer);
+            StaticCacheRules::record_write($this->current_rule_id, $this->cache_key, $this->current_request_path, strlen($buffer));
         }
 
         return $buffer;

@@ -72,7 +72,7 @@ function wps_server_addr(): string
     return $addr;
 }
 
-function wps_error_handler($hook, callable $callback = null, $notify_dev = true): void
+function wps_error_handler($hook, ?callable $callback = null, $notify_dev = true): void
 {
     static $index = 0;
 

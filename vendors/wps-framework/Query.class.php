@@ -161,7 +161,11 @@ class Query
 
         $limit = $this->limit ? "LIMIT $this->limit" : '';
 
-        $offset = $this->offset ? "OFFSET $this->offset" : '';
+        $offset = '';
+        if ($this->offset) {
+            $limit = $limit ?: 'LIMIT 18446744073709551615';
+            $offset = "OFFSET $this->offset";
+        }
 
         foreach ($this->columns as $field) {
 

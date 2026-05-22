@@ -33,15 +33,31 @@ class Settings
 
     public static function get_option($settings, $setting_path, $default = false)
     {
+        $setting_path = (string)$setting_path;
+
+        if ($setting_path === '') {
+            if (is_array($settings) or is_object($settings)) {
+                $settings = wp_parse_args($settings, $default);
+            }
+
+            return $settings;
+        }
+
         // remove consecutive dots and add a last one for while loop
-        $setting_path = preg_replace('#\.+#', '.', $setting_path . '.');
+        $setting_path = preg_replace('#\.+#', '.', $setting_path);
 
-        while (($pos = strpos($setting_path, '.')) !== false) {
+        if ($setting_path === '' or $setting_path[0] === '.') {
+            if (is_array($settings) or is_object($settings)) {
+                $settings = wp_parse_args($settings, $default);
+            }
 
-            $slug = substr($setting_path, 0, $pos);
+            return $settings;
+        }
 
-            if (empty($slug)) {
-                break;
+        foreach (explode('.', $setting_path) as $slug) {
+
+            if ($slug === '') {
+                continue;
             }
 
             if (!isset($settings[$slug])) {
@@ -49,8 +65,6 @@ class Settings
             }
 
             $settings = $settings[$slug];
-
-            $setting_path = substr($setting_path, $pos + 1);
         }
 
         if (is_array($settings) or is_object($settings)) {
@@ -143,10 +157,11 @@ class Settings
          * Consider only modules with settings handlers
          */
         $modules = wps($this->context)->moduleHandler->get_modules(array('scopes' => array('core-settings')), false);
+        $classes = array('wps-wrap', 'wps', 'wps-core-settings-page', "{$this->context}-core-settings-page");
 
         settings_errors();
         ?>
-        <section class="wps-wrap wps">
+        <section class="<?php echo esc_attr(implode(' ', $classes)); ?>">
             <block class="wps">
                 <section class='wps-header'><h1>Core Settings</h1></section>
                 <?php
@@ -174,16 +189,85 @@ class Settings
             }
 
             $field = array(
-                'id'          => "settings-{$module['slug']}",
-                'tab-title'   => $module['name'],
-                'panel-title' => $module['name'] . " setup",
-                'callback'    => array($object, 'render_settings')
+                'id'                => "settings-{$module['slug']}",
+                'tab-title'         => $module['name'],
+                'tab-icon'          => $this->get_settings_icon($module['slug']),
+                'panel-title'       => $module['name'] . " setup",
+                'panel-icon'        => $this->get_settings_icon($module['slug']),
+                'panel-description' => $this->get_settings_description($module['slug'], $module['name']),
+                'panel-status'      => $this->get_settings_status($module['slug']),
+                'callback'          => array($object, 'render_settings')
             );
 
             $fields[] = $field;
         }
 
         return Graphic::generateHTML_tabs_panels($fields);
+    }
+
+    private function get_settings_icon(string $module_slug): string
+    {
+        $icons = array(
+            'cron'            => 'calendar',
+            'modules_handler' => 'grid',
+            'settings'        => 'settings',
+            'tracking'        => 'chart',
+            'database'        => 'database',
+            'media'           => 'image',
+            'minify'          => 'code',
+            'performance_monitor' => 'chart',
+            'widget'          => 'box',
+            'wp_customizer'   => 'sliders',
+            'wp_optimizer'    => 'gauge',
+            'wp_security'     => 'shield',
+            'cache'           => 'server',
+            'activitylog'     => 'list',
+            'wp_mail'         => 'mail',
+            'wp_updates'      => 'repeat',
+            'wp_info'         => 'info',
+        );
+
+        return $icons[$module_slug] ?? 'tools';
+    }
+
+    private function get_settings_description(string $module_slug, string $module_name): string
+    {
+        if ($module_slug === 'cron') {
+            return __('Configure the automatic optimization tasks that keep your site fast, clean and running smoothly.', 'wpopt');
+        }
+
+        if ($module_slug === 'modules_handler') {
+            return __('Choose which tools are available in the optimizer workspace.', 'wpopt');
+        }
+
+        if ($module_slug === 'tracking') {
+            return __('Control diagnostics and anonymous usage tracking for maintenance and troubleshooting.', 'wpopt');
+        }
+
+        return sprintf(__('Manage %s preferences for this plugin.', 'wpopt'), $module_name);
+    }
+
+    private function get_settings_status(string $module_slug): string
+    {
+        if ($module_slug !== 'cron') {
+            return '';
+        }
+
+        $cron_settings = $this->get('cron', array(
+            'active'         => false,
+            'execution-time' => '01:00',
+        ));
+
+        $active = UtilEnv::to_boolean($cron_settings['active'] ?? false);
+        $execution_time = (string)($cron_settings['execution-time'] ?? '01:00');
+
+        return sprintf(
+            '<div class="wps-panel-status %s"><strong><span></span>%s</strong><small>%s</small>%s</div>',
+            $active ? 'is-active' : 'is-inactive',
+            $active ? esc_html__('Active', 'wpopt') : esc_html__('Inactive', 'wpopt'),
+            esc_html(sprintf(__('Next run: today at %s', 'wpopt'), $execution_time)),
+            Graphic::icon('calendar', 'wps-panel-status-icon')
+        );
     }
 
     public function register_hooks(): void
@@ -197,6 +281,7 @@ class Settings
     public function render_modules_settings()
     {
         $mod_handler = wps($this->context)->moduleHandler;
+        $classes = array('wps-wrap', 'wps', 'wps-core-settings-page', "{$this->context}-core-settings-page");
 
         /**
          * Consider only modules with settings handlers
@@ -205,7 +290,7 @@ class Settings
 
         settings_errors();
         ?>
-        <section class="wps-wrap wps">
+        <section class="<?php echo esc_attr(implode(' ', $classes)); ?>">
             <block class="wps">
                 <section class='wps-header'><h1>Modules Settings</h1></section>
                 <?php

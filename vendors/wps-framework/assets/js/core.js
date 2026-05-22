@@ -642,6 +642,7 @@
 
         if (!wpoptAutosaveNonce) return;
         if ($form.data("wpopt-autosave-init")) return;
+        if ($form.closest(".wpfs-core-settings-page, .wpfs-breadcrumbs-page, .wpfs-settings-page").length) return;
 
         $form.data("wpopt-autosave-init", true);
 

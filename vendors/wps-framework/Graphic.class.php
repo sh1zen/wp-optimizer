@@ -12,13 +12,42 @@ class Graphic
     public static function generate_fields($fields_args, $infos = [], $args = [], $display = true): string
     {
         $output = '';
+        $loose_fields = '';
         $levels = array();
+        $wrap_loose_fields = $args['wrap_loose_fields'] ?? true;
+
+        $flush_loose_fields = function () use (&$output, &$loose_fields, $wrap_loose_fields) {
+            if ($loose_fields === '') {
+                return;
+            }
+
+            if ($wrap_loose_fields) {
+                $output .= "<wps-block class='wps-boxed--light wps-settings-section wps-settings-section-plain'>{$loose_fields}</wps-block>";
+            }
+            else {
+                $output .= $loose_fields;
+            }
+
+            $loose_fields = '';
+        };
 
         foreach ($fields_args as $field_args) {
 
-            if (isset($field_args[0])) {
-                // Usa wps-block con data-expandable invece di wps-boxed--light
-                $output .= "<wps-block class='wps-boxed--light'>" . self::generate_fields($field_args, $infos, $args, false) . "</wps-block>";
+            if (is_array($field_args) and isset($field_args[0])) {
+                $flush_loose_fields();
+                $output .= self::generate_field_group($field_args, $infos, $args);
+                continue;
+            }
+
+            if (is_array($field_args) and strtolower((string)($field_args['type'] ?? '')) === 'separator') {
+                $flush_loose_fields();
+                $field_args['name_prefix'] = $args['name_prefix'] ?? false;
+                $output .= self::generate_field($field_args, false);
+                continue;
+            }
+
+            if (!is_array($field_args)) {
+                $loose_fields .= self::generate_field($field_args, false);
                 continue;
             }
 
@@ -36,14 +65,41 @@ class Graphic
                 }
             }
 
-            $output .= self::generate_field($field_args, false);
+            $loose_fields .= self::generate_field($field_args, false);
         }
+
+        $flush_loose_fields();
 
         if ($display) {
             echo $output;
         }
 
         return $output;
+    }
+
+    private static function generate_field_group(array $field_args, $infos = [], $args = []): string
+    {
+        $section = null;
+
+        if (isset($field_args[0]) and is_array($field_args[0]) and strtolower((string)($field_args[0]['type'] ?? '')) === 'separator') {
+            $section = array_shift($field_args);
+        }
+
+        $group_args = $args;
+        $group_args['wrap_loose_fields'] = false;
+        $fields = self::generate_fields($field_args, $infos, $group_args, false);
+
+        if (!$section) {
+            return "<wps-block class='wps-boxed--light wps-settings-section wps-settings-section-plain'>{$fields}</wps-block>";
+        }
+
+        $name = (string)($section['name'] ?? '');
+        $label = $section['label'] ?? '';
+        $icon = self::icon(($section['icon'] ?? '') ?: self::separator_icon($name), 'wps-section-icon');
+        $description = $label ? "<p class='wps-section-description'>{$label}</p>" : '';
+        $props = !empty($section['props']) && is_array($section['props']) ? ' ' . self::buildProps($section['props'], true) : '';
+
+        return "<wps-block class='wps-boxed--light wps-settings-section'{$props}><div class='wps-section-head'>{$icon}<div class='wps-section-title'><h3>{$name}</h3>{$description}</div></div><div class='wps-section-body'>{$fields}</div></wps-block>";
     }
 
     public static function generate_field($args, $display = true)
@@ -74,6 +130,7 @@ class Graphic
             'props'        => [],
             'parent'       => false,
             'depend'       => false,
+            'icon'         => '',
             'nexted_level' => 0,
             'context'      => 'table'
         ), $args);
@@ -93,6 +150,7 @@ class Graphic
         $args['classes'] = array_filter($args['classes']);
 
         $label = $args['label'] ? "<label class='wps-option-info' for='{$args['id']}'>{$args['label']}</label>" : '';
+        $description = $args['label'] ? "<span class='wps-option-description'>{$args['label']}</span>" : '';
         $label_icon = $args['label'] ? '<icon class="wps-option-info-icon"><span>i</span></icon>' : '';
 
         switch ($args['context']) {
@@ -117,10 +175,13 @@ class Graphic
                 $padding_left = 30 * $args['nexted_level'];
 
                 $row_class = $padding_left ? 'wps-child' : '';
+                $row_type_class = sanitize_html_class('wps-row-type-' . str_replace('_', '-', $args['type']));
+                $row_id_class = $args['id'] ? sanitize_html_class('wps-row-' . str_replace(['.', '_'], '-', $args['id'])) : '';
+                $row_icon = self::icon($args['icon'] ?: self::field_icon($args['id'], $args['type']), 'wps-row-icon');
 
                 $_style = $padding_left ? "style='padding-left: {$padding_left}px'" : '';
 
-                $p_open_wrapper = "<row class='wps-row $row_class' $_style><div class='wps-option'><strong>{$args['name']}</strong>$label_icon</div><div class='wps-value'>";
+                $p_open_wrapper = "<row class='wps-row $row_class $row_type_class $row_id_class' $_style>{$row_icon}<div class='wps-option'><strong>{$args['name']}</strong>$description$label_icon</div><div class='wps-value'>";
                 $o_close_wrapper = "</div>$label</row>";
                 break;
         }
@@ -150,7 +211,10 @@ class Graphic
 
             case 'separator':
                 $p_open_wrapper = $o_close_wrapper = '';
-                $o_inner .= "<row class='wps-row-title' $dataValues><h3><strong>{$args['name']}</strong>$label_icon</h3>$label</row>";
+                $is_notice = self::is_separator_notice($args['name']);
+                $notice_class = $is_notice ? ' wps-row-notice' : '';
+                $separator_icon = self::icon($args['icon'] ?: ($is_notice ? 'info' : self::separator_icon($args['name'])), 'wps-row-icon');
+                $o_inner .= "<row class='wps-row-title{$notice_class}' $dataValues>{$separator_icon}<h3><strong>{$args['name']}</strong>$label_icon</h3>$label</row>";
                 break;
 
             case "time":
@@ -158,10 +222,21 @@ class Graphic
             case "text":
             case "numeric":
             case "number":
+            case "range":
             case "submit":
 
                 $args['classes'][] = 'wps';
                 $args['classes'][] = "wps-{$args['type']}";
+
+                $input_type = $args['type'] === 'range' ? 'range' : $args['type'];
+
+                if ($args['type'] === 'range') {
+                    $args['props']['min'] = $args['props']['min'] ?? '1';
+                    $args['props']['max'] = $args['props']['max'] ?? '10';
+                    $args['props']['step'] = $args['props']['step'] ?? '1';
+                    $args['props']['oninput'] = trim(($args['props']['oninput'] ?? '') . " this.closest('.wps-range-field').querySelector('.wps-range-value').textContent=this.value;");
+                    $o_inner .= "<div class='wps-range-field'>";
+                }
 
                 $o_inner .= self::buildField(
                     "input",
@@ -169,7 +244,7 @@ class Graphic
                         [
                             'class'        => self::parse_classes($args['classes']),
                             'autocomplete' => 'off',
-                            'type'         => $args['type'],
+                            'type'         => $input_type,
                             'name'         => $args['input_name'],
                             'id'           => $args['id'],
                             'placeholder'  => $args['placeholder'],
@@ -179,6 +254,11 @@ class Graphic
                         $args['props']
                     )
                 );
+
+                if ($args['type'] === 'range') {
+                    $o_inner .= "<span class='wps-range-value'>" . esc_html((string)$args['value']) . "</span>";
+                    $o_inner .= "</div>";
+                }
                 break;
 
             case 'button':
@@ -365,7 +445,13 @@ class Graphic
             'parent'      => $args['parent'],
             'depend'      => $args['depend'],
             'placeholder' => $args['placeholder'],
-            'list'        => $args['list']
+            'list'        => $args['list'],
+            'icon'        => $args['icon'] ?? '',
+            'classes'     => $args['classes'] ?? '',
+            'props'       => $args['props'] ?? [],
+            'before'      => $args['before'] ?? false,
+            'after'       => $args['after'] ?? false,
+            'context'     => $args['context'] ?? 'table',
         ];
     }
 
@@ -376,6 +462,109 @@ class Graphic
         }
 
         return "<$type " . self::buildProps($props, true) . ">$content</$type>";
+    }
+
+    public static function icon(string $icon, string $class = '', string $label = ''): string
+    {
+        $icon = sanitize_key($icon);
+
+        if ($icon === '') {
+            return '';
+        }
+
+        $class = trim('wps-svg-icon ' . $class);
+        $href = esc_url(UtilEnv::path_to_url(__DIR__) . 'assets/icons/wps-icons.svg#wps-icon-' . $icon);
+        $aria = $label === '' ? 'aria-hidden="true" focusable="false"' : 'role="img" aria-label="' . esc_attr($label) . '"';
+
+        return '<svg class="' . esc_attr($class) . '" ' . $aria . '><use href="' . $href . '"></use></svg>';
+    }
+
+    private static function field_icon(string $id, string $type): string
+    {
+        $icons = array(
+            'active'          => 'check',
+            'execution-time'  => 'clock',
+            'recurrence'      => 'repeat',
+            'database.active' => 'database',
+            'media.active'    => 'image',
+        );
+
+        if (isset($icons[$id])) {
+            return $icons[$id];
+        }
+
+        if ($type === 'checkbox') {
+            return 'check';
+        }
+
+        if ($type === 'time') {
+            return 'clock';
+        }
+
+        if ($type === 'range') {
+            return 'sliders';
+        }
+
+        if ($type === 'textarea_array' || $type === 'textarea') {
+            return 'list';
+        }
+
+        if ($type === 'link') {
+            return 'external';
+        }
+
+        if ($type === 'dropdown') {
+            return 'repeat';
+        }
+
+        return 'settings';
+    }
+
+    private static function separator_icon(string $name): string
+    {
+        $name = strtolower(wp_strip_all_tags($name));
+
+        if (str_contains($name, 'sweep') || str_contains($name, 'clean')) {
+            return 'broom';
+        }
+
+        if (str_contains($name, 'backup') || str_contains($name, 'database') || str_contains($name, 'sql')) {
+            return 'database';
+        }
+
+        if (str_contains($name, 'image') || str_contains($name, 'media') || str_contains($name, 'format')) {
+            return 'image';
+        }
+
+        if (str_contains($name, 'security') || str_contains($name, 'ssl') || str_contains($name, 'api')) {
+            return 'shield';
+        }
+
+        if (str_contains($name, 'server') || str_contains($name, 'cache')) {
+            return 'server';
+        }
+
+        if (str_contains($name, 'mail') || str_contains($name, 'smtp')) {
+            return 'mail';
+        }
+
+        if (str_contains($name, 'speed') || str_contains($name, 'performance') || str_contains($name, 'optimization')) {
+            return 'gauge';
+        }
+
+        return 'settings';
+    }
+
+    private static function is_separator_notice(string $name): bool
+    {
+        $name = strtolower(wp_strip_all_tags($name));
+
+        return str_contains($name, 'available only')
+            || str_contains($name, 'only in')
+            || str_contains($name, 'up to now')
+            || str_contains($name, 'apache only')
+            || str_contains($name, 'warning')
+            || str_contains($name, 'notice');
     }
 
     public static function buildProps($props = [], $strip_empty = false): string
@@ -478,7 +667,7 @@ class Graphic
      * @param array $limit_ids
      * @return false|string
      */
-    public static function generateHTML_tabs_panels($fields, array $limit_ids = array())
+    public static function generateHTML_tabs_panels($fields, array $limit_ids = array(), string $after_tablist = '')
     {
         if (!is_array($limit_ids)) {
             $limit_ids = array($limit_ids);
@@ -501,9 +690,10 @@ class Graphic
                 $panels = '';
                 foreach ($fields as $field) {
                     $tab_title = $field['tab-title'] ?? $field['panel-title'];
+                    $tab_icon = !empty($field['tab-icon']) ? self::icon($field['tab-icon'], 'wps-tab-icon') : '';
                     ?>
                     <li class="wps-ar-tab" aria-controls="<?php echo $field['id']; ?>"
-                        aria-selected="false"><?php echo $tab_title; ?></li>
+                        aria-selected="false"><?php echo $tab_icon; ?><span><?php echo $tab_title; ?></span></li>
                     <?php
 
                     // Support for limiting the rendering to only specific tab
@@ -512,12 +702,30 @@ class Graphic
                             continue;
                     }
 
-                    $aria_ajax = isset($field['ajax-callback']) ? "aria-ajax='" . json_encode($field['ajax-callback']) . "'" : '';
+                    $aria_ajax = isset($field['ajax-callback']) ? "aria-ajax='" . esc_attr(wp_json_encode($field['ajax-callback'])) . "'" : '';
+                    $panel_classes = array('wps-ar-tabcontent');
 
-                    $panels .= "<panel id='{$field['id']}' class='wps-ar-tabcontent' aria-hidden='true' $aria_ajax>" . self::generatePanelContent($field) . "</panel>";
+                    if (!empty($field['panel-flush'])) {
+                        $panel_classes[] = 'wps-ar-tabcontent-flush';
+                    }
+
+                    if (!empty($field['panel-class'])) {
+                        foreach (preg_split('/\s+/', (string)$field['panel-class']) as $panel_class) {
+                            $panel_class = sanitize_html_class($panel_class);
+                            if ($panel_class) {
+                                $panel_classes[] = $panel_class;
+                            }
+                        }
+                    }
+
+                    $panel_id = esc_attr((string)$field['id']);
+                    $panel_class_attr = esc_attr(implode(' ', array_unique($panel_classes)));
+
+                    $panels .= "<panel id='{$panel_id}' class='{$panel_class_attr}' aria-hidden='true' $aria_ajax>" . self::generatePanelContent($field) . "</panel>";
                 }
                 ?>
             </ul>
+            <?php echo $after_tablist; ?>
             <?php echo $panels; ?>
         </section>
         <?php
@@ -533,7 +741,16 @@ class Graphic
         $HTML = '';
 
         if (!empty($field['panel-title'])) {
-            $HTML .= "<h2>{$field['panel-title']}</h2>";
+            $panel_icon = !empty($field['panel-icon']) ? self::icon($field['panel-icon'], 'wps-panel-icon') : '';
+            $panel_description = !empty($field['panel-description']) ? "<p>{$field['panel-description']}</p>" : '';
+            $panel_status = $field['panel-status'] ?? '';
+
+            if ($panel_icon || $panel_description || $panel_status) {
+                $HTML .= "<div class='wps-panel-head'>{$panel_icon}<div class='wps-panel-title'><h2>{$field['panel-title']}</h2>{$panel_description}</div>{$panel_status}</div>";
+            }
+            else {
+                $HTML .= "<h2>{$field['panel-title']}</h2>";
+            }
         }
 
         if (isset($field['callback'])) {
