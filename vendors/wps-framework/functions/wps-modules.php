@@ -23,12 +23,60 @@ function wps_admin_enqueue_scripts(): void
 
 function wps_module_panel_url($module = '', $panel = ''): ?string
 {
-    return admin_url("admin.php?page=$module#$panel");
+    $context = wps_current_admin_context();
+    $route = $module ? "module-$module" : 'dashboard';
+    $fragment = $panel ? "#$panel" : '';
+
+    return admin_url('admin.php?' . http_build_query([
+            'page'     => wps_admin_menu_slug($context),
+            'wps-page' => $route,
+        ]) . $fragment);
 }
 
 function wps_module_setting_url($context, $panel = ''): ?string
 {
-    return admin_url("admin.php?page=$context-modules-settings#settings-$panel");
+    $route = $panel ? "module-setting-$panel" : 'setting-modules_handler';
+
+    return admin_url('admin.php?' . http_build_query([
+        'page'     => wps_admin_menu_slug($context),
+        'wps-page' => $route,
+    ]));
+}
+
+function wps_admin_route_url(string $context, string $route = 'dashboard', array $args = [], string $fragment = ''): string
+{
+    $query = array_merge([
+        'page'     => wps_admin_menu_slug($context),
+        'wps-page' => $route,
+    ], $args);
+
+    return admin_url('admin.php?' . http_build_query($query) . ($fragment ? "#$fragment" : ''));
+}
+
+function wps_admin_menu_slug(string $context): string
+{
+    $slugs = [
+        'wpopt' => 'wp-optimizer',
+        'wpfs'  => 'wp-flexyseo',
+        'wpmc'  => 'members-control',
+    ];
+
+    return $slugs[$context] ?? $context;
+}
+
+function wps_current_admin_context(): string
+{
+    $page = isset($_GET['page']) ? sanitize_key(wp_unslash($_GET['page'])) : '';
+
+    if ($page === 'wp-flexyseo' || str_starts_with($page, 'wpfs-')) {
+        return 'wpfs';
+    }
+
+    if ($page === 'members-control' || str_starts_with($page, 'wpmc-')) {
+        return 'wpmc';
+    }
+
+    return 'wpopt';
 }
 
 function wps_run_upgrade($context, $version, $path): void

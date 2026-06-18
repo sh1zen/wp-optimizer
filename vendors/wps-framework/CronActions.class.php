@@ -124,6 +124,7 @@ class CronActions
     {
         $cron_array_edited = false;
         $crons = _get_cron_array();
+        $original_crons = $crons;
 
         $key = $this->get_event_key();
         $event = $this->build_event();
@@ -156,7 +157,11 @@ class CronActions
         if ($matching_timestamp !== false) {
             $crons[$matching_timestamp][$this->hook][$key] = $event;
 
-            return $cron_array_edited ? (self::save_cron_array($crons) ? $matching_timestamp : false) : $matching_timestamp;
+            if (!$cron_array_edited or $crons == $original_crons) {
+                return $matching_timestamp;
+            }
+
+            return self::save_cron_array($crons) ? $matching_timestamp : false;
         }
 
         $crons[$this->timestamp][$this->hook][$key] = $event;
@@ -393,12 +398,16 @@ class CronActions
     public static function unschedule_event($hook): bool
     {
         $crons = _get_cron_array();
+        $cron_array_edited = false;
 
         foreach ($crons as $timestamp => $cron) {
-            unset($crons[$timestamp][$hook]);
+            if (isset($cron[$hook])) {
+                unset($crons[$timestamp][$hook]);
+                $cron_array_edited = true;
+            }
         }
 
-        return self::save_cron_array($crons);
+        return !$cron_array_edited or self::save_cron_array($crons);
     }
 
     public static function Initialize(): void

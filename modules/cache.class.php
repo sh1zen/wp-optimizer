@@ -114,6 +114,10 @@ class Mod_Cache extends Module
         if ($this->option('wp_db.active')) {
             DBCache::flush($just_expired ? WPOPT_CACHE_DB_LIFETIME : false);
         }
+
+        if (!$just_expired) {
+            $this->purge_cloudflare_cache();
+        }
     }
 
     public function actions(): void
@@ -146,6 +150,8 @@ class Mod_Cache extends Module
                 DBCache::flush();
 
                 ObjectCache::flush();
+
+                $this->purge_cloudflare_cache();
 
                 $response = true;
             }
@@ -264,6 +270,17 @@ class Mod_Cache extends Module
             || (bool)$this->option('static_pages.active');
     }
 
+    private function purge_cloudflare_cache(): bool
+    {
+        $cloudflare = wps('wpopt')->moduleHandler->get_module_instance('cloudflare');
+
+        if (!$cloudflare || !method_exists($cloudflare, 'purge_cache')) {
+            return false;
+        }
+
+        return (bool)$cloudflare->purge_cache();
+    }
+
     private function cache_flush_hooks(): void
     {
         if ($this->option('wp_query.active') or $this->option('wp_db.active') or $this->option('static_pages.active')) {
@@ -300,12 +317,12 @@ class Mod_Cache extends Module
         return $this->group_setting_fields(
             $this->group_setting_fields(
                 $this->setting_field(__('WP_Query Cache'), 'wp_query_cache', 'separator'),
-                $this->setting_field(__('Active', 'wpopt'), "wp_query.active", "checkbox"),
-                $this->setting_field(__('Lifespan', 'wpopt'), "wp_query.lifespan", "time", ['parent' => 'wp_query.active']),
+                $this->setting_field(__('Active', 'wpopt'), "wp_query.active", "checkbox", ['default' => true]),
+                $this->setting_field(__('Lifespan', 'wpopt'), "wp_query.lifespan", "time", ['default' => '01:00', 'parent' => 'wp_query.active']),
             ),
             $this->group_setting_fields(
                 $this->setting_field(__('Database Query Cache'), 'db_query_cache', 'separator'),
-                $this->setting_field(__('Active', 'wpopt'), "wp_db.active", "checkbox"),
+                $this->setting_field(__('Active', 'wpopt'), "wp_db.active", "checkbox", ['default' => true]),
             ),
             $this->group_setting_fields(
                 $this->setting_field(__('Object Cache'), 'object_cache', 'separator'),
@@ -489,4 +506,3 @@ class Mod_Cache extends Module
 }
 
 return __NAMESPACE__;
-

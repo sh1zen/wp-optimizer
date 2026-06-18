@@ -154,7 +154,7 @@ class Mod_WP_Security extends Module
             $this->setting_field(__('Some configuration are available only in apache.', 'wpopt'), false, "separator"),
 
             $this->group_setting_fields(
-                $this->setting_field(__('Requests and Server', 'wpopt'), "srv_security.active", "checkbox"),
+                $this->setting_field(__('Requests and Server', 'wpopt'), "srv_security.active", "checkbox", ['default_value' => true]),
                 $this->setting_field(__('Disable directory listing', 'wpopt'), "srv_security.listings", "checkbox", ['parent' => 'srv_security.active', 'default_value' => true]),
                 $this->setting_field(__('Disable access to configuration file (.htaccess)', 'wpopt'), "srv_security.protect_htaccess", "checkbox", ['parent' => 'srv_security.active', 'default_value' => true]),
                 $this->setting_field(__('Enable HTTPS Strict Transport Security', 'wpopt'), "srv_security.hsts", "checkbox", ['parent' => 'srv_security.active', 'default_value' => true]),

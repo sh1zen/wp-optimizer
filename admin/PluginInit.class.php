@@ -149,7 +149,11 @@ class PluginInit
      */
     public function plugin_activation($network_wide)
     {
+        $had_module_settings = $this->has_module_settings();
+
         wps('wpopt')->settings->activate();
+
+        $this->set_initial_module_defaults($had_module_settings);
 
         wps('wpopt')->cron->activate();
 
@@ -159,6 +163,42 @@ class PluginInit
         do_action('wpopt-activate');
 
         wps('wpopt')->settings->update('do_welcome', time(), true);
+    }
+
+    private function has_module_settings(): bool
+    {
+        $settings = wps('wpopt')->settings->get('', array());
+
+        return !empty($settings['modules_handler']) && is_array($settings['modules_handler']);
+    }
+
+    private function set_initial_module_defaults(bool $had_module_settings): void
+    {
+        if ($had_module_settings) {
+            return;
+        }
+
+        $inactive_by_default = array(
+            'activitylog',
+            'performance_monitor',
+            'wp_mail',
+            'wp_updates',
+            'widget',
+            'wp_info',
+        );
+
+        $module_defaults = array();
+        $modules = wps('wpopt')->moduleHandler->get_modules(array('excepts' => array('cloudflare', 'modules_handler', 'settings', 'tracking')), false);
+
+        foreach ($modules as $module) {
+            $slug = $module['slug'];
+            $module_defaults[$slug] = !in_array($slug, $inactive_by_default, true);
+        }
+
+        $settings = wps('wpopt')->settings->get('', array());
+        $settings['modules_handler'] = $module_defaults;
+
+        wps('wpopt')->settings->reset($settings);
     }
 
     /**
@@ -220,7 +260,7 @@ class PluginInit
     {
         $links[] = sprintf(
             '<a href="%s">%s</a>',
-            admin_url('admin.php?page=wpopt-modules-settings'),
+            wps_module_setting_url('wpopt'),
             __('Settings', 'wpopt')
         );
 

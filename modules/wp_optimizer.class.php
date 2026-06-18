@@ -80,6 +80,10 @@ class Mod_WP_Optimizer extends Module
 
     private function optimize(): void
     {
+        if (is_admin() && $this->option('heartbeat.admin_control', true)) {
+            add_filter('heartbeat_settings', array($this, 'control_admin_heartbeat'));
+        }
+
         if ($this->option('cron.enhance')) {
 
             if (!defined('WP_CRON_LOCK_TIMEOUT')) {
@@ -95,6 +99,13 @@ class Mod_WP_Optimizer extends Module
                 wps('wpopt')->options->update('last_cron_event', 'cron', time(), 'wp_optimizer');
             }
         }
+    }
+
+    public function control_admin_heartbeat(array $settings): array
+    {
+        $settings['interval'] = max(15, min(120, absint($this->option('heartbeat.admin_interval', 60))));
+
+        return $settings;
     }
 
     protected function print_header(): string
@@ -127,8 +138,10 @@ class Mod_WP_Optimizer extends Module
 
             $this->group_setting_fields(
                 $this->setting_field(__('General speedup', 'wpopt'), false, "separator"),
-                $this->setting_field(__('Improve WordPress Cron performances', 'wpopt'), "cron.enhance", "checkbox"),
+                $this->setting_field(__('Improve WordPress Cron performances', 'wpopt'), "cron.enhance", "checkbox", ['default_value' => true]),
                 $this->setting_field(__('Check Cron schedules every (seconds)', 'wpopt'), "cron.timenext", "numeric", ['parent' => 'cron.enhance', 'default_value' => 300]),
+                $this->setting_field(__('Control wp-admin Heartbeat', 'wpopt'), "heartbeat.admin_control", "checkbox", ['default_value' => true]),
+                $this->setting_field(__('wp-admin Heartbeat interval (seconds)', 'wpopt'), "heartbeat.admin_interval", "numeric", ['parent' => 'heartbeat.admin_control', 'default_value' => 60, 'props' => ['min' => 15, 'max' => 120]]),
             ),
 
             $this->setting_field(__('Server configuration (Up to now, apache only)', 'wpopt'), false, "separator"),
@@ -145,16 +158,16 @@ class Mod_WP_Optimizer extends Module
             ),
 
             $this->group_setting_fields(
-                $this->setting_field(__('Enable server ongoing scripts compression', 'wpopt'), "srv_compression.active", "checkbox"),
+                $this->setting_field(__('Enable server ongoing scripts compression', 'wpopt'), "srv_compression.active", "checkbox", ['default_value' => true]),
                 $this->setting_field(__('GZIP', 'wpopt'), "srv_compression.gzip", "checkbox", ['parent' => 'srv_compression.active']),
                 $this->setting_field(__('BROTLI', 'wpopt'), "srv_compression.brotli", "checkbox", ['parent' => 'srv_compression.active', 'default_value' => true]),
             ),
 
             $this->group_setting_fields(
-                $this->setting_field(__('Enable browser cache', 'wpopt'), "srv_browser_cache.active", "checkbox"),
-                $this->setting_field(__('Immutable', 'wpopt'), "srv_browser_cache.immutable", "checkbox", ['parent' => 'srv_browser_cache.active', 'default_value' => false]),
-                $this->setting_field(__('Stale if Error', 'wpopt'), "srv_browser_cache.stale_error", "checkbox", ['parent' => 'srv_browser_cache.active', 'default_value' => false]),
-                $this->setting_field(__('Stale while revalidate ', 'wpopt'), "srv_browser_cache.stale_revalidate", "checkbox", ['parent' => 'srv_browser_cache.active', 'default_value' => false]),
+                $this->setting_field(__('Enable browser cache', 'wpopt'), "srv_browser_cache.active", "checkbox", ['default_value' => true]),
+                $this->setting_field(__('Immutable', 'wpopt'), "srv_browser_cache.immutable", "checkbox", ['parent' => 'srv_browser_cache.active', 'default_value' => true]),
+                $this->setting_field(__('Stale if Error', 'wpopt'), "srv_browser_cache.stale_error", "checkbox", ['parent' => 'srv_browser_cache.active', 'default_value' => true]),
+                $this->setting_field(__('Stale while revalidate ', 'wpopt'), "srv_browser_cache.stale_revalidate", "checkbox", ['parent' => 'srv_browser_cache.active', 'default_value' => true]),
                 $this->setting_field(__('Default lifetime', 'wpopt'), "srv_browser_cache.lifetime_default", "numeric", ['parent' => 'srv_browser_cache.active', 'default_value' => YEAR_IN_SECONDS]),
                 $this->setting_field(__('CSS & JavaScripts lifetime', 'wpopt'), "srv_browser_cache.lifetime_text", "numeric", ['parent' => 'srv_browser_cache.active', 'default_value' => YEAR_IN_SECONDS]),
                 $this->setting_field(__('Images lifetime', 'wpopt'), "srv_browser_cache.lifetime_image", "numeric", ['parent' => 'srv_browser_cache.active', 'default_value' => YEAR_IN_SECONDS]),
@@ -169,6 +182,8 @@ class Mod_WP_Optimizer extends Module
         return [
             'cron.enhance'                       => __("Prevent WordPress from checking for cron-jobs at each request, instead does it in background every custom time.", 'wpopt'),
             'cron.timenext'                      => __("Interval in seconds used to trigger background cron checks when cron optimization is enabled.", 'wpopt'),
+            'heartbeat.admin_control'            => __("Reduce wp-admin Heartbeat traffic by forcing a custom interval for the WordPress Heartbeat API in admin pages.", 'wpopt'),
+            'heartbeat.admin_interval'           => __("Interval in seconds for wp-admin Heartbeat requests. WordPress supports values between 15 and 120 seconds.", 'wpopt'),
             'srv_enhancements.active'            => __("Enable server enhancement directives for Apache.", 'wpopt'),
             'srv_enhancements.remove_www'        => __("Redirect www URLs to non-www URLs to enforce a single canonical hostname.", 'wpopt'),
             'srv_enhancements.redirect_https'    => __("Force HTTP requests to redirect to HTTPS.", 'wpopt'),

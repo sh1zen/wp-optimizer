@@ -275,9 +275,13 @@
 
         ajaxHandler(options) {
             options = wps.parse_args({
-                mod: 'none', mod_action: 'none', mod_nonce: '', mod_args: '', mod_form: '',
+                mod: 'none', mod_context: '', mod_action: 'none', mod_nonce: '', mod_args: '', mod_form: '',
                 use_loading: false, callback: null
             }, options);
+
+            if (!options.mod_context) {
+                options.mod_context = wps.currentAdminContext();
+            }
 
             wps.semaphore.lock(options.mod_action);
             if (options.use_loading) options.use_loading.addClass("wps-loader");
@@ -285,7 +289,7 @@
             $.ajax({
                 url: ajaxurl, type: "GET", dataType: "json", global: false, cache: false,
                 data: {
-                    action: 'wps', mod: options.mod, mod_action: options.mod_action,
+                    action: 'wps', mod: options.mod, mod_context: options.mod_context, mod_action: options.mod_action,
                     mod_nonce: options.mod_nonce, mod_args: options.mod_args, mod_form: options.mod_form
                 },
                 complete(jqXHR) {
@@ -596,11 +600,21 @@
 // Document ready
 (function ($) {
     let $window, $body, media_uploader;
-    let wpoptAutosaveNonce = null;
+    let wpsAutosaveNonce = null;
 
     function wpoptStatusText(key, fallback) {
         return wps.locale.get(key, fallback);
     }
+
+    wps.currentAdminContext = function () {
+        const body = document.body;
+
+        if (body?.classList.contains("wpopt-admin-screen")) return "wpopt";
+        if (body?.classList.contains("wpfs-admin-screen")) return "wpfs";
+        if (body?.classList.contains("wpmc-admin-screen")) return "wpmc";
+
+        return "";
+    };
 
     function ensureWpoptToastHost() {
         let $host = $("#wpopt-toast-host");
@@ -637,10 +651,305 @@
         }, 1800);
     }
 
+    wps.showToast = showWpoptToast;
+
+    function saveFeedbackKey() {
+        const context = wps.currentAdminContext();
+        return context ? "wps-save-feedback:" + context : "";
+    }
+
+    function currentFeedbackRoute() {
+        const params = new URLSearchParams(window.location.search);
+
+        return [
+            params.get("page") || "",
+            params.get("wps-page") || "",
+            window.location.pathname
+        ].join("|");
+    }
+
+    function noticeState($notice) {
+        if ($notice.hasClass("notice-error") || $notice.hasClass("error") || $notice.find(".error").length) return "error";
+        if ($notice.hasClass("notice-warning") || $notice.hasClass("update-nag") || $notice.find(".warning").length) return "warning";
+        if ($notice.hasClass("notice-info")) return "info";
+
+        return "success";
+    }
+
+    function clearPendingSaveFeedback() {
+        const key = saveFeedbackKey();
+        if (!key) return;
+
+        try {
+            window.sessionStorage.removeItem(key);
+        } catch (e) {
+        }
+    }
+
+    function rememberPendingSaveFeedback(form) {
+        const key = saveFeedbackKey();
+        if (!key) return;
+
+        const $form = $(form);
+        const method = String($form.attr("method") || "get").toLowerCase();
+        const isSettingsForm = String($form.attr("action") || "").includes("options.php")
+            || $form.find("input[name='option_panel'], .wps-submit, input[type='submit'].button-primary, button[type='submit'].button-primary").length > 0;
+
+        if (method !== "post") return;
+        if (!isSettingsForm) return;
+        if (!$form.closest(".wps-admin-app, .wps-wrap, .wps-core-settings-page").length) return;
+
+        try {
+            window.sessionStorage.setItem(key, JSON.stringify({
+                route: currentFeedbackRoute(),
+                time: Date.now()
+            }));
+        } catch (e) {
+        }
+    }
+
+    function showPendingSaveFeedbackFallback() {
+        const key = saveFeedbackKey();
+        if (!key) return;
+
+        let pending = null;
+
+        try {
+            pending = JSON.parse(window.sessionStorage.getItem(key) || "null");
+            window.sessionStorage.removeItem(key);
+        } catch (e) {
+            return;
+        }
+
+        if (!pending || pending.route !== currentFeedbackRoute()) return;
+        if (Date.now() - Number(pending.time || 0) > 120000) return;
+
+        showWpoptToast("success", wpoptStatusText("saved", "Settings Saved"));
+    }
+
+    function showNoticeElementAsToast(element) {
+        const $notice = $(element);
+        const text = ($notice.find("p").first().text() || $notice.text()).trim();
+
+        if (!text) return false;
+        if ($notice.data("wps-toast-shown")) return false;
+
+        $notice.data("wps-toast-shown", true);
+        showWpoptToast(noticeState($notice), text);
+
+        if ($notice.is("#wps-ajax-message, #message")) {
+            $notice.empty();
+            $notice.removeData("wps-toast-shown");
+        } else {
+            $notice.remove();
+        }
+
+        return true;
+    }
+
+    function initServerNoticeToasts() {
+        if (!$body?.hasClass("wps-admin-screen")) return false;
+
+        let shown = false;
+        const $notices = $("#wpbody-content > .notice, #wpbody-content > .updated, #wpbody-content > .error, #wpbody-content > .settings-error")
+            .not(".inline, .hidden");
+
+        $notices.each(function () {
+            shown = showNoticeElementAsToast(this) || shown;
+        });
+
+        const params = new URLSearchParams(window.location.search);
+
+        if (params.get("settings-updated") === "true" && !shown) {
+            showWpoptToast("success", wpoptStatusText("saved", "Settings Saved"));
+            shown = true;
+        }
+
+        if (shown) {
+            clearPendingSaveFeedback();
+        }
+
+        return shown;
+    }
+
+    function initDynamicNoticeToasts() {
+        if (!$body?.hasClass("wps-admin-screen") || !window.MutationObserver) return;
+
+        const target = document.getElementById("wpbody-content");
+        if (!target) return;
+
+        const noticeSelector = ".notice, .updated, .error, .settings-error, #wps-ajax-message.wps-notice, #message.wps-notice";
+        const observer = new MutationObserver(function (mutations) {
+            mutations.forEach(function (mutation) {
+                $(mutation.addedNodes).each(function () {
+                    if (this.nodeType !== 1) return;
+
+                    const $node = $(this);
+                    if ($node.is(noticeSelector)) {
+                        showNoticeElementAsToast(this);
+                    }
+
+                    $node.find(noticeSelector).each(function () {
+                        showNoticeElementAsToast(this);
+                    });
+                });
+
+                if (mutation.type === "characterData" && mutation.target.parentElement) {
+                    const notice = mutation.target.parentElement.closest(noticeSelector);
+                    if (notice) {
+                        showNoticeElementAsToast(notice);
+                    }
+                }
+            });
+        });
+
+        observer.observe(target, {
+            childList: true,
+            subtree: true,
+            characterData: true
+        });
+    }
+
+    function wpoptCurrentRoute() {
+        return new URLSearchParams(window.location.search).get("wps-page") || "dashboard";
+    }
+
+    function wpoptIconHref(icon) {
+        const href = $(".wps-app-wpopt .wps-app-nav-icon use, .wps-app-wpopt .wps-app-logo-icon use")
+            .first()
+            .attr("href") || "";
+
+        if (!href) return "";
+
+        return href.replace(/#wps-icon-[^#]+$/, "#wps-icon-" + String(icon || "tools"));
+    }
+
+    function wpoptBuildNavIcon(icon) {
+        const href = wpoptIconHref(icon);
+        const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+        svg.setAttribute("class", "wps-svg-icon wps-app-nav-icon");
+        svg.setAttribute("aria-hidden", "true");
+        svg.setAttribute("focusable", "false");
+
+        if (href) {
+            const use = document.createElementNS("http://www.w3.org/2000/svg", "use");
+            use.setAttribute("href", href);
+            svg.appendChild(use);
+        }
+
+        return svg;
+    }
+
+    function wpoptBuildNavSection(section) {
+        const fragment = document.createDocumentFragment();
+        const label = document.createElement("span");
+        const activeRoute = wpoptCurrentRoute();
+
+        label.className = "wps-app-nav-section";
+        label.dataset.wpoptNavKind = section.kind || "";
+        label.textContent = section.label || "";
+        fragment.appendChild(label);
+
+        (section.items || []).forEach(function (item) {
+            const link = document.createElement("a");
+            const text = document.createElement("span");
+
+            link.className = "wps-app-nav-item";
+            link.href = item.url || "#";
+            link.dataset.wpoptNavKind = section.kind || "";
+            link.dataset.wpoptNavId = item.id || "";
+
+            if (item.id === activeRoute) {
+                link.classList.add("is-active");
+            }
+
+            text.textContent = item.label || item.id || "";
+            link.appendChild(wpoptBuildNavIcon(item.icon));
+            link.appendChild(text);
+            fragment.appendChild(link);
+        });
+
+        return fragment;
+    }
+
+    function wpoptNavItemRoute(element) {
+        try {
+            return new URL($(element).attr("href") || "", window.location.href).searchParams.get("wps-page") || "";
+        } catch (e) {
+            return "";
+        }
+    }
+
+    function wpoptNavSectionKind(elements) {
+        let kind = "";
+
+        elements.each(function () {
+            if (!$(this).hasClass("wps-app-nav-item")) return;
+
+            const route = wpoptNavItemRoute(this);
+            if (route.indexOf("module-setting-") === 0) {
+                kind = "settings";
+                return false;
+            }
+
+            if (route.indexOf("module-") === 0) {
+                kind = "tools";
+                return false;
+            }
+        });
+
+        return kind;
+    }
+
+    function wpoptCollectNavSections($nav) {
+        const sections = [];
+        let current = null;
+
+        $nav.children().each(function () {
+            const $node = $(this);
+
+            if ($node.hasClass("wps-app-nav-section")) {
+                current = $();
+                sections.push(current);
+            }
+
+            if (current) {
+                current = current.add(this);
+                sections[sections.length - 1] = current;
+            }
+        });
+
+        return sections;
+    }
+
+    function wpoptRefreshDynamicNav(navUpdate) {
+        if (!navUpdate || !Array.isArray(navUpdate.sections)) return;
+
+        const $nav = $(".wps-app-wpopt .wps-app-nav").first();
+        if (!$nav.length) return;
+
+        wpoptCollectNavSections($nav).forEach(function ($section) {
+            const kind = wpoptNavSectionKind($section);
+
+            if (kind === "settings" || kind === "tools") {
+                $section.remove();
+            }
+        });
+
+        const fragment = document.createDocumentFragment();
+        navUpdate.sections.forEach(function (section) {
+            if (section && Array.isArray(section.items) && section.items.length) {
+                fragment.appendChild(wpoptBuildNavSection(section));
+            }
+        });
+
+        $nav.append(fragment);
+    }
+
     function initWpoptAutosaveForm(form) {
         const $form = $(form);
 
-        if (!wpoptAutosaveNonce) return;
+        if (!wpsAutosaveNonce) return;
         if ($form.data("wpopt-autosave-init")) return;
         if ($form.closest(".wpfs-core-settings-page, .wpfs-breadcrumbs-page, .wpfs-settings-page").length) return;
 
@@ -650,6 +959,7 @@
         let timer = null;
         let inFlight = false;
         let queued = false;
+        const isModulesHandlerForm = $form.find("input[name='option_panel'][value='settings-modules_handler']").length > 0;
 
         const $submit = $form.find(".wps-submit");
         $submit.find("input[type='submit'], button[type='submit'], .button-primary").remove();
@@ -671,13 +981,16 @@
             wps.ajaxHandler({
                 mod: "settings",
                 mod_action: "autosave_settings",
-                mod_nonce: wpoptAutosaveNonce,
+                mod_nonce: wpsAutosaveNonce,
                 mod_form: snapshot,
                 callback(data, state) {
                     inFlight = false;
 
                     if (state === "success") {
                         lastSaved = snapshot;
+                        if (data?.module === "modules_handler") {
+                            wpoptRefreshDynamicNav(data.nav_update);
+                        }
                         showWpoptToast("success", data?.text || wpoptStatusText("autosaved", "All changes saved"));
                     } else {
                         showWpoptToast("error", data?.text || wpoptStatusText("autosave_failed", "Autosave failed"));
@@ -696,7 +1009,17 @@
             timer = setTimeout(doSave, 700);
         };
 
-        $form.on("change input", ":input:not([type='submit']):not([type='button']):not([type='hidden'])", debounceSave);
+        const scheduleSave = function (event) {
+            if (isModulesHandlerForm && event.type === "change") {
+                clearTimeout(timer);
+                doSave();
+                return;
+            }
+
+            debounceSave();
+        };
+
+        $form.on("change input", ":input:not([type='submit']):not([type='button']):not([type='hidden'])", scheduleSave);
         $form.on("submit", function (e) {
             e.preventDefault();
             doSave();
@@ -743,10 +1066,72 @@
         });
     }
 
+    function padTimePart(value) {
+        return String(value).padStart(2, '0');
+    }
+
+    function normalizeTimeValue(value) {
+        const parts = String(value || '').split(':');
+        const hours = Number.parseInt(parts[0], 10);
+        const minutes = Number.parseInt(parts[1], 10);
+
+        return {
+            hours: Number.isFinite(hours) ? hours : 0,
+            minutes: Number.isFinite(minutes) ? minutes : 0,
+        };
+    }
+
+    function stepTimeInput(input, direction) {
+        if (!input || input.disabled || input.readOnly) return;
+
+        const step = Math.max(Number.parseInt(input.getAttribute('step') || '900', 10), 900);
+        const deltaMinutes = Math.max(Math.round(step / 60), 1) * direction;
+        const current = normalizeTimeValue(input.value);
+        const dayMinutes = 24 * 60;
+        let nextMinutes = (current.hours * 60) + current.minutes + deltaMinutes;
+
+        nextMinutes = ((nextMinutes % dayMinutes) + dayMinutes) % dayMinutes;
+        input.value = `${padTimePart(Math.floor(nextMinutes / 60))}:${padTimePart(nextMinutes % 60)}`;
+        $(input).trigger('input').trigger('change');
+    }
+
+    function decimalPlaces(value) {
+        const text = String(value);
+
+        if (text.includes('e-')) {
+            return Number.parseInt(text.split('e-')[1], 10) || 0;
+        }
+
+        return text.includes('.') ? text.split('.')[1].length : 0;
+    }
+
+    function stepNumberInput(input, direction) {
+        if (!input || input.disabled || input.readOnly) return;
+
+        const step = Number.parseFloat(input.getAttribute('step') || '1') || 1;
+        const min = Number.parseFloat(input.getAttribute('min'));
+        const max = Number.parseFloat(input.getAttribute('max'));
+        const current = Number.parseFloat(input.value);
+        const precision = decimalPlaces(step);
+        let next = (Number.isFinite(current) ? current : 0) + (step * direction);
+
+        if (Number.isFinite(min)) next = Math.max(min, next);
+        if (Number.isFinite(max)) next = Math.min(max, next);
+
+        input.value = precision > 0 ? next.toFixed(precision) : String(Math.round(next));
+        $(input).trigger('input').trigger('change');
+    }
+
     $(function () {
         $window = $(window);
         $body = $('body');
-        wpoptAutosaveNonce = wps.locale.get("wpopt_ajax_nonce", "");
+        const adminContext = wps.currentAdminContext();
+        wpsAutosaveNonce = adminContext ? wps.locale.get(adminContext + "_ajax_nonce", "") : "";
+        const hadServerNoticeToast = initServerNoticeToasts();
+        if (!hadServerNoticeToast) {
+            showPendingSaveFeedbackFallback();
+        }
+        initDynamicNoticeToasts();
 
         // Event delegation
         $body.on('click', '.wps-uploader__init', function (e) {
@@ -827,8 +1212,21 @@
                     }
                 });
             })
+            .on('submit', '.wps-admin-app form, .wps-wrap form, .wps-core-settings-page form', function () {
+                rememberPendingSaveFeedback(this);
+            })
             .on('click change', '.wps-apple-switch', function () {
                 handleDependent($(this), this.checked);
+            })
+            .on('click', '.wps-time-stepper-btn', function (e) {
+                e.preventDefault();
+                const direction = Number.parseInt(this.getAttribute('data-wps-time-step') || '0', 10);
+                stepTimeInput($(this).siblings('input[type="time"]').get(0), direction);
+            })
+            .on('click', '.wps-number-stepper-btn', function (e) {
+                e.preventDefault();
+                const direction = Number.parseInt(this.getAttribute('data-wps-number-step') || '0', 10);
+                stepNumberInput($(this).siblings('input[type="number"]').get(0), direction);
             });
 
         // Circle charts
@@ -842,38 +1240,71 @@
             ));
         });
 
+        $('.wps-admin-app').each(function (appIndex) {
+            const $app = $(this);
+            const $tabsbar = $app.find('> .wps-app-main > .wps-app-tabsbar').first();
+            if (!$tabsbar.length) return;
+
+            const $tabs = $app.find('> .wps-app-main > .wps-app-content .wps-ar-tabs').filter(function () {
+                return $(this).closest('.wps-ar-tabcontent').length === 0;
+            }).first();
+
+            if (!$tabs.length) return;
+
+            const $tabList = $tabs.children('.wps-ar-tablist').first();
+            if (!$tabList.length || $tabList.closest('.wps-app-tabsbar').length) return;
+
+            const tabsId = $tabs.attr('data-wps-tabs-id') || `wps-tabs-${appIndex}`;
+            $tabs.attr('data-wps-tabs-id', tabsId).addClass('wps-ar-tabs-has-external-list');
+            $tabList.attr('data-wps-tabs-owner', tabsId);
+            $tabsbar.empty().append($tabList).removeAttr('hidden');
+        });
+
         // Tabs
         $('.wps-ar-tabs').each(function () {
             const $tab = $(this);
-            const $tabLinks = $tab.find('li[aria-controls]');
+            const tabsId = $tab.attr('data-wps-tabs-id');
+            const $externalTabList = tabsId
+                ? $tab.closest('.wps-admin-app').find('.wps-app-tabsbar .wps-ar-tablist').filter(function () {
+                    return $(this).attr('data-wps-tabs-owner') === tabsId;
+                }).first()
+                : $();
+            const $tabList = $externalTabList.length ? $externalTabList : $tab.children('.wps-ar-tablist').first();
+            const $tabLinks = $tabList.find('li[aria-controls]');
             const $tabContents = $tab.find('.wps-ar-tabcontent');
             const hash = window.location.hash.substring(1);
             let hasSelected = false;
 
             $tabContents.each(function () {
                 const $this = $(this), id = $this.attr('id');
-                if (hash === id && $this.attr('aria-disabled') !== 'true') {
+                const $link = $tabLinks.filter(`[aria-controls="${id}"]`).first();
+                if (hash === id && $this.attr('aria-disabled') !== 'true' && $link.attr('aria-disabled') !== 'true') {
                     hasSelected = true;
-                    $tabLinks.filter(`[aria-controls="${id}"]`).attr('aria-selected', 'true');
+                    $link.attr('aria-selected', 'true');
                     $this.attr({'aria-hidden': 'false', 'aria-selected': 'true'});
                 } else {
-                    $this.attr('aria-hidden', 'true');
+                    $this.attr({'aria-hidden': 'true', 'aria-selected': 'false'});
                 }
             });
 
             if (!hasSelected) {
-                const $first = $tab.find('li[aria-controls]:not([aria-disabled="true"]):first');
-                $first.attr('aria-selected', 'true');
-                $tabContents.filter('#' + $first.attr('aria-controls')).attr('aria-hidden', 'false');
+                const $first = $tabLinks.filter(':not([aria-disabled="true"])').first();
+                const firstTarget = $first.attr('aria-controls');
+                if (firstTarget) {
+                    $tabLinks.attr('aria-selected', 'false');
+                    $tabContents.attr({'aria-hidden': 'true', 'aria-selected': 'false'});
+                    $first.attr('aria-selected', 'true');
+                    $tabContents.filter('#' + firstTarget).attr({'aria-hidden': 'false', 'aria-selected': 'true'});
+                }
             }
 
-            $tab.find('ul').on('click', 'li[aria-controls]:not([aria-disabled="true"])', function (e) {
+            $tabList.on('click', 'li[aria-controls]:not([aria-disabled="true"])', function (e) {
                 e.preventDefault();
                 const $this = $(this), targetId = $this.attr('aria-controls');
                 $tabLinks.attr('aria-selected', 'false');
-                $tabContents.attr('aria-hidden', 'true');
+                $tabContents.attr({'aria-hidden': 'true', 'aria-selected': 'false'});
                 $this.attr('aria-selected', 'true');
-                $('#' + targetId).attr('aria-hidden', 'false');
+                $('#' + targetId).attr({'aria-hidden': 'false', 'aria-selected': 'true'});
                 history.pushState(null, null, location.pathname + location.search + '#' + targetId);
                 animateTabPanel(targetId);
             });
@@ -883,7 +1314,7 @@
             animateTabPanel(window.location.hash.substring(1));
         }
 
-        $(".wps-ar-tabcontent form[action='options.php']").each(function () {
+        $(".wps-core-settings-page form[action='options.php'], .wps-ar-tabcontent form[action='options.php'], #wps-options[action='options.php']").each(function () {
             initWpoptAutosaveForm(this);
         });
 

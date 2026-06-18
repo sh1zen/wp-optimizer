@@ -324,10 +324,17 @@ class DBSupport
             case 'auto_drafts':
             case 'deleted_posts':
 
-                if ($name == "revisions")
-                    $query = $wpdb->get_col($wpdb->prepare("SELECT ID FROM $wpdb->posts WHERE post_type = 'revision'"));
-                else
-                    $query = $wpdb->get_col($wpdb->prepare("SELECT ID FROM $wpdb->posts WHERE post_status = '{$name}'"));
+                if ($name == "revisions") {
+                    $query = $wpdb->get_col($wpdb->prepare("SELECT ID FROM $wpdb->posts WHERE post_type = %s", 'revision'));
+                }
+                else {
+                    $post_status = [
+                            'auto_drafts'   => 'auto-draft',
+                            'deleted_posts' => 'trash',
+                    ][$name];
+
+                    $query = $wpdb->get_col($wpdb->prepare("SELECT ID FROM $wpdb->posts WHERE post_status = %s", $post_status));
+                }
 
                 if ($query) {
                     foreach ($query as $id) {
@@ -340,12 +347,15 @@ class DBSupport
             case 'spam_comments':
             case 'deleted_comments':
 
-                if ($name == 'unapproved_comments')
-                    $query = $wpdb->get_col($wpdb->prepare("SELECT comment_ID FROM $wpdb->comments WHERE comment_approved = '0'"));
-                elseif ($name == 'deleted_comments')
-                    $query = $wpdb->get_col($wpdb->prepare("SELECT comment_ID FROM $wpdb->comments WHERE (comment_approved = 'trash' OR comment_approved = 'post-trashed')"));
-                else
-                    $query = $wpdb->get_col($wpdb->prepare("SELECT comment_ID FROM $wpdb->comments WHERE comment_approved = 'spam'"));
+                if ($name == 'unapproved_comments') {
+                    $query = $wpdb->get_col($wpdb->prepare("SELECT comment_ID FROM $wpdb->comments WHERE comment_approved = %s", '0'));
+                }
+                elseif ($name == 'deleted_comments') {
+                    $query = $wpdb->get_col($wpdb->prepare("SELECT comment_ID FROM $wpdb->comments WHERE (comment_approved = %s OR comment_approved = %s)", 'trash', 'post-trashed'));
+                }
+                else {
+                    $query = $wpdb->get_col($wpdb->prepare("SELECT comment_ID FROM $wpdb->comments WHERE comment_approved = %s", 'spam'));
+                }
 
 
                 if ($query) {

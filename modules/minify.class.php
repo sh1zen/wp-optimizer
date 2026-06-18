@@ -211,10 +211,10 @@ class Mod_Minify extends Module
     {
         return $this->group_setting_fields(
                 $this->group_setting_fields(
-                        $this->setting_field(__('Minify HTML', 'wpopt'), "html.active", "checkbox"),
+                        $this->setting_field(__('Minify HTML', 'wpopt'), "html.active", "checkbox", ['default_value' => true]),
                         $this->setting_field(__('Remove Comments', 'wpopt'), "html.remove_comments", "checkbox", ['parent' => 'html.active']),
-                        $this->setting_field(__('Minify inline css', 'wpopt'), "html.minify_css", "checkbox", ['parent' => 'html.active']),
-                        $this->setting_field(__('Minify inline js', 'wpopt'), "html.minify_js", "checkbox", ['parent' => 'html.active']),
+                        $this->setting_field(__('Minify inline css', 'wpopt'), "html.minify_css", "checkbox", ['parent' => 'html.active', 'default_value' => true]),
+                        $this->setting_field(__('Minify inline js', 'wpopt'), "html.minify_js", "checkbox", ['parent' => 'html.active', 'default_value' => false]),
                 ),
                 $this->group_setting_fields(
                         $this->setting_field(__('Minify JavaScript', 'wpopt'), "js.active", "checkbox"),
@@ -231,15 +231,16 @@ class Mod_Minify extends Module
     {
         ob_start();
         ?>
-        <h3 class="wps">
-            <block class="wps wps-block">
-                <h2><?php _e('Beta version.', 'wpopt'); ?></h2>
-                <p class="wps">
-                    <?php echo __('This module is under developing.'); ?><br>
-                    <?php echo __('Should work fine, but to be safe activate this feature only if you know what to do in case of bugs. ', 'wpopt'); ?>
-                </p>
-            </block>
-        </h3>
+        <div class="wpopt-warning-notice wpopt-module-warning" role="note">
+            <span class="wpopt-warning-notice-icon dashicons dashicons-warning" aria-hidden="true"></span>
+            <span class="wpopt-warning-notice-copy">
+                <strong><?php esc_html_e('Beta version.', 'wpopt'); ?></strong>
+                <span>
+                    <?php esc_html_e('This module is under developing.', 'wpopt'); ?><br>
+                    <?php esc_html_e('Should work fine, but to be safe activate this feature only if you know what to do in case of bugs. ', 'wpopt'); ?>
+                </span>
+            </span>
+        </div>
         <?php
         return ob_get_clean();
     }

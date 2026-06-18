@@ -199,36 +199,4 @@ class Media_Table extends \WP_List_Table
         );
     }
 
-    /**
-     * Generates and displays row action links.
-     *
-     * @param $item
-     * @param string $column_name Current column name.
-     * @param string $primary Primary column name.
-     * @return string Row actions output for media attachments, or an empty string
-     *                if the current column is not the primary column.
-     */
-    protected function handle_row_actions($item, $column_name, $primary)
-    {
-        if ($primary !== $column_name) {
-            return '';
-        }
-
-        return $this->row_actions($this->_get_row_actions($item));
-    }
-
-    /**
-     * @param $item
-     * @return array
-     */
-    private function _get_row_actions($item)
-    {
-        return [
-            'view' => sprintf(
-                '<a href="%s" target="_blank">%s</a>',
-                UtilEnv::path_to_url($item['obj_id'], true),
-                __('View')
-            )
-        ];
-    }
 }

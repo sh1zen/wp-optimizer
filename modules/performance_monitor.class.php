@@ -798,7 +798,7 @@ class Mod_Performance_Monitor extends Module
         return $this->runtime_option_cache['slow_query_caller_max_length'];
     }
 
-    protected function render_sub_modules(): void
+    protected function render_sub_modules(bool $standalone = true): void
     {
         $panels = array();
 
@@ -845,7 +845,6 @@ class Mod_Performance_Monitor extends Module
         ?>
         <section class="wps-wrap wpopt-performance-monitor-page">
             <block class="wps">
-                <section class="wps-header"><h1><?php _e('Performance Monitor', 'wpopt'); ?></h1></section>
                 <?php
                 if (empty($panels)) {
                     ?>

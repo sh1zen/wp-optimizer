@@ -214,6 +214,26 @@ class Mod_WP_Customizer extends Module
         if ($this->option('disable.feed-links')) {
             remove_action('wp_head', 'feed_links', 2);
             remove_action('wp_head', 'feed_links_extra', 3);
+
+            add_action('template_redirect', function () {
+                if (!is_feed()) {
+                    return;
+                }
+
+                global $wp_query;
+
+                $wp_query->set_404();
+                status_header(404);
+                nocache_headers();
+
+                $template = get_404_template();
+
+                if ($template) {
+                    include $template;
+                }
+
+                exit;
+            }, 1);
         }
 
         // disable xml rpc
@@ -221,7 +241,34 @@ class Mod_WP_Customizer extends Module
 
             // Disable use XML-RPC
             add_filter('xmlrpc_enabled', '__return_false');
+
+            add_action('init', function () {
+                if (!defined('XMLRPC_REQUEST') or !XMLRPC_REQUEST) {
+                    return;
+                }
+
+                status_header(403);
+                nocache_headers();
+                exit;
+            }, 0);
+
+            add_filter('wp_headers', function ($headers) {
+                unset($headers['X-Pingback']);
+
+                return $headers;
+            }, 100);
+
             remove_action('wp_head', 'rsd_link');
+            remove_action('wp_head', 'wlwmanifest_link');
+        }
+
+        if ($this->option('disable.dashicons')) {
+            add_action('wp_enqueue_scripts', function () {
+                if (!is_user_logged_in()) {
+                    wp_dequeue_style('dashicons');
+                    wp_deregister_style('dashicons');
+                }
+            }, 100);
         }
 
         if ($this->option('admin-bar.hide')) {
@@ -387,7 +434,7 @@ class Mod_WP_Customizer extends Module
                 $this->setting_field(__('Hide Admin Bar for non admins', 'wpopt'), "admin-bar.hide-non-admin", "checkbox", ['default_value' => true]),
                 $this->setting_field(__('Prevent access to admin dashboard for non admins', 'wpopt'), "admin-panel.block-non-admin", "checkbox"),
                 $this->setting_field(__('Redirect to', 'wpopt'), "non-admin-redirect_to", "text", ['parent' => 'admin-panel.block-non-admin', 'default_value' => '/']),
-                $this->setting_field(__('Remove WP logo', 'wpopt'), "admin-bar-items.wp-logo", "checkbox"),
+                $this->setting_field(__('Remove WP logo', 'wpopt'), "admin-bar-items.wp-logo", "checkbox", ['default_value' => true]),
                 $this->setting_field(__('Remove updates shortcut', 'wpopt'), "admin-bar-items.updates", "checkbox", ['default_value' => true]),
             ),
             $this->group_setting_fields(
@@ -403,6 +450,7 @@ class Mod_WP_Customizer extends Module
                 $this->setting_field(__('Disable Global-Style', 'wpopt'), "global-style-disable", "checkbox"),
                 $this->setting_field(__('Disable theme widgets', 'wpopt'), "widgets-disable", "checkbox"),
                 $this->setting_field(__('Disable custom css', 'wpopt'), "disable.custom_css_cb", "checkbox"),
+                $this->setting_field(__('Disable Dashicons on front-end', 'wpopt'), "disable.dashicons", "checkbox"),
             ),
             $this->group_setting_fields(
                 $this->setting_field(__('Comments', 'wpopt'), false, 'separator'),
@@ -452,15 +500,16 @@ class Mod_WP_Customizer extends Module
             'admin-hide-comments'  => __('Hide comments shortcuts and related dashboard items in admin.', 'wpopt'),
             'disable.dns-prefetch'  => __("WordPress DNS prefetch, preloads domain name system (DNS) information for external resources, reducing the time it takes to connect to them. If no external resources is used it's possible to disable it.", 'wpopt'),
             'disable.shortlink'     => __("WordPress short-link generator creates shortened URLs for posts, pages or custom post types. In most cases not necessary.", 'wpopt'),
-            'disable.feed-links'   => __('Remove RSS and feed discovery links from page head output.', 'wpopt'),
+            'disable.feed-links'   => __('Remove RSS and feed discovery links from page head output and return 404 for feed requests.', 'wpopt'),
             'disable.oembed_and_rest' => __('Disable public REST API access and oEmbed discovery/output hooks.', 'wpopt'),
             'disable.post_relational_links' => __('Remove adjacent, parent and index relational link tags from page head.', 'wpopt'),
-            'disable.xmlrpc'       => __('Disable XML-RPC endpoint usage and related discovery tags.', 'wpopt'),
+            'disable.xmlrpc'       => __('Disable XML-RPC endpoint usage and remove related RSD/WLW discovery tags.', 'wpopt'),
             'core-sitemap'         => __('Disable the native WordPress XML sitemap feature.', 'wpopt'),
             'ping'                 => __('Disable outgoing pingbacks/trackbacks handling.', 'wpopt'),
             'selfping'             => __('Prevent self-pingbacks for internal links on the same site.', 'wpopt'),
             'emoji'                => __('Disable WordPress emoji scripts, styles and related filters.', 'wpopt'),
             'disable.custom_css_cb' => __("WordPress Custom CSS is a feature that allows users to add their own custom styles to a WordPress website, without modifying the theme files.", 'wpopt'),
+            'disable.dashicons'     => __('Stop loading Dashicons on the front-end for logged-out visitors.', 'wpopt'),
             'jquery-migrate'        => __("WordPress jQuery Migrate is a plugin that restores deprecated jQuery features removed in newer versions, ensuring compatibility with older themes and plugins.", 'wpopt')
         ];
     }

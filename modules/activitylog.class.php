@@ -72,7 +72,7 @@ class Mod_ActivityLog extends Module
         });
     }
 
-    public function render_sub_modules(): void
+    public function render_sub_modules(bool $standalone = true): void
     {
         $daily_series = $this->get_activity_daily_series(30);
         $summary = $this->get_activity_summary();
@@ -85,7 +85,6 @@ class Mod_ActivityLog extends Module
         ?>
         <section class="wps-wrap wpopt-activity-log-page">
             <block class="wps">
-                <section class="wps-header"><h1>Activity Log</h1></section>
                 <?php echo $this->render_activity_charts($daily_series, $summary); ?>
                 <section class='wps'>
                     <form method="GET" class="wps-list-table-form" autocapitalize="off" autocomplete="off">

@@ -11,7 +11,6 @@ use WPS\core\Ajax;
 use WPS\core\RequestActions;
 use WPS\core\addon\Exporter;
 use WPS\core\Graphic;
-use WPS\core\Rewriter;
 use WPS\modules\Module;
 
 class Mod_Settings extends Module
@@ -49,7 +48,8 @@ class Mod_Settings extends Module
 
                 case 'reset_options':
                     $response = wps('wpopt')->settings->reset();
-                    Rewriter::reload();
+                    $response &= wps('wpopt')->moduleHandler->upgrade();
+                    $this->redirect_after_action($response);
                     break;
 
                 case 'restore_options':
@@ -95,6 +95,20 @@ class Mod_Settings extends Module
         });
     }
 
+    private function redirect_after_action(bool $response): void
+    {
+        wp_safe_redirect(
+            add_query_arg(
+                array(
+                    'wps-status' => $response ? 'success' : 'warning',
+                    'wps-notice' => $response ? __('Action was correctly executed', $this->context) : __('Action execution failed', $this->context),
+                ),
+                admin_url('admin.php?page=wpopt-settings')
+            ) . '#settings-settings'
+        );
+        exit;
+    }
+
     public function ajax_handler($args = array()): void
     {
         if (($args['action'] ?? '') !== 'autosave_settings') {
@@ -106,14 +120,23 @@ class Mod_Settings extends Module
 
         $context = wps('wpopt')->settings->get_context();
         $payload = $form_data[$context] ?? [];
+        $module_slug = is_array($payload) ? sanitize_key($payload['change'] ?? '') : '';
 
-        if (empty($payload['change'])) {
+        if (!$module_slug && !empty($form_data['option_panel'])) {
+            $module_slug = sanitize_key(preg_replace('#^settings-#', '', (string)$form_data['option_panel']));
+        }
+
+        if (!$module_slug && is_array($payload) && $this->looks_like_modules_handler_payload($payload)) {
+            $module_slug = 'modules_handler';
+        }
+
+        if (!$module_slug || !is_array($payload)) {
             Ajax::response([
                 'text' => __('Cannot detect which module must be saved.', 'wpopt'),
             ], 'error');
         }
 
-        $module = wps('wpopt')->moduleHandler->get_module_instance($payload['change']);
+        $module = wps('wpopt')->moduleHandler->get_module_instance($module_slug);
 
         if (is_null($module)) {
             Ajax::response([
@@ -134,10 +157,97 @@ class Mod_Settings extends Module
             ], 'error');
         }
 
-        Ajax::response([
+        $response = [
             'text'   => __('Settings autosaved.', 'wpopt'),
             'module' => $module->slug,
-        ], 'success');
+        ];
+
+        if ($module->slug === 'modules_handler') {
+            $response['nav_update'] = $this->build_nav_update($valid);
+        }
+
+        Ajax::response($response, 'success');
+    }
+
+    private function looks_like_modules_handler_payload(array $payload): bool
+    {
+        foreach (wps('wpopt')->moduleHandler->get_modules('all', false) as $module) {
+            if (array_key_exists($module['slug'], $payload)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private function build_nav_update(array $module_settings): array
+    {
+        return array(
+            'sections' => array(
+                array(
+                    'kind'  => 'settings',
+                    'label' => __('Settings', 'wpopt'),
+                    'items' => $this->build_nav_items('settings', 'module-setting-', $module_settings),
+                ),
+                array(
+                    'kind'  => 'tools',
+                    'label' => __('Tools', 'wpopt'),
+                    'items' => $this->build_nav_items('admin-page', 'module-', $module_settings),
+                ),
+            ),
+        );
+    }
+
+    private function build_nav_items(string $scope, string $route_prefix, array $module_settings): array
+    {
+        $items = array();
+
+        foreach (wps('wpopt')->moduleHandler->get_modules(array('scopes' => $scope), false) as $module) {
+            $slug = sanitize_key((string)($module['slug'] ?? ''));
+
+            if (!$slug || !$this->module_is_enabled_for_nav($slug, $module_settings)) {
+                continue;
+            }
+
+            $items[] = array(
+                'id'    => $route_prefix . $slug,
+                'label' => (string)($module['name'] ?? $slug),
+                'icon'  => $this->get_nav_icon($slug),
+                'url'   => wps_admin_route_url('wpopt', $route_prefix . $slug),
+            );
+        }
+
+        return $items;
+    }
+
+    private function module_is_enabled_for_nav(string $slug, array $module_settings): bool
+    {
+        if (!array_key_exists($slug, $module_settings)) {
+            return true;
+        }
+
+        return (bool)$module_settings[$slug];
+    }
+
+    private function get_nav_icon(string $slug): string
+    {
+        $icons = array(
+            'activitylog'         => 'list',
+            'cache'               => 'server',
+            'database'            => 'database',
+            'media'               => 'image',
+            'minify'              => 'tools',
+            'performance_monitor' => 'chart',
+            'widget'              => 'box',
+            'wp_customizer'       => 'sliders',
+            'wp_info'             => 'info',
+            'wp_mail'             => 'mail',
+            'wp_optimizer'        => 'gauge',
+            'wp_security'         => 'shield',
+            'wp_updates'          => 'repeat',
+        );
+
+        return $icons[$slug] ?? 'tools';
     }
 
     protected function print_footer(): string
@@ -148,28 +258,54 @@ class Mod_Settings extends Module
 
             <?php RequestActions::nonce_field($this->action_hook); ?>
 
-            <block class="wps-gridRow wps-settings-setup wpopt-settings-transfer">
+            <block class="wps-gridRow wps-settings-setup wps-settings-transfer wpopt-settings-transfer">
                 <row class="wps-custom-action wps-settings-actions">
-                    <?php
-
-                    echo RequestActions::get_action_button($this->action_hook, 'reset_options', __('Reset Plugin options', 'wpopt'), 'wps wps-button wpopt-btn is-danger');
-
-                    echo RequestActions::get_action_button($this->action_hook, 'restore_options', __('Restore Plugin options', 'wpopt'), 'wps wps-button wpopt-btn is-neutral');
-
-                    echo RequestActions::get_action_button($this->action_hook, 'export_options', __('Export Plugin options', 'wpopt'), 'wps wps-button wpopt-btn is-info');
-
-                    ?>
+                    <button type="submit"
+                            name="<?php echo esc_attr($this->action_hook); ?>"
+                            value="reset_options"
+                            class="wps wps-button wpopt-btn is-danger"
+                            onclick="return confirm('<?php echo esc_js(__('Are you sure you want to reset plugin options? Current plugin options will be overwritten.', 'wpopt')); ?>')">
+                        <span class="dashicons dashicons-trash"></span>
+                        <span><?php esc_html_e('Reset Plugin options', 'wpopt'); ?></span>
+                    </button>
+                    <button type="submit"
+                            name="<?php echo esc_attr($this->action_hook); ?>"
+                            value="restore_options"
+                            class="wps wps-button wpopt-btn is-neutral">
+                        <span class="dashicons dashicons-update-alt"></span>
+                        <span><?php esc_html_e('Restore Plugin options', 'wpopt'); ?></span>
+                    </button>
+                    <button type="submit"
+                            name="<?php echo esc_attr($this->action_hook); ?>"
+                            value="export_options"
+                            class="wps wps-button wpopt-btn is-info">
+                        <span class="dashicons dashicons-upload"></span>
+                        <span><?php esc_html_e('Export Plugin options', 'wpopt'); ?></span>
+                    </button>
                 </row>
                 <row class="wps-custom-action wps-settings-import">
                     <label class="wps-import-dropzone" for="wpopt-conf-file">
-                        <span class="wps-import-dropzone-icon"><?php echo Graphic::icon('external'); ?></span>
+                        <span class="wps-import-dropzone-icon">
+                            <?php echo Graphic::icon('external'); ?>
+                        </span>
                         <span class="wps-import-dropzone-copy">
                             <strong><?php esc_html_e('Drop configuration file here', 'wpopt'); ?></strong>
                             <small><?php esc_html_e('or choose the exported .conf file from your computer.', 'wpopt'); ?></small>
                         </span>
                         <input id="wpopt-conf-file" class="wps-import-file" type="file" name="conf_file" accept=".conf,text/plain">
                     </label>
-                    <?php echo RequestActions::get_action_button($this->action_hook, 'import_options', __('Import Plugin options', 'wpopt'), 'wps wps-button wpopt-btn is-info'); ?>
+                    <span class="wps-import-divider wpopt-import-divider"><span><?php esc_html_e('or', 'wpopt'); ?></span></span>
+                    <div class="wps-import-action wpopt-import-action">
+                        <button type="submit"
+                                name="<?php echo esc_attr($this->action_hook); ?>"
+                                value="import_options"
+                                class="wps wps-button wpopt-btn is-info"
+                                onclick="return confirm('<?php echo esc_js(__('Are you sure you want to import plugin options? Current plugin options may be overwritten.', 'wpopt')); ?>')">
+                            <span class="dashicons dashicons-upload"></span>
+                            <span><?php esc_html_e('Import Plugin options', 'wpopt'); ?></span>
+                        </button>
+                        <p><?php esc_html_e('Import settings from a .conf file to apply saved configuration.', 'wpopt'); ?></p>
+                    </div>
                 </row>
             </block>
         </form>

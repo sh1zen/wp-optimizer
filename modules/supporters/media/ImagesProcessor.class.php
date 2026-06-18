@@ -221,6 +221,10 @@ class ImagesProcessor
             return IPC_MEDIA_NOT_FOUND;
         }
 
+        if (!isset($metadata['sizes']) or !is_array($metadata['sizes'])) {
+            $metadata['sizes'] = [];
+        }
+
         $sub_path = UtilEnv::normalize_path(pathinfo($file, PATHINFO_DIRNAME), true);
 
         $image_path_container = UtilEnv::normalize_path(UtilEnv::wp_upload_dir('basedir') . '/' . $sub_path, true);
@@ -271,7 +275,7 @@ class ImagesProcessor
             }
         }
 
-        if ($metadata['sizes']) {
+        if (!empty($metadata['sizes'])) {
             foreach ($metadata['sizes'] as $size => $image) {
 
                 if ($allow_unlink_oversize_images and str_contains($size, 'x')) {

@@ -72,8 +72,6 @@ class Mod_WP_Mail extends Module
 
     public function mail_logger($mail_info)
     {
-        global $wpdb;
-
         $original_mail_info = $mail_info;
 
         $mail_to = is_array($mail_info['to']) ? $mail_info['to'] : explode(',', $mail_info['to']);
@@ -91,20 +89,53 @@ class Mod_WP_Mail extends Module
         $allowed_html = wp_kses_allowed_html('post');
         $allowed_html['style'] = [];
 
-        $wpdb->insert(
-            WPOPT_TABLE_LOG_MAILS,
-            [
-                'to_email'         => implode(', ', $mail_to),
-                'subject'          => StringHelper::sanitize_text($mail_info['subject']),
-                'message'          => wp_kses($mail_info['message'], $allowed_html),
-                'headers'          => implode(',', (array)$mail_info['headers']),
-                'sent_date'        => current_time('mysql', 0),
-                'sent_date_gmt'    => current_time('mysql', 1),
-                'attachments_file' => implode(',', $attachedFiles),
-            ]
-        );
+        $this->insert_mail_log([
+            'to_email'         => implode(', ', $mail_to),
+            'subject'          => StringHelper::sanitize_text($mail_info['subject']),
+            'message'          => wp_kses($mail_info['message'], $allowed_html),
+            'headers'          => implode(',', (array)$mail_info['headers']),
+            'sent_date'        => current_time('mysql', 0),
+            'sent_date_gmt'    => current_time('mysql', 1),
+            'attachments_file' => implode(',', $attachedFiles),
+        ]);
 
         return $original_mail_info;
+    }
+
+    private function insert_mail_log(array $mail_log): bool
+    {
+        global $wpdb;
+
+        $sent_timestamp = strtotime($mail_log['sent_date']);
+        $sent_gmt_timestamp = strtotime($mail_log['sent_date_gmt']);
+
+        for ($attempt = 0; $attempt < 5; $attempt++) {
+            if ($attempt > 0) {
+                $mail_log['sent_date'] = date('Y-m-d H:i:s', $sent_timestamp + $attempt);
+                $mail_log['sent_date_gmt'] = date('Y-m-d H:i:s', $sent_gmt_timestamp + $attempt);
+            }
+
+            $inserted = $wpdb->query(
+                $wpdb->prepare(
+                    'INSERT IGNORE INTO `' . WPOPT_TABLE_LOG_MAILS . '`
+                    (`to_email`, `subject`, `message`, `headers`, `sent_date`, `sent_date_gmt`, `attachments_file`)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s)',
+                    $mail_log['to_email'],
+                    $mail_log['subject'],
+                    $mail_log['message'],
+                    $mail_log['headers'],
+                    $mail_log['sent_date'],
+                    $mail_log['sent_date_gmt'],
+                    $mail_log['attachments_file']
+                )
+            );
+
+            if ($inserted) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     public function set_up_phpmailer(PHPMailer $phpmailer): void
@@ -176,7 +207,7 @@ class Mod_WP_Mail extends Module
         );
     }
 
-    public function render_sub_modules(): void
+    public function render_sub_modules(bool $standalone = true): void
     {
         require_once WPOPT_SUPPORTERS . 'wp-mails/WPMails_Table.class.php';
 
@@ -187,7 +218,6 @@ class Mod_WP_Mail extends Module
         ?>
         <section class="wps-wrap">
             <block class="wps">
-                <section class="wps-header"><h1>WP Mails Log</h1></section>
                 <?php echo $this->render_mail_daily_chart($mail_series); ?>
                 <section class='wps'>
                     <form method="GET" class="wps-list-table-form wpopt-mail-log-form" autocapitalize="off" autocomplete="off">

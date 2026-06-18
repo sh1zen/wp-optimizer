@@ -72,6 +72,38 @@ function wps_server_addr(): string
     return $addr;
 }
 
+function wps_error_handler_should_notify(string $file, int $line, string $error): bool
+{
+    if (!function_exists('get_option') or !function_exists('update_option')) {
+        return true;
+    }
+
+    $year = function_exists('current_time') ? current_time('Y') : date('Y');
+    $option_name = "wps_error_handler_notified_sources_$year";
+    $source = str_replace('\\', '/', trim($file)) . ':' . $line;
+    $source_key = md5($source);
+    $sources = get_option($option_name, []);
+
+    if (!is_array($sources)) {
+        $sources = [];
+    }
+
+    if (isset($sources[$source_key])) {
+        return false;
+    }
+
+    $sources[$source_key] = [
+        'file'       => $file,
+        'line'       => $line,
+        'first_seen' => function_exists('current_time') ? current_time('mysql') : date('Y-m-d H:i:s'),
+        'error'      => $error,
+    ];
+
+    update_option($option_name, $sources, false);
+
+    return true;
+}
+
 function wps_error_handler($hook, ?callable $callback = null, $notify_dev = true): void
 {
     static $index = 0;
@@ -98,7 +130,9 @@ function wps_error_handler($hook, ?callable $callback = null, $notify_dev = true
                 );
 
                 if (wps_core()->online) {
-                    wp_mail('dev.sh1zen@outlook.it', 'Fatal WordPress Error ' . wps_domain(), "$mail_content\n\nAutomatically sent message by wps framework.");
+                    if (wps_error_handler_should_notify($file, (int)$line, $string)) {
+                        wp_mail('dev.sh1zen@outlook.it', 'Fatal WordPress Error ' . wps_domain(), "$mail_content\n\nAutomatically sent message by wps framework.");
+                    }
                 }
                 else {
                     wps_log("$mail_content\n\n", 'wps-error-handler.log');

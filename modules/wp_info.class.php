@@ -7,6 +7,7 @@
 
 namespace WPOptimizer\modules;
 
+use WPS\core\Graphic;
 use WPS\core\UtilEnv;
 use WPS\modules\Module;
 
@@ -18,56 +19,141 @@ class Mod_WP_Info extends Module
 
     protected string $context = 'wpopt';
 
-    protected function render_sub_modules(): void
+    protected function render_sub_modules(bool $standalone = true): void
     {
         ?>
-        <section class="wps-wrap wpopt-system-info">
-            <block class="wps wpopt-system-info-shell">
-                <section class='wps-header'><h1>System Info</h1></section>
-                <section class="wpopt-system-info-list">
-                    <?php foreach ($this->get_info() as $name => $table) : ?>
-                        <section class="wpopt-system-info-card" id="<?php echo esc_attr(sanitize_title($name)); ?>">
-                            <h2 class="sysinfo-title"><?php echo $name; ?></h2>
-                            <table class="widefat wps wpopt-system-info-table">
-                                <thead>
-                                <tr>
-                                    <th><?php _e('Name', 'wpopt'); ?></th>
-                                    <th><?php _e('Value', 'wpopt'); ?></th>
-                                    <th><?php _e('Name', 'wpopt'); ?></th>
-                                    <th><?php _e('Value', 'wpopt'); ?></th>
-                                </tr>
-                                </thead>
-                                <tbody>
-                                <?php
+        <section class="wpopt-system-info-list">
+            <?php foreach ($this->get_info() as $name => $table) : ?>
+                <section class="wpopt-system-info-card" id="<?php echo esc_attr(sanitize_title($name)); ?>">
+                    <h2 class="sysinfo-title">
+                        <span class="wpopt-system-info-title-icon"><?php echo Graphic::icon($this->section_icon($name)); ?></span>
+                        <span><?php echo esc_html($name); ?></span>
+                    </h2>
+                    <table class="widefat wps wpopt-system-info-table">
+                        <tbody>
+                        <?php
 
-                                $iter = 1;
-                                $output = $alternate = $line = '';
-                                foreach ($table as $_name => $value) {
+                        $iter = 1;
+                        $output = $alternate = $line = '';
+                        foreach ($table as $_name => $value) {
 
-                                    $line .= "<td class='width15'><b>" . $_name . ":</b></td><td class='width35'>" . $value . "</td>";
+                            $line .= sprintf(
+                                "<td class='width15 wpopt-system-info-label-cell'><span class='wpopt-system-info-row-icon'>%s</span><b>%s:</b></td><td class='width35 wpopt-system-info-value-cell'>%s</td>",
+                                Graphic::icon($this->info_icon($_name)),
+                                esc_html($_name),
+                                $this->format_info_value($value)
+                            );
 
-                                    if ($iter % 2 == 0) {
-                                        $output .= "<tr {$alternate}>" . $line . "</tr>";
-                                        $alternate = $alternate == '' ? "class='alternate'" : '';
-                                        $line = '';
-                                    }
-                                    $iter++;
-                                }
+                            if ($iter % 2 == 0) {
+                                $output .= "<tr {$alternate}>" . $line . "</tr>";
+                                $alternate = $alternate == '' ? "class='alternate'" : '';
+                                $line = '';
+                            }
+                            $iter++;
+                        }
 
-                                if (!empty($line))
-                                    $output .= "<tr {$alternate}>" . $line . "<td class='width15'></td><td class='width35'></td></tr>";
+                        if (!empty($line))
+                            $output .= "<tr {$alternate}>" . $line . "<td class='width15 wpopt-system-info-empty-cell'></td><td class='width35 wpopt-system-info-empty-cell'></td></tr>";
 
-                                echo $output;
+                        echo $output;
 
-                                ?>
-                                </tbody>
-                            </table>
-                        </section>
-                    <?php endforeach; ?>
+                        ?>
+                        </tbody>
+                    </table>
                 </section>
-            </block>
+            <?php endforeach; ?>
         </section>
         <?php
+    }
+
+    private function format_info_value($value): string
+    {
+        if (is_scalar($value) || $value === null) {
+            $value = (string)$value;
+            $escaped_value = esc_html($value);
+
+            if (filter_var($value, FILTER_VALIDATE_URL)) {
+                return '<a href="' . esc_url($value) . '" target="_blank" rel="noopener noreferrer">' . $escaped_value . '</a>';
+            }
+
+            return $escaped_value;
+        }
+
+        return esc_html(wp_json_encode($value));
+    }
+
+    private function section_icon(string $name): string
+    {
+        $name = strtolower(wp_strip_all_tags($name));
+
+        if (str_contains($name, 'server')) {
+            return 'server';
+        }
+
+        if (str_contains($name, 'php')) {
+            return 'code';
+        }
+
+        if (str_contains($name, 'mysql') || str_contains($name, 'database')) {
+            return 'database';
+        }
+
+        if (str_contains($name, 'wordpress') || str_contains($name, 'theme')) {
+            return 'settings';
+        }
+
+        if (str_contains($name, 'plugin')) {
+            return 'box';
+        }
+
+        if (str_contains($name, 'session') || str_contains($name, 'cookie')) {
+            return 'shield';
+        }
+
+        return 'info';
+    }
+
+    private function info_icon(string $name): string
+    {
+        $name = strtolower(wp_strip_all_tags($name));
+
+        if (str_contains($name, 'url') || str_contains($name, 'uri')) {
+            return 'external';
+        }
+
+        if (str_contains($name, 'server') || str_contains($name, 'host') || str_contains($name, 'ip') || str_contains($name, 'os')) {
+            return 'server';
+        }
+
+        if (str_contains($name, 'database') || str_contains($name, 'mysql') || str_contains($name, 'table') || str_contains($name, 'packet') || str_contains($name, 'query')) {
+            return 'database';
+        }
+
+        if (str_contains($name, 'time') || str_contains($name, 'date') || str_contains($name, 'execution')) {
+            return 'clock';
+        }
+
+        if (str_contains($name, 'memory') || str_contains($name, 'size') || str_contains($name, 'upload') || str_contains($name, 'disk')) {
+            return 'external';
+        }
+
+        if (str_contains($name, 'ssl') || str_contains($name, 'password') || str_contains($name, 'debug') || str_contains($name, 'error')) {
+            return 'shield';
+        }
+
+        if (str_contains($name, 'agent') || str_contains($name, 'user') || str_contains($name, 'author')) {
+            return 'user';
+        }
+
+        if (str_contains($name, 'theme') || str_contains($name, 'plugin')) {
+            return 'box';
+        }
+
+        if (str_contains($name, 'version') || str_contains($name, 'php') || str_contains($name, 'gd') || str_contains($name, 'string') || str_contains($name, 'tag')) {
+            return 'code';
+        }
+
+        return 'settings';
     }
 
     public function get_info()
@@ -78,8 +164,8 @@ class Mod_WP_Info extends Module
 
         $settings = array(
             "Server" => array(
-                __('SITE_URL', 'wpopt')             => site_url(),
-                __('HOME_URL', 'wpopt')             => home_url(),
+                __('SITE URL', 'wpopt')             => site_url(),
+                __('HOME URL', 'wpopt')             => home_url(),
                 __('Server IP : port', 'wpopt')     => wps_server_addr() . ' : ' . $_SERVER['SERVER_PORT'],
                 __("OS", 'wpopt')                   => PHP_OS,
                 __("Server", 'wpopt')               => $_SERVER["SERVER_SOFTWARE"],

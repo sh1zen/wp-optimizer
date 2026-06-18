@@ -72,7 +72,6 @@ class Mod_Database extends Module
 
         ?>
         <form class="wps-list-table-form wpopt-db-tables-form" method="post" action="<?php echo wps_module_panel_url("database", "db-tables"); ?>">
-            <?php $table_list_obj->search_box('Search', 'search'); ?>
             <?php $table_list_obj->display(); ?>
         </form>
         <?php
@@ -137,15 +136,22 @@ class Mod_Database extends Module
         ob_start();
         ?>
         <section class="wpopt-db-backup-panel">
-            <?php _e('Checking Backup Folder', 'wpopt'); ?>
-            <span>(<strong><?php echo self::BACKUP_PATH; ?></strong>)</span> ...
+            <?php
+            $backup_path_ready = Disk::make_path(self::BACKUP_PATH, true);
+            ?>
+            <div class="wpopt-db-backup-status <?php echo $backup_path_ready ? 'is-success' : 'is-error'; ?>">
+                <span class="wpopt-db-backup-status-icon dashicons <?php echo $backup_path_ready ? 'dashicons-yes-alt' : 'dashicons-warning'; ?>"></span>
+                <span class="wpopt-db-backup-status-copy">
+                    <strong><?php _e('Checking Backup Folder', 'wpopt'); ?></strong>
+                    <code><?php echo esc_html(self::BACKUP_PATH); ?></code>
+                </span>
+                <span class="wpopt-db-backup-status-result">
+                    <?php echo $backup_path_ready ? esc_html__('OK', 'wpopt') : esc_html__('FAIL', 'wpopt'); ?>
+                </span>
+            </div>
             <?php
 
-            if (Disk::make_path(self::BACKUP_PATH, true)) {
-                echo '<span style="color: green;">' . __("OK", 'wpopt') . '</span>';
-            }
-            else {
-                echo '<span style="color: red;">' . __("FAIL", 'wpopt') . '</span>';
+            if (!$backup_path_ready) {
                 echo '<div class="wps-notice wps-notice--error">' . sprintf(__('Backup folder does NOT exist or is NOT WRITABLE. Please create it and set permissions to \'774\' or change the location of the backup folder in settings.', 'wpopt'), WP_CONTENT_DIR) . '</div>';
             }
             ?>
@@ -550,7 +556,7 @@ class Mod_Database extends Module
         wp_enqueue_script('wpopt-db-sweep', $script_asset['url'], array('vendor-wps-js'), $script_asset['version'] ?: WPOPT_VERSION);
     }
 
-    public function render_sub_modules(): void
+    public function render_sub_modules(bool $standalone = true): void
     {
         ?>
         <section class="wps-wrap wpopt-db-manager-page">

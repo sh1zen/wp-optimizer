@@ -151,23 +151,31 @@ class Settings
         return update_option($this->context, $options, 'yes');
     }
 
-    public function render_core_settings(): void
+    public function render_core_settings(bool $standalone = true): void
     {
-        /**
-         * Consider only modules with settings handlers
-         */
-        $modules = wps($this->context)->moduleHandler->get_modules(array('scopes' => array('core-settings')), false);
-        $classes = array('wps-wrap', 'wps', 'wps-core-settings-page', "{$this->context}-core-settings-page");
+        $pages = $this->get_core_setting_pages();
+        $classes = $standalone
+            ? array('wps-wrap', 'wps', 'wps-core-settings-page', "{$this->context}-core-settings-page")
+            : array('wps-core-settings-page', "{$this->context}-core-settings-page");
 
         settings_errors();
+
+        if (!$standalone) {
+            $this->render_core_setting_page('', false);
+            return;
+        }
+
         ?>
         <section class="<?php echo esc_attr(implode(' ', $classes)); ?>">
             <block class="wps">
-                <section class='wps-header'><h1>Core Settings</h1></section>
+                <section class='wps-header'>
+                    <h1><?php esc_html_e('Core Settings', $this->get_text_domain()); ?></h1>
+                    <p><?php echo esc_html($this->get_core_settings_header_description()); ?></p>
+                </section>
                 <?php
 
-                if (!empty($modules)) {
-                    echo $this->generateHTML_tabpan($modules);
+                if (!empty($pages)) {
+                    $this->render_registered_setting_page($pages, '');
                 }
 
                 ?>
@@ -203,6 +211,167 @@ class Settings
         }
 
         return Graphic::generateHTML_tabs_panels($fields);
+    }
+
+    public function get_core_setting_pages(): array
+    {
+        $pages = apply_filters("wps_{$this->context}_core_settings_pages", array(), $this);
+
+        if (empty($pages)) {
+            $pages = $this->build_module_setting_pages(array('core-settings'));
+        }
+
+        return $this->normalize_setting_pages($pages);
+    }
+
+    public function get_module_setting_pages(): array
+    {
+        $pages = apply_filters("wps_{$this->context}_module_settings_pages", array(), $this);
+
+        if (empty($pages)) {
+            $pages = $this->build_module_setting_pages(array('settings'), true);
+        }
+
+        return $this->normalize_setting_pages($pages);
+    }
+
+    public function render_core_setting_page(string $page_id = '', bool $standalone = false): void
+    {
+        $pages = $this->get_core_setting_pages();
+
+        if ($standalone) {
+            settings_errors();
+        }
+
+        $this->render_registered_setting_page($pages, $page_id);
+    }
+
+    public function render_module_setting_page(string $page_id = '', bool $standalone = false): void
+    {
+        $pages = $this->get_module_setting_pages();
+
+        if ($standalone) {
+            settings_errors();
+        }
+
+        $this->render_registered_setting_page($pages, $page_id);
+    }
+
+    private function build_module_setting_pages(array $scopes, bool $only_active = false): array
+    {
+        $pages = array();
+        $modules = wps($this->context)->moduleHandler->get_modules(array('scopes' => $scopes), $only_active);
+
+        foreach ($modules as $module) {
+            $object = wps($this->context)->moduleHandler->get_module_instance($module);
+
+            if (is_null($object)) {
+                continue;
+            }
+
+            $pages[] = array(
+                'id'          => $module['slug'],
+                'label'       => $module['name'],
+                'icon'        => $this->get_settings_icon($module['slug']),
+                'description' => $this->get_settings_description($module['slug'], $module['name']),
+                'status'      => $this->get_settings_status($module['slug']),
+                'callback'    => array($object, 'render_settings'),
+            );
+        }
+
+        return $pages;
+    }
+
+    private function normalize_setting_pages(array $pages): array
+    {
+        $normalized = array();
+
+        foreach ($pages as $page) {
+            if (empty($page['id']) || empty($page['callback']) || !is_callable($page['callback'])) {
+                continue;
+            }
+
+            $id = sanitize_key((string)$page['id']);
+
+            $normalized[$id] = array(
+                'id'          => $id,
+                'label'       => (string)($page['label'] ?? $id),
+                'icon'        => (string)($page['icon'] ?? 'settings'),
+                'description' => (string)($page['description'] ?? ''),
+                'status'      => (string)($page['status'] ?? ''),
+                'callback'    => $page['callback'],
+            );
+        }
+
+        return array_values($normalized);
+    }
+
+    private function render_registered_setting_page(array $pages, string $page_id): void
+    {
+        if (empty($pages)) {
+            ?>
+            <section class="wps-app-panel wps-core-settings-page <?php echo esc_attr("{$this->context}-core-settings-page"); ?>">
+                <h1><?php esc_html_e('Settings', $this->get_text_domain()); ?></h1>
+                <p><?php esc_html_e('No settings are registered for this plugin.', $this->get_text_domain()); ?></p>
+            </section>
+            <?php
+            return;
+        }
+
+        $page_id = sanitize_key($page_id);
+        $selected = $pages[0];
+
+        foreach ($pages as $page) {
+            if ($page['id'] === $page_id) {
+                $selected = $page;
+                break;
+            }
+        }
+
+        ?>
+        <section class="wps-app-panel wps-core-settings-page <?php echo esc_attr("{$this->context}-core-settings-page"); ?>">
+            <?php
+            $content = call_user_func($selected['callback']);
+
+            if (is_string($content)) {
+                echo $content;
+            }
+            ?>
+        </section>
+        <?php
+    }
+
+    private function get_text_domain(): string
+    {
+        $text_domains = array(
+            'wpopt' => 'wpopt',
+            'wpfs'  => 'wpfs',
+            'wpmc'  => 'members-control',
+        );
+
+        return $text_domains[$this->context] ?? $this->context;
+    }
+
+    private function get_core_settings_header_description(): string
+    {
+        $descriptions = array(
+            'wpopt' => __('Manage global modules, cron, telemetry, import and export tools.', 'wpopt'),
+            'wpfs'  => __('Configure Flexy SEO modules and metadata tools.', 'wpfs'),
+            'wpmc'  => __('Configure Members Control modules and membership workflows.', 'members-control'),
+        );
+
+        return $descriptions[$this->context] ?? __('Configure plugin settings and shared tools.', $this->get_text_domain());
+    }
+
+    private function get_modules_settings_header_description(): string
+    {
+        $descriptions = array(
+            'wpopt' => __('Configure and manage settings for WP Optimizer modules.', 'wpopt'),
+            'wpfs'  => __('Configure Flexy SEO module preferences.', 'wpfs'),
+            'wpmc'  => __('Configure Members Control module preferences.', 'members-control'),
+        );
+
+        return $descriptions[$this->context] ?? __('Configure and manage module settings.', $this->get_text_domain());
     }
 
     private function get_settings_icon(string $module_slug): string
@@ -278,33 +447,14 @@ class Settings
         ));
     }
 
-    public function render_modules_settings()
+    public function render_modules_settings(bool $standalone = true)
     {
-        $mod_handler = wps($this->context)->moduleHandler;
-        $classes = array('wps-wrap', 'wps', 'wps-core-settings-page', "{$this->context}-core-settings-page");
-
-        /**
-         * Consider only modules with settings handlers
-         */
-        $modules = $mod_handler->get_modules(array('scopes' => array('settings')));
+        $pages = $this->get_module_setting_pages();
+        $page_id = $pages[0]['id'] ?? '';
 
         settings_errors();
-        ?>
-        <section class="<?php echo esc_attr(implode(' ', $classes)); ?>">
-            <block class="wps">
-                <section class='wps-header'><h1>Modules Settings</h1></section>
-                <?php
 
-                if (!empty($modules)) {
-                    echo $this->generateHTML_tabpan($modules);
-                }
-                else {
-                    echo "<h2>" . sprintf("No modules enabled. To enable them go <a href='%s'>here</a>.", admin_url("admin.php?page={$this->context}-settings")) . "</h2>";
-                }
-                ?>
-            </block>
-        </section>
-        <?php
+        $this->render_module_setting_page($page_id, $standalone);
     }
 
     public function activate()

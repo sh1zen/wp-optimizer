@@ -81,14 +81,14 @@ class Module
         // before activation to fix error while upgrading
         $this->settings = wps($this->context)->settings->get($this->slug);
 
-        if (!wps($this->context)->moduleHandler->module_is_active($this->slug)) {
-            return;
-        }
-
         $this->module_id = wps_core()->uid();
 
         $this->action_hook = "$this->context-$this->slug-action";
         $this->action_hook_page = "$this->action_hook-page";
+
+        if (!wps($this->context)->moduleHandler->module_is_active($this->slug)) {
+            return;
+        }
 
         $this->init();
 
@@ -364,15 +364,15 @@ class Module
         return '';
     }
 
-    public function render_admin_page(): void
+    public function render_admin_page(bool $standalone = true): void
     {
-        if ($this->restricted_access('render-admin')) {
+        if (!wps($this->context)->moduleHandler->module_is_active($this->slug) || $this->restricted_access('render-admin')) {
             $this->render_disabled();
         }
         else {
             do_action("{$this->context}_enqueue_panel_scripts");
             //$this->remove_browser_query_args();
-            $this->render_sub_modules();
+            $this->render_sub_modules($standalone);
         }
 
         if (WPS_DEBUG) {
@@ -380,7 +380,7 @@ class Module
         }
     }
 
-    protected function render_sub_modules(): void
+    protected function render_sub_modules(bool $standalone = true): void
     {
         $subModules = [];
 
@@ -404,6 +404,10 @@ class Module
         }
 
         if (!empty($subModules)) {
+            if (!$standalone) {
+                echo Graphic::generateHTML_tabs_panels($subModules);
+                return;
+            }
             ?>
             <section class="wps-wrap">
                 <block class="wps">
@@ -443,7 +447,7 @@ class Module
             return false;
         }
 
-        return add_submenu_page($parent, 'WPOPT ' . static::$name, static::$name, $capability, "$this->context-$this->slug", array($this, 'render_admin_page'));
+        return add_submenu_page(null, 'WPOPT ' . static::$name, static::$name, $capability, "$this->context-$this->slug", array($this, 'render_admin_page'));
     }
 
     public function has_panel(): bool

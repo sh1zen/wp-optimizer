@@ -428,7 +428,12 @@ class Images
             }
 
             if ($image_path) {
-                list($width, $height) = wp_getimagesize($image_path);
+                $image_size = wp_getimagesize($image_path);
+
+                if (is_array($image_size)) {
+                    $width = $image_size[0] ?? 0;
+                    $height = $image_size[1] ?? 0;
+                }
             }
 
             $snippet_data = ['url' => $object, 'width' => $width, 'height' => $height];

@@ -77,15 +77,40 @@
             });
         };
 
-        $('.wpopt-db-manager-page .wps-ar-tabcontent[aria-hidden="false"]').each(function () {
-            schedule_lazy_panel($(this));
-        });
+        let schedule_active_lazy_panels = function () {
+            let $panels = $('.wpopt-db-manager-page .wps-ar-tabcontent[aria-hidden="false"]');
+            let hash = window.location.hash ? window.location.hash.substring(1) : '';
 
-        $(document).on('click', '.wpopt-db-manager-page .wps-ar-tab[aria-controls]', function () {
+            if (!$panels.length && hash) {
+                let hashPanel = document.getElementById(hash);
+
+                if (hashPanel && $(hashPanel).closest('.wpopt-db-manager-page').length) {
+                    $panels = $(hashPanel);
+                }
+            }
+
+            if (!$panels.length) {
+                $panels = $('.wpopt-db-manager-page .wps-ar-tabcontent').first();
+            }
+
+            $panels.each(function () {
+                schedule_lazy_panel($(this));
+            });
+        };
+
+        schedule_active_lazy_panels();
+        window.setTimeout(schedule_active_lazy_panels, 0);
+        window.setTimeout(schedule_active_lazy_panels, 150);
+
+        $(document).on('click', '.wps-ar-tab[aria-controls]', function () {
             let panel_id = $(this).attr('aria-controls');
 
             window.setTimeout(function () {
-                load_lazy_panel($('#' + panel_id));
+                let $panel = $('#' + panel_id);
+
+                if ($panel.closest('.wpopt-db-manager-page').length) {
+                    load_lazy_panel($panel);
+                }
             }, 0);
         });
 

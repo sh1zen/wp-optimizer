@@ -36,13 +36,24 @@ class Ajax
 
         $request = array_merge(array(
             'mod'        => 'none',
+            'mod_context' => '',
             'mod_nonce'  => '',
             'mod_action' => 'none',
             'mod_args'   => '',
             'mod_form'   => ''
         ), $_REQUEST);
 
+        $requested_context = sanitize_key((string)$request['mod_context']);
+
+        if ($requested_context && $requested_context !== $this->context) {
+            return;
+        }
+
         if (!empty($request['mod_nonce']) and !UtilEnv::verify_nonce("{$this->context}-ajax-nonce", $request['mod_nonce'])) {
+            if (!$requested_context) {
+                return;
+            }
+
             self::response([
                 'body'  => "It seems that you are not allowed to do this request.",
                 'title' => 'Request error'
@@ -70,6 +81,9 @@ class Ajax
             $object->ajax_handler($args);
         }
         else {
+            if (!$requested_context) {
+                return;
+            }
 
             self::response([
                 'body'  => 'Wrong ajax request.',

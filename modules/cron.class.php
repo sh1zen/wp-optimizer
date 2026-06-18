@@ -19,6 +19,14 @@ class Mod_Cron extends Module
 
     private const ACTION_NONCE = 'wpopt-cron-manager-action';
 
+    private bool $cron_modules_loaded = false;
+
+    private ?array $custom_schedules = null;
+
+    private array $callback_lookup = array();
+
+    private array $formatted_intervals = array();
+
     public function validate_settings($input, $filtering = false): array
     {
         return wps('wpopt')->cron->cron_setting_validator($input, $filtering);
@@ -75,7 +83,7 @@ class Mod_Cron extends Module
         return $schedules;
     }
 
-    public function render_sub_modules(): void
+    public function render_sub_modules(bool $standalone = true): void
     {
         $this->load_cron_modules();
         $this->handle_cron_request();
@@ -87,19 +95,18 @@ class Mod_Cron extends Module
         $custom_schedules = $this->get_custom_schedules();
         ?>
         <section class="wps-wrap wpopt-cron-manager">
-            <block class="wps">
-                <section class="wps-header"><h1><?php _e('Cron Manager', 'wpopt'); ?></h1></section>
+            <block class="wpopt-cron-summary-block">
                 <?php settings_errors('wpopt-cron-manager'); ?>
                 <?php echo $this->render_summary($summary); ?>
             </block>
 
-            <block class="wps">
+            <block class="wpopt-cron-events-block">
                 <?php echo $this->render_events_table($events, $schedules, $search); ?>
             </block>
 
             <?php echo $this->render_create_event_modal($schedules); ?>
 
-            <block class="wps">
+            <block class="wpopt-cron-schedules-block">
                 <h2><?php _e('Custom schedules', 'wpopt'); ?></h2>
                 <?php echo $this->render_schedules_table($schedules, $custom_schedules); ?>
             </block>
@@ -109,9 +116,15 @@ class Mod_Cron extends Module
 
     private function load_cron_modules(): void
     {
+        if ($this->cron_modules_loaded) {
+            return;
+        }
+
         foreach (wps('wpopt')->moduleHandler->get_modules(array('scopes' => 'cron', 'excepts' => array('cron'))) as $module) {
             wps('wpopt')->moduleHandler->get_module_instance($module);
         }
+
+        $this->cron_modules_loaded = true;
     }
 
     private function handle_cron_request(): void
@@ -398,9 +411,14 @@ class Mod_Cron extends Module
         $crons = (array)_get_cron_array();
         $events = array();
         $search = strtolower(trim($search));
+        $now = time();
 
         foreach ($crons as $timestamp => $hooks) {
+            $timestamp = (int)$timestamp;
+
             foreach ((array)$hooks as $hook => $instances) {
+                $hook = (string)$hook;
+
                 foreach ((array)$instances as $signature => $event) {
                     $args = is_array($event['args'] ?? null) ? $event['args'] : array();
                     $args_json = $this->format_args_json($args);
@@ -410,15 +428,15 @@ class Mod_Cron extends Module
                     }
 
                     $events[] = array(
-                        'timestamp'      => (int)$timestamp,
-                        'hook'           => (string)$hook,
+                        'timestamp'      => $timestamp,
+                        'hook'           => $hook,
                         'signature'      => (string)$signature,
                         'schedule'       => (string)($event['schedule'] ?? ''),
                         'args'           => $args,
                         'args_json'      => $args_json,
                         'interval'       => absint($event['interval'] ?? 0),
-                        'callback_found' => has_action($hook) !== false,
-                        'is_due'         => (int)$timestamp <= time(),
+                        'callback_found' => $this->has_callback($hook),
+                        'is_due'         => $timestamp <= $now,
                     );
                 }
             }
@@ -463,118 +481,961 @@ class Mod_Cron extends Module
         ob_start();
         ?>
         <style>
-            .wpopt-cron-manager { color:#1d2327; }
-            .wpopt-cron-kpis { display:grid; grid-template-columns:repeat(auto-fit, minmax(160px, 1fr)); gap:12px; margin:14px 0 18px; }
-            .wpopt-cron-kpi { padding:14px 16px; border:1px solid #dcdcde; background:#fff; border-radius:8px; box-shadow:0 1px 2px rgba(0, 0, 0, .04); }
-            .wpopt-cron-kpi span { display:block; color:#646970; font-size:11px; font-weight:700; text-transform:uppercase; margin-bottom:6px; }
-            .wpopt-cron-kpi strong { color:#1d2327; font-size:26px; line-height:1; }
-            .wpopt-cron-health { display:flex; gap:8px; flex-wrap:wrap; margin:8px 0 4px; }
-            .wpopt-cron-badge { display:inline-flex; align-items:center; justify-content:center; min-height:24px; padding:3px 9px; border-radius:999px; font-size:12px; font-weight:600; line-height:1.3; background:#f0f0f1; color:#50575e; }
-            .wpopt-cron-badge.is-ok { background:#dff7e8; color:#0a5f2c; }
-            .wpopt-cron-badge.is-warn { background:#fff3cd; color:#8a5a00; }
-            .wpopt-cron-badge.is-bad { background:#f8d7da; color:#8f1f1d; }
-            .wpopt-cron-events-header { display:flex; align-items:center; justify-content:space-between; gap:18px; margin:0 0 14px; }
-            .wpopt-cron-events-title { display:flex; align-items:center; gap:14px; }
-            .wpopt-cron-events-title-icon { display:inline-flex; align-items:center; justify-content:center; width:42px; height:42px; border-radius:12px; background:#eef4ff; color:#135e96; }
-            .wpopt-cron-events-title h2 { margin:0; color:#1d2327; font-size:26px; line-height:1.15; }
-            .wpopt-cron-events-title p { margin:4px 0 0; color:#646970; }
-            .wpopt-cron-toolbar { margin:0; }
-            .wpopt-cron-toolbar .search-box { display:flex; align-items:center; gap:8px; float:none; margin:0; }
-            .wpopt-cron-toolbar input[type="search"] { min-width:280px; min-height:36px; border-color:#dcdcde; border-radius:8px; }
-            .wpopt-cron-toolbar .button { min-height:36px; padding:0 18px; border-radius:8px; background:#0b57d0; border-color:#0b57d0; color:#fff; font-weight:600; }
-            .wpopt-cron-toolbar .wpopt-cron-create-button { display:inline-flex; align-items:center; gap:6px; text-decoration:none; }
-            .wpopt-cron-toolbar .wpopt-cron-create-button .dashicons { font-size:16px; width:16px; height:16px; line-height:16px; }
-            .wpopt-cron-events { display:flex; flex-direction:column; gap:12px; }
-            .wpopt-cron-event-row { position:relative; padding:0; border:1px solid #dcdcde; border-radius:10px; background:#fff; box-shadow:0 1px 2px rgba(0, 0, 0, .04); overflow:visible; }
-            .wpopt-cron-event-row.is-due { background:#fffdf7; }
-            .wpopt-cron-event-summary { display:grid; grid-template-columns:42px minmax(140px, .9fr) minmax(210px, 1.4fr) minmax(180px, 1.2fr) minmax(120px, .7fr) minmax(190px, 1fr) 24px; gap:14px; align-items:center; padding:14px 16px; }
-            .wpopt-cron-row-icon { display:inline-flex; align-items:center; justify-content:center; width:34px; height:34px; border-radius:8px; background:#eef4ff; color:#135e96; }
-            .wpopt-cron-cell-label { display:block; color:#646970; font-size:10px; font-weight:700; text-transform:uppercase; margin-bottom:4px; }
-            .wpopt-cron-time strong { display:block; line-height:1.35; }
-            .wpopt-cron-time small { display:block; margin-top:3px; color:#646970; }
-            .wpopt-cron-hook { display:inline-block; max-width:100%; padding:3px 7px; border:1px solid #dcdcde; border-radius:6px; background:#f6f7f7; color:#1d2327; overflow-wrap:anywhere; white-space:normal; }
-            .wpopt-cron-status { display:flex; align-items:flex-start; gap:6px; flex-wrap:wrap; }
-            .wpopt-cron-chevron { display:flex; align-items:center; justify-content:center; color:#646970; }
-            .wpopt-cron-schedule { display:flex; align-items:center; gap:6px; }
-            .wpopt-cron-schedule .dashicons { color:#0b57d0; font-size:16px; width:16px; height:16px; }
-            .wpopt-cron-event-actions { position:relative; padding:12px 16px 14px 58px; border-top:1px solid #f0f0f1; background:#fbfbfc; border-radius:0 0 10px 10px; }
-            .wpopt-cron-event-actions:has(.wpopt-cron-edit[open]) { padding-bottom:170px; }
-            .wpopt-cron-actions { display:grid; grid-template-columns:minmax(190px, 240px) minmax(220px, 300px) minmax(220px, 1fr) auto; gap:12px; align-items:end; grid-template-areas:"date schedule edit buttons"; }
-            .wpopt-cron-control { display:flex; flex-direction:column; gap:5px; }
-            .wpopt-cron-control label { color:#646970; font-size:11px; font-weight:700; }
-            .wpopt-cron-actions input[type="datetime-local"], .wpopt-cron-actions select { width:100%; min-height:34px; border-color:#c3c4c7; border-radius:6px; background:#fff; }
-            .wpopt-cron-actions input[type="datetime-local"]:focus, .wpopt-cron-actions select:focus, .wpopt-cron-edit input:focus, .wpopt-cron-edit textarea:focus { border-color:#2271b1; box-shadow:0 0 0 1px #2271b1; outline:2px solid transparent; }
+            .wpopt-cron-manager {
+                color:#172033;
+            }
+
+            .wpopt-cron-manager > .wpopt-cron-summary-block {
+                margin-bottom:0 !important;
+                padding-bottom:0 !important;
+            }
+
+            .wpopt-cron-manager > .wpopt-cron-summary-block + .wpopt-cron-events-block {
+                margin-top:0 !important;
+                padding-top:0 !important;
+            }
+
+            body.wps-admin-screen .wpopt-cron-manager > .wpopt-cron-events-block > .wpopt-cron-events-header {
+                margin-top:0 !important;
+                margin-bottom:10px !important;
+            }
+
+            .wpopt-cron-kpis {
+                display:grid;
+                grid-template-columns:repeat(auto-fit, minmax(190px, 1fr));
+                gap:16px;
+                margin:0 0 14px;
+            }
+
+            .wpopt-cron-kpi {
+                position:relative;
+                overflow:hidden;
+                min-height:82px;
+                padding:18px 20px 18px 22px;
+                border:1px solid #d8e5f3;
+                border-radius:14px;
+                background:linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+                box-shadow:0 12px 26px rgba(15, 44, 82, .07);
+            }
+
+            .wpopt-cron-kpi:before {
+                content:"";
+                position:absolute;
+                inset:0 auto 0 0;
+                width:4px;
+                background:linear-gradient(180deg, #2271b1, #72aee6);
+            }
+
+            .wpopt-cron-kpi:nth-child(2):before { background:linear-gradient(180deg, #d97706, #fbbf24); }
+            .wpopt-cron-kpi:nth-child(3):before { background:linear-gradient(180deg, #0f766e, #2dd4bf); }
+            .wpopt-cron-kpi:nth-child(4):before { background:linear-gradient(180deg, #b42318, #f87171); }
+
+            .wpopt-cron-kpi span {
+                display:block;
+                color:#607086;
+                font-size:11px;
+                font-weight:800;
+                letter-spacing:.05em;
+                line-height:1.2;
+                text-transform:uppercase;
+                margin-bottom:10px;
+            }
+
+            .wpopt-cron-kpi strong {
+                display:block;
+                color:#0f172a;
+                font-size:29px;
+                font-weight:800;
+                line-height:1;
+            }
+
+            .wpopt-cron-health {
+                display:flex;
+                gap:9px;
+                flex-wrap:wrap;
+                margin:10px 0 0;
+                padding-bottom:0;
+            }
+
+            .wpopt-cron-badge {
+                display:inline-flex;
+                align-items:center;
+                justify-content:center;
+                min-height:26px;
+                padding:4px 10px;
+                border:1px solid transparent;
+                border-radius:999px;
+                font-size:12px;
+                font-weight:700;
+                line-height:1.3;
+                background:#eef2f7;
+                color:#475569;
+                white-space:nowrap;
+            }
+
+            .wpopt-cron-badge.is-ok { border-color:#bbf7d0; background:#dcfce7; color:#166534; }
+            .wpopt-cron-badge.is-warn { border-color:#fde68a; background:#fffbeb; color:#92400e; }
+            .wpopt-cron-badge.is-bad { border-color:#fecaca; background:#fff1f2; color:#991b1b; }
+
+            .wpopt-cron-events-header {
+                display:flex;
+                align-items:center;
+                justify-content:space-between;
+                gap:20px;
+                margin:0 0 10px;
+                padding:0 0 8px;
+                border-bottom:1px solid #edf2f7;
+            }
+
+            .wpopt-cron-events-title {
+                display:flex;
+                align-items:center;
+                gap:14px;
+                min-width:260px;
+            }
+
+            .wpopt-cron-events-title-icon,
+            .wpopt-cron-row-icon {
+                display:inline-flex;
+                align-items:center;
+                justify-content:center;
+                flex:0 0 auto;
+                border:1px solid #d7e7fb;
+                background:#eef6ff;
+                color:#1d4ed8;
+            }
+
+            .wpopt-cron-events-title-icon {
+                width:44px;
+                height:44px;
+                border-radius:12px;
+                box-shadow:0 8px 18px rgba(29, 78, 216, .09);
+            }
+
+            .wpopt-cron-events-title h2 {
+                margin:0;
+                padding:0;
+                border:0;
+                color:#0f172a;
+                font-size:20px;
+                font-weight:800;
+                line-height:1.2;
+            }
+
+            .wpopt-cron-events-title p {
+                margin:5px 0 0;
+                color:#64748b;
+                font-size:13px;
+            }
+
+            .wpopt-cron-toolbar {
+                flex:1 1 520px;
+                margin:0;
+            }
+
+            .wpopt-cron-toolbar .search-box {
+                display:flex;
+                align-items:center;
+                justify-content:flex-end;
+                gap:10px;
+                float:none;
+                margin:0;
+                width:100%;
+            }
+
+            .wpopt-cron-toolbar input[type="search"] {
+                flex:1 1 280px;
+                max-width:360px;
+                box-sizing:border-box;
+                height:40px;
+                min-height:40px;
+                margin:0;
+                padding:0 14px;
+                border-color:#d6dee8;
+                border-radius:9px;
+                background:#fff;
+                box-shadow:0 1px 2px rgba(15, 23, 42, .03);
+                line-height:38px;
+            }
+
+            .wpopt-cron-toolbar input[type="search"]:focus {
+                border-color:#2271b1;
+                box-shadow:0 0 0 3px rgba(34, 113, 177, .14);
+                outline:2px solid transparent;
+            }
+
+            .wpopt-cron-toolbar .button {
+                box-sizing:border-box;
+                height:40px;
+                min-height:40px;
+                margin:0;
+                padding:0 18px;
+                border-radius:9px;
+                background:#0b57d0;
+                border-color:#0b57d0;
+                color:#fff;
+                font-weight:700;
+                box-shadow:0 8px 16px rgba(11, 87, 208, .18);
+            }
+
+            .wpopt-cron-toolbar .button:hover,
+            .wpopt-cron-toolbar .button:focus {
+                background:#0649b8;
+                border-color:#0649b8;
+                color:#fff;
+            }
+
+            .wpopt-cron-toolbar .wpopt-cron-create-button {
+                display:inline-flex;
+                align-items:center;
+                gap:7px;
+                text-decoration:none;
+                white-space:nowrap;
+            }
+
+            .wpopt-cron-toolbar .wpopt-cron-create-button .dashicons {
+                font-size:16px;
+                width:16px;
+                height:16px;
+                line-height:16px;
+            }
+
+            .wpopt-cron-events {
+                display:flex;
+                flex-direction:column;
+                gap:14px;
+            }
+
+            .wpopt-cron-event-row {
+                position:relative;
+                padding:0;
+                border:1px solid #dce6f1;
+                border-radius:14px;
+                background:#fff;
+                box-shadow:0 10px 24px rgba(15, 44, 82, .06);
+                overflow:hidden;
+                transition:border-color .16s ease, box-shadow .16s ease;
+            }
+
+            .wpopt-cron-event-row:before {
+                content:"";
+                position:absolute;
+                top:16px;
+                bottom:16px;
+                left:0;
+                width:4px;
+                border-radius:0 999px 999px 0;
+                background:#2271b1;
+                opacity:.78;
+            }
+
+            .wpopt-cron-event-row:hover {
+                border-color:#bdd4ed;
+                box-shadow:0 16px 32px rgba(15, 44, 82, .10);
+            }
+
+            .wpopt-cron-event-row.is-due {
+                border-color:#f2d184;
+                background:#fffdf7;
+            }
+
+            .wpopt-cron-event-row.is-due:before {
+                background:#d97706;
+            }
+
+            .wpopt-cron-event-summary {
+                display:grid;
+                grid-template-columns:42px minmax(150px, .9fr) minmax(210px, 1.35fr) minmax(190px, 1.15fr) minmax(130px, .72fr) minmax(210px, 1fr) 24px;
+                gap:16px;
+                align-items:center;
+                padding:18px 18px 16px 20px;
+                cursor:pointer;
+                list-style:none;
+            }
+
+            .wpopt-cron-event-summary::-webkit-details-marker {
+                display:none;
+            }
+
+            .wpopt-cron-event-summary::marker {
+                content:"";
+            }
+
+            .wpopt-cron-row-icon {
+                width:36px;
+                height:36px;
+                border-radius:10px;
+            }
+
+            .wpopt-cron-cell-label {
+                display:block;
+                color:#64748b;
+                font-size:10px;
+                font-weight:800;
+                letter-spacing:.04em;
+                line-height:1.2;
+                text-transform:uppercase;
+                margin-bottom:6px;
+            }
+
+            .wpopt-cron-time strong {
+                display:block;
+                color:#0f172a;
+                line-height:1.35;
+            }
+
+            .wpopt-cron-time small {
+                display:block;
+                margin-top:4px;
+                color:#64748b;
+                font-size:12px;
+            }
+
+            .wpopt-cron-hook {
+                display:inline-block;
+                max-width:100%;
+                padding:5px 8px;
+                border:1px solid #d8e2ed;
+                border-radius:7px;
+                background:#f8fafc;
+                color:#0f172a;
+                overflow-wrap:anywhere;
+                white-space:normal;
+            }
+
+            .wpopt-cron-status {
+                display:flex;
+                align-items:flex-start;
+                gap:7px;
+                flex-wrap:wrap;
+            }
+
+            .wpopt-cron-status .wpopt-cron-cell-label {
+                flex:0 0 100%;
+            }
+
+            .wpopt-cron-chevron {
+                display:flex;
+                align-items:center;
+                justify-content:center;
+                color:#475569;
+            }
+
+            .wpopt-cron-event-row[open] .wpopt-cron-chevron {
+                color:#0b57d0;
+            }
+
+            .wpopt-cron-schedule {
+                display:flex;
+                align-items:center;
+                gap:7px;
+                color:#172033;
+            }
+
+            .wpopt-cron-schedule .dashicons {
+                color:#0b57d0;
+                font-size:16px;
+                width:16px;
+                height:16px;
+            }
+
+            .wpopt-cron-event-actions {
+                position:relative;
+                padding:14px 18px 16px 62px;
+                border-top:1px solid #edf2f7;
+                border-radius:0 0 14px 14px;
+                background:linear-gradient(180deg, #fbfdff 0%, #f8fafc 100%);
+            }
+
+            .wpopt-cron-event-actions:has(.wpopt-cron-edit[open]) {
+                padding-bottom:178px;
+            }
+
+            .wpopt-cron-actions {
+                display:grid;
+                grid-template-columns:minmax(190px, 240px) minmax(220px, 300px) minmax(220px, 1fr) auto;
+                gap:12px;
+                align-items:end;
+                grid-template-areas:"date schedule edit buttons";
+            }
+
+            .wpopt-cron-control {
+                display:flex;
+                flex-direction:column;
+                gap:6px;
+            }
+
+            .wpopt-cron-control label {
+                color:#475569;
+                font-size:11px;
+                font-weight:800;
+            }
+
+            .wpopt-cron-actions input[type="datetime-local"],
+            .wpopt-cron-actions select,
+            .wpopt-cron-form-grid input,
+            .wpopt-cron-form-grid select,
+            .wpopt-cron-form-grid textarea {
+                width:100%;
+                min-height:38px;
+                border-color:#cbd6e2;
+                border-radius:8px;
+                background:#fff;
+                box-shadow:0 1px 2px rgba(15, 23, 42, .03);
+            }
+
+            .wpopt-cron-actions input[type="datetime-local"]:focus,
+            .wpopt-cron-actions select:focus,
+            .wpopt-cron-edit input:focus,
+            .wpopt-cron-edit textarea:focus,
+            .wpopt-cron-form-grid input:focus,
+            .wpopt-cron-form-grid select:focus,
+            .wpopt-cron-form-grid textarea:focus {
+                border-color:#2271b1;
+                box-shadow:0 0 0 3px rgba(34, 113, 177, .14);
+                outline:2px solid transparent;
+            }
+
             .wpopt-cron-control.is-date { grid-area:date; }
             .wpopt-cron-control.is-schedule { grid-area:schedule; }
-            .wpopt-cron-action-buttons { grid-area:buttons; display:flex; gap:10px; flex-wrap:nowrap; }
-            .wpopt-cron-action-buttons .wps-button { display:inline-flex; align-items:center; justify-content:center; gap:6px; min-width:78px; text-align:center; min-height:34px; line-height:32px; padding:0 12px; }
-            .wpopt-cron-action-buttons .dashicons, .wpopt-cron-edit summary .dashicons { font-size:16px; width:16px; height:16px; line-height:16px; }
-            .wpopt-cron-action-buttons .wpopt-btn { box-shadow:none !important; border-radius:6px; font-weight:600; transition:background-color .12s ease, border-color .12s ease, color .12s ease, box-shadow .12s ease; }
-            .wpopt-cron-action-buttons .wpopt-btn.is-info { background:#fff; border:1px solid #8c8f94; color:#1d2327; }
-            .wpopt-cron-action-buttons .wpopt-btn.is-info:hover { background:#f6f7f7; border-color:#646970; color:#1d2327; box-shadow:0 2px 7px rgba(29, 35, 39, .12) !important; }
-            .wpopt-cron-action-buttons .wpopt-btn.is-success { background:#f6fbf7; border:1px solid #8bb99a; color:#1f6f3a; }
-            .wpopt-cron-action-buttons .wpopt-btn.is-success:hover { background:#edf7f0; border-color:#6fa67f; color:#135f2f; box-shadow:0 2px 7px rgba(31, 111, 58, .12) !important; }
-            .wpopt-cron-action-buttons .wpopt-btn.is-danger { background:#fff; border:1px solid #d0a39b; color:#8f3528; }
-            .wpopt-cron-action-buttons .wpopt-btn.is-danger:hover { background:#fcf6f5; border-color:#bd8277; color:#74291f; box-shadow:0 2px 7px rgba(143, 53, 40, .12) !important; }
-            .wpopt-cron-action-buttons .wpopt-btn:disabled { background:#f6f7f7; border-color:#dcdcde; color:#a7aaad; box-shadow:none; }
-            .wpopt-cron-edit { grid-area:edit; position:static; width:100%; min-width:0; padding:6px 10px; border:1px solid #dcdcde; border-radius:6px; background:#fff; box-sizing:border-box; }
-            .wpopt-cron-edit:hover { border-color:#c3c4c7; background:#fff; }
-            .wpopt-cron-edit summary { display:flex; align-items:center; gap:6px; cursor:pointer; color:#135e96; font-weight:600; line-height:20px; }
-            .wpopt-cron-edit[open] summary { color:#1d2327; }
-            .wpopt-cron-edit-fields { position:absolute; top:74px; left:58px; right:16px; display:grid; grid-template-columns:minmax(220px, .8fr) minmax(360px, 1.2fr); gap:12px; padding:14px; border:1px solid #dcdcde; border-radius:8px; background:#fff; box-shadow:0 10px 24px rgba(29, 35, 39, .10); box-sizing:border-box; }
-            .wpopt-cron-edit-fields:before { content:""; position:absolute; top:-6px; left:calc(190px + 300px + 28px); width:10px; height:10px; transform:rotate(45deg); background:#fff; border-left:1px solid #dcdcde; border-top:1px solid #dcdcde; }
-            .wpopt-cron-edit-fields label { display:flex; flex-direction:column; gap:6px; color:#1d2327; font-weight:600; }
-            .wpopt-cron-edit-fields input, .wpopt-cron-edit-fields textarea { border-color:#c3c4c7; border-radius:6px; background:#fff; }
-            .wpopt-cron-edit-fields textarea { min-height:90px; font-family:monospace; resize:vertical; }
-            .wpopt-cron-args { max-width:100%; max-height:56px; margin:0; padding:6px 8px; overflow:auto; white-space:pre-wrap; font-size:12px; line-height:1.35; background:#f6f7f7; border:1px solid #dcdcde; border-radius:6px; }
-            .wpopt-cron-empty { padding:18px; color:#646970; }
-            .wpopt-cron-form-grid { display:grid; grid-template-columns:repeat(2, minmax(220px, 1fr)); gap:14px; max-width:860px; }
-            .wpopt-cron-form-grid label { display:flex; flex-direction:column; gap:6px; font-weight:600; }
-            .wpopt-cron-form-grid textarea { min-height:120px; font-family:monospace; }
-            .wpopt-cron-full { grid-column:1 / -1; }
+
+            .wpopt-cron-action-buttons {
+                grid-area:buttons;
+                display:flex;
+                gap:10px;
+                flex-wrap:nowrap;
+            }
+
+            .wpopt-cron-action-buttons .wps-button {
+                display:inline-flex;
+                align-items:center;
+                justify-content:center;
+                gap:6px;
+                min-width:84px;
+                min-height:38px;
+                padding:0 13px;
+                line-height:36px;
+                text-align:center;
+            }
+
+            .wpopt-cron-action-buttons .dashicons,
+            .wpopt-cron-edit summary .dashicons {
+                font-size:16px;
+                width:16px;
+                height:16px;
+                line-height:16px;
+            }
+
+            .wpopt-cron-action-buttons .wpopt-btn {
+                box-shadow:none !important;
+                border-radius:8px;
+                font-weight:700;
+                transition:background-color .12s ease, border-color .12s ease, color .12s ease, box-shadow .12s ease;
+            }
+
+            .wpopt-cron-action-buttons .wpopt-btn.is-info {
+                background:var(--wps-btn-info-bg, #2271b1);
+                border:1px solid var(--wps-btn-info-border, #135e96);
+                color:var(--wps-btn-info-text, #ffffff);
+            }
+
+            .wpopt-cron-action-buttons .wpopt-btn.is-info:hover {
+                background:var(--wps-btn-info-bg-hover, #1c67a4);
+                border-color:var(--wps-btn-info-border-hover, #0f5a90);
+                color:var(--wps-btn-info-text, #ffffff);
+                box-shadow:var(--wps-btn-info-shadow-hover, 0 8px 16px rgb(19 94 150 / 28%)) !important;
+            }
+
+            .wpopt-cron-action-buttons .wpopt-btn.is-success {
+                background:var(--wps-btn-success-bg, #16a34a);
+                border:1px solid var(--wps-btn-success-border, #166534);
+                color:var(--wps-btn-success-text, #ffffff);
+            }
+
+            .wpopt-cron-action-buttons .wpopt-btn.is-success:hover {
+                background:#15803d;
+                border-color:#14532d;
+                color:var(--wps-btn-success-text, #ffffff);
+                box-shadow:0 8px 16px rgb(21 128 61 / 26%) !important;
+            }
+
+            .wpopt-cron-action-buttons .wpopt-btn.is-danger {
+                background:var(--wps-btn-danger-bg, #b54d33);
+                border:1px solid var(--wps-btn-danger-border, #7a2f1f);
+                color:var(--wps-btn-danger-text, #ffffff);
+            }
+
+            .wpopt-cron-action-buttons .wpopt-btn.is-danger:hover {
+                background:#963c28;
+                border-color:#6f2a1d;
+                color:var(--wps-btn-danger-text, #ffffff);
+                box-shadow:0 8px 16px rgb(140 55 36 / 28%) !important;
+            }
+
+            .wpopt-cron-action-buttons .wpopt-btn:disabled {
+                background:#f1f5f9;
+                border-color:#dce3eb;
+                color:#94a3b8;
+                box-shadow:none;
+            }
+
+            .wpopt-cron-edit {
+                grid-area:edit;
+                position:static;
+                width:100%;
+                min-width:0;
+                padding:8px 11px;
+                border:1px solid #d8e2ed;
+                border-radius:8px;
+                background:#fff;
+                box-sizing:border-box;
+            }
+
+            .wpopt-cron-edit:hover {
+                border-color:#b9c9db;
+                background:#fff;
+            }
+
+            .wpopt-cron-edit summary {
+                display:flex;
+                align-items:center;
+                gap:7px;
+                cursor:pointer;
+                color:#135e96;
+                font-weight:700;
+                line-height:20px;
+            }
+
+            .wpopt-cron-edit[open] summary {
+                color:#0f172a;
+            }
+
+            .wpopt-cron-edit-fields {
+                position:absolute;
+                top:82px;
+                left:62px;
+                right:18px;
+                display:grid;
+                grid-template-columns:minmax(220px, .8fr) minmax(360px, 1.2fr);
+                gap:12px;
+                padding:16px;
+                border:1px solid #d7e1ec;
+                border-radius:12px;
+                background:#fff;
+                box-shadow:0 14px 32px rgba(15, 23, 42, .12);
+                box-sizing:border-box;
+            }
+
+            .wpopt-cron-edit-fields:before {
+                content:"";
+                position:absolute;
+                top:-6px;
+                left:calc(190px + 300px + 28px);
+                width:10px;
+                height:10px;
+                transform:rotate(45deg);
+                background:#fff;
+                border-left:1px solid #d7e1ec;
+                border-top:1px solid #d7e1ec;
+            }
+
+            .wpopt-cron-edit-fields label {
+                display:flex;
+                flex-direction:column;
+                gap:6px;
+                color:#172033;
+                font-weight:700;
+            }
+
+            .wpopt-cron-edit-fields input,
+            .wpopt-cron-edit-fields textarea {
+                border-color:#cbd6e2;
+                border-radius:8px;
+                background:#fff;
+            }
+
+            .wpopt-cron-edit-fields textarea {
+                min-height:96px;
+                font-family:Consolas, Monaco, monospace;
+                resize:vertical;
+            }
+
+            .wpopt-cron-args {
+                max-width:100%;
+                max-height:62px;
+                margin:0;
+                padding:7px 9px;
+                overflow:auto;
+                white-space:pre-wrap;
+                font-size:12px;
+                line-height:1.35;
+                background:#f8fafc;
+                border:1px solid #d8e2ed;
+                border-radius:7px;
+            }
+
+            .wpopt-cron-empty {
+                padding:22px;
+                border:1px dashed #cbd5e1;
+                border-radius:12px;
+                background:#f8fafc;
+                color:#64748b;
+                font-weight:600;
+            }
+
+            .wpopt-cron-form-grid {
+                display:grid;
+                grid-template-columns:repeat(2, minmax(220px, 1fr));
+                gap:16px;
+                max-width:860px;
+            }
+
+            .wpopt-cron-form-grid label {
+                display:flex;
+                flex-direction:column;
+                gap:7px;
+                color:#172033;
+                font-weight:700;
+            }
+
+            .wpopt-cron-form-grid textarea {
+                min-height:126px;
+                font-family:Consolas, Monaco, monospace;
+            }
+
+            .wpopt-cron-full {
+                grid-column:1 / -1;
+                display:flex;
+                align-items:center;
+                gap:12px;
+                flex-wrap:wrap;
+            }
+
             .wpopt-cron-muted { color:#64748b; }
+
             html:has(#wpopt-cron-create-event:target),
             body:has(#wpopt-cron-create-event:target) { overflow:hidden; }
             body:has(#wpopt-cron-create-event:target) #wpwrap { height:100vh; overflow:hidden; }
-            .wpopt-cron-modal { display:none; position:fixed; inset:0; width:100vw; height:100vh; place-items:center; padding:clamp(16px, 4vh, 40px); overflow:hidden; z-index:2147483000; }
+
+            .wpopt-cron-modal {
+                display:none;
+                position:fixed;
+                inset:0;
+                width:100vw;
+                height:100vh;
+                place-items:center;
+                padding:clamp(16px, 4vh, 40px);
+                overflow:hidden;
+                z-index:2147483000;
+            }
+
             .wpopt-cron-modal:target { display:grid; }
-            .wpopt-cron-modal-backdrop { position:fixed; inset:0; background:rgba(15, 23, 42, .56); }
-            .wpopt-cron-modal-panel { position:relative; z-index:1; width:min(920px, calc(100vw - 32px)); max-height:min(760px, calc(100vh - 64px)); overflow:auto; margin:auto; padding:0 24px 24px; border:1px solid #d9e5f1; border-radius:12px; background:#fff; box-shadow:0 28px 80px rgba(15, 23, 42, .34); }
-            .wpopt-cron-modal-head { position:sticky; top:0; z-index:2; display:flex; align-items:center; justify-content:space-between; gap:16px; margin:0 -24px 20px; padding:18px 24px; border-bottom:1px solid #d9e5f1; background:#fff; }
-            .wpopt-cron-modal-head h2 { margin:0; padding:0; border:0; color:#1d2327; font-size:20px; line-height:1.25; }
-            .wpopt-cron-modal-close { display:inline-flex; align-items:center; justify-content:center; width:36px; height:36px; border:1px solid #cbd5e1; border-radius:8px; background:#f8fafc; color:#1d2327; text-decoration:none; }
-            .wpopt-cron-modal-close:hover, .wpopt-cron-modal-close:focus { background:#eef4ff; border-color:#aac8f0; color:#0b57d0; }
+            .wpopt-cron-modal-backdrop { position:fixed; inset:0; background:rgba(15, 23, 42, .58); backdrop-filter:blur(2px); }
+
+            .wpopt-cron-modal-panel {
+                position:relative;
+                z-index:1;
+                width:min(920px, calc(100vw - 32px));
+                max-height:min(760px, calc(100vh - 64px));
+                overflow:auto;
+                margin:auto;
+                padding:0 26px 26px;
+                border:1px solid #d9e5f1;
+                border-radius:16px;
+                background:#fff;
+                box-shadow:0 28px 80px rgba(15, 23, 42, .34);
+            }
+
+            .wpopt-cron-modal-head {
+                position:sticky;
+                top:0;
+                z-index:2;
+                display:flex;
+                align-items:center;
+                justify-content:space-between;
+                gap:16px;
+                margin:0 -26px 22px;
+                padding:19px 26px;
+                border-bottom:1px solid #d9e5f1;
+                background:#fff;
+            }
+
+            .wpopt-cron-modal-head h2 {
+                margin:0;
+                padding:0;
+                border:0;
+                color:#0f172a;
+                font-size:20px;
+                font-weight:800;
+                line-height:1.25;
+            }
+
+            .wpopt-cron-modal-close {
+                display:inline-flex;
+                align-items:center;
+                justify-content:center;
+                width:36px;
+                height:36px;
+                border:1px solid #cbd5e1;
+                border-radius:9px;
+                background:#f8fafc;
+                color:#172033;
+                text-decoration:none;
+            }
+
+            .wpopt-cron-modal-close:hover,
+            .wpopt-cron-modal-close:focus {
+                background:#eef4ff;
+                border-color:#aac8f0;
+                color:#0b57d0;
+            }
+
             .wpopt-cron-modal .wpopt-cron-form-grid { max-width:none; }
-            .wpopt-cron-schedules { border-radius:8px; overflow:hidden; }
+
+            .wpopt-cron-schedules-wrap {
+                width:100%;
+                max-width:1120px;
+                margin-right:auto;
+                margin-left:0;
+                overflow:hidden;
+                border:1px solid #d7e4f2;
+                border-radius:12px;
+                background:#ffffff;
+                box-shadow:0 10px 26px rgba(15, 44, 82, .07);
+                box-sizing:border-box;
+            }
+
+            .wpopt-cron-schedules {
+                table-layout:fixed;
+                width:100%;
+                margin:0;
+                overflow:hidden;
+                border:0;
+                border-radius:0;
+                box-shadow:none;
+                border-collapse:separate;
+                border-spacing:0;
+            }
+
+            .wpopt-cron-schedules,
+            .wpopt-cron-schedules *,
+            .wpopt-cron-schedules-wrap + h3 + .wpopt-cron-actions,
+            .wpopt-cron-schedules-wrap + h3 + .wpopt-cron-actions * {
+                box-sizing:border-box;
+            }
+
+            .wpopt-cron-schedules thead th {
+                padding:13px 14px;
+                border:0;
+                border-bottom:1px solid #d7e4f2;
+                background:#f5f8fc;
+                color:#3f536c;
+                font-size:11px;
+                font-weight:800;
+                letter-spacing:.04em;
+                text-transform:uppercase;
+            }
+
+            .wpopt-cron-schedules tbody td {
+                padding:13px 14px;
+                border:0;
+                border-bottom:1px solid #edf2f7;
+                color:#263247;
+                vertical-align:middle;
+                overflow-wrap:anywhere;
+            }
+
+            .wpopt-cron-schedules tbody tr:nth-child(even) td {
+                background:#fbfdff;
+            }
+
+            .wpopt-cron-schedules tbody tr:hover td {
+                background:#f3f8ff;
+            }
+
+            .wpopt-cron-schedules tbody tr:last-child td {
+                border-bottom:0;
+            }
+
+            .wpopt-cron-schedules th:nth-child(1),
+            .wpopt-cron-schedules td:nth-child(1) { width:26%; }
+            .wpopt-cron-schedules th:nth-child(2),
+            .wpopt-cron-schedules td:nth-child(2) { width:38%; }
+            .wpopt-cron-schedules th:nth-child(3),
+            .wpopt-cron-schedules td:nth-child(3) { width:13%; }
+            .wpopt-cron-schedules th:nth-child(4),
+            .wpopt-cron-schedules td:nth-child(4) { width:13%; }
+            .wpopt-cron-schedules th:nth-child(5),
+            .wpopt-cron-schedules td:nth-child(5) { width:10%; text-align:right; }
+
+            .wpopt-cron-schedules code {
+                display:inline-block;
+                max-width:100%;
+                padding:5px 7px;
+                border:1px solid #dce6f2;
+                border-radius:7px;
+                background:#f6f8fb;
+                color:#172033;
+                font-size:12px;
+                line-height:1.25;
+                white-space:normal;
+                overflow-wrap:anywhere;
+            }
+
+            .wpopt-cron-schedule-label {
+                display:block;
+                max-width:100%;
+                color:#172033;
+                line-height:1.35;
+                overflow-wrap:anywhere;
+            }
+
+            .wpopt-cron-pill {
+                display:inline-flex;
+                align-items:center;
+                max-width:100%;
+                min-height:28px;
+                padding:0 10px;
+                border:1px solid #d8e6f5;
+                border-radius:999px;
+                background:#f8fbff;
+                color:#2f5278;
+                font-size:12px;
+                font-weight:800;
+                line-height:1;
+                white-space:normal;
+            }
+
+            .wpopt-cron-pill.is-source-custom {
+                border-color:#b7dfc3;
+                background:#effaf2;
+                color:#166534;
+            }
+
+            .wpopt-cron-pill.is-readonly {
+                border-color:#d9e2ec;
+                background:#f8fafc;
+                color:#52637a;
+            }
+
+            .wpopt-cron-schedules td form {
+                margin:0;
+            }
+
+            .wpopt-cron-schedules-wrap + h3 {
+                width:100%;
+                max-width:1120px;
+                margin:22px 0 12px;
+                color:#0f172a;
+                font-size:16px;
+                font-weight:800;
+            }
+
+            .wpopt-cron-schedules-wrap + h3 + .wpopt-cron-actions {
+                display:grid;
+                grid-template-columns:minmax(0, 1fr) minmax(0, 1.2fr) minmax(120px, .55fr) auto;
+                grid-template-areas:none;
+                gap:12px;
+                align-items:center;
+                padding:16px;
+                width:100%;
+                max-width:1120px;
+                border:1px solid #d7e4f2;
+                border-radius:12px;
+                background:#f8fbff;
+                box-sizing:border-box;
+            }
+
+            .wpopt-cron-schedules-wrap + h3 + .wpopt-cron-actions input {
+                width:100%;
+                min-width:0;
+                min-height:38px;
+                border-color:#cbd6e2;
+                border-radius:8px;
+                background:#fff;
+                box-sizing:border-box;
+            }
+
+            .wpopt-cron-schedules-wrap + h3 + .wpopt-cron-actions .wpopt-btn {
+                width:100%;
+                min-height:38px;
+                border-radius:8px;
+                font-weight:700;
+                white-space:nowrap;
+            }
+
             @media (max-width: 1280px) {
                 .wpopt-cron-event-summary { grid-template-columns:42px repeat(2, minmax(180px, 1fr)) repeat(2, minmax(130px, .8fr)) 24px; }
                 .wpopt-cron-actions { grid-template-columns:minmax(180px, 1fr) minmax(200px, 1fr) minmax(220px, 1fr); grid-template-areas:"date schedule buttons" "edit edit edit"; }
-                .wpopt-cron-edit-fields { top:118px; left:58px; right:16px; }
+                .wpopt-cron-edit-fields { top:126px; left:62px; right:18px; }
                 .wpopt-cron-edit-fields:before { left:24px; }
-                .wpopt-cron-event-actions:has(.wpopt-cron-edit[open]) { padding-bottom:210px; }
+                .wpopt-cron-event-actions:has(.wpopt-cron-edit[open]) { padding-bottom:218px; }
             }
+
             @media (max-width: 960px) {
                 .wpopt-cron-events-header { align-items:flex-start; flex-direction:column; }
-                .wpopt-cron-toolbar, .wpopt-cron-toolbar .search-box, .wpopt-cron-toolbar input[type="search"] { width:100%; }
-                .wpopt-cron-toolbar .search-box { flex-wrap:wrap; }
+                .wpopt-cron-toolbar, .wpopt-cron-toolbar .search-box, .wpopt-cron-toolbar input[type="search"] { width:100%; max-width:none; }
+                .wpopt-cron-toolbar .search-box { flex-wrap:wrap; justify-content:flex-start; }
                 .wpopt-cron-toolbar .wpopt-cron-create-button { justify-content:center; }
+                .wpopt-cron-schedules-wrap + h3 + .wpopt-cron-actions { grid-template-columns:1fr 1fr; }
+                .wpopt-cron-schedules th:nth-child(1),
+                .wpopt-cron-schedules td:nth-child(1) { width:30%; }
+                .wpopt-cron-schedules th:nth-child(2),
+                .wpopt-cron-schedules td:nth-child(2) { width:34%; }
+                .wpopt-cron-schedules th:nth-child(3),
+                .wpopt-cron-schedules td:nth-child(3) { width:14%; }
+                .wpopt-cron-schedules th:nth-child(4),
+                .wpopt-cron-schedules td:nth-child(4) { width:12%; }
+                .wpopt-cron-schedules th:nth-child(5),
+                .wpopt-cron-schedules td:nth-child(5) { width:10%; }
                 .wpopt-cron-event-summary { grid-template-columns:36px 1fr 1fr; }
                 .wpopt-cron-chevron { display:none; }
-                .wpopt-cron-event-actions { padding-left:16px; }
+                .wpopt-cron-event-actions { padding-left:18px; }
                 .wpopt-cron-actions { grid-template-columns:1fr 1fr; grid-template-areas:"date schedule" "edit edit" "buttons buttons"; }
-                .wpopt-cron-edit-fields { top:136px; left:16px; right:16px; }
-                .wpopt-cron-event-actions:has(.wpopt-cron-edit[open]) { padding-bottom:230px; }
+                .wpopt-cron-edit-fields { top:144px; left:18px; right:18px; }
+                .wpopt-cron-event-actions:has(.wpopt-cron-edit[open]) { padding-bottom:238px; }
             }
+
             @media (max-width: 782px) {
+                .wpopt-cron-kpis { grid-template-columns:1fr; }
                 .wpopt-cron-form-grid { grid-template-columns:1fr; }
                 .wpopt-cron-modal { padding:16px; }
-                .wpopt-cron-modal-panel { max-height:calc(100vh - 32px); }
-                .wpopt-cron-events-title h2 { font-size:22px; }
+                .wpopt-cron-modal-panel { max-height:calc(100vh - 32px); padding-right:18px; padding-left:18px; }
+                .wpopt-cron-modal-head { margin-right:-18px; margin-left:-18px; padding-right:18px; padding-left:18px; }
+                .wpopt-cron-events-title h2 { font-size:19px; }
                 .wpopt-cron-event-summary { grid-template-columns:36px 1fr; }
+                .wpopt-cron-schedules-wrap + h3 + .wpopt-cron-actions { grid-template-columns:1fr; }
+                .wpopt-cron-schedules thead { display:none; }
+                .wpopt-cron-schedules,
+                .wpopt-cron-schedules tbody,
+                .wpopt-cron-schedules tr,
+                .wpopt-cron-schedules td { display:block; width:100%; }
+                .wpopt-cron-schedules tr { padding:12px 14px; border-bottom:1px solid #edf2f7; }
+                .wpopt-cron-schedules tr:last-child { border-bottom:0; }
+                .wpopt-cron-schedules tbody td {
+                    display:grid;
+                    grid-template-columns:96px minmax(0, 1fr);
+                    gap:12px;
+                    align-items:center;
+                    padding:7px 0;
+                    border:0;
+                    background:transparent !important;
+                    text-align:left !important;
+                }
+                .wpopt-cron-schedules td::before {
+                    content:attr(data-label);
+                    color:#64748b;
+                    font-size:10px;
+                    font-weight:800;
+                    letter-spacing:.04em;
+                    text-transform:uppercase;
+                }
+                .wpopt-cron-schedules td form { justify-self:start; }
                 .wpopt-cron-actions { grid-template-columns:1fr; grid-template-areas:"date" "schedule" "edit" "buttons"; }
                 .wpopt-cron-action-buttons { flex-wrap:wrap; }
-                .wpopt-cron-event-actions:has(.wpopt-cron-edit[open]) { padding-bottom:260px; }
-                .wpopt-cron-edit-fields { top:178px; grid-template-columns:1fr; }
+                .wpopt-cron-action-buttons .wps-button { flex:1 1 120px; }
+                .wpopt-cron-event-actions:has(.wpopt-cron-edit[open]) { padding-bottom:268px; }
+                .wpopt-cron-edit-fields { top:186px; grid-template-columns:1fr; }
             }
         </style>
         <div class="wpopt-cron-kpis">
@@ -671,8 +1532,8 @@ class Mod_Cron extends Module
                 <div class="wpopt-cron-empty"><?php _e('No cron events found.', 'wpopt'); ?></div>
             <?php endif; ?>
             <?php foreach ($events as $event): ?>
-                <article class="wpopt-cron-event-row <?php echo $event['is_due'] ? 'is-due' : ''; ?>">
-                    <div class="wpopt-cron-event-summary">
+                <details class="wpopt-cron-event-row <?php echo $event['is_due'] ? 'is-due' : ''; ?>">
+                    <summary class="wpopt-cron-event-summary">
                         <span class="wpopt-cron-row-icon dashicons dashicons-calendar-alt" aria-hidden="true"></span>
                         <div class="wpopt-cron-time">
                             <span class="wpopt-cron-cell-label"><?php _e('Next run', 'wpopt'); ?></span>
@@ -700,7 +1561,7 @@ class Mod_Cron extends Module
                             <span class="wpopt-cron-badge <?php echo $event['callback_found'] ? 'is-ok' : 'is-bad'; ?>"><?php echo $event['callback_found'] ? esc_html__('Callback found', 'wpopt') : esc_html__('Missing callback', 'wpopt'); ?></span>
                         </div>
                         <span class="wpopt-cron-chevron dashicons dashicons-arrow-down-alt2" aria-hidden="true"></span>
-                    </div>
+                    </summary>
                     <div class="wpopt-cron-event-actions">
                         <form method="POST" class="wpopt-cron-actions">
                             <?php wp_nonce_field(self::ACTION_NONCE); ?>
@@ -733,7 +1594,7 @@ class Mod_Cron extends Module
                             </div>
                         </form>
                     </div>
-                </article>
+                </details>
             <?php endforeach; ?>
         </div>
         <?php
@@ -744,39 +1605,46 @@ class Mod_Cron extends Module
     {
         ob_start();
         ?>
-        <table class="widefat striped wps wpopt-cron-schedules">
-            <thead>
-            <tr>
-                <th><?php _e('Slug', 'wpopt'); ?></th>
-                <th><?php _e('Label', 'wpopt'); ?></th>
-                <th><?php _e('Interval', 'wpopt'); ?></th>
-                <th><?php _e('Source', 'wpopt'); ?></th>
-                <th><?php _e('Actions', 'wpopt'); ?></th>
-            </tr>
-            </thead>
-            <tbody>
-            <?php foreach ($schedules as $slug => $schedule): ?>
+        <div class="wpopt-cron-schedules-wrap">
+            <table class="widefat striped wpopt-cron-schedules">
+                <thead>
                 <tr>
-                    <td><code><?php echo esc_html($slug); ?></code></td>
-                    <td><?php echo esc_html($schedule['display'] ?? $slug); ?></td>
-                    <td><?php echo esc_html($this->format_interval(absint($schedule['interval'] ?? 0))); ?></td>
-                    <td><?php echo isset($custom_schedules[$slug]) ? esc_html__('WP Optimizer', 'wpopt') : esc_html__('WordPress/plugin', 'wpopt'); ?></td>
-                    <td>
-                        <?php if (isset($custom_schedules[$slug])): ?>
-                            <form method="POST">
-                                <?php wp_nonce_field(self::ACTION_NONCE); ?>
-                                <input type="hidden" name="wpopt_cron_action" value="delete_schedule">
-                                <input type="hidden" name="schedule_slug" value="<?php echo esc_attr($slug); ?>">
-                                <button type="submit" class="wps wps-button wpopt-btn is-danger" onclick="return confirm('<?php echo esc_js(__('Delete this custom schedule?', 'wpopt')); ?>')"><?php _e('Delete', 'wpopt'); ?></button>
-                            </form>
-                        <?php else: ?>
-                            <span class="wpopt-cron-muted"><?php _e('Read only', 'wpopt'); ?></span>
-                        <?php endif; ?>
-                    </td>
+                    <th><?php _e('Slug', 'wpopt'); ?></th>
+                    <th><?php _e('Label', 'wpopt'); ?></th>
+                    <th><?php _e('Interval', 'wpopt'); ?></th>
+                    <th><?php _e('Source', 'wpopt'); ?></th>
+                    <th><?php _e('Actions', 'wpopt'); ?></th>
                 </tr>
-            <?php endforeach; ?>
-            </tbody>
-        </table>
+                </thead>
+                <tbody>
+                <?php foreach ($schedules as $slug => $schedule): ?>
+                    <?php $is_custom_schedule = isset($custom_schedules[$slug]); ?>
+                    <tr>
+                        <td data-label="<?php esc_attr_e('Slug', 'wpopt'); ?>"><code><?php echo esc_html($slug); ?></code></td>
+                        <td data-label="<?php esc_attr_e('Label', 'wpopt'); ?>"><span class="wpopt-cron-schedule-label"><?php echo esc_html($schedule['display'] ?? $slug); ?></span></td>
+                        <td data-label="<?php esc_attr_e('Interval', 'wpopt'); ?>"><span class="wpopt-cron-pill"><?php echo esc_html($this->format_interval(absint($schedule['interval'] ?? 0))); ?></span></td>
+                        <td data-label="<?php esc_attr_e('Source', 'wpopt'); ?>">
+                            <span class="wpopt-cron-pill <?php echo $is_custom_schedule ? 'is-source-custom' : ''; ?>">
+                                <?php echo $is_custom_schedule ? esc_html__('WP Optimizer', 'wpopt') : esc_html__('WordPress/plugin', 'wpopt'); ?>
+                            </span>
+                        </td>
+                        <td data-label="<?php esc_attr_e('Actions', 'wpopt'); ?>">
+                            <?php if ($is_custom_schedule): ?>
+                                <form method="POST">
+                                    <?php wp_nonce_field(self::ACTION_NONCE); ?>
+                                    <input type="hidden" name="wpopt_cron_action" value="delete_schedule">
+                                    <input type="hidden" name="schedule_slug" value="<?php echo esc_attr($slug); ?>">
+                                    <button type="submit" class="wps wps-button wpopt-btn is-danger" onclick="return confirm('<?php echo esc_js(__('Delete this custom schedule?', 'wpopt')); ?>')"><?php _e('Delete', 'wpopt'); ?></button>
+                                </form>
+                            <?php else: ?>
+                                <span class="wpopt-cron-pill is-readonly"><?php _e('Read only', 'wpopt'); ?></span>
+                            <?php endif; ?>
+                        </td>
+                    </tr>
+                <?php endforeach; ?>
+                </tbody>
+            </table>
+        </div>
         <h3><?php _e('Add custom schedule', 'wpopt'); ?></h3>
         <form method="POST" class="wpopt-cron-actions">
             <?php wp_nonce_field(self::ACTION_NONCE); ?>
@@ -818,11 +1686,16 @@ class Mod_Cron extends Module
 
     private function get_custom_schedules(): array
     {
+        if ($this->custom_schedules !== null) {
+            return $this->custom_schedules;
+        }
+
         $module_settings = wps('wpopt')->settings->get($this->slug, array());
         $raw_schedules = $module_settings['custom_schedules'] ?? $this->option('custom_schedules', array());
 
         if (!is_array($raw_schedules)) {
-            return array();
+            $this->custom_schedules = array();
+            return $this->custom_schedules;
         }
 
         $schedules = array();
@@ -846,7 +1719,9 @@ class Mod_Cron extends Module
             );
         }
 
-        return $schedules;
+        $this->custom_schedules = $schedules;
+
+        return $this->custom_schedules;
     }
 
     private function save_custom_schedules(array $custom_schedules): bool
@@ -863,7 +1738,13 @@ class Mod_Cron extends Module
 
         $settings[$this->slug]['custom_schedules'] = $custom_schedules;
 
-        return (bool)wps('wpopt')->settings->reset($settings);
+        $saved = (bool)wps('wpopt')->settings->reset($settings);
+
+        if ($saved) {
+            $this->custom_schedules = $custom_schedules;
+        }
+
+        return $saved;
     }
 
     private function parse_json_args(string $raw_args, ?bool &$valid): array
@@ -975,22 +1856,35 @@ class Mod_Cron extends Module
 
     private function format_interval(int $seconds): string
     {
+        if (isset($this->formatted_intervals[$seconds])) {
+            return $this->formatted_intervals[$seconds];
+        }
+
         if ($seconds < MINUTE_IN_SECONDS) {
-            return sprintf(_n('%s second', '%s seconds', $seconds, 'wpopt'), number_format_i18n($seconds));
+            return $this->formatted_intervals[$seconds] = sprintf(_n('%s second', '%s seconds', $seconds, 'wpopt'), number_format_i18n($seconds));
         }
 
         if ($seconds < HOUR_IN_SECONDS) {
             $minutes = (int)round($seconds / MINUTE_IN_SECONDS);
-            return sprintf(_n('%s minute', '%s minutes', $minutes, 'wpopt'), number_format_i18n($minutes));
+            return $this->formatted_intervals[$seconds] = sprintf(_n('%s minute', '%s minutes', $minutes, 'wpopt'), number_format_i18n($minutes));
         }
 
         if ($seconds < DAY_IN_SECONDS) {
             $hours = round($seconds / HOUR_IN_SECONDS, 1);
-            return sprintf(_n('%s hour', '%s hours', (int)ceil($hours), 'wpopt'), number_format_i18n($hours, 1));
+            return $this->formatted_intervals[$seconds] = sprintf(_n('%s hour', '%s hours', (int)ceil($hours), 'wpopt'), number_format_i18n($hours, 1));
         }
 
         $days = round($seconds / DAY_IN_SECONDS, 1);
-        return sprintf(_n('%s day', '%s days', (int)ceil($days), 'wpopt'), number_format_i18n($days, 1));
+        return $this->formatted_intervals[$seconds] = sprintf(_n('%s day', '%s days', (int)ceil($days), 'wpopt'), number_format_i18n($days, 1));
+    }
+
+    private function has_callback(string $hook): bool
+    {
+        if (!array_key_exists($hook, $this->callback_lookup)) {
+            $this->callback_lookup[$hook] = has_action($hook) !== false;
+        }
+
+        return $this->callback_lookup[$hook];
     }
 
     private function format_args_json(array $args): string

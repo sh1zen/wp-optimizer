@@ -46,7 +46,7 @@ class Mod_WP_Updates extends Module
 
             remove_action('wp_version_check', 'wp_version_check');
 
-            wp_clear_scheduled_hook('wp_version_check');
+            $this->clear_scheduled_hook('wp_version_check');
         }
 
         if ($this->option('page-updates')) {
@@ -67,7 +67,7 @@ class Mod_WP_Updates extends Module
             remove_action('load-update.php', 'wp_update_plugins');
             remove_action('admin_init', '_maybe_update_plugins');
             remove_action('wp_update_plugins', 'wp_update_plugins');
-            wp_clear_scheduled_hook('wp_update_plugins');
+            $this->clear_scheduled_hook('wp_update_plugins');
 
             add_filter('auto_update_plugin', '__return_false');
         }
@@ -79,7 +79,7 @@ class Mod_WP_Updates extends Module
             remove_action('load-update.php', 'wp_update_themes');
             remove_action('wp_update_themes', 'wp_update_themes');
             remove_action('admin_init', '_maybe_update_themes');
-            wp_clear_scheduled_hook('wp_update_themes');
+            $this->clear_scheduled_hook('wp_update_themes');
 
             add_filter('auto_update_theme', '__return_false');
         }
@@ -119,6 +119,13 @@ class Mod_WP_Updates extends Module
             add_filter('auto_core_update_send_email', '__return_false');
             add_filter('automatic_updates_send_debug_email ', '__return_false');
             add_filter('send_core_update_notification_email', '__return_false');
+        }
+    }
+
+    private function clear_scheduled_hook(string $hook): void
+    {
+        if (wp_next_scheduled($hook)) {
+            wp_clear_scheduled_hook($hook);
         }
     }
 

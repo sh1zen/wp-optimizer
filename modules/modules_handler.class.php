@@ -15,6 +15,15 @@ class Mod_Modules_Handler extends Module
 
     private array $modules_slug2name = [];
 
+    private array $inactive_by_default = [
+        'activitylog',
+        'performance_monitor',
+        'wp_mail',
+        'wp_updates',
+        'widget',
+        'wp_info',
+    ];
+
     protected string $context = 'wpopt';
 
     public function restricted_access($context = ''): bool
@@ -31,7 +40,7 @@ class Mod_Modules_Handler extends Module
 
     protected function init(): void
     {
-        $modules = wps('wpopt')->moduleHandler->get_modules(array('excepts' => array('modules_handler', 'settings', 'tracking')), false);
+        $modules = wps('wpopt')->moduleHandler->get_modules(array('excepts' => array('cloudflare', 'modules_handler', 'settings', 'tracking')), false);
 
         $this->modules_slug2name = array_combine(array_column($modules, 'slug'), array_column($modules, 'name'));
     }
@@ -42,10 +51,15 @@ class Mod_Modules_Handler extends Module
 
         foreach ($this->modules_slug2name as $slug => $name) {
 
-            $settings[] = $this->setting_field($name, $slug, 'checkbox', ['value' => $this->option($slug, true)]);
+            $settings[] = $this->setting_field($name, $slug, 'checkbox', ['value' => $this->option($slug, $this->is_active_by_default($slug))]);
         }
 
         return $settings;
+    }
+
+    private function is_active_by_default(string $slug): bool
+    {
+        return !in_array($slug, $this->inactive_by_default, true);
     }
 }
 

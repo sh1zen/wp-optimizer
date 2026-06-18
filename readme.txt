@@ -5,7 +5,7 @@ Donate link: https://www.paypal.com/donate?business=dev.sh1zen%40outlook.it&item
 Requires at least: 5.0.0
 Tested up to: 7.0.0
 Requires PHP: 7.4
-Stable tag: 2.7.0
+Stable tag: 2.8.0
 License: GPLv2 or later
 
 WordPress performance optimization plugin with cache, minify, image optimization, database cleanup, security hardening and server tuning.
@@ -221,7 +221,14 @@ If needed, open the Settings module to restore or reset options, then re-enable 
 
 == Changelog ==
 
-= 2.7.0 =
+= 2.8.0 =
+
+* updated UI/UX
+* added PageSpeed module
+* improved core performances
+* fixed some bugs
+
+= 2.7.1 =
 
 * added Cron module to manage scheduled tasks
 * extended support to WordPress 7.0

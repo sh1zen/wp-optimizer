@@ -40,19 +40,6 @@ class Mod_Media extends Module
         $this->image_processor_loaded = true;
     }
 
-    public function media_lazyload_maker($buffer)
-    {
-        if (!UtilEnv::is_safe_buffering()) {
-            return $buffer;
-        }
-
-        return preg_replace(
-            "#<img(?!.*?\bloading\b)([^']*?) src=['\"]([^'\"]*?)['\"]([^>]*?)>#",
-            "<img$1 src='$2' loading='lazy'$3>",
-            $buffer
-        );
-    }
-
     public function cron_setting_fields(): array
     {
         return [
@@ -225,7 +212,7 @@ class Mod_Media extends Module
             $table->prepare_items();
 
             ?>
-            <form method="post" action="<?php echo wps_module_panel_url($this->slug, "media-cleaner"); ?>">
+            <form class="wps-list-table-form wpopt-media-cleaner-form" method="post" action="<?php echo wps_module_panel_url($this->slug, "media-cleaner"); ?>">
                 <?php $table->display(); ?>
             </form>
             <?php
@@ -249,7 +236,7 @@ class Mod_Media extends Module
                     <strong><?php echo sprintf(__('Read related <a href="%s">FAQ</a>.', 'wpopt'), admin_url('admin.php?page=wpopt-faqs')) ?></strong>
                 </li>
                 <li>
-                    <strong><?php echo sprintf(__('Set up your optimization parameters <a href="%s">here</a>.', 'wpopt'), admin_url('admin.php?page=wpopt-modules-settings#settings-media')); ?></strong>
+                    <strong><?php echo sprintf(__('Set up your optimization parameters <a href="%s">here</a>.', 'wpopt'), wps_module_setting_url('wpopt', 'media')); ?></strong>
                 </li>
             </ul>
             <strong><?php echo sprintf(__('Note that optimization will run in background and time required depends on number of media you have. <a href="%s">Cron</a> must be active.', 'wpopt'), admin_url('admin.php?page=wpopt-settings#settings-cron')); ?></strong>
@@ -323,12 +310,11 @@ class Mod_Media extends Module
         return (string)ob_get_clean();
     }
 
-    public function render_sub_modules(): void
+    public function render_sub_modules(bool $standalone = true): void
     {
         ?>
         <section class="wps-wrap wpopt-media-optimizer-page">
             <block class="wps">
-                <section class="wps-header"><h1>Media Optimizer</h1></section>
                 <?php
                 echo Graphic::generateHTML_tabs_panels(array(
                         array(
@@ -527,20 +513,11 @@ class Mod_Media extends Module
             $this->load_image_processor();
         }
 
-        if ($this->option('loading_lazy', false)) {
-
-            ob_start([$this, "media_lazyload_maker"]);
-        }
     }
 
     protected function setting_fields($filter = ''): array
     {
         return $this->group_setting_fields(
-
-            $this->group_setting_fields(
-                $this->setting_field(__('Force images to use browser built-in loading lazy advantages', 'wpopt'), "loading_lazy", "checkbox"),
-            ),
-
             $this->group_setting_fields(
                 $this->setting_field(__('Images optimization preferences', 'wpopt'), false, 'separator'),
                 $this->setting_field(__('Auto optimize uploads', 'wpopt'), 'auto_optimize_uploads', 'link', ['value' => ['text' => __('set it here', 'wpopt'), 'href' => admin_url('admin.php?page=wpopt-settings#settings-cron')]]),
@@ -565,7 +542,7 @@ class Mod_Media extends Module
                 $this->setting_field(__('Formats', 'wpopt'), false, 'separator'),
                 $this->setting_field(__('Convert all images to new webp format', 'wpopt'), "convert_to_webp", "checkbox", ['default_value' => false]),
                 $this->setting_field(__('Optimize JPG/JPEG', 'wpopt'), "format.jpg", "checkbox", ['default_value' => true]),
-                $this->setting_field(__('Optimize PNG', 'wpopt'), "format.png", "checkbox", ['default_value' => false]),
+                $this->setting_field(__('Optimize PNG', 'wpopt'), "format.png", "checkbox", ['default_value' => true]),
                 $this->setting_field(__('Optimize GIF', 'wpopt'), "format.gif", "checkbox", ['default_value' => true]),
                 $this->setting_field(__('Optimize WEBP', 'wpopt'), "format.webp", "checkbox", ['default_value' => true]),
                 $this->setting_field(__('Optimize other formats (tiff, heic, bmp)', 'wpopt'), "format.others", "checkbox", ['default_value' => false]),
@@ -595,4 +572,3 @@ class Mod_Media extends Module
 }
 
 return __NAMESPACE__;
-
