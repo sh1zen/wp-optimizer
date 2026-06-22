@@ -21,10 +21,13 @@ class DB_List_Table extends \WP_List_Table
      */
     private $response_type;
 
+    private string $pagination_base_url;
+
     /** Class constructor */
-    public function __construct()
+    public function __construct(string $pagination_base_url = '')
     {
         $this->response_type = 'updated';
+        $this->pagination_base_url = $pagination_base_url;
 
         parent::__construct(array(
             'singular' => __('Table', 'wpopt'),
@@ -131,7 +134,34 @@ class DB_List_Table extends \WP_List_Table
         }
 
         $current = max(1, min((int)$this->get_pagenum(), $total_pages));
-        $base_url = remove_query_arg('paged');
+        $base_url = $this->pagination_base_url ?: remove_query_arg('paged');
+        $base_url = remove_query_arg('paged', $base_url);
+
+        foreach (array('orderby', 'order', 's') as $query_arg) {
+            if (!isset($_REQUEST[$query_arg]) || !is_scalar($_REQUEST[$query_arg])) {
+                continue;
+            }
+
+            $query_value = sanitize_text_field(wp_unslash((string)$_REQUEST[$query_arg]));
+
+            if ('' === $query_value) {
+                continue;
+            }
+
+            if ('orderby' === $query_arg && !in_array($query_value, array('table_name', 'table_rows', 'data_length', 'data_free', 'engine'), true)) {
+                continue;
+            }
+
+            if ('order' === $query_arg) {
+                $query_value = strtoupper($query_value);
+
+                if (!in_array($query_value, array('ASC', 'DESC'), true)) {
+                    continue;
+                }
+            }
+
+            $base_url = add_query_arg($query_arg, $query_value, $base_url);
+        }
 
         $page_url = static function (int $page) use ($base_url): string {
             return esc_url(add_query_arg('paged', max(1, $page), $base_url));
@@ -151,7 +181,7 @@ class DB_List_Table extends \WP_List_Table
         $last_url = $current < $total_pages ? $page_url($total_pages) : null;
         ?>
         <div class="tablenav-pages <?php echo esc_attr($which); ?>">
-            <span class="displaying-num"><?php echo esc_html(sprintf($total_items === 1 ? '%s elemento' : '%s elementi', number_format_i18n($total_items))); ?></span>
+            <span class="displaying-num"><?php echo esc_html(sprintf(_n('%s item', '%s items', $total_items, 'wpopt'), number_format_i18n($total_items))); ?></span>
             <span class="pagination-links">
                 <?php echo $nav_button('first-page', __('First page', 'wpopt'), '<<', $first_url); ?>
                 <?php echo $nav_button('prev-page', __('Previous page', 'wpopt'), '<', $prev_url); ?>
@@ -244,7 +274,7 @@ class DB_List_Table extends \WP_List_Table
 
         // security check!
         if (empty($_POST['_wpnonce']) || !UtilEnv::verify_nonce('bulk-' . $this->_args['plural'], $_POST['_wpnonce'])) {
-            wp_die('Security check failed!');
+            wp_die(esc_html__('Security check failed.', 'wpopt'));
         }
 
         wps('wpopt')->options->remove_all('cache', "get_tables_data");
@@ -277,7 +307,12 @@ class DB_List_Table extends \WP_List_Table
             $this->response_type = 'error';
         }
 
-        $this->response_message = "{$processed} / " . count($tables) . __(" tables where {$action_translators[$this->current_action()]} successfully!", 'wpopt');
+        $this->response_message = sprintf(
+            __('%1$s / %2$s tables were %3$s successfully!', 'wpopt'),
+            number_format_i18n($processed),
+            number_format_i18n(count($tables)),
+            $action_translators[$this->current_action()]
+        );
     }
 
     /**
@@ -346,12 +381,12 @@ class DB_List_Table extends \WP_List_Table
             }
 
             $items_to_display[] = array(
-                'table_name'  => $table['TABLE_NAME'] ?? __('Table Name N/D', 'wpopt'),
-                'table_rows'  => $table['TABLE_ROWS'] ?? __('Rows N/D', 'wpopt'),
-                'data_length' => $table['DATA_LENGTH'] ?? __('Length N/D', 'wpopt'),
-                'data_free'   => $table['DATA_FREE'] ?? __('N/D', 'wpopt'),
+                'table_name'  => $table['TABLE_NAME'] ?? __('Table name N/A', 'wpopt'),
+                'table_rows'  => $table['TABLE_ROWS'] ?? __('Rows N/A', 'wpopt'),
+                'data_length' => $table['DATA_LENGTH'] ?? __('Length N/A', 'wpopt'),
+                'data_free'   => $table['DATA_FREE'] ?? __('N/A', 'wpopt'),
                 'status'      => $status,
-                'engine'      => $table['ENGINE'] ?? __('Engine N/D', 'wpopt')
+                'engine'      => $table['ENGINE'] ?? __('Engine N/A', 'wpopt')
             );
         }
 

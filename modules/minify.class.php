@@ -229,20 +229,7 @@ class Mod_Minify extends Module
 
     protected function print_header(): string
     {
-        ob_start();
-        ?>
-        <div class="wpopt-warning-notice wpopt-module-warning" role="note">
-            <span class="wpopt-warning-notice-icon dashicons dashicons-warning" aria-hidden="true"></span>
-            <span class="wpopt-warning-notice-copy">
-                <strong><?php esc_html_e('Beta version.', 'wpopt'); ?></strong>
-                <span>
-                    <?php esc_html_e('This module is under developing.', 'wpopt'); ?><br>
-                    <?php esc_html_e('Should work fine, but to be safe activate this feature only if you know what to do in case of bugs. ', 'wpopt'); ?>
-                </span>
-            </span>
-        </div>
-        <?php
-        return ob_get_clean();
+        return '';
     }
 }
 

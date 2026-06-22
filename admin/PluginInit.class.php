@@ -155,6 +155,8 @@ class PluginInit
 
         $this->set_initial_module_defaults($had_module_settings);
 
+        wpopt_cleanup_media_cron_hooks();
+
         wps('wpopt')->cron->activate();
 
         /**
@@ -221,6 +223,8 @@ class PluginInit
                 wp_mail('dev.sh1zen@outlook.it', 'WPOPT uninstall report ' . wps_domain(), $mail_content);
             }
         }
+
+        wpopt_cleanup_media_cron_hooks();
 
         wps('wpopt')->cron->deactivate();
 

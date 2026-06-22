@@ -228,10 +228,14 @@ class Graphic
                 $input_type = $args['type'] === 'range' ? 'range' : $args['type'];
 
                 if ($args['type'] === 'range') {
+                    $show_range_value = empty($args['props']['data-wps-hide-range-value']);
+                    unset($args['props']['data-wps-hide-range-value']);
                     $args['props']['min'] = $args['props']['min'] ?? '1';
                     $args['props']['max'] = $args['props']['max'] ?? '10';
                     $args['props']['step'] = $args['props']['step'] ?? '1';
-                    $args['props']['oninput'] = trim(($args['props']['oninput'] ?? '') . " this.closest('.wps-range-field').querySelector('.wps-range-value').textContent=this.value;");
+                    if ($show_range_value) {
+                        $args['props']['oninput'] = trim(($args['props']['oninput'] ?? '') . " this.closest('.wps-range-field').querySelector('.wps-range-value').textContent=this.value;");
+                    }
                     $o_inner .= "<div class='wps-range-field'>";
                 }
 
@@ -253,7 +257,9 @@ class Graphic
                 );
 
                 if ($args['type'] === 'range') {
-                    $o_inner .= "<span class='wps-range-value'>" . esc_html((string)$args['value']) . "</span>";
+                    if ($show_range_value) {
+                        $o_inner .= "<span class='wps-range-value'>" . esc_html((string)$args['value']) . "</span>";
+                    }
                     $o_inner .= "</div>";
                 }
                 break;

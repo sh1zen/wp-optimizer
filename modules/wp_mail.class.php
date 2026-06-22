@@ -13,7 +13,6 @@ use WPS\core\addon\Exporter;
 use WPS\core\CronActions;
 use WPS\core\Query;
 use WPS\core\RequestActions;
-use WPS\core\Rewriter;
 use WPS\core\StringHelper;
 use WPS\core\UtilEnv;
 use WPS\modules\Module;
@@ -61,10 +60,8 @@ class Mod_WP_Mail extends Module
 
                     Query::getInstance()->tables(WPOPT_TABLE_LOG_MAILS)->action('TRUNCATE')->query();
 
-                    Rewriter::getInstance(admin_url('admin.php'))->add_query_args(array(
-                        'page'    => 'wpopt-wp_mail',
-                        'message' => 'wpopt-wpmails-data-erased',
-                    ))->redirect();
+                    wp_safe_redirect(add_query_arg('message', 'wpopt-wpmails-data-erased', wps_module_panel_url('wp_mail')));
+                    exit;
                     break;
             }
         });
@@ -220,22 +217,23 @@ class Mod_WP_Mail extends Module
             <block class="wps">
                 <?php echo $this->render_mail_daily_chart($mail_series); ?>
                 <section class='wps'>
-                    <form method="GET" class="wps-list-table-form wpopt-mail-log-form" autocapitalize="off" autocomplete="off">
-                        <input type="hidden" name="page" value="<?php echo esc_attr($_REQUEST['page']); ?>"/>
+                    <form method="GET" action="<?php echo esc_url(admin_url('admin.php')); ?>" class="wps-list-table-form wpopt-mail-log-form" autocapitalize="off" autocomplete="off">
+                        <input type="hidden" name="page" value="<?php echo esc_attr(wps_admin_menu_slug('wpopt')); ?>"/>
+                        <input type="hidden" name="wps-page" value="module-wp_mail"/>
                         <?php $table->display(); ?>
                         <?php RequestActions::nonce_field($this->action_hook); ?>
                     </form>
                 </section>
             </block>
-            <block class="wps">
-                <row class="wps-inline">
+            <div class="wps wpopt-log-actions-panel" style="display:block;width:100%;box-sizing:border-box;margin-top:18px;padding:16px 18px;border:1px solid #dbe7f4;border-radius:10px;background:#ffffff;">
+                <div class="wps-inline wpopt-log-actions-row" style="display:flex;flex-wrap:wrap;align-items:center;gap:10px 12px;margin:0;">
                     <strong>Actions:</strong>
                     <a href="<?php RequestActions::get_url($this->action_hook, 'reset', false, true); ?>"
                        class="wps wps-button wpopt-btn is-danger">
                         <?php _e('Reset Log', 'wpopt') ?>
                     </a>
-                </row>
-            </block>
+                </div>
+            </div>
         </section>
         <?php
     }

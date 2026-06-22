@@ -32,13 +32,25 @@
 
             $lazy.data('loading', true);
 
+            let args = {
+                panel: $lazy.data('panel')
+            };
+
+            if (args.panel === 'db-tables') {
+                let params = new URLSearchParams(window.location.search);
+
+                ['paged', 'orderby', 'order', 's'].forEach(function (key) {
+                    if (params.has(key)) {
+                        args[key] = params.get(key);
+                    }
+                });
+            }
+
             wps.ajaxHandler({
                 mod: 'database',
                 mod_action: 'render_panel',
                 mod_nonce: $lazy.data('nonce'),
-                mod_args: {
-                    panel: $lazy.data('panel')
-                },
+                mod_args: args,
                 use_loading: $panel,
                 callback: function (res, status) {
                     $lazy.data('loading', false);

@@ -45,6 +45,11 @@ class Mod_WP_Security extends Module
         $this->load_dependencies();
 
         $new_valid = parent::validate_settings($input, $filtering);
+        $new_valid = $this->apply_constant_locks($new_valid);
+
+        if ($this->constant_enabled('DISALLOW_FILE_MODS')) {
+            return $new_valid;
+        }
 
         $htaccess = new WP_Htaccess($new_valid);
 
@@ -58,6 +63,41 @@ class Mod_WP_Security extends Module
         }
 
         return $new_valid;
+    }
+
+    private function apply_constant_locks(array $settings): array
+    {
+        if ($this->constant_enabled('DISALLOW_FILE_EDIT')) {
+            $settings['a_api']['disable_file_editor'] = true;
+        }
+
+        if ($this->constant_enabled('DISALLOW_FILE_MODS')) {
+            $settings['srv_security']['active'] = false;
+        }
+
+        return $settings;
+    }
+
+    private function constant_enabled(string $constant): bool
+    {
+        return defined($constant) && constant($constant);
+    }
+
+    private function locked_checkbox_args(array $args, string $constant, bool $locked_value, string $hint): array
+    {
+        if (!$this->constant_enabled($constant)) {
+            return $args;
+        }
+
+        $args['value'] = $locked_value;
+        $args['default_value'] = $locked_value;
+        $args['props']['disabled'] = 'disabled';
+        $args['props']['aria-disabled'] = 'true';
+        $args['props']['title'] = $hint;
+        $args['classes'][] = 'wpopt-setting-locked-by-constant';
+        $args['label'] = trim(($args['label'] ?? '') . ' ' . $hint);
+
+        return $args;
     }
 
     private function load_dependencies(): void
@@ -76,7 +116,7 @@ class Mod_WP_Security extends Module
     protected function init(): void
     {
         if (is_admin()) {
-            if (!is_writable(ABSPATH . '.htaccess')) {
+            if (!$this->constant_enabled('DISALLOW_FILE_MODS') && !is_writable(ABSPATH . '.htaccess')) {
                 add_action('admin_notices', function () {
                     $this->add_notices('error', sprintf(__("<b><i>'%s'</i> is not writable.</b><br>Modify (<b>run chmod 774</b>) it's group permission to allow WP-Security to make changes automatically.", 'wpopt'), ABSPATH . '.htaccess'));
                 }, 0);
@@ -126,6 +166,10 @@ class Mod_WP_Security extends Module
 
     protected function print_header(): string
     {
+        if ($this->constant_enabled('DISALLOW_FILE_MODS')) {
+            return "<p><b>" . esc_html__('Server-rule changes are disabled because DISALLOW_FILE_MODS is enabled in wp-config.php.', 'wpopt') . "</b></p>";
+        }
+
         if (!is_writable(ABSPATH . '.htaccess')) {
 
             $this->load_dependencies();
@@ -150,11 +194,16 @@ class Mod_WP_Security extends Module
 
     protected function setting_fields($filter = ''): array
     {
+        $file_mods_hint = __('Locked by DISALLOW_FILE_MODS in wp-config.php. WordPress has disabled file modifications, so WP Optimizer cannot manage server rules or filesystem-writing features from this screen.', 'wpopt');
+        $file_editor_hint = __('Locked by DISALLOW_FILE_EDIT in wp-config.php. The WordPress file editor is already disabled by configuration.', 'wpopt');
+        $srv_security_active_args = $this->locked_checkbox_args(['default_value' => true], 'DISALLOW_FILE_MODS', false, $file_mods_hint);
+        $disable_file_editor_args = $this->locked_checkbox_args(['parent' => 'a_api.active'], 'DISALLOW_FILE_EDIT', true, $file_editor_hint);
+
         return $this->group_setting_fields(
             $this->setting_field(__('Some configuration are available only in apache.', 'wpopt'), false, "separator"),
 
             $this->group_setting_fields(
-                $this->setting_field(__('Requests and Server', 'wpopt'), "srv_security.active", "checkbox", ['default_value' => true]),
+                $this->setting_field(__('Requests and Server', 'wpopt'), "srv_security.active", "checkbox", $srv_security_active_args),
                 $this->setting_field(__('Disable directory listing', 'wpopt'), "srv_security.listings", "checkbox", ['parent' => 'srv_security.active', 'default_value' => true]),
                 $this->setting_field(__('Disable access to configuration file (.htaccess)', 'wpopt'), "srv_security.protect_htaccess", "checkbox", ['parent' => 'srv_security.active', 'default_value' => true]),
                 $this->setting_field(__('Enable HTTPS Strict Transport Security', 'wpopt'), "srv_security.hsts", "checkbox", ['parent' => 'srv_security.active', 'default_value' => true]),
@@ -176,7 +225,7 @@ class Mod_WP_Security extends Module
             $this->group_setting_fields(
                 $this->setting_field(__('Admin & API Security', 'wpopt'), "a_api.active", "checkbox"),
                 $this->setting_field(__('Disable WP User Enumeration', 'wpopt'), "a_api.nousernum", "checkbox", ['parent' => 'a_api.active', 'default_value' => true]),
-                $this->setting_field(__('Disable WP File Editor', 'wpopt'), "a_api.disable_file_editor", "checkbox", ['parent' => 'a_api.active']),
+                $this->setting_field(__('Disable WP File Editor', 'wpopt'), "a_api.disable_file_editor", "checkbox", $disable_file_editor_args),
             )
         );
     }

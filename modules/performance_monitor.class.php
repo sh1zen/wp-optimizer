@@ -573,7 +573,7 @@ class Mod_Performance_Monitor extends Module
         $fill_percent = round((($value - 1) / 99) * 100, 4);
 
         return array(
-            'type'    => 'number',
+            'type'    => 'range',
             'name'    => __('Request capture sample rate (%)', 'wpopt'),
             'id'      => 'monitor.sample_rate',
             'value'   => $value,
@@ -583,13 +583,13 @@ class Mod_Performance_Monitor extends Module
                 $value
             ),
             'props'   => array(
-                'type'          => 'range',
                 'min'           => '1',
                 'max'           => '100',
                 'step'          => '1',
                 'aria-valuemin' => '1',
                 'aria-valuemax' => '100',
                 'aria-valuenow' => (string)$value,
+                'data-wps-hide-range-value' => '1',
                 'style'         => sprintf('--wpopt-range-fill:%s%%;width:calc(100%% - 72px);max-width:620px;min-width:180px;vertical-align:middle;', $fill_percent),
                 'oninput'       => "var v=parseInt(this.value,10)||1;var f=((v-1)/99)*100;document.getElementById('wpopt-monitor-sample-rate-value').textContent=v+'%';this.setAttribute('aria-valuenow',v);this.style.setProperty('--wpopt-range-fill',f+'%');",
             ),

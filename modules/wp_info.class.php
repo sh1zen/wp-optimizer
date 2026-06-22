@@ -22,46 +22,48 @@ class Mod_WP_Info extends Module
     protected function render_sub_modules(bool $standalone = true): void
     {
         ?>
-        <section class="wpopt-system-info-list">
-            <?php foreach ($this->get_info() as $name => $table) : ?>
-                <section class="wpopt-system-info-card" id="<?php echo esc_attr(sanitize_title($name)); ?>">
-                    <h2 class="sysinfo-title">
-                        <span class="wpopt-system-info-title-icon"><?php echo Graphic::icon($this->section_icon($name)); ?></span>
-                        <span><?php echo esc_html($name); ?></span>
-                    </h2>
-                    <table class="widefat wps wpopt-system-info-table">
-                        <tbody>
-                        <?php
+        <section class="wpopt-system-info">
+            <section class="wpopt-system-info-list">
+                <?php foreach ($this->get_info() as $name => $table) : ?>
+                    <section class="wpopt-system-info-card" id="<?php echo esc_attr(sanitize_title($name)); ?>">
+                        <h2 class="sysinfo-title">
+                            <span class="wpopt-system-info-title-icon"><?php echo Graphic::icon($this->section_icon($name)); ?></span>
+                            <span><?php echo esc_html($name); ?></span>
+                        </h2>
+                        <table class="widefat wps wpopt-system-info-table">
+                            <tbody>
+                            <?php
 
-                        $iter = 1;
-                        $output = $alternate = $line = '';
-                        foreach ($table as $_name => $value) {
+                            $iter = 1;
+                            $output = $alternate = $line = '';
+                            foreach ($table as $_name => $value) {
 
-                            $line .= sprintf(
-                                "<td class='width15 wpopt-system-info-label-cell'><span class='wpopt-system-info-row-icon'>%s</span><b>%s:</b></td><td class='width35 wpopt-system-info-value-cell'>%s</td>",
-                                Graphic::icon($this->info_icon($_name)),
-                                esc_html($_name),
-                                $this->format_info_value($value)
-                            );
+                                $line .= sprintf(
+                                    "<td class='width15 wpopt-system-info-label-cell'><span class='wpopt-system-info-row-icon'>%s</span><b>%s:</b></td><td class='width35 wpopt-system-info-value-cell'>%s</td>",
+                                    Graphic::icon($this->info_icon($_name)),
+                                    esc_html($_name),
+                                    $this->format_info_value($value)
+                                );
 
-                            if ($iter % 2 == 0) {
-                                $output .= "<tr {$alternate}>" . $line . "</tr>";
-                                $alternate = $alternate == '' ? "class='alternate'" : '';
-                                $line = '';
+                                if ($iter % 2 == 0) {
+                                    $output .= "<tr {$alternate}>" . $line . "</tr>";
+                                    $alternate = $alternate == '' ? "class='alternate'" : '';
+                                    $line = '';
+                                }
+                                $iter++;
                             }
-                            $iter++;
-                        }
 
-                        if (!empty($line))
-                            $output .= "<tr {$alternate}>" . $line . "<td class='width15 wpopt-system-info-empty-cell'></td><td class='width35 wpopt-system-info-empty-cell'></td></tr>";
+                            if (!empty($line))
+                                $output .= "<tr {$alternate}>" . $line . "<td class='width15 wpopt-system-info-empty-cell'></td><td class='width35 wpopt-system-info-empty-cell'></td></tr>";
 
-                        echo $output;
+                            echo $output;
 
-                        ?>
-                        </tbody>
-                    </table>
-                </section>
-            <?php endforeach; ?>
+                            ?>
+                            </tbody>
+                        </table>
+                    </section>
+                <?php endforeach; ?>
+            </section>
         </section>
         <?php
     }

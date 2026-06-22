@@ -59,7 +59,9 @@ class Mod_Media extends Module
                 break;
 
             case 'scan-orphaned-media':
-                if (CronActions::schedule_function('orphaned_media_scanner_cron_handler', array($this, 'orphaned_media_scanner_cron_handler'), time(), [])) {
+                wpopt_remove_cron_hooks(array('orphaned_media_scanner_cron_handler'));
+
+                if (CronActions::schedule_function('orphaned_media_scanner_cron_handler', array($this, 'orphaned_media_scanner_cron_handler'), time())) {
                     $response = __('Orphaned media scanner is successfully started.', 'wpopt');
                 }
                 else {
@@ -69,18 +71,20 @@ class Mod_Media extends Module
 
             case 'pause-orphaned-media':
                 $this->status('orphan-media-scanner', 'paused');
+                wpopt_remove_cron_hooks(array('orphaned_media_scanner_cron_handler'));
                 $response = __('Orphaned media scanner is shutting down.', 'wpopt');
                 break;
 
             case 'reset-orphaned-media':
                 wps('wpopt')->options->remove_all('media', 'orphaned_media');
                 $this->status('orphan-media-scanner', 'paused');
+                wpopt_remove_cron_hooks(array('orphaned_media_scanner_cron_handler'));
                 $response = __('Orphaned media scanner has been successfully reset.', 'wpopt');
                 break;
 
             case 'pause-ipc-posts':
                 $this->status('optimization', 'paused');
-                CronActions::unschedule_function('ipc_scanner_cron_handler');
+                wpopt_remove_cron_hooks(array('ipc_scanner_cron_handler'));
                 $response = __('Media optimization scan is shutting down.', 'wpopt');
                 break;
 
@@ -95,7 +99,7 @@ class Mod_Media extends Module
 
             case 'reset-ipc-posts':
                 wps('wpopt')->options->remove_all('media', 'scan_media');
-                CronActions::unschedule_function('ipc_scanner_cron_handler');
+                wpopt_remove_cron_hooks(array('ipc_scanner_cron_handler'));
                 $this->status('optimization', 'paused');
                 $response = __('Media posts optimization has been successfully reset.', 'wpopt');
                 break;
@@ -130,7 +134,7 @@ class Mod_Media extends Module
             CronActions::schedule_function('orphaned_media_scanner_cron_handler', array($this, 'orphaned_media_scanner_cron_handler'), time() + 30);
         }
         else {
-            CronActions::unschedule_function('orphaned_media_scanner_cron_handler');
+            wpopt_remove_cron_hooks(array('orphaned_media_scanner_cron_handler'));
             $this->status('orphan-media-scanner', 'paused');
         }
     }
@@ -372,7 +376,7 @@ class Mod_Media extends Module
             CronActions::schedule_function('ipc_scanner_cron_handler', array($this, 'ipc_scanner_cron_handler'), time() + 30);
         }
         else {
-            CronActions::unschedule_function('ipc_scanner_cron_handler');
+            wpopt_remove_cron_hooks(array('ipc_scanner_cron_handler'));
             $this->status('optimization', 'paused');
         }
     }

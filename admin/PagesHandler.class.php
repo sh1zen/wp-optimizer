@@ -200,7 +200,9 @@ class PagesHandler
         $style_asset = UtilEnv::resolve_asset(WPOPT_ABSPATH, 'assets/style.css', wps_core()->online);
         $script_asset = UtilEnv::resolve_asset(WPOPT_ABSPATH, 'assets/admin.js', wps_core()->online);
 
-        wp_register_style("wpopt_css", $style_asset['url'], ['vendor-wps-css'], $style_asset['version'] ?: WPOPT_VERSION);
+        $style_version = $style_asset['version'] ?: (file_exists(WPOPT_ABSPATH . 'assets/style.css') ? filemtime(WPOPT_ABSPATH . 'assets/style.css') : WPOPT_VERSION);
+
+        wp_register_style("wpopt_css", $style_asset['url'], ['vendor-wps-css'], $style_version);
         wp_register_script("wpopt_admin_js", $script_asset['url'], ['vendor-wps-js'], $script_asset['version'] ?: WPOPT_VERSION, true);
 
         if ($this->is_wp_optimizer_admin_screen($hook_suffix)) {

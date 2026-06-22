@@ -60,7 +60,9 @@ class Mod_Database extends Module
     {
         require_once WPOPT_SUPPORTERS . '/database/DB_List_Table.class.php';
 
-        $table_list_obj = new DB_List_Table();
+        $this->set_tables_list_request($settings['list_request'] ?? array());
+
+        $table_list_obj = new DB_List_Table(wps_module_panel_url("database", "db-tables"));
 
         list($message, $status) = $table_list_obj->prepare_items();
 
@@ -132,12 +134,13 @@ class Mod_Database extends Module
         global $wpdb;
 
         $this->load_dependencies();
+        $file_mods_disabled = $this->file_mods_disabled();
 
         ob_start();
         ?>
         <section class="wpopt-db-backup-panel">
             <?php
-            $backup_path_ready = Disk::make_path(self::BACKUP_PATH, true);
+            $backup_path_ready = !$file_mods_disabled && Disk::make_path(self::BACKUP_PATH, true);
             ?>
             <div class="wpopt-db-backup-status <?php echo $backup_path_ready ? 'is-success' : 'is-error'; ?>">
                 <span class="wpopt-db-backup-status-icon dashicons <?php echo $backup_path_ready ? 'dashicons-yes-alt' : 'dashicons-warning'; ?>"></span>
@@ -151,7 +154,10 @@ class Mod_Database extends Module
             </div>
             <?php
 
-            if (!$backup_path_ready) {
+            if ($file_mods_disabled) {
+                echo '<div class="wps-notice wps-notice--warning">' . esc_html__('Database backup file management is disabled because DISALLOW_FILE_MODS is enabled in wp-config.php.', 'wpopt') . '</div>';
+            }
+            elseif (!$backup_path_ready) {
                 echo '<div class="wps-notice wps-notice--error">' . sprintf(__('Backup folder does NOT exist or is NOT WRITABLE. Please create it and set permissions to \'774\' or change the location of the backup folder in settings.', 'wpopt'), WP_CONTENT_DIR) . '</div>';
             }
             ?>
@@ -223,7 +229,7 @@ class Mod_Database extends Module
                     }
                     else {
 
-                        if (!file_exists(self::BACKUP_PATH)) {
+                        if (!$file_mods_disabled && !file_exists(self::BACKUP_PATH)) {
                             Disk::make_path(self::BACKUP_PATH, true);
                         }
 
@@ -245,6 +251,8 @@ class Mod_Database extends Module
                                        class="wps wps-button wpopt-btn is-warning" data-action="restore"/>
                                 <input type="submit" data-action="delete" class="wps wps-button wpopt-btn is-danger" name="action"
                                        value="<?php _e('Delete', 'wpopt'); ?>"
+                                       <?php disabled($file_mods_disabled); ?>
+                                       title="<?php echo esc_attr($file_mods_disabled ? __('Disabled by DISALLOW_FILE_MODS in wp-config.php.', 'wpopt') : ''); ?>"
                                        onclick="return confirm('<?php _e('Are you sure to delete selected backup?', 'wpopt'); ?>')"/>
                             </div>
                         </td>
@@ -298,6 +306,8 @@ class Mod_Database extends Module
                             <div class="wpopt-db-button-row">
                                 <input data-action="backup" type="submit" name="action"
                                        value="<?php _e('Backup now', 'wpopt'); ?>"
+                                       <?php disabled($file_mods_disabled); ?>
+                                       title="<?php echo esc_attr($file_mods_disabled ? __('Disabled by DISALLOW_FILE_MODS in wp-config.php.', 'wpopt') : ''); ?>"
                                        class="wps wps-button wpopt-btn is-success"/>
                                 <a class="wps wps-button wpopt-btn is-neutral"
                                    href="<?php echo wps_module_setting_url('wpopt', 'database') ?>">Settings</a>
@@ -319,7 +329,8 @@ class Mod_Database extends Module
 
         if (($args['action'] ?? '') === 'render_panel') {
             $panel_id = $this->get_requested_panel_id($args['options'] ?? '');
-            $html = $this->render_database_panel_content($panel_id);
+            $panel_options = is_array($args['options'] ?? null) ? $args['options'] : array();
+            $html = $this->render_database_panel_content($panel_id, $panel_options);
 
             if ($html !== '') {
                 Ajax::response(array('html' => $html), 'success');
@@ -470,6 +481,11 @@ class Mod_Database extends Module
 
             case 'delete':
 
+                if ($this->file_mods_disabled()) {
+                    $response = $this->new_response(__('Deleting backup files is disabled because DISALLOW_FILE_MODS is enabled in wp-config.php.', 'wpopt'), 'error');
+                    break;
+                }
+
                 $database_file = sanitize_file_name($args['file']);
 
                 if (empty($database_file)) {
@@ -495,6 +511,11 @@ class Mod_Database extends Module
                 break;
 
             case 'backup':
+
+                if ($this->file_mods_disabled()) {
+                    $response = $this->new_response(__('Creating database backup files is disabled because DISALLOW_FILE_MODS is enabled in wp-config.php.', 'wpopt'), 'error');
+                    break;
+                }
 
                 $backup_path = self::BACKUP_PATH . substr(md5(time()), 0, 7) . '.sql';
 
@@ -549,6 +570,11 @@ class Mod_Database extends Module
         return $response;
     }
 
+    private function file_mods_disabled(): bool
+    {
+        return defined('DISALLOW_FILE_MODS') && DISALLOW_FILE_MODS;
+    }
+
     public function enqueue_scripts(): void
     {
         parent::enqueue_scripts();
@@ -566,7 +592,7 @@ class Mod_Database extends Module
                     <span class="wpopt-db-hero-icon dashicons dashicons-database"></span>
                     <div class="wpopt-db-hero-copy">
                         <h1>Database Manager</h1>
-                        <p><?php _e('Pulisci e ottimizza il tuo database WordPress in modo sicuro ed efficiente.', 'wpopt'); ?></p>
+                        <p><?php _e('Clean and optimize your WordPress database safely and efficiently.', 'wpopt'); ?></p>
                     </div>
                     <span class="wpopt-db-hero-art" aria-hidden="true"></span>
                 </section>
@@ -577,7 +603,7 @@ class Mod_Database extends Module
                                 'tab-title'   => __('Database sweeper', 'wpopt'),
                                 'panel-title' => __('Database Sweeper', 'wpopt'),
                                 'panel-icon'  => 'broom',
-                                'panel-description' => __('Rimuovi dati inutili e ottimizza il database del tuo sito.', 'wpopt'),
+                                'panel-description' => __('Remove unnecessary data and optimize your site database.', 'wpopt'),
                                 'callback'    => array($this, 'render_lazy_panel_placeholder'),
                                 'args'        => array('db-sweeper')
                         ),
@@ -619,7 +645,7 @@ class Mod_Database extends Module
                 '<div class="wpopt-db-lazy-panel" data-panel="%1$s" data-nonce="%2$s"><strong>%3$s</strong></div>',
                 esc_attr($panel_id),
                 esc_attr(wp_create_nonce('wpopt-ajax-nonce')),
-                esc_html__('Caricamento sezione...', 'wpopt')
+                esc_html__('Loading section...', 'wpopt')
         );
     }
 
@@ -632,7 +658,7 @@ class Mod_Database extends Module
         return sanitize_key((string)$options);
     }
 
-    private function render_database_panel_content(string $panel_id): string
+    private function render_database_panel_content(string $panel_id, array $options = array()): string
     {
         switch ($panel_id) {
             case 'db-sweeper':
@@ -640,7 +666,9 @@ class Mod_Database extends Module
                 return $this->render_sweeper_panel();
 
             case 'db-tables':
-                return $this->render_tablesList_panel();
+                return $this->render_tablesList_panel(array(
+                        'list_request' => $this->sanitize_tables_list_request($options)
+                ));
 
             case 'db-backup':
                 return $this->render_backup_panel($this->option('backup', array()));
@@ -650,6 +678,52 @@ class Mod_Database extends Module
         }
 
         return '';
+    }
+
+    private function sanitize_tables_list_request(array $options): array
+    {
+        $request = array();
+
+        if (isset($options['paged'])) {
+            $request['paged'] = max(1, absint($options['paged']));
+        }
+
+        if (isset($options['orderby'])) {
+            $orderby = sanitize_key((string)$options['orderby']);
+
+            if (in_array($orderby, array('table_name', 'table_rows', 'data_length', 'data_free', 'engine'), true)) {
+                $request['orderby'] = $orderby;
+            }
+        }
+
+        if (isset($options['order'])) {
+            $order = strtoupper(sanitize_key((string)$options['order']));
+
+            if (in_array($order, array('ASC', 'DESC'), true)) {
+                $request['order'] = $order;
+            }
+        }
+
+        if (isset($options['s'])) {
+            $request['s'] = sanitize_text_field(wp_unslash((string)$options['s']));
+        }
+
+        return $request;
+    }
+
+    private function set_tables_list_request(array $request): void
+    {
+        foreach (array('paged', 'orderby', 'order', 's') as $key) {
+            if (!isset($request[$key])) {
+                continue;
+            }
+
+            $_REQUEST[$key] = $request[$key];
+
+            if ('s' !== $key) {
+                $_GET[$key] = $request[$key];
+            }
+        }
     }
 
     public function render_sweeper_panel()
@@ -730,22 +804,22 @@ class Mod_Database extends Module
             <div class="wpopt-db-notice">
                 <span class="dashicons dashicons-info-outline" aria-hidden="true"></span>
                 <div>
-                    <strong><?php _e('Prima di procedere, fai sempre un backup del database.', 'wpopt'); ?></strong>
-                    <p><?php _e('Lo strumento rimuove dati non necessari e ottimizza le tabelle per migliorare le prestazioni del sito.', 'wpopt'); ?></p>
-                    <small><?php echo sprintf(__('I dettagli mostrano al massimo %s elementi per ogni controllo.', 'wpopt'), number_format_i18n($this->ajax_limit)); ?></small>
+                    <strong><?php _e('Always back up the database before continuing.', 'wpopt'); ?></strong>
+                    <p><?php _e('This tool removes unnecessary data and optimizes tables to improve site performance.', 'wpopt'); ?></p>
+                    <small><?php echo sprintf(__('Details show up to %s items for each check.', 'wpopt'), number_format_i18n($this->ajax_limit)); ?></small>
                 </div>
                 <a class="wps wps-button wpopt-btn is-neutral" href="<?php echo esc_url(wps_module_panel_url('database', 'db-backup')); ?>">
-                    <span class="dashicons dashicons-shield-alt"></span><?php _e('Crea backup ora', 'wpopt'); ?>
+                    <span class="dashicons dashicons-shield-alt"></span><?php _e('Create backup now', 'wpopt'); ?>
                 </a>
             </div>
 
             <div class="wpopt-db-sweeper-toolbar">
                 <div>
                     <strong><?php _e('Database Sweeper', 'wpopt'); ?></strong>
-                    <p><?php _e('Rimuovi dati inutili e ottimizza il database del tuo sito.', 'wpopt'); ?></p>
+                    <p><?php _e('Remove unnecessary data and optimize your site database.', 'wpopt'); ?></p>
                 </div>
                 <button type="button" class="wps wps-button wpopt-btn is-neutral">
-                    <?php _e('Espandi tutto', 'wpopt'); ?><span class="dashicons dashicons-arrow-down-alt2"></span>
+                    <?php _e('Expand all', 'wpopt'); ?><span class="dashicons dashicons-arrow-down-alt2"></span>
                 </button>
             </div>
         <?php
@@ -763,8 +837,8 @@ class Mod_Database extends Module
                     <span class="wpopt-db-sweep-icon dashicons dashicons-media-document"></span>
                     <?php
                     echo "<h3>{$sweeper['title']}</h3>";
-                    echo "<p>" . sprintf(__('Totale: <strong class="attention"><span>%1$s</span></strong> ' . $sweeper['type'] . '.', 'wpopt'), number_format_i18n($total)) . "</p>";
-                    echo "<span class='wpopt-db-sweep-count'>" . sprintf(_n('%s elemento', '%s elementi', $total, 'wpopt'), number_format_i18n($total)) . "</span>";
+                    echo "<p>" . sprintf(__('Total: <strong class="attention"><span>%1$s</span></strong> %2$s.', 'wpopt'), number_format_i18n($total), esc_html($sweeper['type'])) . "</p>";
+                    echo "<span class='wpopt-db-sweep-count'>" . sprintf(_n('%s item', '%s items', $total, 'wpopt'), number_format_i18n($total)) . "</span>";
                     ?>
                 </pre-table>
                 <table class="widefat table-sweep">

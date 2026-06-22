@@ -49,11 +49,70 @@ function wpopt_optimize_media_path(string $path, array $settings = []): bool
         CronActions::schedule_function('wpopt_optimize_media_path', 'wpopt_optimize_media_path', time() + 30, [$path, $settings]);
     }
     else {
-        CronActions::unschedule_function('wpopt_optimize_media_path');
+        wpopt_remove_cron_hooks(array('wpopt_optimize_media_path'));
         wps('wpopt')->options->update("status", 'optimization', 'paused', "media");
     }
 
     return true;
+}
+
+function wpopt_remove_cron_hooks(array $hooks): bool
+{
+    $removed = false;
+    $crons = _get_cron_array();
+
+    if (!is_array($crons)) {
+        _set_cron_array(array());
+        $crons = array();
+        $removed = true;
+    }
+
+    foreach ($hooks as $hook) {
+        $hook = (string)$hook;
+
+        if ('' === $hook) {
+            continue;
+        }
+
+        foreach ($crons as $timestamp => $cron) {
+            if (!is_array($cron) || !isset($cron[$hook])) {
+                continue;
+            }
+
+            unset($crons[$timestamp][$hook]);
+            $removed = true;
+
+            if (empty($crons[$timestamp])) {
+                unset($crons[$timestamp]);
+            }
+        }
+    }
+
+    if ($removed) {
+        ksort($crons);
+        _set_cron_array($crons);
+    }
+
+    $events = get_option('wps#cron-events', array());
+
+    if (is_array($events)) {
+        foreach ($hooks as $hook) {
+            unset($events[(string)$hook]);
+        }
+
+        update_option('wps#cron-events', array_filter($events), 'no');
+    }
+
+    return true;
+}
+
+function wpopt_cleanup_media_cron_hooks(): bool
+{
+    return wpopt_remove_cron_hooks(array(
+        'orphaned_media_scanner_cron_handler',
+        'ipc_scanner_cron_handler',
+        'wpopt_optimize_media_path',
+    ));
 }
 
 function wpopt_minify_html($html, $options = [])

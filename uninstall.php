@@ -17,6 +17,9 @@ if (!defined('WP_UNINSTALL_PLUGIN')) {
 
 // setup constants
 require_once __DIR__ . '/inc/wps_and_constants.php';
+require_once WPOPT_INCPATH . 'functions.php';
+
+wpopt_cleanup_media_cron_hooks();
 
 // Leave no trail
 $option_names = array('wpopt', 'wpopt.media.todo');

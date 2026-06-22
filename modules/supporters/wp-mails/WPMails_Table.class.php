@@ -146,7 +146,7 @@ class WPMails extends \WP_List_Table
 
     private function get_filtered_link($name = '', $value = ''): string
     {
-        $base_page_url = menu_page_url('wpopt-wp_mail', false);
+        $base_page_url = wps_module_panel_url('wp_mail');
 
         if (empty($name)) {
             return $base_page_url;
@@ -330,8 +330,8 @@ class WPMails extends \WP_List_Table
 
     public function get_items($use_limit = false)
     {
-        // get requested order and other filters from _wp_http_referer
-        parse_str(parse_url($_REQUEST['_wp_http_referer'] ?? '', PHP_URL_QUERY) ?: '', $request);
+        parse_str(parse_url($_REQUEST['_wp_http_referer'] ?? '', PHP_URL_QUERY) ?: '', $referrer_request);
+        $request = array_merge($referrer_request, $_REQUEST);
 
         $search_term = $this->get_search_term($request);
         $use_php_search_filter = $this->uses_unsafe_like_subquery_pattern($search_term);

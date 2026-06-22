@@ -1,6 +1,6 @@
-﻿=== WP Optimizer ===
+﻿=== WP Optimizer – Cache, Minify, Image Optimization, Core Web Vitals ===
 Contributors: sh1zen
-Tags: wordpress optimization, performance, cache, minify, image optimization
+Tags: cache, performance, core web vitals, image optimization, minify
 Donate link: https://www.paypal.com/donate?business=dev.sh1zen%40outlook.it&item_name=Thank+you+in+advanced+for+the+kind+donations.+You+will+sustain+me+developing+WP-Optimizer.&currency_code=EUR
 Requires at least: 5.0.0
 Tested up to: 7.0.0
@@ -8,218 +8,227 @@ Requires PHP: 7.4
 Stable tag: 2.8.0
 License: GPLv2 or later
 
-WordPress performance optimization plugin with cache, minify, image optimization, database cleanup, security hardening and server tuning.
+Improve WordPress speed, Core Web Vitals and technical SEO with cache, minify, WebP media optimization, database cleanup, security and diagnostics.
 
 == Description ==
 
-WP Optimizer improves WordPress speed, Core Web Vitals, and technical SEO with a modular toolkit.
-Enable only what you need: cache, minification, image optimization, database cleanup, update controls, security hardening, and admin customization.
-All optimizations run on your server.
+WP Optimizer is a modular WordPress performance and maintenance toolkit built to make your site faster, cleaner and easier to manage.
 
-**WHY USING WP-Optimizer?**
+Instead of installing separate plugins for cache, minification, image optimization, database cleanup, security hardening, diagnostics, mail logging and admin cleanup, WP Optimizer brings them together in one lightweight, modular dashboard.
 
-* **One plugin, full optimization workflow:** performance, maintenance, security, and admin cleanup from a single panel.
-* **Modular architecture:** enable only the modules you need to keep resource usage low.
-* **Built for real speed gains:** cache, minify, media optimization, cron tuning, and browser caching work together to reduce load time.
-* **Safer WordPress defaults:** security and update modules help reduce attack surface and unwanted changes.
-* **Easier site management:** logs, diagnostics, mail logging, and dashboard widgets help you monitor and troubleshoot faster.
-* **Background processing:** long operations can run in background to avoid blocking admin work.
-* **Multisite support.**
-* **Privacy-friendly:** optimization runs on your server, with optional telemetry controls.
-* **No subscription required.**
+Enable only the modules you need. Disabled modules stay out of the way, helping you keep your WordPress installation lean and focused.
 
-**BENEFITS**
+WP Optimizer helps improve page speed, reduce unnecessary page weight, support better Core Web Vitals, maintain your database, monitor performance issues and apply safer WordPress defaults.
 
-* Better technical SEO through faster pages and cleaner WordPress output.
-* Potentially higher search visibility from improved performance metrics.
-* Lower page load times and better user engagement.
-* Better stability during traffic spikes.
-* Reduced bandwidth usage with optimized images and minified assets.
-* Lower disk usage with media optimization and cleanup tools.
+All optimization tasks run on your own server. No subscription is required.
 
-**FEATURES**
+= Why use WP Optimizer? =
 
-**WHAT WP OPTIMIZER DOES**
+* All-in-one WordPress optimization workflow from a single dashboard
+* Modular architecture: activate only the tools your site actually needs
+* Built for speed: cache, minify, compression, browser caching, media optimization and cron tuning
+* Better technical SEO through faster pages, cleaner output and optimized assets
+* Lower page weight with HTML, CSS and JavaScript minification
+* Image optimization and WebP conversion to reduce bandwidth usage
+* Database cleanup and optimization to keep your site lean
+* Security hardening and activity logs to reduce risk and improve visibility
+* Server and WordPress diagnostics to help troubleshoot faster
+* Admin cleanup and WordPress feature toggles without editing theme or core files
+* Multisite support
+* Optional telemetry controls
+* No subscription required
 
-* Improves loading speed with caching, minification, compression, and smarter cron behavior.
-* Reduces page weight through image optimization and cleanup of unnecessary WordPress output.
-* Helps technical SEO with cleaner markup, better performance signals, and faster page delivery.
-* Improves reliability with database maintenance, update controls, and server tuning.
-* Adds visibility with activity logs, server info, mail logs, and admin dashboard widgets.
-* Lets you customize WordPress behavior without editing theme or core files.
+= What WP Optimizer does =
 
-**MODULES INCLUDED (FULL LIST)**
+WP Optimizer focuses on four areas:
 
-* **Activity Log:** logs user/content actions and suspicious requests.
-* **Cache:** object, query, database and static page caching.
-* **Cron Handler:** centralizes scheduled jobs and cron-related module tasks.
-* **Database:** database cleanup, optimization and backup utilities.
-* **Media:** image optimization/conversion and unused media cleanup.
-* **Minify:** HTML, CSS and JavaScript minification.
-* **Performance Monitor:** request history with charts by request type and slow-request visibility.
-* **Settings:** global settings management (reset, import/export, restore, autosave).
-* **Tracking:** optional anonymous plugin usage/error telemetry controls.
-* **Widget:** dashboard widgets for folder size and server information.
-* **WP Customizer:** admin cleanup and WordPress feature toggles.
-* **WP Info:** full diagnostic information about WordPress/server environment.
-* **WP Mail:** SMTP configuration and mail logging.
-* **WP Optimizer:** cron tuning, server enhancements, compression and browser cache policies.
-* **WP Security:** WordPress and server-level hardening options.
-* **WP Updates:** control over core/plugin/theme update behavior.
-* **Modules Handler:** internal loader/manager for module lifecycle and upgrades.
+1. Speed and Core Web Vitals
+   Improve loading performance with caching, minification, compression, browser cache policies, media optimization and smarter cron behavior.
 
-* ***Activity Log:***
-  * WordPress activity log for users, posts and terms
-  * Monitor suspicious access attempts such as XSS and SQL injection probes
-  * Supports custom rule monitoring
+2. Technical SEO and cleaner output
+   Reduce unnecessary WordPress output, optimize assets and improve the technical foundation that search engines and users experience.
 
-* ***Cache:***
-  * Advanced caching system focused on speed and low storage footprint
-  * Object Caching (Memcached and Redis)
-  * WordPress Query Caching
-  * Database Caching
-  * Static Page Caching
+3. Maintenance and reliability
+   Clean and optimize the database, manage settings, monitor slow requests, review server information and keep your WordPress installation easier to maintain.
 
-* ***Database:***
-  * Backup, optimize, and maintain database tables
-  * Clean up orphaned and unnecessary WordPress data
+4. Security and admin control
+   Harden common WordPress defaults, monitor suspicious requests, control update behavior and customize the admin experience.
 
-* ***Media:***
-  * Image optimization and conversion with WebP support
-  * Media leftovers cleanup tool
-  * Automatic image optimization in background
-  * Compatible with servers with limited PHP execution time
+= Performance features =
 
-* ***Server Info:***
-  * Detailed diagnostics for server, database, PHP and WordPress installation
+* Static page caching
+* Object caching with Redis and Memcached support
+* Query caching
+* Database caching
+* HTML, CSS and JavaScript minification
+* Server-side compression with GZIP and Brotli
+* Browser cache lifetime controls
+* WordPress cron optimization
+* Server .htaccess enhancements
+* PageSpeed module
+* Performance monitor with request history, charts and slow-request visibility
 
-* ***WP Optimizer:***
-  * WordPress cron optimization
-  * Server .htaccess enhancements
-  * Server-side compression (GZIP, Brotli)
-  * Browser cache lifetime controls
+= Media optimization =
 
-* ***WP Updates:***
-  * Full control over WordPress core, plugin and theme updates
+WP Optimizer includes tools to reduce media weight and keep your uploads cleaner:
 
-* ***WP Security:***
-  * Practical WordPress and server-level hardening options
+* Image optimization
+* Image conversion with WebP support
+* Automatic image optimization in background
+* Unused media cleanup
+* Processing designed to work even on servers with limited PHP execution time
 
-* ***WP Mail:***
-  * Mail logging
-  * Configure external SMTP server
+= Database cleanup and maintenance =
 
-* ***WP Customizer:***
-  * Prevent access to WordPress dashboard for non-admin users
-  * Hide Admin Bar
-  * Disable Block Editor and related block features
-  * Disable comments
-  * Disable QuickPress, WordPress Blog and Welcome Panel
-  * Fast category list filter in your editor
-  * Disable WordPress sitemap, short-links, self-ping and other non-essential outputs
+Keep your WordPress database cleaner and easier to maintain:
 
-* ***Minify:***
-  * HTML, JavaScript and CSS optimization on the fly
+* Database cleanup
+* Database optimization
+* Database backup utilities
+* Cleanup of orphaned and unnecessary WordPress data
+* Safer maintenance workflow before aggressive cleanup tasks
 
-**DONATIONS**
+= Security and activity monitoring =
 
-This plugin is free and always will be, but if you want to support development, you can buy me a
-beer or coffee [here](https://www.paypal.com/donate/?business=dev.sh1zen%40outlook.it&item_name=Thank+you+in+advanced+for+the+kind+donations.+You+will+sustain+me+developing+WP-Optimizer.&currency_code=EUR).
+WP Optimizer includes practical security and monitoring tools:
+
+* WordPress activity log for users, posts and terms
+* Suspicious request monitoring, including XSS and SQL injection probes
+* Custom rule monitoring
+* WordPress and server-level hardening options
+* Update controls for WordPress core, plugins and themes
+
+= Diagnostics and admin tools =
+
+WP Optimizer also helps you understand and manage your WordPress installation:
+
+* Full diagnostic information about WordPress, PHP, database and server environment
+* Dashboard widgets for folder size and server information
+* Mail logging
+* SMTP configuration
+* Global settings management
+* Settings reset, import, export, restore and autosave
+* Admin cleanup and WordPress behavior customization
+
+= WordPress customization =
+
+Control common WordPress behavior without editing code:
+
+* Prevent dashboard access for non-admin users
+* Hide the Admin Bar
+* Disable the Block Editor and related block features
+* Disable comments
+* Disable QuickPress, WordPress Blog and Welcome Panel
+* Fast category list filter in the editor
+* Disable sitemap, short-links, self-ping and other non-essential outputs
+
+= Recommended first setup =
+
+For a live site, start with lower-risk optimizations first:
+
+1. Enable browser cache and compression.
+2. Enable media optimization for new uploads.
+3. Create a database backup before cleanup tasks.
+4. Enable cache and minify one option at a time.
+5. Clear cache and test the front end after each change.
+6. Monitor requests and performance from the Performance Monitor and PageSpeed modules.
+
+This gradual approach gives you better control and makes it easier to identify conflicts caused by aggressive cache or minification settings.
+
+= Modules included =
+
+* Activity Log
+* Cache
+* Cron Handler
+* Database
+* Media
+* Minify
+* Performance Monitor
+* PageSpeed
+* Settings
+* Widget
+* WP Customizer
+* WP Info
+* WP Mail
+* WP Optimizer
+* WP Security
+* WP Updates
+* Modules Handler
 
 == Installation ==
 
-This section describes how to install the plugin. In general, there are 3 ways to install this plugin like any other
-WordPress plugin.
+1. Go to Plugins → Add New in your WordPress dashboard.
+2. Search for “WP Optimizer”.
+3. Click Install Now.
+4. Activate the plugin.
+5. Open WP Optimizer from the WordPress admin menu.
+6. Enable only the modules you need.
+7. Start with browser cache, compression and media optimization, then enable cache and minify gradually.
 
-**1. VIA WORDPRESS DASHBOARD**
+You can also install WP Optimizer manually by uploading the plugin folder to `/wp-content/plugins/` and activating it from the Plugins screen.
 
-* Click on 'Add New' in the plugins dashboard
-* Search for 'WP Optimizer'
-* Click 'Install Now'
-* Activate the plugin from the same page or from the Plugins Dashboard
-
-**2. VIA UPLOADING THE PLUGIN TO WORDPRESS DASHBOARD**
-
-* Download the plugin to your computer
-  from [https://wordpress.org/plugins/wp-optimizer/](https://wordpress.org/plugins/wp-optimizer/)
-* Click on 'Add New' in the plugins dashboard
-* Click on 'Upload Plugin'
-* Select the plugin zip file
-* Click 'Install Now'
-* Activate the plugin from the Plugins Dashboard
-
-**3. VIA FTP**
-
-* Download the plugin to your computer
-  from [https://wordpress.org/plugins/wp-optimizer/](https://wordpress.org/plugins/wp-optimizer/)
-* Unzip the zip file, which will extract the main directory
-* Upload the main directory to `/wp-content/plugins/`
-* Activate the plugin from the Plugins Dashboard
-
-**FOR MULTISITE INSTALLATION**
-
-* Log in to your primary site and go to "My Sites" > "Network Admin" > "Plugins"
-* Install the plugin following one of the above ways
-* Network activate the plugin
-
-**INSTALLATION DONE, A NEW LABEL WILL BE DISPLAYED ON YOUR ADMIN MENU**
+For multisite installations, install the plugin from the Network Admin area and network activate it if you want to use it across the network.
 
 == Frequently Asked Questions ==
 
+= What is WP Optimizer? =
+
+WP Optimizer is a modular WordPress optimization plugin for performance, Core Web Vitals, database maintenance, security hardening, diagnostics and admin cleanup.
+
+= Is WP Optimizer only a cache plugin? =
+
+No. WP Optimizer includes caching, but it also provides minification, image optimization, database cleanup, cron tuning, compression, browser cache policies, performance monitoring, security hardening, mail logging, server diagnostics and WordPress customization tools.
+
 = What should I enable first on a live site? =
 
-Start with lower-risk optimizations first:
-
-* Browser cache and compression
-* Media optimization for new uploads
-* A database backup before cleanup tasks
-
-After that, enable cache and minify one option at a time and test the front end after each change.
+Start with lower-risk optimizations: browser cache, compression and media optimization. Before database cleanup, create a backup. Then enable cache and minify options one at a time, clearing cache and testing the front end after each change.
 
 = Can cache or minify break my layout? =
 
-Yes. Minification and aggressive caching can expose theme or plugin conflicts.
+Yes. Like any performance plugin, aggressive cache or minification settings can expose theme or plugin conflicts. Enable HTML, CSS and JavaScript minification separately. If something breaks, disable the last option you enabled, clear cache and test again.
 
-* Enable HTML, CSS, and JavaScript minification separately
-* Clear cache after each change
-* If something breaks, disable the last option you enabled first
+= Do I need Redis or Memcached? =
 
-= Why are image optimization jobs not starting? =
+Only if you want to use the object cache feature. Browser cache, static cache, database/query cache, compression, minification and media optimization can still be used without Redis or Memcached.
 
-Bulk media optimization runs in background, so it depends on your scheduler and PHP image libraries.
+= Does WP Optimizer optimize images? =
 
-* WP-Cron or a real server cron must be working
-* Imagick or GD must be available in PHP
-* Large media libraries can take time to finish
-* Review media settings before launching a full scan
+Yes. WP Optimizer includes media optimization, WebP conversion, background image optimization and unused media cleanup.
 
-= Do I need Redis or Memcached for object cache? =
+= Can WP Optimizer help with Core Web Vitals? =
 
-Only for the object cache feature. Browser cache, static cache, database/query cache, compression, and minify can still be used without Redis or Memcached.
+Yes. WP Optimizer helps improve the technical foundation behind Core Web Vitals through caching, minification, compression, browser caching, media optimization, reduced page weight and performance monitoring.
 
-= How can I clean the database safely? =
+= Does WP Optimizer include database cleanup? =
 
-Create a fresh backup first, then clean up in small steps.
+Yes. The Database module includes cleanup, optimization and backup utilities for maintaining WordPress database tables and removing unnecessary or orphaned data.
 
-* Back up the database before removing revisions, transients, or orphaned data
-* Avoid cleanup during migrations, imports, or major plugin/theme updates
-* Restore the backup instead of guessing if the result is not what you expected
+= Is WP Optimizer privacy-friendly? =
+
+WP Optimizer runs optimization tasks on your own server. Optional telemetry controls are available in the Tracking module.
+
+= Does WP Optimizer include security features? =
+
+Yes. WP Optimizer includes practical WordPress and server-level hardening options, activity logging and suspicious request monitoring.
+
+= Does WP Optimizer support multisite? =
+
+Yes. WP Optimizer supports multisite and can be network activated. Each site can still require different performance settings depending on theme, plugins and traffic.
 
 = Can I export or restore plugin settings? =
 
-Yes. The Settings module can export, import, reset, and restore plugin options. This is useful before testing aggressive tuning or when moving the same configuration between staging and production.
+Yes. The Settings module supports reset, import, export, restore and autosave features, which is useful when testing aggressive optimization settings or moving configurations between sites.
 
-= Does WP Optimizer work on multisite? =
+= What should I do if something looks wrong after changing settings? =
 
-Yes. The plugin supports multisite and can be network activated. Each subsite may still have different themes, plugins, and traffic patterns, so test cache, minify, and security changes gradually.
-
-= What should I do if something looks wrong after an update or settings change? =
-
-Disable the last module or option you enabled, clear cache, and test again. If the issue started after an update, deactivate and reactivate the plugin first.
-
-If needed, open the Settings module to restore or reset options, then re-enable features one by one.
+Disable the last module or option you enabled, clear cache and test again. If needed, use the Settings module to restore or reset options, then re-enable features one by one.
 
 == Changelog ==
+
+= 2.8.1 =
+
+* fixed some bugs as reported
+* improved translations
 
 = 2.8.0 =
 

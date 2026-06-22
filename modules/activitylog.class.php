@@ -94,15 +94,15 @@ class Mod_ActivityLog extends Module
                     </form>
                 </section>
             </block>
-            <block class="wps">
-                <row class="wps-inline">
+            <div class="wps wpopt-log-actions-panel" style="display:block;width:100%;box-sizing:border-box;margin-top:18px;padding:16px 18px;border:1px solid #dbe7f4;border-radius:10px;background:#ffffff;">
+                <div class="wps-inline wpopt-log-actions-row" style="display:flex;flex-wrap:wrap;align-items:center;gap:10px 12px;margin:0;">
                     <strong>Actions:</strong>
                     <a href="<?php RequestActions::get_url($this->action_hook, 'reset', false, true); ?>"
                        class="wps wps-button wpopt-btn is-danger">
                         <?php _e('Reset Log', 'wpopt') ?>
                     </a>
-                </row>
-            </block>
+                </div>
+            </div>
         </section>
         <?php
     }
