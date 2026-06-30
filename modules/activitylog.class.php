@@ -28,9 +28,16 @@ class Mod_ActivityLog extends Module
 
     protected string $context = 'wpopt';
 
+    private bool $clear_logs_on_shutdown = false;
+
     public function cleanup(array $settings = array(), array $all_settings = array()): bool
     {
-        return wpopt_remove_cron_hooks(array('WPOPT-ActivityLog'));
+        $cron_removed = wpopt_remove_cron_hooks(array('WPOPT-ActivityLog'));
+        $logs_cleared = $this->clear_activity_logs();
+
+        $this->clear_activity_logs_on_shutdown();
+
+        return $cron_removed && $logs_cleared;
     }
 
     public function activate(array $settings = array(), array $all_settings = array()): bool
@@ -70,7 +77,7 @@ class Mod_ActivityLog extends Module
 
                 case 'reset':
 
-                    Query::getInstance()->tables(WPOPT_TABLE_ACTIVITY_LOG)->action('TRUNCATE')->query();
+                    $this->clear_activity_logs();
 
                     Rewriter::getInstance(admin_url('admin.php'))->add_query_args(array(
                         'page'    => 'wpopt-' . $this->slug,
@@ -79,6 +86,38 @@ class Mod_ActivityLog extends Module
                     break;
             }
         });
+    }
+
+    private function clear_activity_logs(): bool
+    {
+        global $wpdb;
+
+        $table = defined('WPOPT_TABLE_ACTIVITY_LOG') ? (string)WPOPT_TABLE_ACTIVITY_LOG : '';
+
+        if ('' === $table || !preg_match('/^[A-Za-z0-9_]+$/', $table)) {
+            return false;
+        }
+
+        $existing_table = $wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s', $wpdb->esc_like($table)));
+
+        if ($existing_table !== $table) {
+            return true;
+        }
+
+        return false !== $wpdb->query('TRUNCATE TABLE ' . $table);
+    }
+
+    private function clear_activity_logs_on_shutdown(): void
+    {
+        if ($this->clear_logs_on_shutdown) {
+            return;
+        }
+
+        $this->clear_logs_on_shutdown = true;
+
+        add_action('shutdown', function (): void {
+            $this->clear_activity_logs();
+        }, PHP_INT_MAX);
     }
 
     private function schedule_auto_clear(array $settings): void

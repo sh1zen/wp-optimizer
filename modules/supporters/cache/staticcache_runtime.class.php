@@ -7,6 +7,7 @@
 
 namespace WPOptimizer\modules\supporters;
 
+use WPS\core\Disk;
 use WPS\core\Rewriter;
 use WPS\core\Settings;
 
@@ -44,6 +45,26 @@ class StaticCache extends Cache_Dispatcher
     public static function get_static_cache_group(): string
     {
         return static::get_cache_group();
+    }
+
+    public static function get_storage_size(): int
+    {
+        $storage = wps('wpopt')->storage;
+        $cache_group = static::get_cache_group();
+        $storage_size = method_exists($storage, 'get_size_bytes')
+            ? (int)$storage->get_size_bytes($cache_group)
+            : (method_exists($storage, 'get_path') ? Disk::calc_size($storage->get_path($cache_group)) : 0);
+
+        return $storage_size + StaticCacheDirectAccess::get_index_size();
+    }
+
+    public static function get_storage_file_count(): int
+    {
+        $storage = wps('wpopt')->storage;
+        $cache_group = static::get_cache_group();
+        $path = method_exists($storage, 'get_path') ? $storage->get_path($cache_group) : '';
+
+        return Disk::count_files($path) + StaticCacheDirectAccess::get_index_file_count();
     }
 
     public static function flush($lifetime = false, $blog_id = 0): void

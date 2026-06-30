@@ -32,5 +32,7 @@ $wpdb->query("DROP TABLE IF EXISTS " . wps('wpopt')->options->table_name());
 $wpdb->query("DROP TABLE IF EXISTS " . WPOPT_TABLE_ACTIVITY_LOG);
 $wpdb->query("DROP TABLE IF EXISTS " . WPOPT_TABLE_LOG_MAILS);
 $wpdb->query("DROP TABLE IF EXISTS " . WPOPT_TABLE_REQUEST_PERFORMANCE);
+$wpdb->query("DROP TABLE IF EXISTS " . WPOPT_TABLE_SLOW_QUERIES);
+$wpdb->query("DROP TABLE IF EXISTS " . WPOPT_TABLE_CACHE_ENTRIES);
 
 wps_uninstall();

@@ -56,7 +56,7 @@ class Mod_Pagespeed extends Module
             return $buffer;
         }
 
-        if ($this->is_enabled('lazyload_images', $this->legacy_media_lazyload_enabled())) {
+        if ($this->is_enabled('lazyload_images', true)) {
             $buffer = $this->add_lazy_loading($buffer, 'img');
         }
 
@@ -104,7 +104,7 @@ class Mod_Pagespeed extends Module
                 $this->setting_field(__('Lazy loading', 'wpopt'), false, 'separator'),
                 $this->setting_field(__('Lazyload images', 'wpopt'), 'lazyload_images', 'checkbox', array(
                     'default_value' => true,
-                    'value'         => $this->option('lazyload_images', $this->legacy_media_lazyload_enabled()),
+                    'value'         => $this->option('lazyload_images', true),
                 )),
                 $this->setting_field(__('Lazy load iframes', 'wpopt'), 'lazyload_iframes', 'checkbox', array('default_value' => true)),
                 $this->setting_field(__('Lazy load video', 'wpopt'), 'lazyload_video', 'checkbox', array('default_value' => true))
@@ -143,7 +143,7 @@ class Mod_Pagespeed extends Module
     private function has_enabled_optimization(): bool
     {
         $defaults = array(
-            'lazyload_images'              => $this->legacy_media_lazyload_enabled(),
+            'lazyload_images'              => true,
             'lazyload_fonts'               => false,
             'force_font_display_swap'      => false,
             'lazyload_iframes'             => true,
@@ -165,11 +165,6 @@ class Mod_Pagespeed extends Module
     private function is_enabled(string $option, bool $default = false): bool
     {
         return (bool)$this->option($option, $default);
-    }
-
-    private function legacy_media_lazyload_enabled(): bool
-    {
-        return (bool)wps('wpopt')->settings->get('media.loading_lazy', true);
     }
 
     private function add_lazy_loading(string $buffer, string $tag): string

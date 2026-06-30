@@ -5,7 +5,7 @@ Donate link: https://www.paypal.com/donate/?hosted_button_id=8G8VR4APG9JRU
 Requires at least: 5.0.0
 Tested up to: 7.0.0
 Requires PHP: 7.4
-Stable tag: 2.8.2
+Stable tag: 2.8.4
 License: GPLv2 or later
 
 Improve WordPress speed, Core Web Vitals and technical SEO with cache, minify, WebP media optimization, database cleanup, security and diagnostics.
@@ -290,6 +290,14 @@ Disable the last module or option you enabled, clear cache and test again. Use P
 
 == Changelog ==
 
+= 2.8.4 =
+
+* added dedicated db tables to performances monitor and cache
+* improved performances
+* removed legacy fallbacks
+* updated translations
+* fixed some bugs
+
 = 2.8.2 =
 
 * added config backup and restore
@@ -297,7 +305,6 @@ Disable the last module or option you enabled, clear cache and test again. Use P
 * added Page Test tool
 * added welcome page
 * improved cache configuration documentation and diagnostics
-* fixed some bugs
 * fixed some UI/UX issues
 
 = 2.8.1 =

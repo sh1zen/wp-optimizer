@@ -43,6 +43,10 @@ Automatic configuration backups are created before plugin settings changes. Back
 
 Each module can be reset from the modules settings screen. A module reset restores that module to factory settings and runs its cleanup lifecycle after confirmation.
 
+### Developer integrations
+
+External plugins, themes, importers and maintenance scripts can use the documented public PHP functions in [EXTERNAL-API.md](EXTERNAL-API.md).
+
 
 ## Support
 This repository is not suitable for support. Please don't use our issue tracker for support requests. Support can take 

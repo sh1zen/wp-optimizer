@@ -206,9 +206,10 @@ class Storage
         return true;
     }
 
-    public function get_size($contexts = '', $blog_id = 0): string
+    public function get_size_bytes($contexts = '', $blog_id = 0): int
     {
         $size = 0;
+
         foreach ((array)$contexts as $context) {
 
             $context = $this->filter_context($context, $blog_id);
@@ -221,6 +222,13 @@ class Storage
 
             $size += Disk::calc_size($path);
         }
+
+        return $size;
+    }
+
+    public function get_size($contexts = '', $blog_id = 0): string
+    {
+        $size = $this->get_size_bytes($contexts, $blog_id);
 
         return (string)size_format($size);
     }

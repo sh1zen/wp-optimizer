@@ -82,6 +82,7 @@ function wpopt_setup_db_table_constants(): void
     define('WPOPT_TABLE_ACTIVITY_LOG', "{$wpdb->prefix}wpopt_activity_log");
     define('WPOPT_TABLE_REQUEST_PERFORMANCE', "{$wpdb->prefix}wpopt_performance_monitor");
     define('WPOPT_TABLE_SLOW_QUERIES', "{$wpdb->prefix}wpopt_performance_slow_queries");
+    define('WPOPT_TABLE_CACHE_ENTRIES', "{$wpdb->prefix}wpopt_cache_entries");
 
 }
 

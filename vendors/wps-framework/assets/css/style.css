@@ -2825,6 +2825,8 @@ body.wps-admin-screen .wps-wrap:not(.wps-home) .wps-ar-tabcontent > .wps-list-ta
 }
 
 .wps-wrap table.wp-list-table {
+    width: 100%;
+    max-width: 100%;
     overflow: hidden;
     margin: 0;
     border: 1px solid var(--wps-line-color);
@@ -2834,21 +2836,26 @@ body.wps-admin-screen .wps-wrap:not(.wps-home) .wps-ar-tabcontent > .wps-list-ta
     background: #ffffff;
     background-clip: padding-box;
     box-shadow: var(--wps-shadow-light);
+    table-layout: fixed;
 }
 
 .wps-wrap table.wp-list-table thead th,
 .wps-wrap table.wp-list-table thead td,
 .wps-wrap table.wp-list-table tfoot th,
 .wps-wrap table.wp-list-table tfoot td {
-    height: 46px;
-    padding: 0 14px;
+    min-width: 0;
+    height: 40px;
+    padding: 0 10px;
     border-bottom: 1px solid var(--wps-line-color);
     border-right: 1px solid var(--wps-line-color);
     background: #ffffff;
     color: var(--wps-border-color);
     font-size: 12px;
     font-weight: 800;
-    line-height: 46px;
+    line-height: 1.3;
+    vertical-align: middle;
+    white-space: normal;
+    overflow-wrap: anywhere;
 }
 
 .wps-wrap table.wp-list-table thead th:last-child,
@@ -2868,8 +2875,48 @@ body.wps-admin-screen .wps-wrap:not(.wps-home) .wps-ar-tabcontent > .wps-list-ta
 
 .wps-wrap table.wp-list-table thead th a,
 .wps-wrap table.wp-list-table tfoot th a {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    min-width: 0;
+    max-width: 100%;
     color: var(--wps-border-color);
     font-weight: 800;
+    line-height: 1.3;
+    white-space: normal;
+    overflow-wrap: anywhere;
+}
+
+.wps-wrap table.wp-list-table :where(.check-column, .column-cb) {
+    width: 44px;
+}
+
+.wps-wrap table.wp-list-table :where(.column-id, .column-count, .column-size) {
+    width: 68px;
+}
+
+.wps-wrap table.wp-list-table :where(.column-time, .column-date, .column-created, .column-created_at, .column-updated, .column-updated_at) {
+    width: 112px;
+}
+
+.wps-wrap table.wp-list-table :where(.column-user, .column-user_id, .column-author, .column-owner) {
+    width: 112px;
+}
+
+.wps-wrap table.wp-list-table :where(.column-ip, .column-address, .column-host) {
+    width: 128px;
+}
+
+.wps-wrap table.wp-list-table :where(.column-status, .column-state, .column-actions) {
+    width: 104px;
+}
+
+.wps-wrap table.wp-list-table :where(.column-action) {
+    width: 118px;
+}
+
+.wps-wrap table.wp-list-table :where(.column-request) {
+    width: 84px;
 }
 
 .wps-wrap table.wp-list-table .sorting-indicators {
@@ -2882,13 +2929,25 @@ body.wps-admin-screen .wps-wrap:not(.wps-home) .wps-ar-tabcontent > .wps-list-ta
 
 .wps-wrap table.wp-list-table tbody th,
 .wps-wrap table.wp-list-table tbody td {
-    padding: 11px 14px;
+    min-width: 0;
+    max-width: 100%;
+    padding: 8px 10px;
     border-right: 1px solid #edf3f9;
     border-bottom: 1px solid #edf3f9;
     color: var(--wps-text-primary);
+    line-height: 1.38;
     vertical-align: top;
     white-space: normal;
     overflow-wrap: anywhere;
+}
+
+.wps-wrap table.wp-list-table tbody th > :where(a, span, small, strong, em, p, div, code, pre),
+.wps-wrap table.wp-list-table tbody td > :where(a, span, small, strong, em, p, div, code, pre) {
+    min-width: 0;
+    max-width: 100%;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    word-break: normal;
 }
 
 .wps-wrap table.wp-list-table tbody tr:last-child th,

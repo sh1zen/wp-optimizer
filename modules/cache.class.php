@@ -8,6 +8,7 @@
 namespace WPOptimizer\modules;
 
 use WPS\core\Ajax;
+use WPS\core\Disk;
 use WPS\core\List_Table;
 use WPS\core\RequestActions;
 use WPS\core\CronActions;
@@ -34,6 +35,10 @@ class Mod_Cache extends Module
     protected string $context = 'wpopt';
 
     private bool $dependencies_loaded = false;
+    private array $cache_auto_purge_suspensions = array();
+    private array $cache_auto_purge_dirty = array();
+    private array $cache_runtime_suspensions = array();
+    private bool $cache_trash_cleanup_registered = false;
 
     private const DEFAULT_STATIC_LIFESPAN = '04:00';
     private const DEFAULT_DYNAMIC_LIFESPAN = '01:00';
@@ -43,6 +48,11 @@ class Mod_Cache extends Module
     private const STATIC_STATUS_CACHE_GROUPS = array('2xx', '3xx', '4xx', '5xx');
     private const DEFAULT_LAYER_DISABLE_ADMIN_CACHE = true;
     private const DYNAMIC_CACHE_LAYERS = array('wp_query', 'wp_db');
+    private const CACHE_LAYERS = array('static_pages', 'wp_query', 'wp_db', 'object_cache');
+    private const CACHE_RUNTIME_SUSPEND_LAYERS = array('wp_query', 'wp_db', 'object_cache');
+    private const CACHE_TRASH_CLEANUP_HOOK = 'WPOPT-CacheTrashCleanup';
+    private const CACHE_TRASH_CLEANUP_BATCH_LIMIT = 300;
+    private const CACHE_TRASH_CLEANUP_TIME_BUDGET = 2.0;
     private const WP_QUERY_CACHE_TYPES = array(
         'post',
         'page',
@@ -108,25 +118,28 @@ class Mod_Cache extends Module
             $new_valid['static_pages']['direct_access_enabled'] = $this->sync_static_direct_access((array)$new_valid['static_pages']);
         }
 
-        if ($static_options_changed) {
-            StaticCache::flush();
+        $wp_query_deactivating = $this->deactivating('wp_query.active', $new_valid);
+        $wp_db_deactivating = $this->deactivating('wp_db.active', $new_valid);
+        $static_pages_deactivating = $this->deactivating('static_pages.active', $new_valid);
+
+        if ($static_options_changed && !$static_pages_deactivating) {
+            $this->flush_single_cache_layer('static_pages');
         }
 
-        if (!empty($dynamic_options_changed['wp_query'])) {
+        if (!empty($dynamic_options_changed['wp_query']) && !$wp_query_deactivating) {
             $this->flush_single_cache_layer('wp_query');
         }
 
-        if (!empty($dynamic_options_changed['wp_db'])) {
+        if (!empty($dynamic_options_changed['wp_db']) && !$wp_db_deactivating) {
             $this->flush_single_cache_layer('wp_db');
         }
 
-        if ($this->deactivating('wp_query.active', $new_valid)) {
-            QueryCache::deactivate();
-            StaticCacheRules::clear_all_entries('wp_query');
+        if ($wp_query_deactivating) {
+            $this->flush_single_cache_layer('wp_query');
         }
 
-        if ($this->deactivating('static_pages.active', $new_valid)) {
-            StaticCache::deactivate();
+        if ($static_pages_deactivating) {
+            $this->deactivate_static_cache_layer();
         }
 
         if ($this->activating('object_cache.active', $new_valid)) {
@@ -141,9 +154,9 @@ class Mod_Cache extends Module
             DBCache::activate($this->layer_options_from_settings($new_valid, 'wp_db'));
         }
 
-        if ($this->deactivating('wp_db.active', $new_valid)) {
-            DBCache::deactivate();
-            StaticCacheRules::clear_all_entries('wp_db');
+        if ($wp_db_deactivating) {
+            Disk::delete(WP_CONTENT_DIR . DIRECTORY_SEPARATOR . "db.php");
+            $this->flush_single_cache_layer('wp_db');
         }
 
         return $new_valid;
@@ -450,13 +463,12 @@ class Mod_Cache extends Module
         $static_settings = (array)Settings::get_option($settings, 'static_pages', $this->option('static_pages', array()));
         $response = $this->toggle_static_direct_access_rules(false, $static_settings);
 
-        StaticCacheDirectAccess::deactivate();
+        $this->deactivate_static_direct_access_fast();
         ObjectCache::deactivate();
-        DBCache::deactivate();
-        StaticCacheRules::clear_all_entries('wp_db');
-        StaticCache::deactivate();
-        QueryCache::deactivate();
-        StaticCacheRules::clear_all_entries('wp_query');
+        Disk::delete(WP_CONTENT_DIR . DIRECTORY_SEPARATOR . "db.php");
+        $this->flush_single_cache_layer('wp_db');
+        $this->deactivate_static_cache_layer();
+        $this->flush_single_cache_layer('wp_query');
         wpopt_remove_cron_hooks(array('WPOPT-ClearCache'));
 
         return $response;
@@ -475,7 +487,7 @@ class Mod_Cache extends Module
         }
         else {
             $this->toggle_static_direct_access_rules(false, $static_settings);
-            StaticCacheDirectAccess::deactivate();
+            $this->deactivate_static_direct_access_fast();
         }
 
         if (Settings::get_option($settings, 'object_cache.active')) {
@@ -526,9 +538,9 @@ class Mod_Cache extends Module
     {
         $this->load_dependencies();
 
-        DBCache::flush(false, $blog_id);
-        StaticCache::flush(false, $blog_id);
-        QueryCache::flush(false, $blog_id);
+        $this->flush_single_cache_layer('wp_db', absint($blog_id));
+        $this->flush_single_cache_layer('static_pages', absint($blog_id));
+        $this->flush_single_cache_layer('wp_query', absint($blog_id));
     }
 
     public function flush_handler($arg = null): void
@@ -536,7 +548,7 @@ class Mod_Cache extends Module
         $this->flush_cache();
     }
 
-    public function purge_query_cache_for_post_id($post_id): void
+    public function purge_query_cache_for_post_id($post_id = 0): void
     {
         if (!$this->wp_query_auto_purge_is_enabled()) {
             return;
@@ -549,7 +561,7 @@ class Mod_Cache extends Module
         }
     }
 
-    public function purge_query_cache_for_comment($comment_id): void
+    public function purge_query_cache_for_comment($comment_id = 0): void
     {
         if (!$this->wp_query_auto_purge_is_enabled()) {
             return;
@@ -572,7 +584,7 @@ class Mod_Cache extends Module
         }
     }
 
-    public function purge_query_cache_for_terms($ids, $taxonomy = ''): void
+    public function purge_query_cache_for_terms($ids = array(), $taxonomy = ''): void
     {
         if (!$this->wp_query_auto_purge_is_enabled()) {
             return;
@@ -590,7 +602,7 @@ class Mod_Cache extends Module
         QueryCache::clear_by_dependencies($criteria);
     }
 
-    public function purge_query_cache_for_object_terms($object_ids): void
+    public function purge_query_cache_for_object_terms($object_ids = array()): void
     {
         if (!$this->wp_query_auto_purge_is_enabled()) {
             return;
@@ -607,7 +619,7 @@ class Mod_Cache extends Module
         }
     }
 
-    public function purge_query_cache_for_taxonomy(string $taxonomy): void
+    public function purge_query_cache_for_taxonomy(string $taxonomy = ''): void
     {
         if (!$this->wp_query_auto_purge_is_enabled() || $taxonomy === '') {
             return;
@@ -618,7 +630,7 @@ class Mod_Cache extends Module
         ));
     }
 
-    public function purge_query_cache_for_user($user): void
+    public function purge_query_cache_for_user($user = 0): void
     {
         if (!$this->wp_query_auto_purge_is_enabled()) {
             return;
@@ -657,26 +669,41 @@ class Mod_Cache extends Module
     private function flush_cache_layers(bool $just_expired, bool $flush_query, bool $flush_static, bool $flush_db): void
     {
         if ($flush_query) {
-            QueryCache::flush($just_expired ? $this->option('wp_query.lifespan') : false);
-            if (!$just_expired) {
-                StaticCacheRules::clear_all_entries('wp_query');
+            if ($just_expired) {
+                QueryCache::flush($this->option('wp_query.lifespan'));
+            }
+            else {
+                $this->flush_single_cache_layer('wp_query');
+                $this->cache_auto_purge_dirty['wp_query'] = false;
             }
         }
 
         if ($flush_static) {
-            StaticCache::flush($just_expired ? $this->option('static_pages.lifespan') : false);
+            if ($just_expired) {
+                StaticCache::flush($this->option('static_pages.lifespan'));
+            }
+            else {
+                $this->flush_single_cache_layer('static_pages');
+                $this->cache_auto_purge_dirty['static_pages'] = false;
+            }
         }
 
         if ($flush_db) {
-            DBCache::flush($just_expired ? $this->option('wp_db.lifespan', self::DEFAULT_DYNAMIC_LIFESPAN) : false);
-            if (!$just_expired) {
-                StaticCacheRules::clear_all_entries('wp_db');
+            if ($just_expired) {
+                DBCache::flush($this->option('wp_db.lifespan', self::DEFAULT_DYNAMIC_LIFESPAN));
+            }
+            else {
+                $this->flush_single_cache_layer('wp_db');
+                $this->cache_auto_purge_dirty['wp_db'] = false;
             }
         }
+
+        $this->sync_cache_auto_purge_globals();
     }
 
     public function actions(): void
     {
+        $this->register_cache_trash_cleanup();
         $this->schedule_expired_cache_cleanup($this->option());
 
         if (!is_admin() || !current_user_can('manage_options')) {
@@ -749,7 +776,7 @@ class Mod_Cache extends Module
 
         if ($action === 'reset_cache') {
             $this->flush_single_cache_layer('wp_query');
-            StaticCache::flush();
+            $this->flush_single_cache_layer('static_pages');
             $this->flush_single_cache_layer('wp_db');
 
             ObjectCache::flush();
@@ -854,24 +881,36 @@ class Mod_Cache extends Module
                 'label' => __('WP_Query Cache', 'wpopt'),
                 'active' => (bool)$this->option('wp_query.active'),
                 'storage_group' => QueryCache::get_storage_cache_group(),
-                'flush' => static function (): void {
-                    QueryCache::flush();
-                    StaticCacheRules::clear_all_entries('wp_query');
+                'size' => static function (): int {
+                    return self::storage_group_size_bytes('wp_query');
+                },
+                'files' => static function (): int {
+                    return self::storage_group_file_count('wp_query');
+                },
+                'flush' => function (): void {
+                    $this->flush_single_cache_layer('wp_query');
                 },
             ],
             'wp_db' => [
                 'label' => __('Database Query Cache', 'wpopt'),
                 'active' => (bool)$this->option('wp_db.active'),
                 'storage_group' => DBCache::get_storage_cache_group(),
-                'flush' => static function (): void {
-                    DBCache::flush();
-                    StaticCacheRules::clear_all_entries('wp_db');
+                'size' => static function (): int {
+                    return self::storage_group_size_bytes('wp_db');
+                },
+                'files' => static function (): int {
+                    return self::storage_group_file_count('wp_db');
+                },
+                'flush' => function (): void {
+                    $this->flush_single_cache_layer('wp_db');
                 },
             ],
             'object_cache' => [
                 'label' => __('Object Cache', 'wpopt'),
                 'active' => (bool)$this->option('object_cache.active'),
                 'storage_group' => '',
+                'size' => null,
+                'files' => null,
                 'flush' => static function (): void {
                     ObjectCache::flush();
                 },
@@ -880,8 +919,14 @@ class Mod_Cache extends Module
                 'label' => __('Static Pages Cache', 'wpopt'),
                 'active' => (bool)$this->option('static_pages.active'),
                 'storage_group' => StaticCache::get_storage_cache_group(),
-                'flush' => static function (): void {
-                    StaticCache::flush();
+                'size' => static function (): int {
+                    return StaticCache::get_storage_size();
+                },
+                'files' => static function (): int {
+                    return StaticCache::get_storage_file_count();
+                },
+                'flush' => function (): void {
+                    $this->flush_single_cache_layer('static_pages');
                 },
             ],
         ];
@@ -1075,21 +1120,205 @@ class Mod_Cache extends Module
         return StaticCache::get_static_cache_group();
     }
 
-    private function flush_single_cache_layer(string $layer): void
+    private function flush_single_cache_layer(string $layer, int $blog_id = 0): void
     {
         if ($layer === 'wp_query') {
-            QueryCache::flush();
+            $this->flush_cache_storage_group(QueryCache::get_storage_cache_group(), $blog_id);
             StaticCacheRules::clear_all_entries('wp_query');
             return;
         }
 
         if ($layer === 'wp_db') {
-            DBCache::flush();
+            $this->flush_cache_storage_group(DBCache::get_storage_cache_group(), $blog_id);
             StaticCacheRules::clear_all_entries('wp_db');
             return;
         }
 
-        StaticCache::flush();
+        $this->flush_static_cache_layer($blog_id);
+    }
+
+    private function flush_static_cache_layer(int $blog_id = 0): void
+    {
+        $this->flush_cache_storage_group(StaticCache::get_storage_cache_group(), $blog_id);
+
+        if ($blog_id === 0) {
+            $this->flush_static_direct_index();
+        }
+
+        StaticCacheRules::clear_all_entries();
+    }
+
+    private function deactivate_static_cache_layer(): void
+    {
+        $this->flush_static_cache_layer();
+        $this->deactivate_static_direct_access_fast();
+    }
+
+    private function flush_static_direct_index(): void
+    {
+        $this->detach_cache_storage_path(trailingslashit(WPOPT_STORAGE) . 'direct-static/index', 'direct-static-index');
+    }
+
+    private function deactivate_static_direct_access_fast(): bool
+    {
+        $bootstrap_path = trailingslashit(ABSPATH) . 'wpopt-static-direct.php';
+
+        if (is_file($bootstrap_path)) {
+            @unlink($bootstrap_path);
+        }
+
+        $this->detach_cache_storage_path(trailingslashit(WPOPT_STORAGE) . 'direct-static', 'direct-static');
+
+        return !is_file($bootstrap_path);
+    }
+
+    private function flush_cache_storage_group(string $storage_group, int $blog_id = 0): void
+    {
+        if ($storage_group === '') {
+            return;
+        }
+
+        $storage = wps('wpopt')->storage;
+        if (!method_exists($storage, 'get_path')) {
+            return;
+        }
+
+        $path = $storage->get_path($storage_group, '', $blog_id);
+        $this->detach_cache_storage_path($path, $storage_group, $blog_id);
+    }
+
+    private function detach_cache_storage_path(string $path, string $storage_group, int $blog_id = 0): bool
+    {
+        $source = realpath($path);
+        if (!$source || !is_dir($source)) {
+            return true;
+        }
+
+        $storage_root = realpath(WPOPT_STORAGE);
+        if (!$storage_root || !$this->path_is_inside($source, $storage_root)) {
+            return false;
+        }
+
+        $trash_root = $this->cache_trash_root();
+        if (!Disk::make_path($trash_root, true)) {
+            return false;
+        }
+
+        $trash_name = sanitize_file_name(str_replace(array('/', '\\'), '-', trim($storage_group, '/\\')));
+        if ($blog_id > 0) {
+            $trash_name .= '-blog-' . $blog_id;
+        }
+
+        $destination = trailingslashit($trash_root) . $trash_name . '-' . gmdate('YmdHis') . '-' . wp_generate_password(8, false, false);
+
+        if (@rename($source, $destination)) {
+            $this->schedule_cache_trash_cleanup(10);
+            return true;
+        }
+
+        return false;
+    }
+
+    private function cache_trash_root(): string
+    {
+        return trailingslashit(WPOPT_STORAGE) . 'cache-trash';
+    }
+
+    private function register_cache_trash_cleanup(): void
+    {
+        if ($this->cache_trash_cleanup_registered) {
+            return;
+        }
+
+        add_action(self::CACHE_TRASH_CLEANUP_HOOK, array($this, 'cleanup_cache_trash'));
+        $this->cache_trash_cleanup_registered = true;
+
+        if ($this->cache_trash_has_entries()) {
+            $this->schedule_cache_trash_cleanup(30);
+        }
+    }
+
+    private function schedule_cache_trash_cleanup(int $delay = 60): void
+    {
+        if (!function_exists('wp_next_scheduled') || !function_exists('wp_schedule_single_event')) {
+            return;
+        }
+
+        if (!wp_next_scheduled(self::CACHE_TRASH_CLEANUP_HOOK)) {
+            wp_schedule_single_event(time() + max(1, $delay), self::CACHE_TRASH_CLEANUP_HOOK);
+        }
+    }
+
+    public function cleanup_cache_trash(): void
+    {
+        if ($this->delete_cache_trash_batch()) {
+            $this->schedule_cache_trash_cleanup(60);
+        }
+    }
+
+    private function delete_cache_trash_batch(): bool
+    {
+        $trash_root = realpath($this->cache_trash_root());
+        if (!$trash_root || !is_dir($trash_root)) {
+            return false;
+        }
+
+        $deadline = microtime(true) + self::CACHE_TRASH_CLEANUP_TIME_BUDGET;
+        $deleted = 0;
+
+        try {
+            $iterator = new \RecursiveIteratorIterator(
+                new \RecursiveDirectoryIterator($trash_root, \FilesystemIterator::SKIP_DOTS),
+                \RecursiveIteratorIterator::CHILD_FIRST
+            );
+
+            foreach ($iterator as $item) {
+                if (microtime(true) >= $deadline || $deleted >= self::CACHE_TRASH_CLEANUP_BATCH_LIMIT) {
+                    break;
+                }
+
+                $item_path = $item->getPathname();
+                if (!$this->path_is_inside($item_path, $trash_root)) {
+                    continue;
+                }
+
+                if ($item->isDir()) {
+                    @rmdir($item_path);
+                }
+                else {
+                    @unlink($item_path);
+                }
+
+                $deleted++;
+            }
+        } catch (\UnexpectedValueException $exception) {
+            return false;
+        }
+
+        return $this->cache_trash_has_entries();
+    }
+
+    private function cache_trash_has_entries(): bool
+    {
+        $trash_root = realpath($this->cache_trash_root());
+        if (!$trash_root || !is_dir($trash_root)) {
+            return false;
+        }
+
+        try {
+            $iterator = new \FilesystemIterator($trash_root, \FilesystemIterator::SKIP_DOTS);
+            return $iterator->valid();
+        } catch (\UnexpectedValueException $exception) {
+            return false;
+        }
+    }
+
+    private function path_is_inside(string $path, string $base): bool
+    {
+        $path = wp_normalize_path($path);
+        $base = trailingslashit(wp_normalize_path($base));
+
+        return strpos($path, $base) === 0;
     }
 
     private function normalize_static_user_scope($scope): string
@@ -1340,7 +1569,7 @@ class Mod_Cache extends Module
         );
 
         if ($layer === 'static_pages' && $updated && (bool)$this->option('static_pages.direct_access_enabled', false)) {
-            StaticCacheDirectAccess::clear_index();
+            $this->flush_static_direct_index();
             StaticCacheDirectAccess::write_runtime_files($this->static_direct_access_options());
         }
 
@@ -1353,13 +1582,13 @@ class Mod_Cache extends Module
 
         if (!$requested) {
             $this->toggle_static_direct_access_rules(false, $static_options);
-            StaticCacheDirectAccess::deactivate();
+            $this->deactivate_static_direct_access_fast();
             return false;
         }
 
         if (empty($static_options['active'])) {
             $this->toggle_static_direct_access_rules(false, $static_options);
-            StaticCacheDirectAccess::deactivate();
+            $this->deactivate_static_direct_access_fast();
             $this->add_notices('warning', __('Static cache direct access is saved but inactive until static page cache is enabled.', 'wpopt'));
 
             return true;
@@ -1437,6 +1666,8 @@ class Mod_Cache extends Module
 
     protected function init(): void
     {
+        $this->register_cache_trash_cleanup();
+
         if (!$this->has_active_cache_layers()) {
             return;
         }
@@ -1457,7 +1688,8 @@ class Mod_Cache extends Module
     {
         return (bool)Settings::get_option($settings, 'wp_query.active')
             || (bool)Settings::get_option($settings, 'wp_db.active')
-            || (bool)Settings::get_option($settings, 'static_pages.active');
+            || (bool)Settings::get_option($settings, 'static_pages.active')
+            || (bool)Settings::get_option($settings, 'object_cache.active');
     }
 
     private function layer_options(string $layer): array
@@ -1540,7 +1772,228 @@ class Mod_Cache extends Module
 
     private function wp_query_auto_purge_is_enabled(): bool
     {
-        return (bool)$this->option('wp_query.active') && $this->dynamic_auto_purge_is_enabled('wp_query');
+        if (!(bool)$this->option('wp_query.active') || !$this->dynamic_auto_purge_is_enabled('wp_query')) {
+            return false;
+        }
+
+        if ($this->cache_auto_purge_is_suspended('wp_query')) {
+            return false;
+        }
+
+        return true;
+    }
+
+    public function cache_is_active(): bool
+    {
+        return !empty($this->get_active_cache_layers());
+    }
+
+    public function suspend_cache_auto_purge(string $source = ''): bool
+    {
+        $active_layers = $this->get_active_cache_layers();
+
+        if (empty($active_layers)) {
+            return false;
+        }
+
+        foreach ($active_layers as $layer) {
+            $this->increment_cache_auto_purge_suspension($layer);
+            $this->mark_cache_auto_purge_dirty($layer);
+
+            if (in_array($layer, self::CACHE_RUNTIME_SUSPEND_LAYERS, true)) {
+                $this->increment_cache_runtime_suspension($layer);
+            }
+        }
+
+        $this->sync_cache_auto_purge_globals();
+
+        return true;
+    }
+
+    public function resume_cache_auto_purge(bool $flush_if_dirty = true, string $source = ''): bool
+    {
+        if (!$this->has_cache_auto_purge_suspensions()) {
+            return false;
+        }
+
+        $remaining_auto_purge_suspensions = $this->cache_auto_purge_suspensions;
+        foreach (self::CACHE_LAYERS as $layer) {
+            if (empty($remaining_auto_purge_suspensions[$layer])) {
+                continue;
+            }
+
+            $remaining_auto_purge_suspensions[$layer]--;
+
+            if ($remaining_auto_purge_suspensions[$layer] <= 0) {
+                unset($remaining_auto_purge_suspensions[$layer]);
+            }
+        }
+
+        $should_flush_dirty_layers = $flush_if_dirty && empty(array_filter($remaining_auto_purge_suspensions));
+        $flushed = true;
+
+        if ($should_flush_dirty_layers) {
+            $flushed = $this->flush_dirty_cache_layers();
+        }
+
+        foreach (self::CACHE_LAYERS as $layer) {
+            $this->decrement_cache_auto_purge_suspension($layer);
+        }
+
+        foreach (self::CACHE_RUNTIME_SUSPEND_LAYERS as $layer) {
+            $this->decrement_cache_runtime_suspension($layer);
+        }
+
+        $this->sync_cache_auto_purge_globals();
+
+        return $flushed;
+    }
+
+    public function flush_cache_layers_active(): bool
+    {
+        $active_layers = $this->get_active_cache_layers();
+
+        if (empty($active_layers)) {
+            $this->cache_auto_purge_dirty = array();
+            $this->sync_cache_auto_purge_globals();
+            return false;
+        }
+
+        $this->load_dependencies();
+        $this->flush_cache_layers(
+            false,
+            in_array('wp_query', $active_layers, true),
+            in_array('static_pages', $active_layers, true),
+            in_array('wp_db', $active_layers, true)
+        );
+
+        if (in_array('object_cache', $active_layers, true)) {
+            ObjectCache::flush();
+            $this->cache_auto_purge_dirty['object_cache'] = false;
+            $this->sync_cache_auto_purge_globals();
+        }
+
+        return true;
+    }
+
+    private function get_active_cache_layers(): array
+    {
+        $active_layers = array();
+
+        foreach (self::CACHE_LAYERS as $layer) {
+            if ((bool)$this->option("{$layer}.active")) {
+                $active_layers[] = $layer;
+            }
+        }
+
+        return $active_layers;
+    }
+
+    private function cache_auto_purge_is_suspended(string $layer): bool
+    {
+        if (empty($this->cache_auto_purge_suspensions[$layer])) {
+            return false;
+        }
+
+        $this->mark_cache_auto_purge_dirty($layer);
+
+        return true;
+    }
+
+    private function mark_cache_auto_purge_dirty(string $layer): void
+    {
+        if (!in_array($layer, self::CACHE_LAYERS, true)) {
+            return;
+        }
+
+        $this->cache_auto_purge_dirty[$layer] = true;
+        $this->sync_cache_auto_purge_globals();
+    }
+
+    private function increment_cache_auto_purge_suspension(string $layer): void
+    {
+        if (!in_array($layer, self::CACHE_LAYERS, true)) {
+            return;
+        }
+
+        $this->cache_auto_purge_suspensions[$layer] = absint($this->cache_auto_purge_suspensions[$layer] ?? 0) + 1;
+    }
+
+    private function decrement_cache_auto_purge_suspension(string $layer): void
+    {
+        if (empty($this->cache_auto_purge_suspensions[$layer])) {
+            return;
+        }
+
+        $this->cache_auto_purge_suspensions[$layer]--;
+
+        if ($this->cache_auto_purge_suspensions[$layer] <= 0) {
+            unset($this->cache_auto_purge_suspensions[$layer]);
+        }
+    }
+
+    private function has_cache_auto_purge_suspensions(): bool
+    {
+        return !empty(array_filter($this->cache_auto_purge_suspensions));
+    }
+
+    private function increment_cache_runtime_suspension(string $layer): void
+    {
+        if (!in_array($layer, self::CACHE_RUNTIME_SUSPEND_LAYERS, true)) {
+            return;
+        }
+
+        $this->cache_runtime_suspensions[$layer] = absint($this->cache_runtime_suspensions[$layer] ?? 0) + 1;
+    }
+
+    private function decrement_cache_runtime_suspension(string $layer): void
+    {
+        if (empty($this->cache_runtime_suspensions[$layer])) {
+            return;
+        }
+
+        $this->cache_runtime_suspensions[$layer]--;
+
+        if ($this->cache_runtime_suspensions[$layer] <= 0) {
+            unset($this->cache_runtime_suspensions[$layer]);
+        }
+    }
+
+    private function flush_dirty_cache_layers(): bool
+    {
+        $active_layers = $this->get_active_cache_layers();
+        $dirty_layers = array_values(array_filter($active_layers, function (string $layer): bool {
+            return !empty($this->cache_auto_purge_dirty[$layer]);
+        }));
+
+        if (empty($dirty_layers)) {
+            return true;
+        }
+
+        $this->load_dependencies();
+        $this->flush_cache_layers(
+            false,
+            in_array('wp_query', $dirty_layers, true),
+            in_array('static_pages', $dirty_layers, true),
+            in_array('wp_db', $dirty_layers, true)
+        );
+
+        if (in_array('object_cache', $dirty_layers, true)) {
+            ObjectCache::flush();
+            $this->cache_auto_purge_dirty['object_cache'] = false;
+            $this->sync_cache_auto_purge_globals();
+        }
+
+        return true;
+    }
+
+    private function sync_cache_auto_purge_globals(): void
+    {
+        $GLOBALS['wpopt_cache_auto_purge_suspensions'] = array_sum(array_map('absint', $this->cache_auto_purge_suspensions));
+        $GLOBALS['wpopt_cache_auto_purge_suspended_layers'] = array_keys(array_filter($this->cache_auto_purge_suspensions));
+        $GLOBALS['wpopt_cache_auto_purge_dirty_layers'] = array_keys(array_filter($this->cache_auto_purge_dirty));
+        $GLOBALS['wpopt_cache_runtime_suspensions'] = array_sum(array_map('absint', $this->cache_runtime_suspensions));
+        $GLOBALS['wpopt_cache_runtime_suspended_layers'] = array_keys(array_filter($this->cache_runtime_suspensions));
     }
 
     private function get_query_cache_post_criteria(int $post_id): array
@@ -1741,6 +2194,10 @@ class Mod_Cache extends Module
 
     private function purge_static_cache_paths(array $urls): int
     {
+        if ($this->cache_auto_purge_is_suspended('static_pages')) {
+            return 0;
+        }
+
         $this->load_dependencies();
 
         $paths = array();
@@ -1925,9 +2382,7 @@ class Mod_Cache extends Module
                             <span><?php _e('Cache size', 'wpopt') ?></span>
                             <strong>
                                 <?php
-                                echo $layer['storage_group'] !== ''
-                                    ? esc_html(wps('wpopt')->storage->get_size($layer['storage_group']))
-                                    : esc_html__('N/A', 'wpopt');
+                                echo esc_html($this->cache_layer_size_label($layer));
                                 ?>
                             </strong>
                         </span>
@@ -1938,6 +2393,74 @@ class Mod_Cache extends Module
         </div>
         <?php
         return ob_get_clean();
+    }
+
+    private function cache_layer_size_label(array $layer): string
+    {
+        if (!isset($layer['size']) || !is_callable($layer['size'])) {
+            return __('N/A', 'wpopt');
+        }
+
+        try {
+            $bytes = max(0, (int)call_user_func($layer['size']));
+            $file_count = isset($layer['files']) && is_callable($layer['files']) ? max(0, (int)call_user_func($layer['files'])) : null;
+            $file_count_label = $file_count !== null
+                ? sprintf(
+                    ' (%s %s)',
+                    function_exists('number_format_i18n') ? number_format_i18n($file_count) : number_format($file_count),
+                    $file_count === 1 ? __('file', 'wpopt') : __('files', 'wpopt')
+                )
+                : '';
+
+            return sprintf(
+                '%s%s',
+                (string)size_format($bytes, 2),
+                $file_count_label
+            );
+        } catch (\Throwable $exception) {
+            return __('N/A', 'wpopt');
+        }
+    }
+
+    private static function storage_group_size_bytes(string $layer): int
+    {
+        $storage = wps('wpopt')->storage;
+        $storage_group = self::storage_group_for_layer($layer);
+
+        if (method_exists($storage, 'get_size_bytes')) {
+            return max(0, (int)$storage->get_size_bytes($storage_group));
+        }
+
+        if (method_exists($storage, 'get_path')) {
+            return max(0, Disk::calc_size($storage->get_path($storage_group)));
+        }
+
+        return 0;
+    }
+
+    private static function storage_group_file_count(string $layer): int
+    {
+        $storage = wps('wpopt')->storage;
+
+        if (!method_exists($storage, 'get_path')) {
+            return 0;
+        }
+
+        return Disk::count_files($storage->get_path(self::storage_group_for_layer($layer)));
+    }
+
+    private static function storage_group_for_layer(string $layer): string
+    {
+        switch ($layer) {
+            case 'wp_query':
+                return QueryCache::get_storage_cache_group();
+            case 'wp_db':
+                return DBCache::get_storage_cache_group();
+            case 'static_pages':
+                return StaticCache::get_storage_cache_group();
+        }
+
+        return '';
     }
 
     protected function print_footer(): string

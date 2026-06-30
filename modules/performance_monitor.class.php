@@ -28,6 +28,9 @@ class Mod_Performance_Monitor extends Module
     private const SLOW_QUERY_SQL_MAX_LENGTH = 1600;
     private const MAX_REQUEST_HISTORY_ROWS = 10000;
     private const MAX_SLOW_QUERY_ROWS = 10000;
+    private const CACHE_METRICS_OBJ_ID = 'wpopt_perf_cache_cumulative';
+    private const CACHE_METRICS_ITEM = 'cumulative_cache_metrics';
+    private const CACHE_METRICS_CONTEXT = 'performance_monitor';
 
     public array $scopes = array('autoload', 'admin-page', 'settings');
 
@@ -79,9 +82,16 @@ class Mod_Performance_Monitor extends Module
 
     private ?string $request_path_cache = null;
 
+    private bool $clear_history_on_shutdown = false;
+
     public function cleanup(array $settings = array(), array $all_settings = array()): bool
     {
-        return wpopt_remove_cron_hooks(array('WPOPT-PerformanceMonitorCleanup'));
+        $cron_removed = wpopt_remove_cron_hooks(array('WPOPT-PerformanceMonitorCleanup'));
+        $history_cleared = $this->clear_performance_history();
+
+        $this->clear_performance_history_on_shutdown();
+
+        return $cron_removed && $history_cleared;
     }
 
     public function activate(array $settings = array(), array $all_settings = array()): bool
@@ -337,8 +347,6 @@ class Mod_Performance_Monitor extends Module
         }
 
         RequestActions::request($this->action_hook, function ($action) {
-            global $wpdb;
-
             switch ($action) {
                 case 'cleanup_history':
                     $this->cleanup_history();
@@ -350,9 +358,7 @@ class Mod_Performance_Monitor extends Module
                     break;
 
                 case 'reset_history':
-                    $wpdb->query('TRUNCATE TABLE ' . WPOPT_TABLE_REQUEST_PERFORMANCE);
-                    $wpdb->query('TRUNCATE TABLE ' . WPOPT_TABLE_SLOW_QUERIES);
-                    $this->reset_cumulative_cache_metrics();
+                    $this->clear_performance_history();
 
                     Rewriter::getInstance(admin_url('admin.php'))->add_query_args(array(
                         'page'    => 'wpopt-' . $this->slug,
@@ -361,6 +367,50 @@ class Mod_Performance_Monitor extends Module
                     break;
             }
         });
+    }
+
+    private function clear_performance_history(): bool
+    {
+        global $wpdb;
+
+        $tables = array_filter(array(
+            defined('WPOPT_TABLE_SLOW_QUERIES') ? (string)WPOPT_TABLE_SLOW_QUERIES : '',
+            defined('WPOPT_TABLE_REQUEST_PERFORMANCE') ? (string)WPOPT_TABLE_REQUEST_PERFORMANCE : '',
+        ));
+
+        $success = true;
+
+        foreach ($tables as $table) {
+            if (!preg_match('/^[A-Za-z0-9_]+$/', $table)) {
+                $success = false;
+                continue;
+            }
+
+            $existing_table = $wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s', $wpdb->esc_like($table)));
+
+            if ($existing_table !== $table) {
+                continue;
+            }
+
+            $success = (false !== $wpdb->query('TRUNCATE TABLE ' . $table)) && $success;
+        }
+
+        $this->reset_cumulative_cache_metrics();
+
+        return $success;
+    }
+
+    private function clear_performance_history_on_shutdown(): void
+    {
+        if ($this->clear_history_on_shutdown) {
+            return;
+        }
+
+        $this->clear_history_on_shutdown = true;
+
+        add_action('shutdown', function (): void {
+            $this->clear_performance_history();
+        }, PHP_INT_MAX);
     }
 
     private function schedule_history_cleanup(): void
@@ -908,10 +958,6 @@ class Mod_Performance_Monitor extends Module
         ob_start();
         ?>
         <div class="wpopt-perf-shell">
-            <div class="wpopt-perf-toolbar">
-                <p class="wpopt-muted"><?php echo esc_html(sprintf(__('Performance data is limited to %s and older entries are cleaned automatically.', 'wpopt'), strtolower($window['label']))); ?></p>
-            </div>
-
             <div class="wpopt-perf-kpis">
                 <div class="wpopt-perf-kpi"><span><?php _e('Requests', 'wpopt'); ?></span><strong><?php echo number_format_i18n((int)$summary['total_requests']); ?></strong></div>
                 <div class="wpopt-perf-kpi"><span><?php _e('Average time', 'wpopt'); ?></span><strong><?php echo esc_html($this->format_ms($summary['avg_ms'])); ?></strong></div>
@@ -2123,9 +2169,7 @@ class Mod_Performance_Monitor extends Module
 
     private function get_cumulative_cache_metrics(): array
     {
-        $metrics = function_exists('get_option')
-            ? get_option('wpopt_perf_cache_cumulative', array())
-            : array();
+        $metrics = $this->get_persistent_cache_metrics();
 
         if (!is_array($metrics)) {
             $metrics = array();
@@ -2189,14 +2233,41 @@ class Mod_Performance_Monitor extends Module
         $metrics['started_at'] = $metrics['started_at'] !== '' ? $metrics['started_at'] : $now;
         $metrics['updated_at'] = $now;
 
-        update_option('wpopt_perf_cache_cumulative', $metrics, false);
+        $this->update_persistent_cache_metrics($metrics);
     }
 
     private function reset_cumulative_cache_metrics(): void
     {
-        if (function_exists('delete_option')) {
-            delete_option('wpopt_perf_cache_cumulative');
+        if (function_exists('wps') && isset(wps('wpopt')->options)) {
+            wps('wpopt')->options->remove(self::CACHE_METRICS_OBJ_ID, self::CACHE_METRICS_ITEM, self::CACHE_METRICS_CONTEXT);
         }
+    }
+
+    private function get_persistent_cache_metrics(): array
+    {
+        $metrics = array();
+
+        if (function_exists('wps') && isset(wps('wpopt')->options)) {
+            $stored_metrics = wps('wpopt')->options->get(self::CACHE_METRICS_OBJ_ID, self::CACHE_METRICS_ITEM, self::CACHE_METRICS_CONTEXT, array(), false);
+            $metrics = is_array($stored_metrics) ? $stored_metrics : array();
+        }
+
+        return $metrics;
+    }
+
+    private function update_persistent_cache_metrics(array $metrics): bool
+    {
+        if (!function_exists('wps') || !isset(wps('wpopt')->options)) {
+            return false;
+        }
+
+        $existing = wps('wpopt')->options->get(self::CACHE_METRICS_OBJ_ID, self::CACHE_METRICS_ITEM, self::CACHE_METRICS_CONTEXT, null, false);
+
+        if (maybe_serialize($existing) === maybe_serialize($metrics)) {
+            return true;
+        }
+
+        return wps('wpopt')->options->update(self::CACHE_METRICS_OBJ_ID, self::CACHE_METRICS_ITEM, $metrics, self::CACHE_METRICS_CONTEXT);
     }
 
     private function supports_component_profile_column(): bool

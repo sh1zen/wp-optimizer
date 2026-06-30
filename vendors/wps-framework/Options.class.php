@@ -12,9 +12,9 @@ namespace WPS\core;
  */
 class Options
 {
-    private const DB_LOCK_RETRY_ATTEMPTS = 3;
+    private const DB_LOCK_RETRY_ATTEMPTS = 5;
 
-    private const DB_LOCK_RETRY_DELAY_US = 50000;
+    private const DB_LOCK_RETRY_DELAY_US = 25000;
 
     private const DB_DEADLOCK_ERROR_CODE = 1213;
 
@@ -129,15 +129,7 @@ class Options
             $expiration += time();
         }
 
-        $result = $this->upsert($obj_id, $option, $serialized_value, $context, $expiration, $container);
-
-        if (!$result) {
-            return false;
-        }
-
-        $this->cache->set($obj_id . $option . $context, $value, 'db_cache', true);
-
-        return true;
+        return $this->add($obj_id, $option, $value, $context, $expiration, $container);
     }
 
     public function get($obj_id, $option, $context = 'core', $default = false, $cache = true)
@@ -218,9 +210,30 @@ class Options
             $value = clone $value;
         }
 
-        $serialized_value = maybe_serialize($value);
+        $container_sql = 'NULL';
+        $query_params = [
+            $obj_id,
+            $context,
+            $option,
+            maybe_serialize($value),
+        ];
 
-        $result = $this->upsert($obj_id, $option, $serialized_value, $context, $expiration, $container);
+        if ($container !== null) {
+            $container_sql = '%s';
+            $query_params[] = $container;
+        }
+
+        $query_params[] = $expiration;
+
+        global $wpdb;
+
+        $result = $this->execute_with_db_lock_retries(
+            $wpdb->prepare(
+                "REPLACE INTO " . $this->table_name() . " (obj_id, context, item, value, container, expiration)
+                VALUES (%s, %s, %s, %s, {$container_sql}, %d)",
+                ...$query_params
+            )
+        );
 
         if (!$result) {
             return false;
@@ -231,52 +244,57 @@ class Options
         return true;
     }
 
-    private function upsert($obj_id, $option, $serialized_value, string $context, int $expiration, $container = null): bool
+    private function execute_with_db_lock_retries(string $sql)
     {
         global $wpdb;
 
-        $sql = $wpdb->prepare(
-            "INSERT INTO " . $this->table_name() . " (obj_id, context, item, value, container, expiration)
-            VALUES (%s, %s, %s, %s, %s, %d)
-            ON DUPLICATE KEY UPDATE
-                context = VALUES(context),
-                value = VALUES(value),
-                container = VALUES(container),
-                expiration = VALUES(expiration)",
-            $obj_id,
-            $context,
-            $option,
-            $serialized_value,
-            $container,
-            $expiration
-        );
+        $previous_suppress_errors = $wpdb->suppress_errors(true);
 
-        for ($attempt = 0; $attempt < self::DB_LOCK_RETRY_ATTEMPTS; $attempt++) {
-            $result = $wpdb->query($sql);
+        try {
+            for ($attempt = 0; $attempt < self::DB_LOCK_RETRY_ATTEMPTS; $attempt++) {
+                if ($attempt + 1 >= self::DB_LOCK_RETRY_ATTEMPTS) {
+                    $wpdb->suppress_errors($previous_suppress_errors);
+                }
 
-            if ($result !== false) {
-                return true;
+                $result = $wpdb->query($sql);
+
+                if ($result !== false) {
+                    return $result;
+                }
+
+                if (!$this->is_retryable_db_lock_error()) {
+                    return false;
+                }
+
+                if ($attempt + 1 >= self::DB_LOCK_RETRY_ATTEMPTS) {
+                    $this->report_db_lock_retry_issue($attempt, 0, true);
+                    return false;
+                }
+
+                $delay = $this->db_lock_retry_delay($attempt);
+                $this->report_db_lock_retry_issue($attempt, $delay, false);
+                usleep($delay);
             }
-
-            if (!$this->is_retryable_db_lock_error() or $attempt + 1 >= self::DB_LOCK_RETRY_ATTEMPTS) {
-                return false;
-            }
-
-            usleep(self::DB_LOCK_RETRY_DELAY_US * ($attempt + 1));
+        }
+        finally {
+            $wpdb->suppress_errors($previous_suppress_errors);
         }
 
         return false;
+    }
+
+    private function db_lock_retry_delay(int $attempt): int
+    {
+        $delay = self::DB_LOCK_RETRY_DELAY_US * (2 ** $attempt);
+
+        return $delay + mt_rand(0, self::DB_LOCK_RETRY_DELAY_US);
     }
 
     private function is_retryable_db_lock_error(): bool
     {
         global $wpdb;
 
-        $error_code = 0;
-
-        if (class_exists('\mysqli') and $wpdb->dbh instanceof \mysqli) {
-            $error_code = mysqli_errno($wpdb->dbh);
-        }
+        $error_code = $this->db_error_code();
 
         if (in_array($error_code, [self::DB_DEADLOCK_ERROR_CODE, self::DB_LOCK_WAIT_TIMEOUT_ERROR_CODE], true)) {
             return true;
@@ -285,6 +303,41 @@ class Options
         $last_error = strtolower((string)$wpdb->last_error);
 
         return str_contains($last_error, 'deadlock found') or str_contains($last_error, 'lock wait timeout');
+    }
+
+    private function db_error_code(): int
+    {
+        global $wpdb;
+
+        if (class_exists('\mysqli') and $wpdb->dbh instanceof \mysqli) {
+            return (int)mysqli_errno($wpdb->dbh);
+        }
+
+        return 0;
+    }
+
+    private function report_db_lock_retry_issue(int $attempt, int $delay_us, bool $exhausted): void
+    {
+        global $wpdb;
+
+        $message = sprintf(
+            'WPS Options database write encountered a retryable lock error on table "%s" (attempt %d/%d, errno %d: %s). %s',
+            $this->table_name(),
+            $attempt + 1,
+            self::DB_LOCK_RETRY_ATTEMPTS,
+            $this->db_error_code(),
+            $wpdb->last_error ?: 'unknown database lock error',
+            $exhausted
+                ? 'Retry attempts exhausted; the write was not completed.'
+                : sprintf('Retrying after %d microseconds.', $delay_us)
+        );
+
+        if (function_exists('wp_trigger_error')) {
+            wp_trigger_error(__METHOD__, $message, E_USER_WARNING);
+            return;
+        }
+
+        trigger_error($message, E_USER_WARNING);
     }
 
     public function remove_all($context, $option = '')
@@ -359,6 +412,22 @@ class Options
         }
 
         return $values;
+    }
+
+    public function count_all($option, $context = 'core'): int
+    {
+        global $wpdb;
+
+        if (empty($option)) {
+            return 0;
+        }
+
+        return (int)$wpdb->get_var($wpdb->prepare(
+            "SELECT COUNT(*) FROM " . $this->table_name() . " WHERE item = %s AND context = %s AND (expiration = 0 OR expiration >= %d)",
+            $option,
+            $context,
+            time()
+        ));
     }
 
     public function remove_by_id($id): bool

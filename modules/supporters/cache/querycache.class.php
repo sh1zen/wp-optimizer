@@ -98,6 +98,10 @@ class QueryCache extends Cache_Dispatcher
 
     private function request_is_cacheable(): bool
     {
+        if ($this->runtime_cache_is_suspended()) {
+            return false;
+        }
+
         $this->query_request_path = CacheRequestPolicy::normalize_request_path();
 
         if ($this->request_policy()->has_no_cache_cookie() || $this->request_policy()->user_agent_is_excluded()) {
@@ -105,6 +109,11 @@ class QueryCache extends Cache_Dispatcher
         }
 
         return true;
+    }
+
+    private function runtime_cache_is_suspended(): bool
+    {
+        return function_exists('wpopt_cache_runtime_is_suspended') && wpopt_cache_runtime_is_suspended('wp_query');
     }
 
     private function request_policy(): CacheRequestPolicy
@@ -346,6 +355,10 @@ class QueryCache extends Cache_Dispatcher
 
     public function action_found_posts($found_posts, \WP_Query $wp_query)
     {
+        if ($this->runtime_cache_is_suspended()) {
+            return $found_posts;
+        }
+
         $cache_key = $this->request_scoped_cache_key((string)$wp_query->query_vars_hash);
 
         if (isset($this->data[$cache_key])) {
@@ -357,6 +370,10 @@ class QueryCache extends Cache_Dispatcher
 
     public function action_posts_pre_query($posts, \WP_Query $wp_query)
     {
+        if ($this->runtime_cache_is_suspended()) {
+            return $posts;
+        }
+
         if (!$this->is_cacheable) {
             return $posts;
         }
@@ -404,6 +421,10 @@ class QueryCache extends Cache_Dispatcher
 
     public function action_posts_results($posts, \WP_Query $wp_query)
     {
+        if ($this->runtime_cache_is_suspended()) {
+            return $posts;
+        }
+
         if (!$this->is_cacheable) {
             return $posts;
         }
@@ -429,6 +450,10 @@ class QueryCache extends Cache_Dispatcher
      */
     public function commit($posts, \WP_Query $wp_query)
     {
+        if ($this->runtime_cache_is_suspended()) {
+            return $posts;
+        }
+
         if (!$this->is_cacheable) {
             return $posts;
         }

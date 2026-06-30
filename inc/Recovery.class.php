@@ -11,6 +11,8 @@ use WPS\core\Settings;
 class Recovery
 {
     private const BACKUP_OPTION = 'wpopt_configuration_backups';
+    private const BACKUP_ITEM = 'configuration_backups';
+    private const BACKUP_CONTEXT = 'settings';
     private const STATE_OPTION = 'wpopt_recovery_state';
     private const RECOVERY_FLAG = 'WPOPT_RECOVERY_RUNNING';
     private const RECOVER_ACTION = 'wpopt_recovery_try_recover';
@@ -505,7 +507,12 @@ class Recovery
 
     private static function get_backups(): array
     {
-        $backups = get_option(self::BACKUP_OPTION, array());
+        $backups = array();
+
+        if (function_exists('wps') && isset(wps('wpopt')->options)) {
+            $stored_backups = wps('wpopt')->options->get(self::BACKUP_OPTION, self::BACKUP_ITEM, self::BACKUP_CONTEXT, array(), false);
+            $backups = is_array($stored_backups) ? $stored_backups : array();
+        }
 
         if (!is_array($backups)) {
             return array();

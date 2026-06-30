@@ -5245,8 +5245,7 @@ body.wpopt-admin-screen .wpopt-faq-shell .wps-faq-answer ul:last-child {
     line-height: 1.25;
 }
 
-.wpopt-system-info-title-icon,
-.wpopt-system-info-row-icon {
+.wpopt-system-info-title-icon {
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -5262,14 +5261,7 @@ body.wpopt-admin-screen .wpopt-faq-shell .wps-faq-answer ul:last-child {
     border-radius: 9px;
 }
 
-.wpopt-system-info-row-icon {
-    width: 28px;
-    height: 28px;
-    border-radius: 8px;
-}
-
-.wpopt-system-info-title-icon .wps-svg-icon,
-.wpopt-system-info-row-icon .wps-svg-icon {
+.wpopt-system-info-title-icon .wps-svg-icon {
     width: 16px;
     height: 16px;
 }
@@ -5355,16 +5347,25 @@ body.wpopt-admin-screen .wpopt-system-info-table.widefat tbody tr.alternate td {
     font-size: 12px;
 }
 
+.wpopt-system-info-empty {
+    box-sizing: border-box;
+    width: 100%;
+    padding: 14px 18px;
+    border: 1px solid #dbe3ee;
+    border-radius: 12px;
+    background: var(--wpopt-system-info-panel);
+    box-shadow: var(--wpopt-system-info-shadow);
+    color: var(--wpopt-system-info-copy);
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 1.45;
+}
+
 .wpopt-system-info-label-cell {
     display: table-cell;
 }
 
 .wpopt-system-info-label-cell b {
-    vertical-align: middle;
-}
-
-.wpopt-system-info-label-cell .wpopt-system-info-row-icon {
-    margin-right: 14px;
     vertical-align: middle;
 }
 

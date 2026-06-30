@@ -84,6 +84,11 @@ function wpopt_should_use_persistent_object_cache(): bool
     return !function_exists('is_admin') || !is_admin();
 }
 
+function wpopt_object_cache_runtime_is_suspended(): bool
+{
+    return function_exists('wpopt_cache_runtime_is_suspended') && wpopt_cache_runtime_is_suspended('object_cache');
+}
+
 /**
  * Helper: safe debug dump.
  */
@@ -196,6 +201,11 @@ function wp_cache_set($key, $data, $group = '', $expire = 0)
 
 function wp_cache_get($key, $group = '', $force = false, &$found = null)
 {
+    if (wpopt_object_cache_runtime_is_suspended()) {
+        $found = false;
+        return false;
+    }
+
     wpopt_ensure_cache_object();
     global $wp_object_cache;
 
@@ -268,6 +278,10 @@ function wp_cache_set_multiple(array $data, $group = '', $expire = 0)
 
 function wp_cache_get_multiple(array $keys, $group = '')
 {
+    if (wpopt_object_cache_runtime_is_suspended()) {
+        return array_fill_keys($keys, false);
+    }
+
     wpopt_ensure_cache_object();
     global $wp_object_cache;
 

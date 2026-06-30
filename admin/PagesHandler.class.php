@@ -179,7 +179,7 @@ class PagesHandler
             }
         }
 
-        $cache_metrics = get_option('wpopt_perf_cache_cumulative', array());
+        $cache_metrics = wps('wpopt')->options->get('wpopt_perf_cache_cumulative', 'cumulative_cache_metrics', 'performance_monitor', array(), false);
         $cache_metrics = is_array($cache_metrics) ? $cache_metrics : array();
         $db_cache_hits = absint($cache_metrics['db_cache_hits'] ?? 0);
         $db_cache_misses = absint($cache_metrics['db_cache_misses'] ?? 0);
@@ -204,11 +204,8 @@ class PagesHandler
             $static_cache_stats['writes'] += absint($rule_stats['writes'] ?? 0);
         }
 
-        foreach ((array)wps('wpopt')->options->get_all('static_cache_entry', 'cache', []) as $static_cache_entry) {
-            $entry_value = (array)($static_cache_entry['value'] ?? array());
-            $static_cache_stats['entries']++;
-            $static_cache_stats['bytes'] += absint($entry_value['bytes'] ?? 0);
-        }
+        $static_cache_stats['entries'] = $this->count_static_cache_entries();
+        $static_cache_stats['bytes'] = $this->get_static_cache_storage_bytes();
 
         $dynamic_cards = array();
         $fallback_cards = array();
@@ -897,6 +894,56 @@ class PagesHandler
         set_transient($cache_key, $view_model, self::DASHBOARD_CACHE_TTL);
 
         return $view_model;
+    }
+
+    private function get_static_cache_storage_bytes(): int
+    {
+        $class = '\\WPOptimizer\\modules\\supporters\\StaticCache';
+
+        if (!class_exists($class) && defined('WPOPT_SUPPORTERS')) {
+            $loader = WPOPT_SUPPORTERS . 'cache/staticcache_runtime.class.php';
+
+            if (is_file($loader)) {
+                require_once $loader;
+            }
+        }
+
+        if (!class_exists($class) || !method_exists($class, 'get_storage_size')) {
+            return 0;
+        }
+
+        try {
+            return max(0, (int)$class::get_storage_size());
+        } catch (\Throwable $exception) {
+            return 0;
+        }
+    }
+
+    private function count_static_cache_entries(): int
+    {
+        global $wpdb;
+
+        if (!defined('WPOPT_TABLE_CACHE_ENTRIES')) {
+            return 0;
+        }
+
+        $table = (string)WPOPT_TABLE_CACHE_ENTRIES;
+
+        if (!preg_match('/^[A-Za-z0-9_]+$/', $table)) {
+            return 0;
+        }
+
+        $existing_table = $wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s', $table));
+
+        if ($existing_table !== $table) {
+            return 0;
+        }
+
+        return absint($wpdb->get_var($wpdb->prepare(
+            'SELECT COUNT(*) FROM ' . $table . ' WHERE namespace = %s AND dependency_type = %s',
+            'static',
+            '__entry'
+        )));
     }
 
     private function get_dashboard_cron_overview(): array

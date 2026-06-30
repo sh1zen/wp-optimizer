@@ -124,6 +124,10 @@ class WPOPT_DB extends wpdb
             return true;
         }
 
+        if (function_exists('wpopt_cache_runtime_is_suspended') && wpopt_cache_runtime_is_suspended('wp_db')) {
+            return true;
+        }
+
         // If cache backend/framework not ready => disable caching (but still work)
         if (!$this->cache_ready()) {
             return true;
@@ -422,6 +426,10 @@ class WPOPT_DB extends wpdb
             || !$this->cache_ready()
             || !$this->cache_index_ready()
         ) {
+            return;
+        }
+
+        if (function_exists('wpopt_cache_auto_purge_is_suspended') && wpopt_cache_auto_purge_is_suspended('wp_db')) {
             return;
         }
 

@@ -39,13 +39,18 @@ class Mod_WP_Info extends Module
         <?php
     }
 
-    private function render_system_info_table(array $table): string
+    private function render_system_info_table($table): string
     {
         $rows = array();
+        $table = is_array($table) ? $table : array();
+
+        if (!$table) {
+            return '<div class="wpopt-system-info-empty">' . esc_html__('No system information available.', 'wpopt') . '</div>';
+        }
 
         foreach ($table as $_name => $value) {
             $rows[] = array(
-                'name' => '<span class="wpopt-system-info-row-icon">' . Graphic::icon($this->info_icon($_name)) . '</span><b>' . esc_html($_name) . ':</b>',
+                'name' => '<b>' . esc_html($_name) . ':</b>',
                 'value' => $this->format_info_value($value),
             );
         }
@@ -106,49 +111,6 @@ class Mod_WP_Info extends Module
         }
 
         return 'info';
-    }
-
-    private function info_icon(string $name): string
-    {
-        $name = strtolower(wp_strip_all_tags($name));
-
-        if (str_contains($name, 'url') || str_contains($name, 'uri')) {
-            return 'external';
-        }
-
-        if (str_contains($name, 'server') || str_contains($name, 'host') || str_contains($name, 'ip') || str_contains($name, 'os')) {
-            return 'server';
-        }
-
-        if (str_contains($name, 'database') || str_contains($name, 'mysql') || str_contains($name, 'table') || str_contains($name, 'packet') || str_contains($name, 'query')) {
-            return 'database';
-        }
-
-        if (str_contains($name, 'time') || str_contains($name, 'date') || str_contains($name, 'execution')) {
-            return 'clock';
-        }
-
-        if (str_contains($name, 'memory') || str_contains($name, 'size') || str_contains($name, 'upload') || str_contains($name, 'disk')) {
-            return 'external';
-        }
-
-        if (str_contains($name, 'ssl') || str_contains($name, 'password') || str_contains($name, 'debug') || str_contains($name, 'error')) {
-            return 'shield';
-        }
-
-        if (str_contains($name, 'agent') || str_contains($name, 'user') || str_contains($name, 'author')) {
-            return 'user';
-        }
-
-        if (str_contains($name, 'theme') || str_contains($name, 'plugin')) {
-            return 'box';
-        }
-
-        if (str_contains($name, 'version') || str_contains($name, 'php') || str_contains($name, 'gd') || str_contains($name, 'string') || str_contains($name, 'tag')) {
-            return 'code';
-        }
-
-        return 'settings';
     }
 
     public function get_info()
@@ -221,8 +183,8 @@ class Mod_WP_Info extends Module
                 __('Use Only Cookies', 'wpopt') => ini_get('session.use_only_cookies') ? __('On', 'wpopt') : __('Off', 'wpopt'),
             ),
 
-            __('Active plugins', 'wpopt')   => $plugins['active'] ?? 0,
-            __('Inactive plugins', 'wpopt') => $plugins['inactive'] ?? 0,
+            __('Active plugins', 'wpopt')   => $plugins['active'] ?? array(),
+            __('Inactive plugins', 'wpopt') => $plugins['inactive'] ?? array(),
             __('Current theme', 'wpopt')    => $this->get_current_theme(),
         );
 

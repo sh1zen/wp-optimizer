@@ -13,10 +13,10 @@
  * Author URI: https://sh1zen.github.io/
  * Text Domain: wpopt
  * Domain Path: /languages
- * Version: 2.8.2
+ * Version: 2.8.4
  */
 
-const WPOPT_VERSION = '2.8.2';
+const WPOPT_VERSION = '2.8.4';
 const WPOPT_FILE = __FILE__;
 
 // setup constants
@@ -28,6 +28,7 @@ WPOptimizer\core\Recovery::bootstrap();
 
 // essential
 require_once WPOPT_INCPATH . 'functions.php';
+require_once WPOPT_INCPATH . 'cache-api.php';
 require_once WPOPT_INCPATH . 'Report.class.php';
 
 // initializer class

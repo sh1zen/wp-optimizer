@@ -116,6 +116,16 @@ class StaticCacheDirectAccess
         }
     }
 
+    public static function get_index_size(): int
+    {
+        return Disk::calc_size(self::index_dir());
+    }
+
+    public static function get_index_file_count(): int
+    {
+        return Disk::count_files(self::index_dir());
+    }
+
     public static function get_rewrite_target(): string
     {
         return self::BOOTSTRAP_FILE;

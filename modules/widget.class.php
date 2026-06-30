@@ -22,8 +22,6 @@ class Mod_Widget extends Module
 
     private array $cache = [];
 
-    private bool $update_cache = false;
-
     protected string $context = 'wpopt';
 
     public function cleanup(array $settings = array(), array $all_settings = array()): bool
@@ -158,19 +156,10 @@ class Mod_Widget extends Module
 
         $path = UtilEnv::normalize_path($path);
 
-        $this->cache = wps('wpopt')->options->get(basename($path), 'folder_size', 'cache', []);
-
-        if (empty($this->cache) or !isset($this->cache['root_folder'])) {
-            $this->cache['root_folder'] = size_format(Disk::calc_size($path));
-            $this->update_cache = true;
-        }
+        $this->cache['root_folder'] = size_format(Disk::calc_size($path));
 
         $directories = glob($path . '/*', \GLOB_ONLYDIR);
         echo $this->render_dashboard_folders_table(is_array($directories) ? $directories : array());
-
-        if ($this->update_cache) {
-            wps('wpopt')->options->update(basename($path), 'folder_size', $this->cache, 'cache', WEEK_IN_SECONDS);
-        }
     }
 
     private function render_dashboard_info_table(array $serverInfo): string
@@ -216,7 +205,6 @@ class Mod_Widget extends Module
 
     private function reset_folder_size_state()
     {
-        $this->update_cache = false;
         $this->cache = [];
     }
 
@@ -229,25 +217,15 @@ class Mod_Widget extends Module
     {
         $rows = array();
 
-        if (empty($this->cache) or !isset($this->cache['dir_list'])):
-            foreach ($directories as $dir) {
-                $name = basename($dir);
-                $size = size_format(Disk::calc_size($dir));
-                $this->cache['dir_list'][$name] = $size;
-                $rows[] = array(
-                    'files' => esc_html($name),
-                    'size' => esc_html($size),
-                );
-            }
-            $this->update_cache = true;
-        else:
-            foreach ($this->cache['dir_list'] as $name => $size) {
-                $rows[] = array(
-                    'files' => esc_html($name),
-                    'size' => esc_html($size),
-                );
-            }
-        endif;
+        foreach ($directories as $dir) {
+            $name = basename($dir);
+            $size = size_format(Disk::calc_size($dir));
+            $this->cache['dir_list'][$name] = $size;
+            $rows[] = array(
+                'files' => esc_html($name),
+                'size' => esc_html($size),
+            );
+        }
 
         return $rows;
     }
@@ -264,8 +242,8 @@ class Mod_Widget extends Module
             }
         }
         $name = 'wpopt_folder_sizes';
-        $cache_msg = count($this->paths) > 1 ? __('Clears all widgets caches', 'wpopt') : __('Clear widget cache', 'wpopt');
-        echo "<p><label><input name='$name' id='$name' type='checkbox' value='1' />" . __('Check to empty the cache', 'wpopt') . "</label><br /><em style='margin-left: 23px'>$cache_msg</em></p>";
+        $cache_msg = __('Removes saved folder-size snapshots from older versions. Current sizes are calculated from disk each time.', 'wpopt');
+        echo "<p><label><input name='$name' id='$name' type='checkbox' value='1' />" . __('Check to empty the saved snapshots', 'wpopt') . "</label><br /><em style='margin-left: 23px'>$cache_msg</em></p>";
     }
 
     protected function setting_fields($filter = ''): array

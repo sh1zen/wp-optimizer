@@ -18,6 +18,8 @@ class Mod_Settings extends Module
     public static ?string $name = 'Settings';
 
     private const BACKUP_OPTION = 'wpopt_configuration_backups';
+    private const BACKUP_ITEM = 'configuration_backups';
+    private const BACKUP_CONTEXT = 'settings';
     private const BACKUP_MIN_INTERVAL_SECONDS = 900;
     private const BACKUP_MAX_ENTRIES = 50;
 
@@ -237,7 +239,7 @@ class Mod_Settings extends Module
 
         $backups = $this->limit_configuration_backups($backups);
 
-        return update_option(self::BACKUP_OPTION, array_values($backups), 'no');
+        return $this->update_configuration_backups($backups);
     }
 
     private function has_recent_configuration_backup(array $backups, int $now): bool
@@ -247,7 +249,7 @@ class Mod_Settings extends Module
 
     private function get_configuration_backups(): array
     {
-        $backups = get_option(self::BACKUP_OPTION, array());
+        $backups = wps('wpopt')->options->get(self::BACKUP_OPTION, self::BACKUP_ITEM, self::BACKUP_CONTEXT, array(), false);
 
         if (!is_array($backups)) {
             return array();
@@ -267,7 +269,7 @@ class Mod_Settings extends Module
         $limited_backups = $this->limit_configuration_backups($backups);
 
         if (count($limited_backups) !== count($backups)) {
-            update_option(self::BACKUP_OPTION, $limited_backups, 'no');
+            $this->update_configuration_backups($limited_backups);
         }
 
         return $limited_backups;
@@ -319,7 +321,26 @@ class Mod_Settings extends Module
             return true;
         }));
 
-        return $deleted && update_option(self::BACKUP_OPTION, $backups, 'no');
+        return $deleted && $this->update_configuration_backups($backups);
+    }
+
+    private function update_configuration_backups(array $backups): bool
+    {
+        $backups = array_values($backups);
+
+        if (empty($backups)) {
+            wps('wpopt')->options->remove(self::BACKUP_OPTION, self::BACKUP_ITEM, self::BACKUP_CONTEXT);
+
+            return true;
+        }
+
+        $existing = wps('wpopt')->options->get(self::BACKUP_OPTION, self::BACKUP_ITEM, self::BACKUP_CONTEXT, null, false);
+
+        if (maybe_serialize($existing) === maybe_serialize($backups)) {
+            return true;
+        }
+
+        return wps('wpopt')->options->update(self::BACKUP_OPTION, self::BACKUP_ITEM, $backups, self::BACKUP_CONTEXT);
     }
 
     protected function print_footer(): string

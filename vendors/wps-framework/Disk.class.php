@@ -268,16 +268,83 @@ class Disk
         return true;
     }
 
-    public static function calc_size($directory)
+    public static function calc_size($directory): int
     {
         $bytesTotal = 0;
         $path = realpath($directory);
-        if ($path !== false && $path != '' && file_exists($path)) {
-            foreach (new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($path, \FilesystemIterator::SKIP_DOTS)) as $object) {
-                $bytesTotal += $object->getSize();
-            }
+
+        if ($path === false || $path === '' || !file_exists($path)) {
+            return 0;
         }
+
+        clearstatcache(true, $path);
+
+        if (is_file($path)) {
+            return (int)(@filesize($path) ?: 0);
+        }
+
+        if (!is_dir($path)) {
+            return 0;
+        }
+
+        try {
+            $iterator = new \RecursiveIteratorIterator(
+                new \RecursiveDirectoryIterator($path, \FilesystemIterator::SKIP_DOTS),
+                \RecursiveIteratorIterator::LEAVES_ONLY,
+                \RecursiveIteratorIterator::CATCH_GET_CHILD
+            );
+
+            foreach ($iterator as $object) {
+                if (!$object->isFile()) {
+                    continue;
+                }
+
+                $filePath = $object->getPathname();
+                clearstatcache(true, $filePath);
+                $bytesTotal += (int)($object->getSize() ?: 0);
+            }
+        } catch (\Throwable $exception) {
+            return $bytesTotal;
+        }
+
         return $bytesTotal;
+    }
+
+    public static function count_files($directory): int
+    {
+        $path = realpath($directory);
+
+        if ($path === false || $path === '' || !file_exists($path)) {
+            return 0;
+        }
+
+        if (is_file($path)) {
+            return 1;
+        }
+
+        if (!is_dir($path)) {
+            return 0;
+        }
+
+        $count = 0;
+
+        try {
+            $iterator = new \RecursiveIteratorIterator(
+                new \RecursiveDirectoryIterator($path, \FilesystemIterator::SKIP_DOTS),
+                \RecursiveIteratorIterator::LEAVES_ONLY,
+                \RecursiveIteratorIterator::CATCH_GET_CHILD
+            );
+
+            foreach ($iterator as $object) {
+                if ($object->isFile()) {
+                    $count++;
+                }
+            }
+        } catch (\Throwable $exception) {
+            return $count;
+        }
+
+        return $count;
     }
 
     public static function remove_old_file($dir, $max_age = 60, $recursive = false): void
