@@ -2,8 +2,8 @@
 /**
  * Object Cache Drop-in (single-file, bootstrap-safe)
  *
- * - Tries to use \WPS\core\Cache(true) if available
- * - Falls back to WP_Object_Cache (in-memory) otherwise
+ * - Tries to use \WPS\core\Cache('wpopt', true) if available
+ * - Uses WP_Object_Cache (in-memory) otherwise
  *
  * @author    sh1zen
  * @copyright Copyright (C) 2024.
@@ -36,21 +36,12 @@ if (function_exists('wp_cache_init')) {
         }
     }
 
-    // Optional: fallback to a plugin/extension constant if you have it
-    if (defined('WPOPT_DB_ABSPATH')) {
-        $loader = rtrim((string)WPOPT_DB_ABSPATH, "/\\") . DIRECTORY_SEPARATOR . 'vendors/wps-framework/loader.php';
-        if (is_file($loader)) {
-            require_once $loader;
-            return;
-        }
-    }
-
-    // No loader found -> silently continue with fallback cache.
+    // No loader found: continue with WordPress in-memory cache.
 })();
 
 /**
  * Ensures global $wp_object_cache is always a valid object.
- * Prefers \WPS\core\Cache(true); else uses WP_Object_Cache.
+ * Prefers \WPS\core\Cache('wpopt', true); else uses WP_Object_Cache.
  */
 function wpopt_ensure_cache_object(): void
 {
@@ -60,10 +51,10 @@ function wpopt_ensure_cache_object(): void
         return;
     }
 
-    // Prefer WPS cache if available
-    if (class_exists('\WPS\core\Cache')) {
+    // Prefer WPS cache if available and this request is allowed to use persistent cache.
+    if (wpopt_should_use_persistent_object_cache() && class_exists('\WPS\core\Cache')) {
         try {
-            $wp_object_cache = new \WPS\core\Cache(true);
+            $wp_object_cache = new \WPS\core\Cache('wpopt', true);
             return;
         } catch (\Throwable $e) {
             error_log('object-cache.php: failed to init \\WPS\\core\\Cache: ' . $e->getMessage());
@@ -77,6 +68,20 @@ function wpopt_ensure_cache_object(): void
     }
 
     $wp_object_cache = new WP_Object_Cache();
+}
+
+function wpopt_is_wps_cache($cache): bool
+{
+    return class_exists('\WPS\core\Cache') && $cache instanceof \WPS\core\Cache;
+}
+
+function wpopt_should_use_persistent_object_cache(): bool
+{
+    if (!defined('WPOPT_ADMIN_CACHE_DISABLED') || !WPOPT_ADMIN_CACHE_DISABLED) {
+        return true;
+    }
+
+    return !function_exists('is_admin') || !is_admin();
 }
 
 /**
@@ -182,6 +187,10 @@ function wp_cache_set($key, $data, $group = '', $expire = 0)
     wpopt_ensure_cache_object();
     global $wp_object_cache;
 
+    if (wpopt_is_wps_cache($wp_object_cache)) {
+        return $wp_object_cache->set($key, $data, $group, true, $expire);
+    }
+
     return $wp_object_cache->set($key, $data, $group, $expire);
 }
 
@@ -195,6 +204,11 @@ function wp_cache_get($key, $group = '', $force = false, &$found = null)
      * - $found must be boolean, by-ref
      * - if value stored is false, $found must still be true
      */
+    if (wpopt_is_wps_cache($wp_object_cache)) {
+        $found = $wp_object_cache->has($key, $group);
+        return $wp_object_cache->get($key, $group, false);
+    }
+
     if (method_exists($wp_object_cache, 'get')) {
         return $wp_object_cache->get($key, $group, $force, $found);
     }
@@ -247,7 +261,7 @@ function wp_cache_set_multiple(array $data, $group = '', $expire = 0)
 
     $values = [];
     foreach ($data as $key => $value) {
-        $values[$key] = $wp_object_cache->set($key, $value, $group, $expire);
+        $values[$key] = wp_cache_set($key, $value, $group, $expire);
     }
     return $values;
 }

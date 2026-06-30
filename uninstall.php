@@ -22,7 +22,7 @@ require_once WPOPT_INCPATH . 'functions.php';
 wpopt_cleanup_media_cron_hooks();
 
 // Leave no trail
-$option_names = array('wpopt', 'wpopt.media.todo');
+$option_names = array('wpopt', 'wpopt.media.todo', 'wpopt_activated_at', 'wpopt_welcome_seen');
 
 foreach ($option_names as $option_name) {
     delete_option($option_name);

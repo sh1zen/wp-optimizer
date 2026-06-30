@@ -8,6 +8,7 @@
 namespace WPOptimizer\modules;
 
 use WPS\core\Graphic;
+use WPS\core\List_Table;
 use WPS\core\UtilEnv;
 use WPS\modules\Module;
 
@@ -30,42 +31,34 @@ class Mod_WP_Info extends Module
                             <span class="wpopt-system-info-title-icon"><?php echo Graphic::icon($this->section_icon($name)); ?></span>
                             <span><?php echo esc_html($name); ?></span>
                         </h2>
-                        <table class="widefat wps wpopt-system-info-table">
-                            <tbody>
-                            <?php
-
-                            $iter = 1;
-                            $output = $alternate = $line = '';
-                            foreach ($table as $_name => $value) {
-
-                                $line .= sprintf(
-                                    "<td class='width15 wpopt-system-info-label-cell'><span class='wpopt-system-info-row-icon'>%s</span><b>%s:</b></td><td class='width35 wpopt-system-info-value-cell'>%s</td>",
-                                    Graphic::icon($this->info_icon($_name)),
-                                    esc_html($_name),
-                                    $this->format_info_value($value)
-                                );
-
-                                if ($iter % 2 == 0) {
-                                    $output .= "<tr {$alternate}>" . $line . "</tr>";
-                                    $alternate = $alternate == '' ? "class='alternate'" : '';
-                                    $line = '';
-                                }
-                                $iter++;
-                            }
-
-                            if (!empty($line))
-                                $output .= "<tr {$alternate}>" . $line . "<td class='width15 wpopt-system-info-empty-cell'></td><td class='width35 wpopt-system-info-empty-cell'></td></tr>";
-
-                            echo $output;
-
-                            ?>
-                            </tbody>
-                        </table>
+                        <?php echo $this->render_system_info_table($table); ?>
                     </section>
                 <?php endforeach; ?>
             </section>
         </section>
         <?php
+    }
+
+    private function render_system_info_table(array $table): string
+    {
+        $rows = array();
+
+        foreach ($table as $_name => $value) {
+            $rows[] = array(
+                'name' => '<span class="wpopt-system-info-row-icon">' . Graphic::icon($this->info_icon($_name)) . '</span><b>' . esc_html($_name) . ':</b>',
+                'value' => $this->format_info_value($value),
+            );
+        }
+
+        return List_Table::generateHTML_table(array(
+            'class' => 'wps wpopt-system-info-table',
+            'columns' => array(
+                'name' => __('Name', 'wpopt'),
+                'value' => __('Value', 'wpopt'),
+            ),
+            'rows' => $rows,
+            'empty' => __('No system information available.', 'wpopt'),
+        ));
     }
 
     private function format_info_value($value): string

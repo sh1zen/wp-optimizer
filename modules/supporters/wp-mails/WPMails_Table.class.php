@@ -22,7 +22,7 @@ use WPS\core\UtilEnv;
  *
  * @see \WP_List_Table
  */
-class WPMails extends \WP_List_Table
+class WPMails extends \WPS\core\List_Table
 {
     private string $action_hook;
 
@@ -43,21 +43,6 @@ class WPMails extends \WP_List_Table
                 'screen'   => get_current_screen(),
             )
         );
-    }
-
-    public function display_tablenav($which)
-    {
-        ?>
-        <div class="tablenav <?php echo esc_attr($which); ?>">
-            <?php
-            $this->extra_tablenav($which);
-            if ('top' == $which) {
-                $this->search_box(__('Search', 'wpopt'), 'wpopt-mailLog');
-            }
-            $this->pagination($which);
-            ?>
-        </div>
-        <?php
     }
 
     public function search_box($text, $input_id)

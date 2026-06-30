@@ -28,13 +28,22 @@ class Mod_ActivityLog extends Module
 
     protected string $context = 'wpopt';
 
+    public function cleanup(array $settings = array(), array $all_settings = array()): bool
+    {
+        return wpopt_remove_cron_hooks(array('WPOPT-ActivityLog'));
+    }
+
+    public function activate(array $settings = array(), array $all_settings = array()): bool
+    {
+        $settings = !empty($settings) ? $settings : $this->option();
+        $this->schedule_auto_clear($settings);
+
+        return true;
+    }
+
     public function actions(): void
     {
-        if ($this->option('auto_clear')) {
-            CronActions::schedule("WPOPT-ActivityLog", DAY_IN_SECONDS, function () {
-                Query::getInstance()->delete(['time' => time() - ($this->option('lifetime') * DAY_IN_SECONDS), 'compare' => '<'], WPOPT_TABLE_ACTIVITY_LOG)->query();
-            }, '08:00');
-        }
+        $this->schedule_auto_clear($this->option());
 
         if (!is_admin() || !current_user_can('manage_options')) {
             return;
@@ -70,6 +79,20 @@ class Mod_ActivityLog extends Module
                     break;
             }
         });
+    }
+
+    private function schedule_auto_clear(array $settings): void
+    {
+        if (empty($settings['auto_clear'])) {
+            wpopt_remove_cron_hooks(array('WPOPT-ActivityLog'));
+            return;
+        }
+
+        $lifetime = max(1, absint($settings['lifetime'] ?? $this->option('lifetime', 90)));
+
+        CronActions::schedule("WPOPT-ActivityLog", DAY_IN_SECONDS, function () use ($lifetime) {
+            Query::getInstance()->delete(['time' => time() - ($lifetime * DAY_IN_SECONDS), 'compare' => '<'], WPOPT_TABLE_ACTIVITY_LOG)->query();
+        }, '08:00');
     }
 
     public function render_sub_modules(bool $standalone = true): void

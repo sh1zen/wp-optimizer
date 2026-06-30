@@ -21,7 +21,7 @@ use WPS\core\UtilEnv;
  *
  * @see \WP_List_Table
  */
-class ActivityLog extends \WP_List_Table
+class ActivityLog extends \WPS\core\List_Table
 {
     private $settings;
 
@@ -63,21 +63,6 @@ class ActivityLog extends \WP_List_Table
             return $value;
 
         return $status;
-    }
-
-    public function display_tablenav($which)
-    {
-        ?>
-        <div class="tablenav <?php echo esc_attr($which); ?>">
-            <?php
-            $this->extra_tablenav($which);
-            if ('top' == $which) {
-                $this->search_box(__('Search', 'wpopt'), 'wpopt-activityLog');
-            }
-            $this->pagination($which);
-            ?>
-        </div>
-        <?php
     }
 
     public function search_box($text, $input_id)

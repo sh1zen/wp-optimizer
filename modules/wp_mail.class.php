@@ -25,13 +25,21 @@ class Mod_WP_Mail extends Module
 
     protected string $context = 'wpopt';
 
+    public function cleanup(array $settings = array(), array $all_settings = array()): bool
+    {
+        return wpopt_remove_cron_hooks(array('WPOPT-WP-Mails'));
+    }
+
+    public function activate(array $settings = array(), array $all_settings = array()): bool
+    {
+        $this->schedule_auto_clear(!empty($settings) ? $settings : $this->option());
+
+        return true;
+    }
+
     public function actions(): void
     {
-        if ($this->option('auto_clear', false)) {
-            CronActions::schedule("WPOPT-WP-Mails", DAY_IN_SECONDS, function () {
-                 Query::getInstance()->delete(['sent_date' => wps_time('mysql', WEEK_IN_SECONDS), 'compare' => '<'], WPOPT_TABLE_LOG_MAILS)->query();
-            }, '08:00');
-        }
+        $this->schedule_auto_clear($this->option());
 
         if (!is_admin() || !current_user_can('manage_options')) {
             return;
@@ -65,6 +73,18 @@ class Mod_WP_Mail extends Module
                     break;
             }
         });
+    }
+
+    private function schedule_auto_clear(array $settings): void
+    {
+        if (empty($settings['auto_clear'])) {
+            wpopt_remove_cron_hooks(array('WPOPT-WP-Mails'));
+            return;
+        }
+
+        CronActions::schedule("WPOPT-WP-Mails", DAY_IN_SECONDS, function () {
+             Query::getInstance()->delete(['sent_date' => wps_time('mysql', WEEK_IN_SECONDS), 'compare' => '<'], WPOPT_TABLE_LOG_MAILS)->query();
+        }, '08:00');
     }
 
     public function mail_logger($mail_info)
@@ -385,31 +405,25 @@ class Mod_WP_Mail extends Module
         return $this->group_setting_fields(
 
             $this->group_setting_fields(
-                $this->setting_field(__('General', 'wpopt'), false, "separator"),
-                $this->setting_field(__('Configuration Override', 'wpopt'), "active", "checkbox"),
-                $this->setting_field(__('Mails logging', 'wpopt'), "log-mail", "checkbox", ['default_value' => true]),
-                $this->setting_field(__('Delete mails older then a week', 'wpopt'), "auto_clear", "checkbox"),
-            ),
-
-            $this->group_setting_fields(
                 $this->setting_field(__('Server Conf', 'wpopt'), false, "separator"),
+                $this->setting_field(__('Configuration Override', 'wpopt'), "active", "checkbox"),
                 $this->setting_field(__('Host', 'wpopt'), "server.host", "text"),
                 $this->setting_field(__('Port', 'wpopt'), "server.port", "numeric", ['default_value' => 465]),
-                $this->setting_field(__('Port', 'wpopt'), "server.timeout", "numeric", ['default_value' => 10]),
-            ),
-
-            $this->group_setting_fields(
+                $this->setting_field(__('Timeout', 'wpopt'), "server.timeout", "numeric", ['default_value' => 10]),
                 $this->setting_field(__('SMTP', 'wpopt'), false, "separator"),
                 $this->setting_field(__('Enable', 'wpopt'), "smtp.active", "checkbox"),
                 $this->setting_field(__('Username', 'wpopt'), "smtp.username", "text", ['parent' => 'smtp.active']),
                 $this->setting_field(__('Password', 'wpopt'), "smtp.password", "text", ['parent' => 'smtp.active']),
                 $this->setting_field(__('Encryption', 'wpopt'), "smtp.encryption", "dropdown", ['parent' => 'smtp.active', 'list' => ['ssl', 'tls', ''], 'default_value' => 'ssl']),
                 $this->setting_field(__('AutoTLS', 'wpopt'), "smtp.autotls", "text", ['parent' => 'smtp.active', 'default_value' => false]),
+                $this->setting_field(__('SSL', 'wpopt'), false, "separator"),
+                $this->setting_field(__('Allow self signed ssl certificate', 'wpopt'), "ssl.self-signed", "checkbox", ['default_value' => false]),
             ),
 
             $this->group_setting_fields(
-                $this->setting_field(__('SSL', 'wpopt'), false, "separator"),
-                $this->setting_field(__('Allow self signed ssl certificate', 'wpopt'), "ssl.self-signed", "checkbox", ['default_value' => false]),
+                $this->setting_field(__('General', 'wpopt'), false, "separator"),
+                $this->setting_field(__('Mails logging', 'wpopt'), "log-mail", "checkbox", ['default_value' => true]),
+                $this->setting_field(__('Delete mails older then a week', 'wpopt'), "auto_clear", "checkbox"),
             )
         );
     }

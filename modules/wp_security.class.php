@@ -51,18 +51,59 @@ class Mod_WP_Security extends Module
             return $new_valid;
         }
 
-        $htaccess = new WP_Htaccess($new_valid);
+        $this->sync_server_rules($new_valid);
+
+        return $new_valid;
+    }
+
+    public function cleanup(array $settings = array(), array $all_settings = array()): bool
+    {
+        $this->load_dependencies();
+
+        if ($this->constant_enabled('DISALLOW_FILE_MODS')) {
+            return true;
+        }
+
+        return $this->sync_server_rules($this->inactive_server_rules_settings());
+    }
+
+    public function activate(array $settings = array(), array $all_settings = array()): bool
+    {
+        $this->load_dependencies();
+        $settings = $this->apply_constant_locks(!empty($settings) ? $settings : $this->option());
+
+        if ($this->constant_enabled('DISALLOW_FILE_MODS')) {
+            return true;
+        }
+
+        return $this->sync_server_rules($settings);
+    }
+
+    private function inactive_server_rules_settings(): array
+    {
+        $settings = array();
+
+        foreach ($this->server_conf_hooks as $server_hooks => $value) {
+            $settings[$server_hooks]['active'] = false;
+        }
+
+        return $settings;
+    }
+
+    private function sync_server_rules(array $settings): bool
+    {
+        $htaccess = new WP_Htaccess($settings);
 
         foreach ($this->server_conf_hooks as $server_hooks => $value) {
 
-            $htaccess->toggle_rule($server_hooks, Settings::get_option($new_valid, "$server_hooks.active"));
+            $htaccess->toggle_rule($server_hooks, Settings::get_option($settings, "$server_hooks.active"));
         }
 
         if ($htaccess->edited()) {
-            $htaccess->write();
+            return $htaccess->write();
         }
 
-        return $new_valid;
+        return true;
     }
 
     private function apply_constant_locks(array $settings): array
@@ -102,7 +143,7 @@ class Mod_WP_Security extends Module
 
     private function load_dependencies(): void
     {
-        require_once WPOPT_SUPPORTERS . 'optisec/WP_Htaccess.class.php';
+        require_once WPOPT_SUPPORTERS . 'optisec/localConf.php';
     }
 
     public function restricted_access($context = ''): bool
@@ -116,9 +157,11 @@ class Mod_WP_Security extends Module
     protected function init(): void
     {
         if (is_admin()) {
-            if (!$this->constant_enabled('DISALLOW_FILE_MODS') && !is_writable(ABSPATH . '.htaccess')) {
+            $this->load_dependencies();
+
+            if (!$this->constant_enabled('DISALLOW_FILE_MODS') && !WP_Htaccess::is_rules_file_writable()) {
                 add_action('admin_notices', function () {
-                    $this->add_notices('error', sprintf(__("<b><i>'%s'</i> is not writable.</b><br>Modify (<b>run chmod 774</b>) it's group permission to allow WP-Security to make changes automatically.", 'wpopt'), ABSPATH . '.htaccess'));
+                    $this->add_notices('error', sprintf(__("'%1\$s' is not writable. Update its permissions to allow WP Optimizer to apply %2\$s server-rule changes automatically. Until this file is writable, WP Optimizer cannot apply some performance, security, and compatibility improvements automatically.", 'wpopt'), WP_Htaccess::get_rules_path(), WP_Htaccess::get_server_label()));
                 }, 0);
             }
         }
@@ -170,10 +213,14 @@ class Mod_WP_Security extends Module
             return "<p><b>" . esc_html__('Server-rule changes are disabled because DISALLOW_FILE_MODS is enabled in wp-config.php.', 'wpopt') . "</b></p>";
         }
 
-        if (!is_writable(ABSPATH . '.htaccess')) {
+        $this->load_dependencies();
+        $header = '';
 
-            $this->load_dependencies();
+        if (WP_Htaccess::is_nginx()) {
+            $header .= "<p><b>" . esc_html__('Nginx server rules', 'wpopt') . "</b><br>" . sprintf(esc_html__("WP-Optimizer writes Nginx rules to %s. Include this file inside your Nginx server block, then reload Nginx after changes. Optional module directives such as Brotli and PageSpeed are written as comments to avoid reload errors when the module is not installed.", 'wpopt'), '<code>' . esc_html(WP_Htaccess::get_rules_path()) . '</code>') . "</p>";
+        }
 
+        if (!WP_Htaccess::is_rules_file_writable()) {
             $htaccess = new WP_Htaccess($this->option());
 
             foreach ($this->server_conf_hooks as $server_hooks => $value) {
@@ -183,13 +230,13 @@ class Mod_WP_Security extends Module
 
             if ($htaccess->edited() and !$htaccess->write()) {
 
-                $virtual_page = htmlentities($htaccess->get_rules());
+                $virtual_page = esc_textarea($htaccess->get_rules());
 
-                return "<p><b>" . __("Your htaccess file is not modifiable, to make desired enhancements copy and paste those lines to .htaccess file.", 'wpopt') . "</b><br><br><textarea style='width: 100%; height: 200px'>$virtual_page</textarea></p>";
+                return $header . "<p><b>" . sprintf(esc_html__("Your %s file is not modifiable, to make desired enhancements copy and paste those lines to the server configuration file.", 'wpopt'), esc_html(WP_Htaccess::get_rules_file_name())) . "</b><br><br><textarea style='width: 100%; height: 200px'>$virtual_page</textarea></p>";
             }
         }
 
-        return '';
+        return $header;
     }
 
     protected function setting_fields($filter = ''): array
@@ -200,12 +247,10 @@ class Mod_WP_Security extends Module
         $disable_file_editor_args = $this->locked_checkbox_args(['parent' => 'a_api.active'], 'DISALLOW_FILE_EDIT', true, $file_editor_hint);
 
         return $this->group_setting_fields(
-            $this->setting_field(__('Some configuration are available only in apache.', 'wpopt'), false, "separator"),
-
             $this->group_setting_fields(
                 $this->setting_field(__('Requests and Server', 'wpopt'), "srv_security.active", "checkbox", $srv_security_active_args),
                 $this->setting_field(__('Disable directory listing', 'wpopt'), "srv_security.listings", "checkbox", ['parent' => 'srv_security.active', 'default_value' => true]),
-                $this->setting_field(__('Disable access to configuration file (.htaccess)', 'wpopt'), "srv_security.protect_htaccess", "checkbox", ['parent' => 'srv_security.active', 'default_value' => true]),
+                $this->setting_field(__('Disable access to configuration files (.htaccess/nginx.conf)', 'wpopt'), "srv_security.protect_htaccess", "checkbox", ['parent' => 'srv_security.active', 'default_value' => true]),
                 $this->setting_field(__('Enable HTTPS Strict Transport Security', 'wpopt'), "srv_security.hsts", "checkbox", ['parent' => 'srv_security.active', 'default_value' => true]),
                 $this->setting_field(__('Disable Cross-Origin Resource Sharing', 'wpopt'), "srv_security.cors", "checkbox", ['parent' => 'srv_security.active', 'default_value' => true]),
                 $this->setting_field(__('Disable HTTP Track & Trace', 'wpopt'), "srv_security.http_track&trace", "checkbox", ['parent' => 'srv_security.active', 'default_value' => true]),
@@ -233,9 +278,9 @@ class Mod_WP_Security extends Module
     protected function infos(): array
     {
         return [
-            'srv_security.active'           => __("Enable server-level security hardening rules for Apache environments.", 'wpopt'),
+            'srv_security.active'           => __("Enable server-level security hardening rules for Apache or Nginx environments.", 'wpopt'),
             'srv_security.listings'         => __("Directory listing is a web server feature that displays the contents of a directory when an index file is not present, potentially exposing sensitive information.", 'wpopt'),
-            'srv_security.protect_htaccess' => __("Disabling access to .htaccess files prevents unauthorized modification of server configuration settings, improving website security..", 'wpopt'),
+            'srv_security.protect_htaccess' => __("Disabling public access to server configuration files prevents unauthorized reads of rewrite and hardening rules, improving website security.", 'wpopt'),
             'srv_security.hsts'             => __("Enabling HTTPS Strict Transport Security (HSTS) enforces secure HTTPS connections, reducing the risk of man-in-the-middle attacks and improving website security.", 'wpopt'),
             'srv_security.cors'             => __("Disabling Cross-Origin Resource Sharing (CORS) restricts cross-domain requests, improving website security by preventing unauthorized access to resources.", 'wpopt'),
             'srv_security.http_track&trace' => __("Disabling HTTP track and trace prevents servers from disclosing information about requests, improving website security by reducing the risk of sensitive data leaks.", 'wpopt'),

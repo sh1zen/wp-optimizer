@@ -7,6 +7,7 @@
 
 namespace WPOptimizer\modules;
 
+use WPS\core\List_Table;
 use WPS\modules\Module;
 
 class Mod_Cron extends Module
@@ -26,6 +27,27 @@ class Mod_Cron extends Module
     private array $callback_lookup = array();
 
     private array $formatted_intervals = array();
+
+    public function cleanup(array $settings = array(), array $all_settings = array()): bool
+    {
+        wps('wpopt')->cron->deactivate();
+
+        return true;
+    }
+
+    public function activate(array $settings = array(), array $all_settings = array()): bool
+    {
+        $settings = !empty($settings) ? $settings : wps('wpopt')->settings->get('cron', array());
+
+        if (!empty($settings['active'])) {
+            wps('wpopt')->cron->activate();
+        }
+        else {
+            wps('wpopt')->cron->deactivate();
+        }
+
+        return true;
+    }
 
     public function validate_settings($input, $filtering = false): array
     {
@@ -95,21 +117,21 @@ class Mod_Cron extends Module
         $custom_schedules = $this->get_custom_schedules();
         ?>
         <section class="wps-wrap wpopt-cron-manager">
-            <block class="wpopt-cron-summary-block">
+            <div class="wpopt-cron-summary-block">
                 <?php settings_errors('wpopt-cron-manager'); ?>
                 <?php echo $this->render_summary($summary); ?>
-            </block>
+            </div>
 
-            <block class="wpopt-cron-events-block">
+            <div class="wpopt-cron-events-block">
                 <?php echo $this->render_events_table($events, $schedules, $search); ?>
-            </block>
+            </div>
 
             <?php echo $this->render_create_event_modal($schedules); ?>
 
-            <block class="wpopt-cron-schedules-block">
+            <div class="wpopt-cron-schedules-block">
                 <h2><?php _e('Custom schedules', 'wpopt'); ?></h2>
                 <?php echo $this->render_schedules_table($schedules, $custom_schedules); ?>
-            </block>
+            </div>
         </section>
         <?php
     }
@@ -483,21 +505,24 @@ class Mod_Cron extends Module
         <style>
             .wpopt-cron-manager {
                 color:#172033;
+                display:flex;
+                flex-direction:column;
+                gap:16px;
             }
 
-            .wpopt-cron-manager > .wpopt-cron-summary-block {
-                margin-bottom:0 !important;
-                padding-bottom:0 !important;
+            .wpopt-cron-manager > .wpopt-cron-summary-block,
+            .wpopt-cron-manager > .wpopt-cron-schedules-block {
+                display:block;
+                margin:0;
+                padding:0;
             }
 
-            .wpopt-cron-manager > .wpopt-cron-summary-block + .wpopt-cron-events-block {
-                margin-top:0 !important;
-                padding-top:0 !important;
-            }
-
-            body.wps-admin-screen .wpopt-cron-manager > .wpopt-cron-events-block > .wpopt-cron-events-header {
-                margin-top:0 !important;
-                margin-bottom:10px !important;
+            .wpopt-cron-manager > .wpopt-cron-events-block {
+                display:flex;
+                flex-direction:column;
+                gap:14px;
+                margin:0;
+                padding:0;
             }
 
             .wpopt-cron-kpis {
@@ -561,6 +586,7 @@ class Mod_Cron extends Module
                 display:inline-flex;
                 align-items:center;
                 justify-content:center;
+                max-width:100%;
                 min-height:26px;
                 padding:4px 10px;
                 border:1px solid transparent;
@@ -579,10 +605,11 @@ class Mod_Cron extends Module
 
             .wpopt-cron-events-header {
                 display:flex;
+                flex-wrap:wrap;
                 align-items:center;
                 justify-content:space-between;
                 gap:20px;
-                margin:0 0 10px;
+                margin:0;
                 padding:0 0 8px;
                 border-bottom:1px solid #edf2f7;
             }
@@ -630,6 +657,7 @@ class Mod_Cron extends Module
 
             .wpopt-cron-toolbar {
                 flex:1 1 520px;
+                min-width:0;
                 margin:0;
             }
 
@@ -704,6 +732,7 @@ class Mod_Cron extends Module
                 display:flex;
                 flex-direction:column;
                 gap:14px;
+                margin:0;
             }
 
             .wpopt-cron-event-row {
@@ -744,13 +773,41 @@ class Mod_Cron extends Module
             }
 
             .wpopt-cron-event-summary {
-                display:grid;
-                grid-template-columns:42px minmax(150px, .9fr) minmax(210px, 1.35fr) minmax(190px, 1.15fr) minmax(130px, .72fr) minmax(210px, 1fr) 24px;
+                display:flex;
+                flex-wrap:wrap;
                 gap:16px;
                 align-items:center;
                 padding:18px 18px 16px 20px;
                 cursor:pointer;
                 list-style:none;
+            }
+
+            .wpopt-cron-event-summary > * {
+                min-width:0;
+            }
+
+            .wpopt-cron-event-summary > .wpopt-cron-row-icon {
+                flex:0 0 36px;
+            }
+
+            .wpopt-cron-event-summary > div:nth-of-type(1) {
+                flex:1 1 160px;
+            }
+
+            .wpopt-cron-event-summary > div:nth-of-type(2) {
+                flex:1 1 190px;
+            }
+
+            .wpopt-cron-event-summary > div:nth-of-type(3) {
+                flex:1.1 1 180px;
+            }
+
+            .wpopt-cron-event-summary > div:nth-of-type(4) {
+                flex:.8 1 130px;
+            }
+
+            .wpopt-cron-event-summary > .wpopt-cron-status {
+                flex:1 1 210px;
             }
 
             .wpopt-cron-event-summary::-webkit-details-marker {
@@ -816,8 +873,10 @@ class Mod_Cron extends Module
 
             .wpopt-cron-chevron {
                 display:flex;
+                flex:0 0 24px;
                 align-items:center;
                 justify-content:center;
+                margin-left:auto;
                 color:#475569;
             }
 
@@ -1365,7 +1424,6 @@ class Mod_Cron extends Module
             }
 
             @media (max-width: 1280px) {
-                .wpopt-cron-event-summary { grid-template-columns:42px repeat(2, minmax(180px, 1fr)) repeat(2, minmax(130px, .8fr)) 24px; }
                 .wpopt-cron-actions { grid-template-columns:minmax(180px, 1fr) minmax(200px, 1fr) minmax(220px, 1fr); grid-template-areas:"date schedule buttons" "edit edit edit"; }
                 .wpopt-cron-edit-fields { top:126px; left:62px; right:18px; }
                 .wpopt-cron-edit-fields:before { left:24px; }
@@ -1373,7 +1431,7 @@ class Mod_Cron extends Module
             }
 
             @media (max-width: 960px) {
-                .wpopt-cron-events-header { align-items:flex-start; flex-direction:column; }
+                .wpopt-cron-events-header { align-items:flex-start; }
                 .wpopt-cron-toolbar, .wpopt-cron-toolbar .search-box, .wpopt-cron-toolbar input[type="search"] { width:100%; max-width:none; }
                 .wpopt-cron-toolbar .search-box { flex-wrap:wrap; justify-content:flex-start; }
                 .wpopt-cron-toolbar .wpopt-cron-create-button { justify-content:center; }
@@ -1388,7 +1446,6 @@ class Mod_Cron extends Module
                 .wpopt-cron-schedules td:nth-child(4) { width:12%; }
                 .wpopt-cron-schedules th:nth-child(5),
                 .wpopt-cron-schedules td:nth-child(5) { width:10%; }
-                .wpopt-cron-event-summary { grid-template-columns:36px 1fr 1fr; }
                 .wpopt-cron-chevron { display:none; }
                 .wpopt-cron-event-actions { padding-left:18px; }
                 .wpopt-cron-actions { grid-template-columns:1fr 1fr; grid-template-areas:"date schedule" "edit edit" "buttons buttons"; }
@@ -1402,8 +1459,75 @@ class Mod_Cron extends Module
                 .wpopt-cron-modal { padding:16px; }
                 .wpopt-cron-modal-panel { max-height:calc(100vh - 32px); padding-right:18px; padding-left:18px; }
                 .wpopt-cron-modal-head { margin-right:-18px; margin-left:-18px; padding-right:18px; padding-left:18px; }
+                .wpopt-cron-events-header {
+                    gap:14px;
+                }
+                .wpopt-cron-events-title {
+                    min-width:0;
+                    width:100%;
+                    gap:12px;
+                }
                 .wpopt-cron-events-title h2 { font-size:19px; }
-                .wpopt-cron-event-summary { grid-template-columns:36px 1fr; }
+                .wpopt-cron-events-title p { line-height:1.35; }
+                .wpopt-cron-toolbar .search-box {
+                    display:grid;
+                    grid-template-columns:1fr auto;
+                    gap:10px;
+                }
+                .wpopt-cron-toolbar .wpopt-cron-create-button {
+                    grid-column:1 / -1;
+                    width:100%;
+                }
+                .wpopt-cron-toolbar input[type="search"] {
+                    min-width:0;
+                }
+                .wpopt-cron-toolbar .button:not(.wpopt-cron-create-button) {
+                    width:auto;
+                    padding:0 14px;
+                }
+                .wpopt-cron-events {
+                    gap:12px;
+                }
+                .wpopt-cron-event-row {
+                    border-radius:12px;
+                }
+                .wpopt-cron-event-row:before {
+                    top:12px;
+                    bottom:12px;
+                }
+                .wpopt-cron-event-summary {
+                    gap:12px;
+                    align-items:start;
+                    padding:16px 14px 14px 18px;
+                }
+                .wpopt-cron-event-summary > div {
+                    flex:1 1 100%;
+                    min-width:0;
+                }
+                .wpopt-cron-event-summary > .wpopt-cron-row-icon {
+                    flex:0 0 36px;
+                }
+                .wpopt-cron-event-summary > .wpopt-cron-time {
+                    flex:1 1 calc(100% - 48px);
+                }
+                .wpopt-cron-hook,
+                .wpopt-cron-args {
+                    display:block;
+                    width:100%;
+                    box-sizing:border-box;
+                }
+                .wpopt-cron-hook {
+                    overflow-wrap:anywhere;
+                    word-break:normal;
+                    white-space:normal;
+                }
+                .wpopt-cron-args {
+                    max-height:none;
+                    overflow:visible;
+                }
+                .wpopt-cron-status {
+                    align-items:center;
+                }
                 .wpopt-cron-schedules-wrap + h3 + .wpopt-cron-actions { grid-template-columns:1fr; }
                 .wpopt-cron-schedules thead { display:none; }
                 .wpopt-cron-schedules,
@@ -1436,6 +1560,23 @@ class Mod_Cron extends Module
                 .wpopt-cron-action-buttons .wps-button { flex:1 1 120px; }
                 .wpopt-cron-event-actions:has(.wpopt-cron-edit[open]) { padding-bottom:268px; }
                 .wpopt-cron-edit-fields { top:186px; grid-template-columns:1fr; }
+            }
+
+            @media (max-width: 520px) {
+                .wpopt-cron-toolbar .search-box {
+                    grid-template-columns:1fr;
+                }
+                .wpopt-cron-toolbar .button:not(.wpopt-cron-create-button) {
+                    width:100%;
+                }
+                .wpopt-cron-event-summary {
+                    padding-right:12px;
+                    padding-left:16px;
+                }
+                .wpopt-cron-event-actions {
+                    padding-right:14px;
+                    padding-left:14px;
+                }
             }
         </style>
         <div class="wpopt-cron-kpis">
@@ -1590,7 +1731,7 @@ class Mod_Cron extends Module
                             <div class="wpopt-cron-action-buttons">
                                 <button type="submit" name="wpopt_cron_action" value="reschedule_event" class="wps wps-button wpopt-btn is-info"><span class="dashicons dashicons-saved" aria-hidden="true"></span><?php _e('Save', 'wpopt'); ?></button>
                                 <button type="submit" name="wpopt_cron_action" value="run_event" class="wps wps-button wpopt-btn is-success" <?php disabled(!$event['callback_found']); ?>><span class="dashicons dashicons-controls-play" aria-hidden="true"></span><?php _e('Run now', 'wpopt'); ?></button>
-                                <button type="submit" name="wpopt_cron_action" value="delete_event" class="wps wps-button wpopt-btn is-danger" onclick="return confirm('<?php echo esc_js(__('Delete this cron event?', 'wpopt')); ?>')"><span class="dashicons dashicons-trash" aria-hidden="true"></span><?php _e('Delete', 'wpopt'); ?></button>
+                                <button type="submit" name="wpopt_cron_action" value="delete_event" class="wps wps-button wpopt-btn is-danger" data-wps-confirm="<?php echo esc_attr__('Delete this cron event?', 'wpopt'); ?>"><span class="dashicons dashicons-trash" aria-hidden="true"></span><?php _e('Delete', 'wpopt'); ?></button>
                             </div>
                         </form>
                     </div>
@@ -1603,47 +1744,54 @@ class Mod_Cron extends Module
 
     private function render_schedules_table(array $schedules, array $custom_schedules): string
     {
+        $rows = array();
+
+        foreach ($schedules as $slug => $schedule) {
+            $is_custom_schedule = isset($custom_schedules[$slug]);
+            $actions = '';
+
+            if ($is_custom_schedule) {
+                ob_start();
+                ?>
+                <form method="POST">
+                    <?php wp_nonce_field(self::ACTION_NONCE); ?>
+                    <input type="hidden" name="wpopt_cron_action" value="delete_schedule">
+                    <input type="hidden" name="schedule_slug" value="<?php echo esc_attr($slug); ?>">
+                    <button type="submit" class="wps wps-button wpopt-btn is-danger" data-wps-confirm="<?php echo esc_attr__('Delete this custom schedule?', 'wpopt'); ?>"><?php _e('Delete', 'wpopt'); ?></button>
+                </form>
+                <?php
+                $actions = ob_get_clean();
+            }
+            else {
+                $actions = '<span class="wpopt-cron-pill is-readonly">' . esc_html__('Read only', 'wpopt') . '</span>';
+            }
+
+            $rows[] = array(
+                'slug' => '<code>' . esc_html($slug) . '</code>',
+                'label' => '<span class="wpopt-cron-schedule-label">' . esc_html($schedule['display'] ?? $slug) . '</span>',
+                'interval' => '<span class="wpopt-cron-pill">' . esc_html($this->format_interval(absint($schedule['interval'] ?? 0))) . '</span>',
+                'source' => '<span class="wpopt-cron-pill ' . ($is_custom_schedule ? 'is-source-custom' : '') . '">' . ($is_custom_schedule ? esc_html__('WP Optimizer', 'wpopt') : esc_html__('WordPress/plugin', 'wpopt')) . '</span>',
+                'actions' => $actions,
+            );
+        }
+
         ob_start();
         ?>
         <div class="wpopt-cron-schedules-wrap">
-            <table class="widefat striped wpopt-cron-schedules">
-                <thead>
-                <tr>
-                    <th><?php _e('Slug', 'wpopt'); ?></th>
-                    <th><?php _e('Label', 'wpopt'); ?></th>
-                    <th><?php _e('Interval', 'wpopt'); ?></th>
-                    <th><?php _e('Source', 'wpopt'); ?></th>
-                    <th><?php _e('Actions', 'wpopt'); ?></th>
-                </tr>
-                </thead>
-                <tbody>
-                <?php foreach ($schedules as $slug => $schedule): ?>
-                    <?php $is_custom_schedule = isset($custom_schedules[$slug]); ?>
-                    <tr>
-                        <td data-label="<?php esc_attr_e('Slug', 'wpopt'); ?>"><code><?php echo esc_html($slug); ?></code></td>
-                        <td data-label="<?php esc_attr_e('Label', 'wpopt'); ?>"><span class="wpopt-cron-schedule-label"><?php echo esc_html($schedule['display'] ?? $slug); ?></span></td>
-                        <td data-label="<?php esc_attr_e('Interval', 'wpopt'); ?>"><span class="wpopt-cron-pill"><?php echo esc_html($this->format_interval(absint($schedule['interval'] ?? 0))); ?></span></td>
-                        <td data-label="<?php esc_attr_e('Source', 'wpopt'); ?>">
-                            <span class="wpopt-cron-pill <?php echo $is_custom_schedule ? 'is-source-custom' : ''; ?>">
-                                <?php echo $is_custom_schedule ? esc_html__('WP Optimizer', 'wpopt') : esc_html__('WordPress/plugin', 'wpopt'); ?>
-                            </span>
-                        </td>
-                        <td data-label="<?php esc_attr_e('Actions', 'wpopt'); ?>">
-                            <?php if ($is_custom_schedule): ?>
-                                <form method="POST">
-                                    <?php wp_nonce_field(self::ACTION_NONCE); ?>
-                                    <input type="hidden" name="wpopt_cron_action" value="delete_schedule">
-                                    <input type="hidden" name="schedule_slug" value="<?php echo esc_attr($slug); ?>">
-                                    <button type="submit" class="wps wps-button wpopt-btn is-danger" onclick="return confirm('<?php echo esc_js(__('Delete this custom schedule?', 'wpopt')); ?>')"><?php _e('Delete', 'wpopt'); ?></button>
-                                </form>
-                            <?php else: ?>
-                                <span class="wpopt-cron-pill is-readonly"><?php _e('Read only', 'wpopt'); ?></span>
-                            <?php endif; ?>
-                        </td>
-                    </tr>
-                <?php endforeach; ?>
-                </tbody>
-            </table>
+            <?php
+            echo List_Table::generateHTML_table(array(
+                'class' => 'striped wpopt-cron-schedules',
+                'columns' => array(
+                    'slug' => __('Slug', 'wpopt'),
+                    'label' => __('Label', 'wpopt'),
+                    'interval' => __('Interval', 'wpopt'),
+                    'source' => __('Source', 'wpopt'),
+                    'actions' => __('Actions', 'wpopt'),
+                ),
+                'rows' => $rows,
+                'empty' => __('No schedules available.', 'wpopt'),
+            ));
+            ?>
         </div>
         <h3><?php _e('Add custom schedule', 'wpopt'); ?></h3>
         <form method="POST" class="wpopt-cron-actions">

@@ -42,6 +42,7 @@ require_once WPS_FRAMEWORK . 'Options.class.php';
 require_once WPS_FRAMEWORK . 'CronForModules.php';
 
 require_once WPS_FRAMEWORK . 'Graphic.class.php';
+require_once WPS_FRAMEWORK . 'wp-table.class.php';
 
 require_once WPS_FRAMEWORK . 'RuleUtil.php';
 require_once WPS_FRAMEWORK . 'PerformanceMeter.class.php';

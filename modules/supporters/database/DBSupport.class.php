@@ -13,6 +13,7 @@ class DBSupport
 {
     private static DBSupport $_Instance;
     private const COUNT_CACHE_TTL = 300;
+    private const AUTOLOAD_ENABLED_VALUES = array('yes', 'on', 'auto', 'auto-on');
 
     private function __construct()
     {
@@ -186,6 +187,417 @@ class DBSupport
     private static function count_cache_key(string $scope, string $name): string
     {
         return 'wpopt_db_' . $scope . '_' . md5(DB_NAME . ':' . $name);
+    }
+
+    public static function sanitize_option_name($option_name): string
+    {
+        $option_name = trim((string)wp_unslash($option_name));
+        $option_name = str_replace("\0", '', $option_name);
+
+        if ('' === $option_name || preg_match('/[\x00-\x1F\x7F]/', $option_name)) {
+            return '';
+        }
+
+        return substr($option_name, 0, 191);
+    }
+
+    public static function get_options_autoload_summary(): array
+    {
+        global $wpdb;
+
+        $autoload_placeholders = implode(', ', array_fill(0, count(self::AUTOLOAD_ENABLED_VALUES), '%s'));
+
+        $autoload = $wpdb->get_row(
+                $wpdb->prepare(
+                        "SELECT COUNT(*) AS autoload_count, COALESCE(SUM(LENGTH(option_value)), 0) AS autoload_size FROM {$wpdb->options} WHERE autoload IN ($autoload_placeholders)",
+                        self::AUTOLOAD_ENABLED_VALUES
+                ),
+                ARRAY_A
+        );
+
+        $autoload_size = (int)($autoload['autoload_size'] ?? 0);
+
+        return array(
+                'autoload_count' => (int)($autoload['autoload_count'] ?? 0),
+                'autoload_size'  => $autoload_size,
+                'total_size'     => (int)$wpdb->get_var("SELECT COALESCE(SUM(LENGTH(option_value)), 0) FROM {$wpdb->options}"),
+                'total_count'    => (int)$wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->options}"),
+        );
+    }
+
+    public static function get_autoload_health(int $autoload_size): array
+    {
+        if ($autoload_size >= 1048576) {
+            return array(
+                    'label' => __('Needs attention', 'wpopt'),
+                    'class' => 'is-danger',
+            );
+        }
+
+        if ($autoload_size >= 819200) {
+            return array(
+                    'label' => __('Review', 'wpopt'),
+                    'class' => 'is-warning',
+            );
+        }
+
+        return array(
+                'label' => __('Good', 'wpopt'),
+                'class' => 'is-success',
+        );
+    }
+
+    public static function option_autoloads($autoload): bool
+    {
+        return in_array((string)$autoload, self::AUTOLOAD_ENABLED_VALUES, true);
+    }
+
+    public static function count_options(array $args = array()): int
+    {
+        global $wpdb;
+
+        list($where, $params) = self::build_options_where($args);
+        $sql = "SELECT COUNT(*) FROM {$wpdb->options} WHERE {$where}";
+
+        if ($params) {
+            $sql = $wpdb->prepare($sql, $params);
+        }
+
+        return (int)$wpdb->get_var($sql);
+    }
+
+    public static function get_options_data(array $args = array(), int $per_page = 25, int $current_page = 1): array
+    {
+        global $wpdb;
+
+        list($where, $params) = self::build_options_where($args);
+
+        $orderby = (string)($args['orderby'] ?? 'option_size');
+        if (!in_array($orderby, array('option_name', 'option_size', 'autoload'), true)) {
+            $orderby = 'option_size';
+        }
+
+        $order = strtoupper((string)($args['order'] ?? 'DESC'));
+        if (!in_array($order, array('ASC', 'DESC'), true)) {
+            $order = 'DESC';
+        }
+
+        $per_page = max(1, $per_page);
+        $offset = max(0, ($current_page - 1) * $per_page);
+
+        $params[] = $per_page;
+        $params[] = $offset;
+
+        $sql = "SELECT option_id, option_name, autoload, LENGTH(option_value) AS option_size FROM {$wpdb->options} WHERE {$where} ORDER BY {$orderby} {$order} LIMIT %d OFFSET %d";
+
+        return (array)$wpdb->get_results($wpdb->prepare($sql, $params), ARRAY_A);
+    }
+
+    public static function get_option_row_summary(string $option_name): array
+    {
+        global $wpdb;
+
+        $option_name = self::sanitize_option_name($option_name);
+
+        if ('' === $option_name) {
+            return array();
+        }
+
+        $row = $wpdb->get_row(
+                $wpdb->prepare(
+                        "SELECT option_name, autoload, LENGTH(option_value) AS option_size FROM {$wpdb->options} WHERE option_name = %s",
+                        $option_name
+                ),
+                ARRAY_A
+        );
+
+        return is_array($row) ? $row : array();
+    }
+
+    public static function get_option_preview(string $option_name, int $limit = 120000): array
+    {
+        global $wpdb;
+
+        $option_name = self::sanitize_option_name($option_name);
+
+        if ('' === $option_name) {
+            return array();
+        }
+
+        $row = $wpdb->get_row(
+                $wpdb->prepare(
+                        "SELECT option_name, option_value, autoload, LENGTH(option_value) AS option_size FROM {$wpdb->options} WHERE option_name = %s",
+                        $option_name
+                ),
+                ARRAY_A
+        );
+
+        if (!is_array($row)) {
+            return array();
+        }
+
+        $raw_value = (string)($row['option_value'] ?? '');
+        $display_value = $raw_value;
+        $type = __('Raw value', 'wpopt');
+
+        if (function_exists('is_serialized') && is_serialized($raw_value)) {
+            $decoded = @unserialize($raw_value, array('allowed_classes' => false));
+
+            if (false !== $decoded || 'b:0;' === $raw_value) {
+                $display_value = print_r($decoded, true);
+                $type = __('Serialized value', 'wpopt');
+            }
+        }
+        else {
+            $json = json_decode($raw_value, true);
+
+            if (json_last_error() === JSON_ERROR_NONE && (is_array($json) || is_object($json))) {
+                $encoded = wp_json_encode($json, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+
+                if (is_string($encoded)) {
+                    $display_value = $encoded;
+                    $type = __('JSON value', 'wpopt');
+                }
+            }
+        }
+
+        $truncated = false;
+
+        if ($limit > 0 && strlen($display_value) > $limit) {
+            $display_value = substr($display_value, 0, $limit);
+            $truncated = true;
+        }
+
+        return array(
+                'option_name' => $option_name,
+                'autoload'    => (string)($row['autoload'] ?? ''),
+                'option_size' => (int)($row['option_size'] ?? strlen($raw_value)),
+                'type'        => $type,
+                'preview'     => $display_value,
+                'truncated'   => $truncated,
+        );
+    }
+
+    public static function disable_option_autoload(string $option_name): array
+    {
+        global $wpdb;
+
+        $option_name = self::sanitize_option_name($option_name);
+        $row = self::get_option_row_summary($option_name);
+
+        if (!$row) {
+            return self::option_action_result(false, __('Option not found.', 'wpopt'));
+        }
+
+        if (self::is_protected_option($option_name)) {
+            return self::option_action_result(false, __('This WordPress core or plugin-critical option is protected.', 'wpopt'));
+        }
+
+        if (!self::option_autoloads($row['autoload'] ?? '')) {
+            return self::option_action_result(true, __('Autoload is already disabled for this option.', 'wpopt'));
+        }
+
+        $updated = $wpdb->update(
+                $wpdb->options,
+                array('autoload' => self::get_disabled_autoload_value()),
+                array('option_name' => $option_name),
+                array('%s'),
+                array('%s')
+        );
+
+        if (false === $updated) {
+            return self::option_action_result(false, __('Unable to disable autoload for this option.', 'wpopt'));
+        }
+
+        self::clear_option_cache($option_name);
+
+        return self::option_action_result(true, sprintf(__('Autoload disabled for "%s".', 'wpopt'), $option_name));
+    }
+
+    public static function enable_option_autoload(string $option_name): array
+    {
+        global $wpdb;
+
+        $option_name = self::sanitize_option_name($option_name);
+        $row = self::get_option_row_summary($option_name);
+
+        if (!$row) {
+            return self::option_action_result(false, __('Option not found.', 'wpopt'));
+        }
+
+        if (self::is_protected_option($option_name)) {
+            return self::option_action_result(false, __('This WordPress core or plugin-critical option is protected.', 'wpopt'));
+        }
+
+        if (self::option_autoloads($row['autoload'] ?? '')) {
+            return self::option_action_result(true, __('Autoload is already enabled for this option.', 'wpopt'));
+        }
+
+        $updated = $wpdb->update(
+                $wpdb->options,
+                array('autoload' => self::get_enabled_autoload_value()),
+                array('option_name' => $option_name),
+                array('%s'),
+                array('%s')
+        );
+
+        if (false === $updated) {
+            return self::option_action_result(false, __('Unable to enable autoload for this option.', 'wpopt'));
+        }
+
+        self::clear_option_cache($option_name);
+
+        return self::option_action_result(true, sprintf(__('Autoload enabled for "%s".', 'wpopt'), $option_name));
+    }
+
+    public static function toggle_option_autoload(string $option_name): array
+    {
+        $row = self::get_option_row_summary($option_name);
+
+        if (!$row) {
+            return self::option_action_result(false, __('Option not found.', 'wpopt'));
+        }
+
+        if (self::option_autoloads($row['autoload'] ?? '')) {
+            return self::disable_option_autoload($option_name);
+        }
+
+        return self::enable_option_autoload($option_name);
+    }
+
+    public static function delete_option_row(string $option_name): array
+    {
+        $option_name = self::sanitize_option_name($option_name);
+
+        if (!self::get_option_row_summary($option_name)) {
+            return self::option_action_result(false, __('Option not found.', 'wpopt'));
+        }
+
+        if (self::is_protected_option($option_name)) {
+            return self::option_action_result(false, __('This WordPress core or plugin-critical option is protected.', 'wpopt'));
+        }
+
+        if (!delete_option($option_name)) {
+            return self::option_action_result(false, __('Unable to delete this option.', 'wpopt'));
+        }
+
+        self::clear_option_cache($option_name);
+
+        return self::option_action_result(true, sprintf(__('Option "%s" deleted.', 'wpopt'), $option_name));
+    }
+
+    public static function is_protected_option(string $option_name): bool
+    {
+        global $wpdb;
+
+        $protected = array(
+                'active_plugins',
+                'admin_email',
+                'allowedthemes',
+                'blog_public',
+                'blogdescription',
+                'blogname',
+                'cron',
+                'current_theme',
+                'db_version',
+                'finished_splitting_shared_terms',
+                'home',
+                'initial_db_version',
+                'permalink_structure',
+                'recently_activated',
+                'rewrite_rules',
+                'sidebars_widgets',
+                'siteurl',
+                'stylesheet',
+                'template',
+                'uninstall_plugins',
+                'upload_path',
+                'users_can_register',
+                $wpdb->prefix . 'user_roles',
+        );
+
+        if (in_array($option_name, $protected, true)) {
+            return true;
+        }
+
+        foreach (array('theme_mods_', 'widget_', 'wpopt_', 'wps_') as $prefix) {
+            if (0 === strpos($option_name, $prefix)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static function build_options_where(array $args): array
+    {
+        global $wpdb;
+
+        $where = array('1 = 1');
+        $params = array();
+
+        if (($args['wpopt_autoload'] ?? '') === 'autoload') {
+            $where[] = 'autoload IN (' . implode(', ', array_fill(0, count(self::AUTOLOAD_ENABLED_VALUES), '%s')) . ')';
+            $params = array_merge($params, self::AUTOLOAD_ENABLED_VALUES);
+        }
+
+        $search = trim((string)($args['s'] ?? ''));
+
+        if ('' !== $search) {
+            $where[] = 'option_name LIKE %s';
+            $params[] = '%' . $wpdb->esc_like($search) . '%';
+        }
+
+        return array(implode(' AND ', $where), $params);
+    }
+
+    private static function get_disabled_autoload_value(): string
+    {
+        global $wpdb;
+
+        $modern_value = $wpdb->get_var(
+                $wpdb->prepare(
+                        "SELECT autoload FROM {$wpdb->options} WHERE autoload IN (%s, %s, %s, %s) LIMIT 1",
+                        'on',
+                        'off',
+                        'auto-on',
+                        'auto-off'
+                )
+        );
+
+        return $modern_value ? 'off' : 'no';
+    }
+
+    private static function get_enabled_autoload_value(): string
+    {
+        global $wpdb;
+
+        $modern_value = $wpdb->get_var(
+                $wpdb->prepare(
+                        "SELECT autoload FROM {$wpdb->options} WHERE autoload IN (%s, %s, %s, %s) LIMIT 1",
+                        'on',
+                        'off',
+                        'auto-on',
+                        'auto-off'
+                )
+        );
+
+        return $modern_value ? 'on' : 'yes';
+    }
+
+    private static function clear_option_cache(string $option_name): void
+    {
+        wp_cache_delete('alloptions', 'options');
+        wp_cache_delete('notoptions', 'options');
+        wp_cache_delete($option_name, 'options');
+    }
+
+    private static function option_action_result(bool $success, string $message): array
+    {
+        return array(
+                'success' => $success,
+                'message' => $message,
+        );
     }
 
     /**

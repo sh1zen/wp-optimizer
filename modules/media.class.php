@@ -40,6 +40,14 @@ class Mod_Media extends Module
         $this->image_processor_loaded = true;
     }
 
+    public function cleanup(array $settings = array(), array $all_settings = array()): bool
+    {
+        $this->status('orphan-media-scanner', 'paused');
+        $this->status('optimization', 'paused');
+
+        return wpopt_cleanup_media_cron_hooks();
+    }
+
     public function cron_setting_fields(): array
     {
         return [
@@ -243,7 +251,7 @@ class Mod_Media extends Module
                     <strong><?php echo sprintf(__('Set up your optimization parameters <a href="%s">here</a>.', 'wpopt'), wps_module_setting_url('wpopt', 'media')); ?></strong>
                 </li>
             </ul>
-            <strong><?php echo sprintf(__('Note that optimization will run in background and time required depends on number of media you have. <a href="%s">Cron</a> must be active.', 'wpopt'), admin_url('admin.php?page=wpopt-settings#settings-cron')); ?></strong>
+            <strong><?php echo sprintf(__('Note that optimization will run in background and time required depends on number of media you have. <a href="%s">Cron</a> must be active.', 'wpopt'), wps_admin_route_url('wpopt', 'setting-cron')); ?></strong>
         </notice>
         <block class="wps-options">
             <?php if (!extension_loaded('imagick')): ?>
@@ -524,7 +532,7 @@ class Mod_Media extends Module
         return $this->group_setting_fields(
             $this->group_setting_fields(
                 $this->setting_field(__('Images optimization preferences', 'wpopt'), false, 'separator'),
-                $this->setting_field(__('Auto optimize uploads', 'wpopt'), 'auto_optimize_uploads', 'link', ['value' => ['text' => __('set it here', 'wpopt'), 'href' => admin_url('admin.php?page=wpopt-settings#settings-cron')]]),
+                $this->setting_field(__('Auto optimize uploads', 'wpopt'), 'auto_optimize_uploads', 'link', ['value' => ['text' => __('set it here', 'wpopt'), 'href' => wps_admin_route_url('wpopt', 'setting-cron')]]),
                 $this->setting_field(__('Use Imagick (if installed)', 'wpopt'), "use_imagick", "checkbox", ['default_value' => true]),
                 $this->setting_field(__('Optimization intensity', 'wpopt'), "quality", "range", [
                         'default_value' => 8,

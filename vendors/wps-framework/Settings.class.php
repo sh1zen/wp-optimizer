@@ -148,7 +148,13 @@ class Settings
     {
         $this->settings = $options;
 
-        return update_option($this->context, $options, 'yes');
+        $updated = update_option($this->context, $options, 'yes');
+
+        if (function_exists('wps_loaded') && wps_loaded($this->context, 'moduleHandler')) {
+            wps($this->context)->moduleHandler->refresh_settings(is_array($options) ? $options : array());
+        }
+
+        return $updated;
     }
 
     public function render_core_settings(bool $standalone = true): void
@@ -233,6 +239,74 @@ class Settings
         }
 
         return $this->normalize_setting_pages($pages);
+    }
+
+    public function build_admin_app_nav_update(array $module_settings = array(), array $labels = array(), array $tool_icons = array()): array
+    {
+        $labels = array_merge(array(
+            'settings' => __('Settings', $this->get_text_domain()),
+            'tools'    => __('Tools', $this->get_text_domain()),
+        ), $labels);
+
+        $sections = array();
+        $setting_items = array();
+
+        foreach ($this->get_module_setting_pages() as $page) {
+            if (!$this->module_is_enabled_for_nav((string)$page['id'], $module_settings)) {
+                continue;
+            }
+
+            $setting_items[] = array(
+                'id'    => 'module-setting-' . $page['id'],
+                'label' => $page['label'],
+                'icon'  => $page['icon'],
+                'url'   => wps_admin_route_url($this->context, 'module-setting-' . $page['id']),
+            );
+        }
+
+        if (!empty($setting_items)) {
+            $sections[] = array(
+                'kind'  => 'settings',
+                'label' => $labels['settings'],
+                'items' => $setting_items,
+            );
+        }
+
+        $tool_items = array();
+
+        foreach (wps($this->context)->moduleHandler->get_modules(array('scopes' => 'admin-page'), true) as $module) {
+            $slug = sanitize_key((string)($module['slug'] ?? ''));
+
+            if (!$slug) {
+                continue;
+            }
+
+            if (!$this->module_is_enabled_for_nav($slug, $module_settings)) {
+                continue;
+            }
+
+            $tool_items[] = array(
+                'id'    => 'module-' . $slug,
+                'label' => (string)($module['name'] ?? $slug),
+                'icon'  => (string)($tool_icons[$slug] ?? $this->get_settings_icon($slug)),
+                'url'   => wps_admin_route_url($this->context, 'module-' . $slug),
+            );
+        }
+
+        if (!empty($tool_items)) {
+            $sections[] = array(
+                'kind'  => 'tools',
+                'label' => $labels['tools'],
+                'items' => $tool_items,
+            );
+        }
+
+        return array('sections' => $sections);
+    }
+
+    private function module_is_enabled_for_nav(string $slug, array $module_settings): bool
+    {
+        return !array_key_exists($slug, $module_settings) || (bool)$module_settings[$slug];
     }
 
     public function render_core_setting_page(string $page_id = '', bool $standalone = false): void
@@ -384,6 +458,7 @@ class Settings
             'database'        => 'database',
             'media'           => 'image',
             'minify'          => 'code',
+            'pagespeed'       => 'pagespeed',
             'performance_monitor' => 'chart',
             'widget'          => 'box',
             'wp_customizer'   => 'sliders',
@@ -486,7 +561,14 @@ class Settings
 
         $valid = $object->validate_settings($input);
 
-        $this->settings = wp_parse_args(array($object->slug => $valid), $this->settings);
+        $new_settings = wp_parse_args(array($object->slug => $valid), $this->settings);
+
+        if ($object->slug === 'modules_handler') {
+            wps($this->context)->moduleHandler->apply_module_status_changes($valid, $new_settings);
+        }
+
+        $this->settings = $new_settings;
+        wps($this->context)->moduleHandler->refresh_settings($this->settings);
 
         add_action('shutdown', function () {
 

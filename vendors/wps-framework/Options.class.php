@@ -12,6 +12,14 @@ namespace WPS\core;
  */
 class Options
 {
+    private const DB_LOCK_RETRY_ATTEMPTS = 3;
+
+    private const DB_LOCK_RETRY_DELAY_US = 50000;
+
+    private const DB_DEADLOCK_ERROR_CODE = 1213;
+
+    private const DB_LOCK_WAIT_TIMEOUT_ERROR_CODE = 1205;
+
     private string $table_name;
 
     private Cache $cache;
@@ -93,8 +101,6 @@ class Options
 
     public function update($obj_id, $option, $value = false, $context = 'core', $expiration = 0, $container = null): bool
     {
-        global $wpdb;
-
         if (empty($option)) {
             return false;
         }
@@ -123,9 +129,7 @@ class Options
             $expiration += time();
         }
 
-        $result = $wpdb->query(
-            $wpdb->prepare("REPLACE INTO " . $this->table_name() . " (obj_id, context, item, value, container, expiration) VALUES (%s, %s, %s, %s, %s, %d)", $obj_id, $context, $option, $serialized_value, $container, $expiration)
-        );
+        $result = $this->upsert($obj_id, $option, $serialized_value, $context, $expiration, $container);
 
         if (!$result) {
             return false;
@@ -198,8 +202,6 @@ class Options
 
     public function add($obj_id, $option, $value = false, string $context = 'core', int $expiration = 0, $container = null): bool
     {
-        global $wpdb;
-
         if (empty($option) or !$obj_id) {
             return false;
         }
@@ -218,7 +220,7 @@ class Options
 
         $serialized_value = maybe_serialize($value);
 
-        $result = $wpdb->query($wpdb->prepare("REPLACE INTO " . $this->table_name() . " (obj_id, context, item, value, container, expiration) VALUES (%s, %s, %s, %s, %s, %d)", $obj_id, $context, $option, $serialized_value, $container, $expiration));
+        $result = $this->upsert($obj_id, $option, $serialized_value, $context, $expiration, $container);
 
         if (!$result) {
             return false;
@@ -227,6 +229,62 @@ class Options
         $this->cache->set($obj_id . $option . $context, $value, 'db_cache', true);
 
         return true;
+    }
+
+    private function upsert($obj_id, $option, $serialized_value, string $context, int $expiration, $container = null): bool
+    {
+        global $wpdb;
+
+        $sql = $wpdb->prepare(
+            "INSERT INTO " . $this->table_name() . " (obj_id, context, item, value, container, expiration)
+            VALUES (%s, %s, %s, %s, %s, %d)
+            ON DUPLICATE KEY UPDATE
+                context = VALUES(context),
+                value = VALUES(value),
+                container = VALUES(container),
+                expiration = VALUES(expiration)",
+            $obj_id,
+            $context,
+            $option,
+            $serialized_value,
+            $container,
+            $expiration
+        );
+
+        for ($attempt = 0; $attempt < self::DB_LOCK_RETRY_ATTEMPTS; $attempt++) {
+            $result = $wpdb->query($sql);
+
+            if ($result !== false) {
+                return true;
+            }
+
+            if (!$this->is_retryable_db_lock_error() or $attempt + 1 >= self::DB_LOCK_RETRY_ATTEMPTS) {
+                return false;
+            }
+
+            usleep(self::DB_LOCK_RETRY_DELAY_US * ($attempt + 1));
+        }
+
+        return false;
+    }
+
+    private function is_retryable_db_lock_error(): bool
+    {
+        global $wpdb;
+
+        $error_code = 0;
+
+        if (class_exists('\mysqli') and $wpdb->dbh instanceof \mysqli) {
+            $error_code = mysqli_errno($wpdb->dbh);
+        }
+
+        if (in_array($error_code, [self::DB_DEADLOCK_ERROR_CODE, self::DB_LOCK_WAIT_TIMEOUT_ERROR_CODE], true)) {
+            return true;
+        }
+
+        $last_error = strtolower((string)$wpdb->last_error);
+
+        return str_contains($last_error, 'deadlock found') or str_contains($last_error, 'lock wait timeout');
     }
 
     public function remove_all($context, $option = '')

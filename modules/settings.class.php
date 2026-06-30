@@ -7,19 +7,28 @@
 
 namespace WPOptimizer\modules;
 
-use WPS\core\Ajax;
 use WPS\core\RequestActions;
 use WPS\core\addon\Exporter;
 use WPS\core\Graphic;
+use WPS\core\List_Table;
 use WPS\modules\Module;
 
 class Mod_Settings extends Module
 {
     public static ?string $name = 'Settings';
 
+    private const BACKUP_OPTION = 'wpopt_configuration_backups';
+    private const BACKUP_MIN_INTERVAL_SECONDS = 900;
+    private const BACKUP_MAX_ENTRIES = 50;
+
     public array $scopes = array('core-settings', 'admin', 'ajax');
 
     protected string $context = 'wpopt';
+
+    protected function init(): void
+    {
+        add_filter('pre_update_option_wpopt', array($this, 'backup_before_wpopt_option_update'), 10, 3);
+    }
 
     public function restricted_access($context = ''): bool
     {
@@ -43,17 +52,25 @@ class Mod_Settings extends Module
         RequestActions::request($this->action_hook, function ($action) {
 
             $response = false;
+            $action_parts = explode(':', (string)$action, 2);
+            $action = $action_parts[0];
+            $backup_id = sanitize_key((string)($action_parts[1] ?? ''));
 
             switch ($action) {
 
                 case 'reset_options':
-                    $response = wps('wpopt')->settings->reset();
+                    $response = wps('wpopt')->moduleHandler->reset_modules(null, false);
+                    $response = wps('wpopt')->settings->reset() && $response;
                     $response &= wps('wpopt')->moduleHandler->upgrade();
+                    $response = $this->apply_configuration_lifecycle(wps('wpopt')->settings->get('', array())) && $response;
                     $this->redirect_after_action($response);
                     break;
 
                 case 'restore_options':
                     $response = wps('wpopt')->moduleHandler->upgrade();
+                    if ($response) {
+                        $response = $this->apply_configuration_lifecycle(wps('wpopt')->settings->get('', array())) && $response;
+                    }
                     break;
 
                 case 'export_options':
@@ -78,11 +95,31 @@ class Mod_Settings extends Module
                         $tmp_name = (string)($uploaded_file['tmp_name'] ?? '');
 
                         if ($tmp_name !== '' && is_uploaded_file($tmp_name)) {
-                            $response = wps('wpopt')->settings->import((string)file_get_contents($tmp_name));
+                            $response = wps('wpopt')->moduleHandler->reset_modules(null, false);
+                            $response = wps('wpopt')->settings->import((string)file_get_contents($tmp_name)) && $response;
                         }
                     }
 
                     $response &= wps('wpopt')->moduleHandler->upgrade();
+                    if ($response) {
+                        $response = $this->apply_configuration_lifecycle(wps('wpopt')->settings->get('', array())) && $response;
+                    }
+                    break;
+
+                case 'restore_configuration_backup':
+                    $backup_settings = $this->get_backup_settings($backup_id);
+
+                    if (is_array($backup_settings)) {
+                        $response = wps('wpopt')->moduleHandler->reset_modules(null, false);
+                        $response = wps('wpopt')->settings->reset($backup_settings) && $response;
+                        $response = $response && $this->apply_configuration_lifecycle($backup_settings);
+                        $this->redirect_after_action($response);
+                    }
+
+                    break;
+
+                case 'delete_configuration_backup':
+                    $response = $this->delete_configuration_backup($backup_id);
                     break;
             }
 
@@ -103,140 +140,48 @@ class Mod_Settings extends Module
                     'wps-status' => $response ? 'success' : 'warning',
                     'wps-notice' => $response ? __('Action was correctly executed', $this->context) : __('Action execution failed', $this->context),
                 ),
-                admin_url('admin.php?page=wpopt-settings')
-            ) . '#settings-settings'
+                wps_admin_route_url('wpopt', 'setting-settings')
+            )
         );
         exit;
     }
 
     public function ajax_handler($args = array()): void
     {
+        if (($args['action'] ?? '') === 'reset_module') {
+            $this->handle_module_reset_ajax($args, array('tracking'), array(
+                'invalid' => __('Invalid module reset request.', 'wpopt'),
+                'failed'  => __('Factory reset failed for %s.', 'wpopt'),
+                'success' => __('%s has been reset to factory settings.', 'wpopt'),
+            ));
+            return;
+        }
+
         if (($args['action'] ?? '') !== 'autosave_settings') {
             parent::ajax_handler($args);
             return;
         }
 
-        parse_str((string)($args['form_data'] ?? ''), $form_data);
-
-        $context = wps('wpopt')->settings->get_context();
-        $payload = $form_data[$context] ?? [];
-        $module_slug = is_array($payload) ? sanitize_key($payload['change'] ?? '') : '';
-
-        if (!$module_slug && !empty($form_data['option_panel'])) {
-            $module_slug = sanitize_key(preg_replace('#^settings-#', '', (string)$form_data['option_panel']));
-        }
-
-        if (!$module_slug && is_array($payload) && $this->looks_like_modules_handler_payload($payload)) {
-            $module_slug = 'modules_handler';
-        }
-
-        if (!$module_slug || !is_array($payload)) {
-            Ajax::response([
-                'text' => __('Cannot detect which module must be saved.', 'wpopt'),
-            ], 'error');
-        }
-
-        $module = wps('wpopt')->moduleHandler->get_module_instance($module_slug);
-
-        if (is_null($module)) {
-            Ajax::response([
-                'text' => __('Invalid module settings payload.', 'wpopt'),
-            ], 'error');
-        }
-
-        $valid = $module->validate_settings($payload);
-
-        $settings = wps('wpopt')->settings->get('', []);
-        $settings[$module->slug] = $valid;
-
-        $saved = wps('wpopt')->settings->reset($settings);
-
-        if (!$saved) {
-            Ajax::response([
-                'text' => __('Autosave failed while updating settings.', 'wpopt'),
-            ], 'error');
-        }
-
-        $response = [
-            'text'   => __('Settings autosaved.', 'wpopt'),
-            'module' => $module->slug,
-        ];
-
-        if ($module->slug === 'modules_handler') {
-            $response['nav_update'] = $this->build_nav_update($valid);
-        }
-
-        Ajax::response($response, 'success');
+        $this->handle_settings_autosave_ajax((string)($args['form_data'] ?? ''), array(
+            'invalid_payload' => __('Cannot detect which module must be saved.', 'wpopt'),
+            'invalid_module'  => __('Invalid module settings payload.', 'wpopt'),
+            'save_failed'     => __('Autosave failed while updating settings.', 'wpopt'),
+            'saved'           => __('Settings autosaved.', 'wpopt'),
+        ), array(
+            'settings' => __('Settings', 'wpopt'),
+            'tools'    => __('Tools', 'wpopt'),
+        ), $this->get_nav_icons());
     }
 
-    private function looks_like_modules_handler_payload(array $payload): bool
-    {
-        foreach (wps('wpopt')->moduleHandler->get_modules('all', false) as $module) {
-            if (array_key_exists($module['slug'], $payload)) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    private function build_nav_update(array $module_settings): array
+    private function get_nav_icons(): array
     {
         return array(
-            'sections' => array(
-                array(
-                    'kind'  => 'settings',
-                    'label' => __('Settings', 'wpopt'),
-                    'items' => $this->build_nav_items('settings', 'module-setting-', $module_settings),
-                ),
-                array(
-                    'kind'  => 'tools',
-                    'label' => __('Tools', 'wpopt'),
-                    'items' => $this->build_nav_items('admin-page', 'module-', $module_settings),
-                ),
-            ),
-        );
-    }
-
-    private function build_nav_items(string $scope, string $route_prefix, array $module_settings): array
-    {
-        $items = array();
-
-        foreach (wps('wpopt')->moduleHandler->get_modules(array('scopes' => $scope), false) as $module) {
-            $slug = sanitize_key((string)($module['slug'] ?? ''));
-
-            if (!$slug || !$this->module_is_enabled_for_nav($slug, $module_settings)) {
-                continue;
-            }
-
-            $items[] = array(
-                'id'    => $route_prefix . $slug,
-                'label' => (string)($module['name'] ?? $slug),
-                'icon'  => $this->get_nav_icon($slug),
-                'url'   => wps_admin_route_url('wpopt', $route_prefix . $slug),
-            );
-        }
-
-        return $items;
-    }
-
-    private function module_is_enabled_for_nav(string $slug, array $module_settings): bool
-    {
-        if (!array_key_exists($slug, $module_settings)) {
-            return true;
-        }
-
-        return (bool)$module_settings[$slug];
-    }
-
-    private function get_nav_icon(string $slug): string
-    {
-        $icons = array(
             'activitylog'         => 'list',
             'cache'               => 'server',
             'database'            => 'database',
             'media'               => 'image',
             'minify'              => 'tools',
+            'pagespeed'           => 'pagespeed',
             'performance_monitor' => 'chart',
             'widget'              => 'box',
             'wp_customizer'       => 'sliders',
@@ -246,8 +191,135 @@ class Mod_Settings extends Module
             'wp_security'         => 'shield',
             'wp_updates'          => 'repeat',
         );
+    }
 
-        return $icons[$slug] ?? 'tools';
+    public function backup_before_wpopt_option_update($value, $old_value, $option)
+    {
+        if (defined('WPOPT_RECOVERY_RUNNING') && WPOPT_RECOVERY_RUNNING) {
+            return $value;
+        }
+
+        if ($option !== 'wpopt' || maybe_serialize($value) === maybe_serialize($old_value)) {
+            return $value;
+        }
+
+        if (!$this->create_configuration_backup(is_array($old_value) ? $old_value : array())) {
+            return $old_value;
+        }
+
+        return $value;
+    }
+
+    private function apply_configuration_lifecycle(array $settings): bool
+    {
+        $response = wps('wpopt')->moduleHandler->activate_modules_for_settings($settings);
+
+        do_action('wpopt_configuration_restored', $settings, $response);
+
+        return $response;
+    }
+
+    private function create_configuration_backup(?array $settings = null): bool
+    {
+        $settings = is_array($settings) ? $settings : wps('wpopt')->settings->get('', []);
+        $backups = $this->get_configuration_backups();
+        $now = time();
+
+        if ($this->has_recent_configuration_backup($backups, $now)) {
+            return true;
+        }
+
+        array_unshift($backups, array(
+            'id'         => gmdate('YmdHis', $now) . '-' . strtolower(wp_generate_password(8, false, false)),
+            'created_at' => $now,
+            'settings'   => base64_encode(serialize($settings)),
+        ));
+
+        $backups = $this->limit_configuration_backups($backups);
+
+        return update_option(self::BACKUP_OPTION, array_values($backups), 'no');
+    }
+
+    private function has_recent_configuration_backup(array $backups, int $now): bool
+    {
+        return !empty($backups) && (int)$backups[0]['created_at'] >= ($now - self::BACKUP_MIN_INTERVAL_SECONDS);
+    }
+
+    private function get_configuration_backups(): array
+    {
+        $backups = get_option(self::BACKUP_OPTION, array());
+
+        if (!is_array($backups)) {
+            return array();
+        }
+
+        $backups = array_values(array_filter($backups, function ($backup) {
+            return is_array($backup)
+                && !empty($backup['id'])
+                && !empty($backup['created_at'])
+                && !empty($backup['settings']);
+        }));
+
+        usort($backups, function ($a, $b) {
+            return (int)$b['created_at'] <=> (int)$a['created_at'];
+        });
+
+        $limited_backups = $this->limit_configuration_backups($backups);
+
+        if (count($limited_backups) !== count($backups)) {
+            update_option(self::BACKUP_OPTION, $limited_backups, 'no');
+        }
+
+        return $limited_backups;
+    }
+
+    private function limit_configuration_backups(array $backups): array
+    {
+        return array_slice(array_values($backups), 0, self::BACKUP_MAX_ENTRIES);
+    }
+
+    private function get_backup_settings(string $backup_id): ?array
+    {
+        if ($backup_id === '') {
+            return null;
+        }
+
+        foreach ($this->get_configuration_backups() as $backup) {
+            if ((string)$backup['id'] !== $backup_id) {
+                continue;
+            }
+
+            $decoded_settings = base64_decode((string)$backup['settings'], true);
+
+            if (!is_string($decoded_settings) || $decoded_settings === '') {
+                return null;
+            }
+
+            $settings = @unserialize($decoded_settings, array('allowed_classes' => false));
+
+            return is_array($settings) ? $settings : null;
+        }
+
+        return null;
+    }
+
+    private function delete_configuration_backup(string $backup_id): bool
+    {
+        if ($backup_id === '') {
+            return false;
+        }
+
+        $deleted = false;
+        $backups = array_values(array_filter($this->get_configuration_backups(), function ($backup) use ($backup_id, &$deleted) {
+            if ((string)$backup['id'] === $backup_id) {
+                $deleted = true;
+                return false;
+            }
+
+            return true;
+        }));
+
+        return $deleted && update_option(self::BACKUP_OPTION, $backups, 'no');
     }
 
     protected function print_footer(): string
@@ -264,7 +336,7 @@ class Mod_Settings extends Module
                             name="<?php echo esc_attr($this->action_hook); ?>"
                             value="reset_options"
                             class="wps wps-button wpopt-btn is-danger"
-                            onclick="return confirm('<?php echo esc_js(__('Are you sure you want to reset plugin options? Current plugin options will be overwritten.', 'wpopt')); ?>')">
+                            data-wps-confirm="<?php echo esc_attr__('Are you sure you want to reset plugin options? Current plugin options will be overwritten.', 'wpopt'); ?>">
                         <span class="dashicons dashicons-trash"></span>
                         <span><?php esc_html_e('Reset Plugin options', 'wpopt'); ?></span>
                     </button>
@@ -300,7 +372,7 @@ class Mod_Settings extends Module
                                 name="<?php echo esc_attr($this->action_hook); ?>"
                                 value="import_options"
                                 class="wps wps-button wpopt-btn is-info"
-                                onclick="return confirm('<?php echo esc_js(__('Are you sure you want to import plugin options? Current plugin options may be overwritten.', 'wpopt')); ?>')">
+                                data-wps-confirm="<?php echo esc_attr__('Are you sure you want to import plugin options? Current plugin options may be overwritten.', 'wpopt'); ?>">
                             <span class="dashicons dashicons-upload"></span>
                             <span><?php esc_html_e('Import Plugin options', 'wpopt'); ?></span>
                         </button>
@@ -308,9 +380,88 @@ class Mod_Settings extends Module
                     </div>
                 </row>
             </block>
+
+            <?php echo $this->render_configuration_backups(); ?>
         </form>
         <?php
         return ob_get_clean();
+    }
+
+    private function render_configuration_backups(): string
+    {
+        $backups = $this->get_configuration_backups();
+
+        ob_start();
+        ?>
+        <block class="wps-gridRow wpopt-configuration-backups">
+            <header class="wpopt-configuration-backups-header">
+                <div>
+                    <h2><?php esc_html_e('Configuration backups', 'wpopt'); ?></h2>
+                    <p><?php esc_html_e('A backup is created before configuration changes. If the newest backup is less than 15 minutes old, no new backup is created. WP Optimizer keeps the newest 50 backups and removes older entries automatically.', 'wpopt'); ?></p>
+                </div>
+            </header>
+
+            <?php if (empty($backups)) : ?>
+                <div class="wpopt-configuration-backups-empty">
+                    <?php esc_html_e('No configuration backups available yet.', 'wpopt'); ?>
+                </div>
+            <?php else : ?>
+                <div class="wpopt-configuration-backups-table-wrap">
+                    <?php echo $this->render_configuration_backups_table($backups); ?>
+                </div>
+            <?php endif; ?>
+        </block>
+        <?php
+
+        return ob_get_clean();
+    }
+
+    private function render_configuration_backups_table(array $backups): string
+    {
+        $rows = array();
+
+        foreach ($backups as $backup) {
+            $created_at = (int)$backup['created_at'];
+
+            ob_start();
+            ?>
+            <div class="wpopt-configuration-backups-actions">
+                <button type="submit"
+                        name="<?php echo esc_attr($this->action_hook); ?>"
+                        value="<?php echo esc_attr('restore_configuration_backup:' . (string)$backup['id']); ?>"
+                        class="wps wps-button wpopt-btn is-neutral"
+                        data-wps-confirm="<?php echo esc_attr__('Restore this configuration backup? Current plugin options will be overwritten.', 'wpopt'); ?>">
+                    <span class="dashicons dashicons-update-alt"></span>
+                    <span><?php esc_html_e('Restore', 'wpopt'); ?></span>
+                </button>
+                <button type="submit"
+                        name="<?php echo esc_attr($this->action_hook); ?>"
+                        value="<?php echo esc_attr('delete_configuration_backup:' . (string)$backup['id']); ?>"
+                        class="wps wps-button wpopt-btn is-danger"
+                        data-wps-confirm="<?php echo esc_attr__('Delete this configuration backup?', 'wpopt'); ?>">
+                    <span class="dashicons dashicons-trash"></span>
+                    <span><?php esc_html_e('Delete', 'wpopt'); ?></span>
+                </button>
+            </div>
+            <?php
+
+            $rows[] = array(
+                'date' => '<strong>' . esc_html(wp_date(get_option('date_format') . ' ' . get_option('time_format'), $created_at)) . '</strong><code>' . esc_html((string)$backup['id']) . '</code>',
+                'age' => esc_html(sprintf(__('%s ago', 'wpopt'), human_time_diff($created_at, time()))),
+                'actions' => ob_get_clean(),
+            );
+        }
+
+        return List_Table::generateHTML_table(array(
+            'class' => 'wps wpopt-configuration-backups-table',
+            'columns' => array(
+                'date' => __('Date', 'wpopt'),
+                'age' => __('Age', 'wpopt'),
+                'actions' => __('Actions', 'wpopt'),
+            ),
+            'rows' => $rows,
+            'empty' => __('No configuration backups available yet.', 'wpopt'),
+        ));
     }
 }
 

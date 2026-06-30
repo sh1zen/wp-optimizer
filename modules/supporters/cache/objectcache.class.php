@@ -11,18 +11,13 @@ use WPS\core\Disk;
 
 class ObjectCache extends Cache_Dispatcher
 {
-    public static function activate()
+    public static function activate(bool $disable_admin_cache = true)
     {
         Disk::write(
             WP_CONTENT_DIR . DIRECTORY_SEPARATOR . "object-cache.php",
             "<?php\n\n// WP-Optimizer object cache drop-in\n" .
-            "if (defined('WPOPT_SUPPORTERS')) {\n" .
-            "    include_once(WPOPT_SUPPORTERS . 'cache/object-cache.php');\n" .
-            "} else {\n" .
-            "    // Fallback: compute path relative to this file if constant missing.\n" .
-            "    \$p = dirname(__FILE__) . '/cms/extensions/wp-optimizer/modules/supporters/cache/object-cache.php';\n" .
-            "    if (is_file(\$p)) { include_once(\$p); }\n" .
-            "}\n",
+            "defined('WPOPT_ADMIN_CACHE_DISABLED') || define('WPOPT_ADMIN_CACHE_DISABLED', " . ($disable_admin_cache ? 'true' : 'false') . ");\n" .
+            "include_once('" . WPOPT_SUPPORTERS . "cache/object-cache.php');\n",
             0
         );
     }

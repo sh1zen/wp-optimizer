@@ -25,6 +25,13 @@ class Mod_Minify extends Module
 
     protected string $context = 'wpopt';
 
+    public function cleanup(array $settings = array(), array $all_settings = array()): bool
+    {
+        Disk::delete(WPOPT_STORAGE . 'minify');
+
+        return true;
+    }
+
     public function minify($buffer)
     {
         if (!UtilEnv::is_safe_buffering() or !$this->is_valid_buffer($buffer)) {

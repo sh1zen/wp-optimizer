@@ -8,6 +8,7 @@
 namespace WPOptimizer\modules;
 
 use WPS\core\Disk;
+use WPS\core\List_Table;
 use WPS\core\UtilEnv;
 use WPS\modules\Module;
 
@@ -24,6 +25,13 @@ class Mod_Widget extends Module
     private bool $update_cache = false;
 
     protected string $context = 'wpopt';
+
+    public function cleanup(array $settings = array(), array $all_settings = array()): bool
+    {
+        wps('wpopt')->options->remove_all('cache', 'folder_size');
+
+        return true;
+    }
 
     protected function init(): void
     {
@@ -113,22 +121,8 @@ class Mod_Widget extends Module
             __('Index Disk Usage', 'wpopt')        => size_format($this->get_mysql_usages('index')),
         ];
 
+        echo $this->render_dashboard_info_table($serverInfo);
         ?>
-        <table class="widefat wps wpopt-dash-widget">
-            <tbody>
-            <?php
-            $count = 0;
-            foreach ($serverInfo as $info => $data) {
-                printf(
-                    '<tr class="%s">
-						<td class="width35"><b>%s</b></td>
-						<td><strong>%s</strong></td>
-					</tr>', ((++$count % 2) ? 'alternate' : ''), $info, $data
-                );
-            }
-            ?>
-            </tbody>
-        </table>
         <br>
         <div class="wps-row">
             <a class="wps wps-button wpopt-btn is-info"
@@ -158,7 +152,7 @@ class Mod_Widget extends Module
 
     public function wp_dashboard_foldersize($var, $args = array()): void
     {
-        $this->reset();
+        $this->reset_folder_size_state();
 
         $path = $args['args']['path'] ?? ABSPATH;
 
@@ -171,34 +165,56 @@ class Mod_Widget extends Module
             $this->update_cache = true;
         }
 
-        ?>
-        <table class="widefat wpopt-dash-widget">
-            <thead>
-            <tr>
-                <th class="row-title"><strong><?php _e('Files', 'wpopt') ?></strong></th>
-                <th><strong><?php _e('size', 'wpopt') ?></strong></th>
-            </tr>
-            </thead>
-            <tbody>
-            <?php
-            $this->printDirectoryList(glob($path . '/*', \GLOB_ONLYDIR));
-            ?>
-            </tbody>
-            <tfoot>
-            <tr>
-                <th class="row-title"><?php echo __('Total', 'wpopt'); ?></th>
-                <th><?php echo $this->cache['root_folder']; ?></th>
-            </tr>
-            </tfoot>
-        </table>
-        <?php
+        $directories = glob($path . '/*', \GLOB_ONLYDIR);
+        echo $this->render_dashboard_folders_table(is_array($directories) ? $directories : array());
 
         if ($this->update_cache) {
             wps('wpopt')->options->update(basename($path), 'folder_size', $this->cache, 'cache', WEEK_IN_SECONDS);
         }
     }
 
-    private function reset()
+    private function render_dashboard_info_table(array $serverInfo): string
+    {
+        $rows = array();
+
+        foreach ($serverInfo as $info => $data) {
+            $rows[] = array(
+                'label' => '<b>' . esc_html($info) . '</b>',
+                'value' => '<strong>' . esc_html($data) . '</strong>',
+            );
+        }
+
+        return List_Table::generateHTML_table(array(
+            'class' => 'wps wpopt-dash-widget',
+            'columns' => array(
+                'label' => __('Info', 'wpopt'),
+                'value' => __('Value', 'wpopt'),
+            ),
+            'rows' => $rows,
+            'empty' => __('No server information available.', 'wpopt'),
+        ));
+    }
+
+    private function render_dashboard_folders_table(array $directories): string
+    {
+        $rows = $this->get_directory_rows($directories);
+        $rows[] = array(
+            'files' => '<strong>' . esc_html__('Total', 'wpopt') . '</strong>',
+            'size' => '<strong>' . esc_html($this->cache['root_folder']) . '</strong>',
+        );
+
+        return List_Table::generateHTML_table(array(
+            'class' => 'wpopt-dash-widget',
+            'columns' => array(
+                'files' => __('Files', 'wpopt'),
+                'size' => __('size', 'wpopt'),
+            ),
+            'rows' => $rows,
+            'empty' => __('No folder information available.', 'wpopt'),
+        ));
+    }
+
+    private function reset_folder_size_state()
     {
         $this->update_cache = false;
         $this->cache = [];
@@ -209,34 +225,31 @@ class Mod_Widget extends Module
      *
      * @param array $directories List of folders inside a directory
      */
-    private function printDirectoryList(array $directories): void
+    private function get_directory_rows(array $directories): array
     {
-        $count = 0;
+        $rows = array();
+
         if (empty($this->cache) or !isset($this->cache['dir_list'])):
             foreach ($directories as $dir) {
-                $alt = (++$count % 2) ? 'alternate' : '';
                 $name = basename($dir);
                 $size = size_format(Disk::calc_size($dir));
                 $this->cache['dir_list'][$name] = $size;
-                printf(
-                    '<tr class="%s">
-						<td class="row">%s</td>
-						<td>%s</td>
-					</tr>', $alt, $name, $size
+                $rows[] = array(
+                    'files' => esc_html($name),
+                    'size' => esc_html($size),
                 );
             }
             $this->update_cache = true;
         else:
             foreach ($this->cache['dir_list'] as $name => $size) {
-                $alt = (++$count % 2) ? 'alternate' : '';
-                printf(
-                    '<tr class="%s">
-						<td class="row">%s</td>
-						<td>%s</td>
-					</tr>', $alt, $name, $size
+                $rows[] = array(
+                    'files' => esc_html($name),
+                    'size' => esc_html($size),
                 );
             }
         endif;
+
+        return $rows;
     }
 
     /**

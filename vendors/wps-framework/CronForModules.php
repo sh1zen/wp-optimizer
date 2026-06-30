@@ -35,17 +35,20 @@ class CronForModules
 
     public function cron_setting_validator($input, $filtering): array
     {
+        $input = is_array($input) ? $input : array();
         $schedules = array_keys(wp_get_schedules());
 
-        $valid = [];
+        $valid = $filtering ? wp_parse_args($input, $this->settings) : [];
+
+        $recurrence = (string)($input['recurrence'] ?? ($this->settings['recurrence'] ?? 'daily'));
+
+        $valid['active'] = $filtering ? !empty($input['active']) : isset($input['active']);
+        $valid['execution-time'] = StringHelper::sanitize_text((string)($input['execution-time'] ?? ($this->settings['execution-time'] ?? '01:00')));
+        $valid['recurrence'] = in_array($recurrence, $schedules, true) ? $recurrence : 'daily';
 
         if ($filtering) {
-            return $this->settings;
+            return $valid;
         }
-
-        $valid['active'] = isset($input['active']);
-        $valid['execution-time'] = StringHelper::sanitize_text($input['execution-time']);
-        $valid['recurrence'] = in_array($input['recurrence'], $schedules) ? $input['recurrence'] : 'daily';
 
         $this->set_schedule($valid['execution-time'], $valid['recurrence']);
 

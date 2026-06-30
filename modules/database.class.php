@@ -12,6 +12,7 @@ use WPOptimizer\modules\supporters\DBSupport;
 use WPS\core\Ajax;
 use WPS\core\Disk;
 use WPS\core\Graphic;
+use WPS\core\List_Table;
 use WPS\core\UtilEnv;
 use WPS\modules\Module;
 
@@ -27,6 +28,13 @@ class Mod_Database extends Module
     protected string $context = 'wpopt';
 
     private bool $dependencies_loaded = false;
+
+    public function cleanup(array $settings = array(), array $all_settings = array()): bool
+    {
+        wps('wpopt')->options->remove_all('cache', 'get_tables_data');
+
+        return true;
+    }
 
     private function load_dependencies(): void
     {
@@ -74,7 +82,7 @@ class Mod_Database extends Module
 
         ?>
         <form class="wps-list-table-form wpopt-db-tables-form" method="post" action="<?php echo wps_module_panel_url("database", "db-tables"); ?>">
-            <?php $table_list_obj->display(); ?>
+            <?php $this->display_list_table_on_panel_url($table_list_obj, 'database', 'db-tables'); ?>
         </form>
         <?php
 
@@ -163,162 +171,226 @@ class Mod_Database extends Module
             ?>
         </section>
         <section>
-            <form class="wpopt-ajax-db wpopt-db-backup-form" method="post" data-module="<?php echo $this->slug ?>"
+            <form class="wpopt-ajax-db wpopt-db-backup-table-form" method="post" data-module="<?php echo $this->slug ?>"
                   data-nonce="<?php echo wp_create_nonce('wpopt-ajax-nonce') ?>"
                   action="<?php echo wps_module_panel_url('database', 'db-backup'); ?>">
                 <?php wp_nonce_field('wpopt-db-backup-manage'); ?>
                 <input type="hidden" name="wpopt-db-do" value="db-manage-backup">
 
-                <h3><?php _e('Manage Backups', 'wpopt'); ?></h3>
-                <table class="widefat wps">
-                    <thead>
-                    <tr>
-                        <th><?php _e('No.', 'wpopt'); ?></th>
-                        <th><?php _e('MD5 Checksum', 'wpopt'); ?></th>
-                        <th><?php _e('Database File', 'wpopt'); ?></th>
-                        <th><?php _e('Creation date', 'wpopt'); ?></th>
-                        <th><?php _e('Size', 'wpopt'); ?></th>
-                        <th><?php _e('Select', 'wpopt'); ?></th>
-                    </tr>
-                    </thead>
-                    <?php
-                    $no = 0;
-                    $totalsize = 0;
-
-                    if (is_readable(self::BACKUP_PATH)) {
-
-                        $database_files = array_filter(
-                                array_merge(
-                                        glob(self::BACKUP_PATH . "*.sql"),
-                                        glob(self::BACKUP_PATH . "*.gz")
-                                )
-                        );
-
-                        if (empty($database_files)) {
-                            echo '<tr><td class="wps-centered" colspan="6">' . __('There Are No Database Backup Files Available.', 'wpopt') . '</td></tr>';
-                        }
-                        else {
-                            usort($database_files, function ($a, $b) {
-                                return filemtime($a) - filemtime($b);
-                            });
-
-                            foreach ($database_files as $database_file) {
-
-                                if ($no++ % 2 === 0) {
-                                    $style = '';
-                                }
-                                else {
-                                    $style = 'class="alternate"';
-                                }
-
-                                $file_size = UtilEnv::filesize($database_file);
-
-                                $display_name = strlen($database_file) > 50 ? substr($database_file, 0, 25) . '.....' . substr($database_file, -24) : $database_file;
-
-                                echo '<tr ' . $style . '>';
-                                echo '<td>' . number_format_i18n($no) . '</td>';
-                                echo '<td>' . md5($database_file) . '</td>';
-                                echo '<td>' . $display_name . '</td>';
-                                echo '<td>' . get_date_from_gmt(date('Y-m-d H:i:s', filemtime($database_file))) . '</td>';
-                                echo '<td>' . size_format($file_size) . '</td>';
-                                echo '<td><input type="radio" name="file" value="' . esc_attr(basename($database_file)) . '"/></td></tr>';
-
-                                $totalsize += $file_size;
-                            }
-                        }
-                    }
-                    else {
-
-                        if (!$file_mods_disabled && !file_exists(self::BACKUP_PATH)) {
-                            Disk::make_path(self::BACKUP_PATH, true);
-                        }
-
-                        echo '<tr><td class="wps-centered" colspan="6">' . __('There Are No Database Backup Files Available.', 'wpopt') . '</td></tr>';
-                    }
-
-                    ?>
-                    <tr class="wps-footer">
-                        <th colspan="4"><?php printf(_n('%s Backup found', '%s Backups found', $no, 'wpopt'), number_format_i18n($no)); ?></th>
-                        <th colspan="2"><?php echo size_format($totalsize, 2); ?></th>
-                    </tr>
-                    <tr>
-                        <td colspan="6" class="wps-centered wps-actions">
-                            <div class="wpopt-db-button-row">
-                                <input type="submit" name="action" value="<?php _e('Download', 'wpopt'); ?>"
-                                       class="wps wps-button wpopt-btn is-info" data-action="download"/>
-                                <input type="submit" name="action" value="<?php _e('Restore', 'wpopt'); ?>"
-                                       onclick="return confirm('<?php _e('Are you sure to restore selected backup?\nAny data inserted after the backup date will be lost.\n\nThis action is not reversible.', 'wpopt'); ?>')"
-                                       class="wps wps-button wpopt-btn is-warning" data-action="restore"/>
-                                <input type="submit" data-action="delete" class="wps wps-button wpopt-btn is-danger" name="action"
-                                       value="<?php _e('Delete', 'wpopt'); ?>"
-                                       <?php disabled($file_mods_disabled); ?>
-                                       title="<?php echo esc_attr($file_mods_disabled ? __('Disabled by DISALLOW_FILE_MODS in wp-config.php.', 'wpopt') : ''); ?>"
-                                       onclick="return confirm('<?php _e('Are you sure to delete selected backup?', 'wpopt'); ?>')"/>
-                            </div>
-                        </td>
-                    </tr>
-                </table>
+                <?php echo $this->render_database_backup_files_table($file_mods_disabled); ?>
             </form>
             <form class="wpopt-ajax-db wpopt-db-backup-form" method="post" data-module="<?php echo $this->slug ?>"
                   data-nonce="<?php echo wp_create_nonce('wpopt-ajax-nonce') ?>"
                   action="<?php echo wps_module_panel_url('database', 'db-backup'); ?>">
                 <h3><?php _e('Backup Database', 'wpopt'); ?></h3>
-                <table class="widefat wps">
-                    <thead>
-                    <tr>
-                        <th><?php _e('Option', 'wpopt'); ?></th>
-                        <th><?php _e('Value', 'wpopt'); ?></th>
-                    </tr>
-                    </thead>
-                    <tr class="alternate">
-                        <th><?php _e('Database Name:', 'wpopt'); ?></th>
-                        <td><?php echo DB_NAME; ?></td>
-                    </tr>
-                    <tr>
-                        <th><?php _e('Database size:', 'wpopt'); ?></th>
-                        <td><?php echo size_format($wpdb->get_var("SELECT SUM(data_length + index_length) AS 'size' FROM information_schema.tables WHERE table_schema = '" . DB_NAME . "' GROUP BY table_schema;"), 2); ?></td>
-                    </tr>
-                    <tr class="alternate">
-                        <th><?php _e('Database index size:', 'wpopt'); ?></th>
-                        <td><?php echo size_format($wpdb->get_var("SELECT SUM(index_length) AS 'size' FROM information_schema.tables WHERE table_schema = '" . DB_NAME . "' GROUP BY table_schema;"), 2); ?></td>
-                    </tr>
-                    <tr>
-                        <th><?php _e('Database Backup Type:', 'wpopt'); ?></th>
-                        <td><?php _e('Full (Structure and Data)', 'wpopt'); ?></td>
-                    </tr>
-                    <tr class="alternate">
-                        <th><?php _e('MYSQL Dump Location:', 'wpopt'); ?></th>
-                        <td>
-                            <span>
-                            <?php
-                            if ($path = DBSupport::get_mysqlDump_cmd_path()) {
-                                echo $path;
-                            }
-                            else {
-                                echo __('No mysqldump found or not valid path set. Using sql export method will be slower.', 'wpopt');
-                            }
-                            ?>
-                        </span>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td colspan="2" class="wps-centered wps-actions">
-                            <div class="wpopt-db-button-row">
-                                <input data-action="backup" type="submit" name="action"
-                                       value="<?php _e('Backup now', 'wpopt'); ?>"
-                                       <?php disabled($file_mods_disabled); ?>
-                                       title="<?php echo esc_attr($file_mods_disabled ? __('Disabled by DISALLOW_FILE_MODS in wp-config.php.', 'wpopt') : ''); ?>"
-                                       class="wps wps-button wpopt-btn is-success"/>
-                                <a class="wps wps-button wpopt-btn is-neutral"
-                                   href="<?php echo wps_module_setting_url('wpopt', 'database') ?>">Settings</a>
-                            </div>
-                        </td>
-                    </tr>
-                </table>
+                <?php echo $this->render_database_backup_summary_panel($file_mods_disabled); ?>
             </form>
         </section>
         <?php
         return ob_get_clean();
+    }
+
+    private function render_database_backup_files_table(bool $file_mods_disabled): string
+    {
+        return List_Table::generateHTML_table($this->get_database_backup_files_table_args($file_mods_disabled));
+    }
+
+    private function get_database_backup_files_table_args(bool $file_mods_disabled): array
+    {
+        $data = $this->get_database_backup_files_table_data($file_mods_disabled);
+        $count = (int)$data['count'];
+
+        return array(
+            'class' => 'wps wpopt-db-backups-table',
+            'columns' => $this->get_database_backup_files_columns(),
+            'rows' => $data['rows'],
+            'footer_rows' => array(
+                array(
+                    'class' => 'wps-footer',
+                    'cells' => array(
+                        'number' => array(
+                            'class' => 'wpopt-db-backup-summary-cell',
+                            'attributes' => array('colspan' => count($this->get_database_backup_files_columns())),
+                            'content' => '<div class="wpopt-db-backup-summary-row"><strong>' . sprintf(
+                                esc_html(_n('%s Backup found', '%s Backups found', $count, 'wpopt')),
+                                esc_html(number_format_i18n($count))
+                            ) . '</strong><span>' . esc_html(size_format((int)$data['total_size'], 2)) . '</span></div>',
+                        ),
+                    ),
+                ),
+            ),
+            'empty' => __('There Are No Database Backup Files Available.', 'wpopt'),
+        );
+    }
+
+    private function get_database_backup_files_table_data(bool $file_mods_disabled): array
+    {
+        $rows = array();
+        $total_size = 0;
+        $count = 0;
+
+        if (is_readable(self::BACKUP_PATH)) {
+            $database_files = array_filter(array_merge(
+                (array)glob(self::BACKUP_PATH . '*.sql'),
+                (array)glob(self::BACKUP_PATH . '*.gz')
+            ));
+
+            usort($database_files, static function ($a, $b) {
+                return filemtime($a) - filemtime($b);
+            });
+
+            foreach ($database_files as $database_file) {
+                $count++;
+                $file_size = UtilEnv::filesize($database_file);
+                $display_name = strlen($database_file) > 50 ? substr($database_file, 0, 25) . '.....' . substr($database_file, -24) : $database_file;
+
+                $rows[] = array(
+                    'number' => esc_html(number_format_i18n($count)),
+                    'checksum' => '<code>' . esc_html(md5($database_file)) . '</code>',
+                    'file' => esc_html($display_name),
+                    'created' => esc_html(get_date_from_gmt(date('Y-m-d H:i:s', filemtime($database_file)))),
+                    'size' => esc_html(size_format($file_size)),
+                    'actions' => $this->render_database_backup_file_actions(basename($database_file), $file_mods_disabled),
+                );
+
+                $total_size += $file_size;
+            }
+        }
+        else {
+            if (!$file_mods_disabled && !file_exists(self::BACKUP_PATH)) {
+                Disk::make_path(self::BACKUP_PATH, true);
+            }
+        }
+
+        return array(
+            'rows' => $rows,
+            'count' => $count,
+            'total_size' => $total_size,
+        );
+    }
+
+    private function get_database_backup_files_columns(): array
+    {
+        return array(
+            'number' => __('No.', 'wpopt'),
+            'checksum' => __('MD5 Checksum', 'wpopt'),
+            'file' => __('Database File', 'wpopt'),
+            'created' => __('Creation date', 'wpopt'),
+            'size' => __('Size', 'wpopt'),
+            'actions' => __('Actions', 'wpopt'),
+        );
+    }
+
+    private function render_database_backup_file_actions(string $database_file, bool $file_mods_disabled): string
+    {
+        $args = esc_attr(base64_encode(serialize(array('file' => $database_file))));
+        $file = esc_attr($database_file);
+        $disabled_title = esc_attr($file_mods_disabled ? __('Disabled by DISALLOW_FILE_MODS in wp-config.php.', 'wpopt') : '');
+
+        ob_start();
+        ?>
+        <div class="wpopt-db-backup-row-actions">
+            <button type="submit" class="wps wps-button wpopt-btn is-info" data-action="download" data-file="<?php echo $file; ?>" data-args="<?php echo $args; ?>">
+                <?php esc_html_e('Download', 'wpopt'); ?>
+            </button>
+            <button type="submit" class="wps wps-button wpopt-btn is-warning" data-action="restore" data-file="<?php echo $file; ?>" data-args="<?php echo $args; ?>"
+                    data-wps-confirm="<?php echo esc_attr__("Are you sure to restore selected backup?\nAny data inserted after the backup date will be lost.\n\nThis action is not reversible.", 'wpopt'); ?>">
+                <?php esc_html_e('Restore', 'wpopt'); ?>
+            </button>
+            <button type="submit" class="wps wps-button wpopt-btn is-danger" data-action="delete" data-file="<?php echo $file; ?>" data-args="<?php echo $args; ?>"
+                    <?php disabled($file_mods_disabled); ?>
+                    title="<?php echo $disabled_title; ?>"
+                    data-wps-confirm="<?php echo esc_attr__('Are you sure to delete selected backup?', 'wpopt'); ?>">
+                <?php esc_html_e('Delete', 'wpopt'); ?>
+            </button>
+        </div>
+        <?php
+        return ob_get_clean();
+    }
+
+    private function render_database_backup_summary_panel(bool $file_mods_disabled): string
+    {
+        ob_start();
+        echo $this->render_database_backup_summary_cards();
+        ?>
+        <div class="wps-centered wps-actions wpopt-db-table-actions">
+            <div class="wpopt-db-button-row">
+                <input data-action="backup" type="submit" name="action"
+                       value="<?php esc_attr_e('Backup now', 'wpopt'); ?>"
+                       <?php disabled($file_mods_disabled); ?>
+                       title="<?php echo esc_attr($file_mods_disabled ? __('Disabled by DISALLOW_FILE_MODS in wp-config.php.', 'wpopt') : ''); ?>"
+                       class="wps wps-button wpopt-btn is-success">
+                <a class="wps wps-button wpopt-btn is-neutral"
+                   href="<?php echo esc_url(wps_module_setting_url('wpopt', 'database')); ?>"><?php esc_html_e('Settings', 'wpopt'); ?></a>
+            </div>
+        </div>
+        <?php
+        return ob_get_clean();
+    }
+
+    private function render_database_backup_summary_cards(): string
+    {
+        ob_start();
+        ?>
+        <div class="wpopt-db-backup-summary-grid" role="list">
+            <?php foreach ($this->get_database_backup_summary_rows() as $item) : ?>
+                <section class="wpopt-db-backup-summary-card <?php echo esc_attr((string)($item['class'] ?? '')); ?>" role="listitem">
+                    <span class="wpopt-db-backup-summary-icon dashicons <?php echo esc_attr((string)($item['icon'] ?? 'dashicons-database')); ?>" aria-hidden="true"></span>
+                    <span class="wpopt-db-backup-summary-label"><?php echo esc_html(rtrim((string)$item['option'], ':')); ?></span>
+                    <strong class="wpopt-db-backup-summary-value"><?php echo (string)$item['value']; ?></strong>
+                </section>
+            <?php endforeach; ?>
+        </div>
+        <?php
+        return ob_get_clean();
+    }
+
+    private function get_database_backup_summary_rows(): array
+    {
+        global $wpdb;
+
+        $mysql_dump = DBSupport::get_mysqlDump_cmd_path();
+        $database_size = $wpdb->get_var(
+            $wpdb->prepare(
+                "SELECT SUM(data_length + index_length) AS size FROM information_schema.tables WHERE table_schema = %s GROUP BY table_schema;",
+                DB_NAME
+            )
+        );
+        $database_index_size = $wpdb->get_var(
+            $wpdb->prepare(
+                "SELECT SUM(index_length) AS size FROM information_schema.tables WHERE table_schema = %s GROUP BY table_schema;",
+                DB_NAME
+            )
+        );
+
+        return array(
+            array(
+                'option' => __('Database Name:', 'wpopt'),
+                'value' => esc_html(DB_NAME),
+                'icon' => 'dashicons-database',
+            ),
+            array(
+                'option' => __('Database size:', 'wpopt'),
+                'value' => esc_html(size_format((int)$database_size, 2)),
+                'icon' => 'dashicons-chart-pie',
+            ),
+            array(
+                'option' => __('Database index size:', 'wpopt'),
+                'value' => esc_html(size_format((int)$database_index_size, 2)),
+                'icon' => 'dashicons-chart-area',
+            ),
+            array(
+                'option' => __('Database Backup Type:', 'wpopt'),
+                'value' => esc_html__('Full (Structure and Data)', 'wpopt'),
+                'icon' => 'dashicons-backup',
+            ),
+            array(
+                'option' => __('MYSQL Dump Location:', 'wpopt'),
+                'value' => $mysql_dump ? esc_html($mysql_dump) : esc_html__('No mysqldump found or not valid path set. Using sql export method will be slower.', 'wpopt'),
+                'icon' => 'dashicons-admin-tools',
+                'class' => 'is-wide',
+            ),
+        );
     }
 
     public function ajax_handler($args = array()): void
@@ -366,7 +438,7 @@ class Mod_Database extends Module
             case 'download':
             case 'restore':
             case 'backup':
-                $response = $this->handle_database_actions($args['action'], array('file' => $form_data['file'] ?? ''));
+                $response = $this->handle_database_actions($args['action'], array('file' => $form_data['file'] ?? $action_args['file'] ?? ''));
                 break;
 
             case 'sweep_details':
@@ -397,6 +469,18 @@ class Mod_Database extends Module
                         'total'      => $total_count,
                         'percentage' => UtilEnv::format_percentage($sweep, $total_count)
                 );
+                break;
+
+            case 'option_toggle_autoload':
+            case 'option_delete':
+                $option_name = (string)($action_args['option-name'] ?? '');
+                $response = $this->handle_option_action($args['action'], $option_name);
+                break;
+
+            case 'option_preview':
+                $option_name = (string)($action_args['option-name'] ?? '');
+                $preview = DBSupport::get_option_preview($option_name, 0);
+                $response = $preview ? $this->new_response(__('Option preview loaded.', 'wpopt'), 'success', $preview) : false;
                 break;
         }
 
@@ -455,6 +539,48 @@ class Mod_Database extends Module
     private function new_response($text, $status = 'success', $extra_data = []): array
     {
         return array('text' => $text, 'status' => $status, 'list' => $extra_data);
+    }
+
+    private function handle_option_action(string $action, string $option_name): array
+    {
+        $option_name = DBSupport::sanitize_option_name($option_name);
+
+        if ('' === $option_name) {
+            return $this->new_response(__('Invalid option selected.', 'wpopt'), 'error');
+        }
+
+        if ('option_toggle_autoload' === $action) {
+            $result = DBSupport::toggle_option_autoload($option_name);
+
+            if (!$result['success']) {
+                return $this->new_response($result['message'], 'error', array(
+                        'summary' => DBSupport::get_options_autoload_summary(),
+                ));
+            }
+
+            return $this->new_response($result['message'], 'success', array(
+                    'option'  => DBSupport::get_option_row_summary($option_name),
+                    'summary' => DBSupport::get_options_autoload_summary(),
+            ));
+        }
+
+        if ('option_delete' === $action) {
+            $result = DBSupport::delete_option_row($option_name);
+
+            if (!$result['success']) {
+                return $this->new_response($result['message'], 'error', array(
+                        'summary' => DBSupport::get_options_autoload_summary(),
+                ));
+            }
+
+            return $this->new_response($result['message'], 'success', array(
+                    'deleted' => true,
+                    'option_name' => $option_name,
+                    'summary' => DBSupport::get_options_autoload_summary(),
+            ));
+        }
+
+        return $this->new_response(__('Invalid request.', 'wpopt'), 'error');
     }
 
     private function handle_database_actions($action, $args = array())
@@ -586,16 +712,7 @@ class Mod_Database extends Module
     {
         ?>
         <section class="wps-wrap wpopt-db-manager-page">
-            <div id="wpopt-ajax-message" class="wps-notice"></div>
             <block class="wps wpopt-db-shell">
-                <section class="wps-header wpopt-db-hero">
-                    <span class="wpopt-db-hero-icon dashicons dashicons-database"></span>
-                    <div class="wpopt-db-hero-copy">
-                        <h1>Database Manager</h1>
-                        <p><?php _e('Clean and optimize your WordPress database safely and efficiently.', 'wpopt'); ?></p>
-                    </div>
-                    <span class="wpopt-db-hero-art" aria-hidden="true"></span>
-                </section>
                 <?php
                 echo Graphic::generateHTML_tabs_panels(array(
                         array(
@@ -614,6 +731,15 @@ class Mod_Database extends Module
                                 'panel-icon'  => 'grid',
                                 'callback'    => array($this, 'render_lazy_panel_placeholder'),
                                 'args'        => array('db-tables')
+                        ),
+                        array(
+                                'id'          => 'db-options',
+                                'tab-title'   => __('Options', 'wpopt'),
+                                'panel-title' => __('WordPress options', 'wpopt'),
+                                'panel-icon'  => 'settings',
+                                'panel-description' => __('Review wp_options rows, autoload cost and risky cleanup actions.', 'wpopt'),
+                                'callback'    => array($this, 'render_lazy_panel_placeholder'),
+                                'args'        => array('db-options')
                         ),
 
                         array(
@@ -670,6 +796,11 @@ class Mod_Database extends Module
                         'list_request' => $this->sanitize_tables_list_request($options)
                 ));
 
+            case 'db-options':
+                return $this->render_options_panel(array(
+                        'list_request' => $this->sanitize_options_list_request($options)
+                ));
+
             case 'db-backup':
                 return $this->render_backup_panel($this->option('backup', array()));
 
@@ -706,6 +837,45 @@ class Mod_Database extends Module
 
         if (isset($options['s'])) {
             $request['s'] = sanitize_text_field(wp_unslash((string)$options['s']));
+        }
+
+        return $request;
+    }
+
+    private function sanitize_options_list_request(array $options): array
+    {
+        $request = array();
+
+        if (isset($options['paged'])) {
+            $request['paged'] = max(1, absint($options['paged']));
+        }
+
+        if (isset($options['orderby'])) {
+            $orderby = sanitize_key((string)$options['orderby']);
+
+            if (in_array($orderby, array('option_name', 'option_size', 'autoload'), true)) {
+                $request['orderby'] = $orderby;
+            }
+        }
+
+        if (isset($options['order'])) {
+            $order = strtoupper(sanitize_key((string)$options['order']));
+
+            if (in_array($order, array('ASC', 'DESC'), true)) {
+                $request['order'] = $order;
+            }
+        }
+
+        if (isset($options['s'])) {
+            $request['s'] = sanitize_text_field(wp_unslash((string)$options['s']));
+        }
+
+        if (isset($options['wpopt_autoload'])) {
+            $autoload_filter = sanitize_key((string)$options['wpopt_autoload']);
+
+            if (in_array($autoload_filter, array('all', 'autoload'), true)) {
+                $request['wpopt_autoload'] = $autoload_filter;
+            }
         }
 
         return $request;
@@ -841,62 +1011,7 @@ class Mod_Database extends Module
                     echo "<span class='wpopt-db-sweep-count'>" . sprintf(_n('%s item', '%s items', $total, 'wpopt'), number_format_i18n($total)) . "</span>";
                     ?>
                 </pre-table>
-                <table class="widefat table-sweep">
-                    <thead>
-                    <tr>
-                        <th class="col-sweep-details"><?php _e('Details', 'wpopt'); ?></th>
-                        <th class="col-sweep-count"><?php _e('Count', 'wpopt'); ?></th>
-                        <th class="col-sweep-percent"><?php _e('% Of', 'wpopt'); ?></th>
-                        <th class="col-sweep-action"><?php _e('Action', 'wpopt'); ?></th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                    <?php
-                    $alternate = false;
-                    foreach ($sweeper['sweeps'] as $name => $sweep_id) {
-
-                        if (empty($sweep_id)) {
-                            continue;
-                        }
-
-                        $count = DBSupport::count($sweep_id);
-                        ?>
-                        <tr <?php echo $alternate ? "class='alternate'" : ''; ?>>
-                            <td>
-                                <strong><?php echo $name ?></strong>
-                                <div class="hidden sweep-details"></div>
-                            </td>
-                            <td>
-                                <span class="sweep-count"><?php echo number_format_i18n($count); ?></span>
-                            </td>
-                            <td>
-                                <span
-                                        class="sweep-percentage"><?php echo UtilEnv::format_percentage($count, $total); ?></span>
-                            </td>
-                            <td>
-                                <?php if ($count > 0) :
-                                    $data = base64_encode(serialize(array('sweep-name' => $sweep_id, 'sweep-type' => $sweeper['type'])));
-                                    ?>
-                                    <button data-action="sweep"
-                                            data-args="<?php echo $data; ?>"
-                                            data-nonce="<?php echo $nonce; ?>"
-                                            class="wps wps-button wpopt-btn is-warning wpopt-sweep"><?php _e('Sweep', 'wpopt'); ?></button>
-                                    <button data-action="sweep_details"
-                                            data-args="<?php echo $data; ?>"
-                                            data-nonce="<?php echo $nonce; ?>"
-                                            class="wps wps-button wpopt-btn is-info wpopt-sweep-details"><?php _e('Details', 'wpopt'); ?></button>
-                                <?php else :
-                                    _e('None', 'wpopt');
-                                endif;
-                                ?>
-                            </td>
-                        </tr>
-                        <?php
-                        $alternate = !$alternate;
-                    }
-                    ?>
-                    </tbody>
-                </table>
+                <?php echo $this->render_sweeper_table($sweeper, $total, $nonce); ?>
             </section>
             <?php
         }
@@ -904,6 +1019,341 @@ class Mod_Database extends Module
         </section>
         <?php
 
+        return ob_get_clean();
+    }
+
+    private function render_sweeper_table(array $sweeper, int $total, string $nonce): string
+    {
+        $rows = array();
+
+        foreach ($sweeper['sweeps'] as $name => $sweep_id) {
+            if (empty($sweep_id)) {
+                continue;
+            }
+
+            $count = DBSupport::count($sweep_id);
+            $actions = esc_html__('None', 'wpopt');
+
+            if ($count > 0) {
+                $data = base64_encode(serialize(array('sweep-name' => $sweep_id, 'sweep-type' => $sweeper['type'])));
+                $actions = '<button data-action="sweep" data-args="' . esc_attr($data) . '" data-nonce="' . esc_attr($nonce) . '" class="wps wps-button wpopt-btn is-warning wpopt-sweep">' . esc_html__('Sweep', 'wpopt') . '</button>';
+                $actions .= '<button data-action="sweep_details" data-args="' . esc_attr($data) . '" data-nonce="' . esc_attr($nonce) . '" class="wps wps-button wpopt-btn is-info wpopt-sweep-details">' . esc_html__('Details', 'wpopt') . '</button>';
+            }
+
+            $rows[] = array(
+                'details' => '<strong>' . esc_html($name) . '</strong><div class="hidden sweep-details"></div>',
+                'count' => '<span class="sweep-count">' . esc_html(number_format_i18n($count)) . '</span>',
+                'percent' => '<span class="sweep-percentage">' . esc_html(UtilEnv::format_percentage($count, $total)) . '</span>',
+                'action' => $actions,
+            );
+        }
+
+        return List_Table::generateHTML_table(array(
+            'class' => 'table-sweep',
+            'columns' => array(
+                'details' => __('Details', 'wpopt'),
+                'count' => __('Count', 'wpopt'),
+                'percent' => __('% Of', 'wpopt'),
+                'action' => __('Action', 'wpopt'),
+            ),
+            'rows' => $rows,
+            'empty' => __('No sweep actions available.', 'wpopt'),
+        ));
+    }
+
+    /**
+     * Handle the gui for wp_options list.
+     */
+    public function render_options_panel($settings = array()): string
+    {
+        $this->load_dependencies();
+
+        $request = $this->sanitize_options_list_request($settings['list_request'] ?? array());
+        $request = $this->normalize_options_list_request($request);
+        $summary = DBSupport::get_options_autoload_summary();
+        $per_page = 25;
+        $current_page = max(1, (int)($request['paged'] ?? 1));
+        $total_items = DBSupport::count_options($request);
+        $total_pages = max(1, (int)ceil($total_items / $per_page));
+
+        if ($current_page > $total_pages) {
+            $current_page = $total_pages;
+            $request['paged'] = $current_page;
+        }
+
+        $rows = DBSupport::get_options_data($request, $per_page, $current_page);
+
+        ob_start();
+        ?>
+        <section class="wpopt-db-options-panel">
+            <div class="wpopt-db-options-summary" data-role="wpopt-options-summary">
+                <?php echo $this->render_options_summary_cards($summary); ?>
+            </div>
+            <div class="wpopt-db-options-warning">
+                <span class="dashicons dashicons-warning" aria-hidden="true"></span>
+                <div>
+                    <strong><?php _e('Be careful: wrong changes here can break the site.', 'wpopt'); ?></strong>
+                    <p><?php _e('Disabling autoload on required options can cause extra database queries or broken plugin/theme behavior. Deleting an option can permanently remove configuration, scheduled data, licenses, cache state or serialized settings. Create a database backup before changing anything you are not sure about.', 'wpopt'); ?></p>
+                </div>
+            </div>
+            <form class="wps-list-table-form wpopt-db-options-form" method="get" action="<?php echo esc_url(wps_module_panel_url("database", "db-options")); ?>">
+                <input type="hidden" name="page" value="<?php echo esc_attr(wps_admin_menu_slug($this->context)); ?>"/>
+                <input type="hidden" name="wps-page" value="module-database"/>
+                <?php echo $this->render_options_table_controls($request, $total_items, $total_pages, $current_page); ?>
+                <?php echo $this->render_options_table($rows, $request); ?>
+                <?php echo $this->render_options_table_bottom_controls($request, $total_items, $total_pages, $current_page); ?>
+            </form>
+        </section>
+        <?php
+
+        return ob_get_clean();
+    }
+
+    private function render_options_table_bottom_controls(array $request, int $total_items, int $total_pages, int $current_page): string
+    {
+        $pagination = $this->render_options_pagination($request, $total_items, $total_pages, $current_page, 'bottom');
+
+        if ('' === $pagination) {
+            return '';
+        }
+
+        return '<div class="tablenav bottom">' . $pagination . '<br class="clear"/></div>';
+    }
+
+    private function normalize_options_list_request(array $request): array
+    {
+        $request['wpopt_autoload'] = $request['wpopt_autoload'] ?? 'all';
+        $request['orderby'] = $request['orderby'] ?? 'option_size';
+        $request['order'] = $request['order'] ?? 'DESC';
+        $request['paged'] = max(1, (int)($request['paged'] ?? 1));
+
+        return $request;
+    }
+
+    private function render_options_table_controls(array $request, int $total_items, int $total_pages, int $current_page): string
+    {
+        ob_start();
+        ?>
+        <div class="tablenav top">
+            <div class="alignleft actions wpopt-options-filters">
+                <label class="screen-reader-text" for="wpopt-autoload-filter"><?php esc_html_e('Filter by autoload', 'wpopt'); ?></label>
+                <select id="wpopt-autoload-filter" name="wpopt_autoload">
+                    <option value="all" <?php selected($request['wpopt_autoload'], 'all'); ?>><?php esc_html_e('All options', 'wpopt'); ?></option>
+                    <option value="autoload" <?php selected($request['wpopt_autoload'], 'autoload'); ?>><?php esc_html_e('Autoload only', 'wpopt'); ?></option>
+                </select>
+                <input type="submit" class="button" value="<?php esc_attr_e('Filter', 'wpopt'); ?>"/>
+            </div>
+            <p class="search-box">
+                <label class="screen-reader-text" for="search-search-input"><?php esc_html_e('Search', 'wpopt'); ?></label>
+                <input type="search" id="search-search-input" name="s" value="<?php echo esc_attr((string)($request['s'] ?? '')); ?>"/>
+                <input type="submit" id="search-submit" class="button" value="<?php esc_attr_e('Search', 'wpopt'); ?>"/>
+            </p>
+            <?php echo $this->render_options_pagination($request, $total_items, $total_pages, $current_page, 'top'); ?>
+            <br class="clear"/>
+        </div>
+        <?php
+        return ob_get_clean();
+    }
+
+    private function render_options_table(array $rows, array $request): string
+    {
+        $columns = array(
+                'option_name' => array('label' => __('Option name', 'wpopt'), 'sortable' => true),
+                'option_size' => array('label' => __('Size', 'wpopt'), 'sortable' => true),
+                'autoload'    => array('label' => __('Autoload', 'wpopt'), 'sortable' => true),
+                'actions'     => array('label' => __('Actions', 'wpopt')),
+        );
+
+        $table_rows = array();
+
+        foreach ($rows as $row) {
+            $option_name = (string)($row['option_name'] ?? '');
+            $protected = DBSupport::is_protected_option($option_name);
+            $table_rows[] = array(
+                    'option_name' => $this->render_option_name($option_name, $protected),
+                    'option_size' => '<span class="wpopt-option-size">' . esc_html(size_format(absint($row['option_size'] ?? 0), 2)) . '</span>',
+                    'autoload'    => $this->render_option_autoload($option_name, (string)($row['autoload'] ?? ''), $protected),
+                    'actions'     => $this->render_option_actions($option_name, $protected),
+            );
+        }
+
+        return List_Table::generateHTML_table(array(
+                'class'   => 'wpopt-options-table',
+                'columns' => $columns,
+                'rows'    => $table_rows,
+                'empty'   => __('No options found.', 'wpopt'),
+                'sort_url' => $this->get_options_table_url($request, array('paged' => null)),
+                'orderby' => (string)$request['orderby'],
+                'order'   => (string)$request['order'],
+        ));
+    }
+
+    private function render_option_name(string $option_name, bool $protected): string
+    {
+        $args = esc_attr(base64_encode(serialize(array('option-name' => $option_name))));
+        $nonce = esc_attr(wp_create_nonce('wpopt-ajax-nonce'));
+        $icon = '<svg class="wpopt-option-name-eye" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" focusable="false"><path d="M12 5c5 0 8.6 4.4 9.7 5.9a1.8 1.8 0 0 1 0 2.2C20.6 14.6 17 19 12 19s-8.6-4.4-9.7-5.9a1.8 1.8 0 0 1 0-2.2C3.4 9.4 7 5 12 5Zm0 2C8 7 5 10.4 4 12c1 1.6 4 5 8 5s7-3.4 8-5c-1-1.6-4-5-8-5Zm0 2.25A2.75 2.75 0 1 1 12 14.75 2.75 2.75 0 0 1 12 9.25Zm0 2A.75.75 0 1 0 12 12.75.75.75 0 0 0 12 11.25Z" fill="currentColor"/></svg>';
+        $protected_label = $protected ? '<span class="wpopt-option-protected"><span class="dashicons dashicons-lock"></span>' . esc_html__('Protected', 'wpopt') . '</span>' : '';
+
+        return sprintf(
+                '<button type="button" class="wpopt-option-name-preview wpopt-option-preview" data-action="option_preview" data-args="%1$s" data-nonce="%2$s" aria-label="%3$s">%4$s<code class="wpopt-option-name">%5$s</code></button>%6$s',
+                $args,
+                $nonce,
+                esc_attr(sprintf(__('Show option "%s" here', 'wpopt'), $option_name)),
+                $icon,
+                esc_html($option_name),
+                $protected_label
+        );
+    }
+
+    private function render_option_autoload(string $option_name, string $autoload, bool $protected): string
+    {
+        $autoloads = DBSupport::option_autoloads($autoload);
+
+        return sprintf(
+                '<input type="checkbox" class="wps-apple-switch wpopt-option-autoload-toggle" data-action="option_toggle_autoload" data-args="%1$s" data-nonce="%2$s" aria-label="%3$s" %4$s %5$s>',
+                esc_attr(base64_encode(serialize(array('option-name' => $option_name)))),
+                esc_attr(wp_create_nonce('wpopt-ajax-nonce')),
+                esc_attr(sprintf(__('Toggle autoload for "%s"', 'wpopt'), $option_name)),
+                checked($autoloads, true, false),
+                disabled($protected, true, false)
+        );
+    }
+
+    private function render_option_actions(string $option_name, bool $protected): string
+    {
+        $args = esc_attr(base64_encode(serialize(array('option-name' => $option_name))));
+        $nonce = esc_attr(wp_create_nonce('wpopt-ajax-nonce'));
+
+        if ($protected) {
+            return '<div class="wpopt-option-actions is-protected"><span class="wpopt-option-action-note">' . esc_html__('Core/plugin option protected.', 'wpopt') . '</span></div>';
+        }
+
+        $delete_button = sprintf(
+                '<button type="button" class="wps wps-button wpopt-btn is-danger wpopt-option-action" data-action="option_delete" data-args="%1$s" data-nonce="%2$s" data-confirm="%3$s">%4$s</button>',
+                $args,
+                $nonce,
+                esc_attr__('Deleting the wrong option can break the site or remove plugin/theme settings. Continue?', 'wpopt'),
+                esc_html__('Delete', 'wpopt')
+        );
+
+        return '<div class="wpopt-option-actions">' . $delete_button . '</div>';
+    }
+
+    private function render_options_pagination(array $request, int $total_items, int $total_pages, int $current_page, string $which): string
+    {
+        if ($total_items <= 0 || $total_pages <= 1) {
+            return '';
+        }
+
+        $page_url = function (int $page) use ($request): string {
+            return esc_url($this->get_options_table_url($request, array('paged' => max(1, $page))));
+        };
+
+        $nav_button = static function (string $class, string $label, string $symbol, ?string $url): string {
+            if ($url === null) {
+                return '';
+            }
+
+            return '<a class="' . esc_attr($class) . ' button" href="' . $url . '"><span class="screen-reader-text">' . esc_html($label) . '</span><span aria-hidden="true">' . esc_html($symbol) . '</span></a>';
+        };
+
+        ob_start();
+        ?>
+        <div class="tablenav-pages <?php echo esc_attr($which); ?>">
+            <span class="displaying-num"><?php echo esc_html(sprintf(_n('%s item', '%s items', $total_items, 'wpopt'), number_format_i18n($total_items))); ?></span>
+            <span class="pagination-links">
+                <?php echo $nav_button('first-page', __('First page', 'wpopt'), '<<', $current_page > 1 ? $page_url(1) : null); ?>
+                <?php echo $nav_button('prev-page', __('Previous page', 'wpopt'), '<', $current_page > 1 ? $page_url($current_page - 1) : null); ?>
+                <span class="paging-input wpopt-pagination-status" aria-label="<?php echo esc_attr(sprintf(__('Page %1$s of %2$s', 'wpopt'), number_format_i18n($current_page), number_format_i18n($total_pages))); ?>">
+                    <span class="current-page" aria-current="page"><?php echo esc_html(number_format_i18n($current_page)); ?></span>
+                    <span class="wps-page-separator" aria-hidden="true">...</span>
+                    <span class="wps-total-pages"><?php echo esc_html(number_format_i18n($total_pages)); ?></span>
+                </span>
+                <?php echo $nav_button('next-page', __('Next page', 'wpopt'), '>', $current_page < $total_pages ? $page_url($current_page + 1) : null); ?>
+                <?php echo $nav_button('last-page', __('Last page', 'wpopt'), '>>', $current_page < $total_pages ? $page_url($total_pages) : null); ?>
+            </span>
+        </div>
+        <?php
+        return ob_get_clean();
+    }
+
+    private function get_options_table_url(array $request, array $overrides = array()): string
+    {
+        $args = array(
+                'wpopt_autoload' => $request['wpopt_autoload'] ?? 'all',
+                's'              => $request['s'] ?? '',
+                'orderby'        => $request['orderby'] ?? 'option_size',
+                'order'          => $request['order'] ?? 'DESC',
+                'paged'          => $request['paged'] ?? 1,
+        );
+
+        foreach ($overrides as $key => $value) {
+            if ($value === null || $value === '') {
+                unset($args[$key]);
+            }
+            else {
+                $args[$key] = $value;
+            }
+        }
+
+        foreach ($args as $key => $value) {
+            if ($value === '' || ($key === 'wpopt_autoload' && $value === 'all') || ($key === 'paged' && (int)$value <= 1)) {
+                unset($args[$key]);
+            }
+        }
+
+        return add_query_arg($args, wps_module_panel_url('database', 'db-options'));
+    }
+
+    private function display_list_table_on_panel_url(\WP_List_Table $table, string $module, string $panel): void
+    {
+        $original_request_uri = $_SERVER['REQUEST_URI'] ?? '';
+        $_SERVER['REQUEST_URI'] = $this->get_admin_request_uri(wps_module_panel_url($module, $panel));
+
+        try {
+            $table->display();
+        }
+        finally {
+            $_SERVER['REQUEST_URI'] = $original_request_uri;
+        }
+    }
+
+    private function get_admin_request_uri(string $url): string
+    {
+        $path = wp_parse_url($url, PHP_URL_PATH) ?: '';
+        $query = wp_parse_url($url, PHP_URL_QUERY);
+        $fragment = wp_parse_url($url, PHP_URL_FRAGMENT);
+
+        return $path . ($query ? '?' . $query : '') . ($fragment ? '#' . $fragment : '');
+    }
+
+    private function render_options_summary_cards(array $summary): string
+    {
+        $autoload_size = (int)($summary['autoload_size'] ?? 0);
+        $autoload_count = (int)($summary['autoload_count'] ?? 0);
+        $total_size = (int)($summary['total_size'] ?? 0);
+        $total_count = (int)($summary['total_count'] ?? 0);
+
+        ob_start();
+        ?>
+        <div class="wpopt-db-options-card" data-stat="autoload-size">
+            <span><?php _e('Total Autoload Size', 'wpopt'); ?></span>
+            <strong><?php echo esc_html(size_format($autoload_size, 2)); ?></strong>
+        </div>
+        <div class="wpopt-db-options-card" data-stat="autoload-count">
+            <span><?php _e('Autoloaded Options', 'wpopt'); ?></span>
+            <strong><?php echo esc_html(number_format_i18n($autoload_count)); ?></strong>
+        </div>
+        <div class="wpopt-db-options-card" data-stat="total-count">
+            <span><?php _e('Total Options', 'wpopt'); ?></span>
+            <strong><?php echo esc_html(number_format_i18n($total_count)); ?></strong>
+        </div>
+        <div class="wpopt-db-options-card" data-stat="total-size">
+            <span><?php _e('Total Options Size', 'wpopt'); ?></span>
+            <strong><?php echo esc_html(size_format($total_size, 2)); ?></strong>
+        </div>
+        <?php
         return ob_get_clean();
     }
 

@@ -18,6 +18,22 @@ class Mod_WP_Updates extends Module
 
     protected string $context = 'wpopt';
 
+    public function cleanup(array $settings = array(), array $all_settings = array()): bool
+    {
+        $this->restore_scheduled_hook('wp_version_check');
+        $this->restore_scheduled_hook('wp_update_plugins');
+        $this->restore_scheduled_hook('wp_update_themes');
+
+        return true;
+    }
+
+    public function activate(array $settings = array(), array $all_settings = array()): bool
+    {
+        $this->disable_updates();
+
+        return true;
+    }
+
     public function restricted_access($context = ''): bool
     {
         if ($context === 'settings')
@@ -126,6 +142,13 @@ class Mod_WP_Updates extends Module
     {
         if (wp_next_scheduled($hook)) {
             wp_clear_scheduled_hook($hook);
+        }
+    }
+
+    private function restore_scheduled_hook(string $hook): void
+    {
+        if (!wp_next_scheduled($hook)) {
+            wp_schedule_event(time(), 'twicedaily', $hook);
         }
     }
 

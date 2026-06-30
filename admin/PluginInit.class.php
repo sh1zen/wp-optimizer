@@ -16,6 +16,8 @@ use WPS\core\UtilEnv;
  */
 class PluginInit
 {
+    private const WELCOME_SEEN_OPTION = 'wpopt_welcome_seen';
+
     private static ?PluginInit $_instance;
 
     /**
@@ -49,6 +51,9 @@ class PluginInit
         // Plugin Activation/Deactivation.
         register_activation_hook(WPOPT_FILE, array($this, 'plugin_activation'));
         register_deactivation_hook(WPOPT_FILE, array($this, 'plugin_deactivation'));
+
+        add_action('wp_ajax_wpopt_page_test_prepare', array($this, 'ajax_prepare_page_test'));
+        add_action('wp_ajax_wpopt_page_test_diagnostics', array($this, 'ajax_page_test_diagnostics'));
 
         add_filter("plugin_action_links_$this->plugin_basename", array($this, 'extra_plugin_link'), 10, 2);
         add_filter('plugin_row_meta', array($this, 'donate_link'), 10, 4);
@@ -94,6 +99,23 @@ class PluginInit
     private function setup_modules_for_current_request(): void
     {
         $module_handler = wps('wpopt')->moduleHandler;
+        $page_test_mode = self::get_page_test_request_mode();
+
+        if ($page_test_mode !== '') {
+            self::register_page_test_runtime_headers($page_test_mode);
+
+            if ($page_test_mode === 'warmup') {
+                self::register_page_test_warmup_diagnostics(self::get_page_test_run_id());
+            }
+
+            if ($page_test_mode === 'disabled') {
+                add_action('send_headers', static function (): void {
+                    header('X-WP-Optimizer-Test: disabled-modules');
+                }, 0);
+
+                return;
+            }
+        }
 
         /**
          * Keep Ajax requests fast:
@@ -141,6 +163,510 @@ class PluginInit
         $module_handler->setup_modules('autoload');
     }
 
+    public function ajax_prepare_page_test(): void
+    {
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(array(
+                'message' => __('You are not allowed to run this test.', 'wpopt'),
+            ), 403);
+        }
+
+        check_ajax_referer('wpopt-page-test', 'nonce');
+
+        $raw_url = isset($_POST['url']) ? (string)wp_unslash($_POST['url']) : '';
+        $url = $this->normalize_page_test_url($raw_url);
+
+        if (!$url) {
+            wp_send_json_error(array(
+                'message' => __('Enter a valid URL from this WordPress site.', 'wpopt'),
+            ), 400);
+        }
+
+        $expires = time() + 5 * MINUTE_IN_SECONDS;
+        $run_id = wp_generate_uuid4();
+
+        wp_send_json_success(array(
+            'url'          => $url,
+            'disabled_url' => self::build_page_test_url($url, 'disabled', $expires, $run_id),
+            'warmup_url'   => self::build_page_test_url($url, 'warmup', $expires, $run_id),
+            'active_url'   => self::build_page_test_url($url, 'active', $expires, $run_id),
+            'run_id'       => $run_id,
+            'expires'      => $expires,
+        ));
+    }
+
+    public function ajax_page_test_diagnostics(): void
+    {
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(array(
+                'message' => __('You are not allowed to read this test report.', 'wpopt'),
+            ), 403);
+        }
+
+        check_ajax_referer('wpopt-page-test', 'nonce');
+
+        $run_id = isset($_POST['run_id']) ? sanitize_text_field(wp_unslash($_POST['run_id'])) : '';
+
+        if (!self::is_valid_page_test_run_id($run_id)) {
+            wp_send_json_error(array(
+                'message' => __('Invalid page test report id.', 'wpopt'),
+            ), 400);
+        }
+
+        $diagnostics = get_transient(self::page_test_diagnostics_key($run_id));
+
+        if (!is_array($diagnostics)) {
+            wp_send_json_success(array(
+                'ready' => false,
+            ));
+        }
+
+        wp_send_json_success(array(
+            'ready'       => true,
+            'diagnostics' => $diagnostics,
+        ));
+    }
+
+    private static function build_page_test_url(string $url, string $mode, int $expires, string $run_id): string
+    {
+        $test_url = add_query_arg(array(
+            'wpopt_page_test'         => $mode,
+            'wpopt_page_test_expires' => $expires,
+            'wpopt_page_test_run'     => $run_id,
+        ), $url);
+        $signature = self::page_test_signature(self::page_test_signature_subject($test_url), $expires);
+
+        return esc_url_raw(add_query_arg('wpopt_page_test_signature', $signature, $test_url));
+    }
+
+    private function normalize_page_test_url(string $url): string
+    {
+        $url = trim($url);
+
+        if ($url === '') {
+            return '';
+        }
+
+        if (strpos($url, '//') === 0) {
+            $url = (is_ssl() ? 'https:' : 'http:') . $url;
+        }
+        elseif (!preg_match('#^https?://#i', $url)) {
+            $url = home_url('/' . ltrim($url, '/'));
+        }
+
+        $parts = wp_parse_url($url);
+
+        if (!is_array($parts) || empty($parts['host'])) {
+            return '';
+        }
+
+        $scheme = strtolower((string)($parts['scheme'] ?? ''));
+
+        if (!in_array($scheme, array('http', 'https'), true)) {
+            return '';
+        }
+
+        $allowed_hosts = array_filter(array_map('strtolower', array(
+            (string)wp_parse_url(home_url(), PHP_URL_HOST),
+            (string)wp_parse_url(site_url(), PHP_URL_HOST),
+            isset($_SERVER['HTTP_HOST']) ? preg_replace('/:\d+$/', '', strtolower((string)wp_unslash($_SERVER['HTTP_HOST']))) : '',
+        )));
+        $allowed_hosts = array_values(array_unique($allowed_hosts));
+
+        if (!in_array(strtolower((string)$parts['host']), $allowed_hosts, true)) {
+            return '';
+        }
+
+        $port = isset($parts['port']) ? ':' . absint($parts['port']) : '';
+        $path = isset($parts['path']) && $parts['path'] !== '' ? $parts['path'] : '/';
+        $query = isset($parts['query']) && $parts['query'] !== '' ? '?' . $parts['query'] : '';
+
+        return esc_url_raw($scheme . '://' . $parts['host'] . $port . $path . $query);
+    }
+
+    private static function get_page_test_request_mode(): string
+    {
+        $mode = isset($_GET['wpopt_page_test']) ? sanitize_key((string)wp_unslash($_GET['wpopt_page_test'])) : '';
+
+        if (!in_array($mode, array('disabled', 'warmup', 'active'), true)) {
+            return '';
+        }
+
+        $expires = isset($_GET['wpopt_page_test_expires']) ? absint($_GET['wpopt_page_test_expires']) : 0;
+        $signature = isset($_GET['wpopt_page_test_signature']) ? sanitize_text_field(wp_unslash($_GET['wpopt_page_test_signature'])) : '';
+
+        if ($expires < time() || $signature === '') {
+            return '';
+        }
+
+        $subject = self::page_test_signature_subject(self::current_page_test_url());
+        $expected = self::page_test_signature($subject, $expires);
+
+        return hash_equals($expected, $signature) ? $mode : '';
+    }
+
+    private static function get_page_test_run_id(): string
+    {
+        $run_id = isset($_GET['wpopt_page_test_run']) ? sanitize_text_field(wp_unslash($_GET['wpopt_page_test_run'])) : '';
+
+        return self::is_valid_page_test_run_id($run_id) ? $run_id : '';
+    }
+
+    private static function is_valid_page_test_run_id(string $run_id): bool
+    {
+        return (bool)preg_match('/^[a-f0-9-]{32,40}$/i', $run_id);
+    }
+
+    private static function page_test_diagnostics_key(string $run_id): string
+    {
+        return 'wpopt_page_test_diag_' . md5($run_id);
+    }
+
+    private static function register_page_test_runtime_headers(string $mode): void
+    {
+        if (!function_exists('header_register_callback')) {
+            return;
+        }
+
+        header_register_callback(static function () use ($mode): void {
+            if (headers_sent()) {
+                return;
+            }
+
+            header('X-WP-Optimizer-Test-Mode: ' . $mode);
+            header('X-WP-Optimizer-Memory-Usage: ' . memory_get_usage(true));
+            header('X-WP-Optimizer-Memory-Peak: ' . memory_get_peak_usage(true));
+        });
+    }
+
+    private static function register_page_test_warmup_diagnostics(string $run_id): void
+    {
+        if ($run_id === '') {
+            return;
+        }
+
+        global $wpdb;
+
+        if (isset($wpdb) && is_object($wpdb) && property_exists($wpdb, 'save_queries')) {
+            $wpdb->save_queries = true;
+        }
+
+        $hook_samples = array();
+        $hook_starts = array();
+        $hooks = array(
+            'plugins_loaded',
+            'setup_theme',
+            'after_setup_theme',
+            'init',
+            'wp_loaded',
+            'parse_request',
+            'send_headers',
+            'parse_query',
+            'pre_get_posts',
+            'wp',
+            'template_redirect',
+            'wp_head',
+            'loop_start',
+            'the_post',
+            'loop_end',
+            'wp_footer',
+        );
+
+        foreach ($hooks as $hook_name) {
+            add_action($hook_name, static function () use (&$hook_starts, $hook_name): void {
+                $hook_starts[$hook_name] = array(
+                    'time'   => microtime(true),
+                    'memory' => memory_get_usage(true),
+                );
+            }, -999999, 0);
+
+            add_action($hook_name, static function () use (&$hook_starts, &$hook_samples, $hook_name): void {
+                if (empty($hook_starts[$hook_name])) {
+                    return;
+                }
+
+                $started = $hook_starts[$hook_name];
+                $duration_ms = max(0, round((microtime(true) - (float)$started['time']) * 1000, 3));
+                $memory_delta = memory_get_usage(true) - (int)$started['memory'];
+
+                $hook_samples[] = array(
+                    'hook'           => $hook_name,
+                    'duration_ms'    => $duration_ms,
+                    'memory_delta'   => $memory_delta,
+                    'callback_count' => self::count_hook_callbacks($hook_name),
+                    'callbacks'      => self::sample_hook_callbacks($hook_name, 5),
+                );
+            }, 999999, 0);
+        }
+
+        add_action('shutdown', static function () use ($run_id, &$hook_samples): void {
+            self::store_page_test_diagnostics($run_id, $hook_samples);
+        }, PHP_INT_MAX, 0);
+    }
+
+    private static function store_page_test_diagnostics(string $run_id, array $hook_samples): void
+    {
+        global $wpdb;
+
+        $queries = isset($wpdb->queries) && is_array($wpdb->queries) ? $wpdb->queries : array();
+        $slow_queries = self::extract_page_test_slow_queries($queries);
+        $duplicate_queries = self::extract_page_test_duplicate_queries($queries);
+        $hook_samples = self::normalize_page_test_hook_samples($hook_samples);
+
+        set_transient(self::page_test_diagnostics_key($run_id), array(
+            'created_at'        => current_time('mysql'),
+            'total_queries'     => count($queries),
+            'slow_queries'      => $slow_queries,
+            'duplicate_queries' => $duplicate_queries,
+            'hooks'             => $hook_samples,
+            'suggestions'       => self::build_page_test_suggestions($slow_queries, $duplicate_queries, $hook_samples, count($queries)),
+            'runtime'           => array(
+                'memory_peak' => memory_get_peak_usage(true),
+                'memory_used' => memory_get_usage(true),
+            ),
+        ), 10 * MINUTE_IN_SECONDS);
+    }
+
+    private static function extract_page_test_slow_queries(array $queries): array
+    {
+        $rows = array();
+
+        foreach ($queries as $query) {
+            if (!is_array($query) || !isset($query[0], $query[1])) {
+                continue;
+            }
+
+            $rows[] = array(
+                'sql'       => self::trim_page_test_text((string)$query[0], 260),
+                'time_ms'   => round((float)$query[1] * 1000, 3),
+                'caller'    => self::trim_page_test_text((string)($query[2] ?? ''), 180),
+            );
+        }
+
+        usort($rows, static function (array $a, array $b): int {
+            return $b['time_ms'] <=> $a['time_ms'];
+        });
+
+        return array_slice($rows, 0, 8);
+    }
+
+    private static function extract_page_test_duplicate_queries(array $queries): array
+    {
+        $groups = array();
+
+        foreach ($queries as $query) {
+            if (!is_array($query) || !isset($query[0], $query[1])) {
+                continue;
+            }
+
+            $signature = self::normalize_page_test_query_signature((string)$query[0]);
+
+            if (!isset($groups[$signature])) {
+                $groups[$signature] = array(
+                    'query'    => self::trim_page_test_text((string)$query[0], 220),
+                    'count'    => 0,
+                    'time_ms'  => 0,
+                );
+            }
+
+            $groups[$signature]['count']++;
+            $groups[$signature]['time_ms'] += (float)$query[1] * 1000;
+        }
+
+        $groups = array_filter($groups, static function (array $group): bool {
+            return $group['count'] > 1;
+        });
+
+        usort($groups, static function (array $a, array $b): int {
+            if ($a['count'] === $b['count']) {
+                return $b['time_ms'] <=> $a['time_ms'];
+            }
+
+            return $b['count'] <=> $a['count'];
+        });
+
+        foreach ($groups as &$group) {
+            $group['time_ms'] = round((float)$group['time_ms'], 3);
+        }
+        unset($group);
+
+        return array_slice(array_values($groups), 0, 6);
+    }
+
+    private static function normalize_page_test_hook_samples(array $hook_samples): array
+    {
+        usort($hook_samples, static function (array $a, array $b): int {
+            return $b['duration_ms'] <=> $a['duration_ms'];
+        });
+
+        return array_slice($hook_samples, 0, 10);
+    }
+
+    private static function build_page_test_suggestions(array $slow_queries, array $duplicate_queries, array $hooks, int $total_queries): array
+    {
+        $suggestions = array();
+
+        if (!empty($slow_queries)) {
+            $suggestions[] = array(
+                'type'  => 'query',
+                'title' => __('Review slow database queries', 'wpopt'),
+                'text'  => sprintf(__('The warmup request recorded %s slow query samples. Check the callers and add indexes, caching, or reduce repeated lookups where possible.', 'wpopt'), number_format_i18n(count($slow_queries))),
+            );
+        }
+
+        if (!empty($duplicate_queries)) {
+            $suggestions[] = array(
+                'type'  => 'duplicates',
+                'title' => __('Reduce repeated queries', 'wpopt'),
+                'text'  => __('Repeated SQL signatures were detected during warmup. Object/query caching or moving repeated lookups outside loops can reduce this cost.', 'wpopt'),
+            );
+        }
+
+        if ($total_queries > 100) {
+            $suggestions[] = array(
+                'type'  => 'queries',
+                'title' => __('High query count', 'wpopt'),
+                'text'  => sprintf(__('The warmup request executed %s queries. Review autoloaded options, widgets, page builders and template loops.', 'wpopt'), number_format_i18n($total_queries)),
+            );
+        }
+
+        if (!empty($hooks)) {
+            $suggestions[] = array(
+                'type'  => 'callbacks',
+                'title' => __('Inspect heavy hooks and callbacks', 'wpopt'),
+                'text'  => __('The hooks below consumed the most warmup time. Disable unused modules/plugins or move expensive callbacks behind stricter conditions.', 'wpopt'),
+            );
+        }
+
+        return array_slice($suggestions, 0, 6);
+    }
+
+    private static function normalize_page_test_query_signature(string $query): string
+    {
+        $query = preg_replace("/'[^']*'/", '?', $query);
+        $query = preg_replace('/"[^"]*"/', '?', (string)$query);
+        $query = preg_replace('/\b\d+\b/', '?', (string)$query);
+        $query = preg_replace('/\s+/', ' ', (string)$query);
+
+        return strtolower(trim((string)$query));
+    }
+
+    private static function trim_page_test_text(string $text, int $limit): string
+    {
+        $text = trim(preg_replace('/\s+/', ' ', $text));
+
+        if (strlen($text) <= $limit) {
+            return $text;
+        }
+
+        return substr($text, 0, max(0, $limit - 3)) . '...';
+    }
+
+    private static function count_hook_callbacks(string $hook_name): int
+    {
+        global $wp_filter;
+
+        if (empty($wp_filter[$hook_name]) || !is_object($wp_filter[$hook_name]) || !property_exists($wp_filter[$hook_name], 'callbacks')) {
+            return 0;
+        }
+
+        $count = 0;
+
+        foreach ((array)$wp_filter[$hook_name]->callbacks as $priority => $callbacks) {
+            if (in_array((int)$priority, array(-999999, 999999), true)) {
+                continue;
+            }
+
+            $count += is_array($callbacks) ? count($callbacks) : 0;
+        }
+
+        return $count;
+    }
+
+    private static function sample_hook_callbacks(string $hook_name, int $limit): array
+    {
+        global $wp_filter;
+
+        if (empty($wp_filter[$hook_name]) || !is_object($wp_filter[$hook_name]) || !property_exists($wp_filter[$hook_name], 'callbacks')) {
+            return array();
+        }
+
+        $samples = array();
+
+        foreach ((array)$wp_filter[$hook_name]->callbacks as $priority => $callbacks) {
+            if (in_array((int)$priority, array(-999999, 999999), true)) {
+                continue;
+            }
+
+            foreach ((array)$callbacks as $callback) {
+                $samples[] = 'p' . (string)$priority . ': ' . self::page_test_callback_label($callback['function'] ?? null);
+
+                if (count($samples) >= $limit) {
+                    return $samples;
+                }
+            }
+        }
+
+        return $samples;
+    }
+
+    private static function page_test_callback_label($callback): string
+    {
+        if (is_string($callback)) {
+            return $callback;
+        }
+
+        if (is_array($callback)) {
+            $owner = $callback[0] ?? '';
+            $method = (string)($callback[1] ?? '');
+
+            if (is_object($owner)) {
+                return get_class($owner) . '::' . $method;
+            }
+
+            return (string)$owner . '::' . $method;
+        }
+
+        if ($callback instanceof \Closure) {
+            return 'Closure';
+        }
+
+        return 'Callback';
+    }
+
+    private static function current_page_test_url(): string
+    {
+        $host = isset($_SERVER['HTTP_HOST']) ? (string)wp_unslash($_SERVER['HTTP_HOST']) : (string)wp_parse_url(home_url(), PHP_URL_HOST);
+        $request_uri = isset($_SERVER['REQUEST_URI']) ? (string)wp_unslash($_SERVER['REQUEST_URI']) : '/';
+
+        return (is_ssl() ? 'https://' : 'http://') . $host . $request_uri;
+    }
+
+    private static function page_test_signature_subject(string $url): string
+    {
+        $unsigned_url = remove_query_arg('wpopt_page_test_signature', $url);
+        $parts = wp_parse_url($unsigned_url);
+
+        if (!is_array($parts)) {
+            return '/';
+        }
+
+        $path = isset($parts['path']) && $parts['path'] !== '' ? $parts['path'] : '/';
+        $query_args = array();
+
+        if (!empty($parts['query'])) {
+            parse_str((string)$parts['query'], $query_args);
+            ksort($query_args);
+        }
+
+        return $path . (empty($query_args) ? '' : '?' . http_build_query($query_args, '', '&', PHP_QUERY_RFC3986));
+    }
+
+    private static function page_test_signature(string $subject, int $expires): string
+    {
+        return hash_hmac('sha256', $expires . '|' . $subject, wp_salt('auth'));
+    }
+
     /**
      * What to do when the plugin on plugin activation
      *
@@ -151,9 +677,14 @@ class PluginInit
     {
         $had_module_settings = $this->has_module_settings();
 
+        if (!get_option('wpopt_activated_at', false)) {
+            add_option('wpopt_activated_at', time(), '', 'no');
+        }
+
         wps('wpopt')->settings->activate();
 
         $this->set_initial_module_defaults($had_module_settings);
+        wps('wpopt')->moduleHandler->activate_modules();
 
         wpopt_cleanup_media_cron_hooks();
 
@@ -164,7 +695,9 @@ class PluginInit
          */
         do_action('wpopt-activate');
 
-        wps('wpopt')->settings->update('do_welcome', time(), true);
+        if (!get_option(self::WELCOME_SEEN_OPTION, false)) {
+            wps('wpopt')->settings->update('do_welcome', time(), true);
+        }
     }
 
     private function has_module_settings(): bool
@@ -226,6 +759,8 @@ class PluginInit
 
         wpopt_cleanup_media_cron_hooks();
 
+        wps('wpopt')->moduleHandler->cleanup_modules(null, false);
+
         wps('wpopt')->cron->deactivate();
 
         /**
@@ -246,7 +781,7 @@ class PluginInit
     public function donate_link($plugin_meta, $plugin_file, $plugin_data, $status): array
     {
         if ($plugin_file == $this->plugin_basename) {
-            $plugin_meta[] = '&hearts; <a target="_blank" href="https://www.paypal.com/donate/?business=dev.sh1zen%40outlook.it&item_name=Thank+you+in+advanced+for+the+kind+donations.+You+will+sustain+me+developing+WP-Optimizer.&currency_code=EUR">' . __('Buy me a beer', 'wpopt') . ' :o)</a>';
+            $plugin_meta[] = '&hearts; <a target="_blank" href="https://www.paypal.com/donate/?hosted_button_id=8G8VR4APG9JRU">' . __('Buy me a beer', 'wpopt') . ' :o)</a>';
         }
 
         return $plugin_meta;
@@ -273,9 +808,23 @@ class PluginInit
 
     private function do_welcome()
     {
-        if(wps('wpopt')->settings->get('do_welcome', false)) {
-            wps('wpopt')->settings->update('do_welcome', false, true);
-            Rewriter::getInstance()->redirect(admin_url('admin.php?page=wp-optimizer&wpsargs=do_welcome:true'));
+        if (wp_doing_ajax() || wp_doing_cron() || !current_user_can('customize')) {
+            return;
         }
+
+        $should_show_welcome = wps('wpopt')->settings->get('do_welcome', false);
+
+        if (!$should_show_welcome) {
+            return;
+        }
+
+        if (get_option(self::WELCOME_SEEN_OPTION, false)) {
+            wps('wpopt')->settings->update('do_welcome', false, true);
+            return;
+        }
+
+        wps('wpopt')->settings->update('do_welcome', false, true);
+        update_option(self::WELCOME_SEEN_OPTION, time(), 'no');
+        Rewriter::getInstance()->redirect(admin_url('admin.php?page=wp-optimizer&wps-page=welcome&do_welcome=true'));
     }
 }

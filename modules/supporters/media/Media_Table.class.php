@@ -18,7 +18,7 @@ use WPS\core\UtilEnv;
  *
  * @see \WP_List_Table
  */
-class Media_Table extends \WP_List_Table
+class Media_Table extends \WPS\core\List_Table
 {
     private int $total_count = 0;
 

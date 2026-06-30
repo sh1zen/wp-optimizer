@@ -28,7 +28,8 @@ class Cache_Dispatcher
 
         $this->lifetime = self::parse_lifetime($lifetime);
 
-        $this->is_cacheable = !(is_admin() or wps_core()->doing_jobs());
+        $disable_admin_cache = $this->options['disable_admin_cache'] ?? true;
+        $this->is_cacheable = !((bool)$disable_admin_cache && is_admin()) && !wps_core()->doing_jobs();
 
         $this->reset();
 
@@ -80,6 +81,11 @@ class Cache_Dispatcher
         }
     }
 
+    public static function get_storage_cache_group(): string
+    {
+        return static::get_cache_group();
+    }
+
     protected static function get_cache_group(): string
     {
         return "cache/" . wps('wpopt')->moduleHandler->module_slug(get_called_class(), true);
@@ -92,6 +98,28 @@ class Cache_Dispatcher
         }
 
         return $this->cache_key;
+    }
+
+    protected function request_scoped_cache_key(string $key): string
+    {
+        if ($key === '') {
+            return '';
+        }
+
+        $fragment = $this->get_request_cache_fragment();
+
+        return $fragment === '' ? $key : Cache::generate_key($key . '|' . $fragment);
+    }
+
+    private function get_request_cache_fragment(): string
+    {
+        if (empty($this->options['cache_query_args'])) {
+            return '';
+        }
+
+        $query_string = CacheRequestPolicy::normalized_query_string();
+
+        return $query_string === '' ? '' : 'query:' . $query_string;
     }
 
     /**

@@ -156,11 +156,42 @@ class Module
 
     public function admin_notices(): void
     {
+        if (empty($this->notices)) {
+            return;
+        }
+
+        $rendered_notices = array();
+
         foreach ($this->notices as $notice) {
-            echo "<div class='notice notice-{$notice['status']} is-dismissible'>";
+            $status = sanitize_html_class((string)($notice['status'] ?? 'info'));
+            $message = (string)($notice['message'] ?? '');
+            $notice_key = "{$status}:" . md5($message);
+
+            if (isset($GLOBALS['wps_rendered_admin_notice_keys'][$notice_key])) {
+                continue;
+            }
+
+            $GLOBALS['wps_rendered_admin_notice_keys'][$notice_key] = true;
+
+            $rendered_notices[] = array(
+                'status'  => $status,
+                'message' => $message,
+            );
+        }
+
+        if (empty($rendered_notices)) {
+            return;
+        }
+
+        echo "<div class='wps-admin-notice-host' aria-live='polite' aria-atomic='true'>";
+
+        foreach ($rendered_notices as $notice) {
+            echo "<div class='notice notice-{$notice['status']} is-dismissible wps-admin-notice'>";
             echo "<p>" . esc_html($notice['message']) . "</p>";
             echo "</div>";
         }
+
+        echo "</div>";
     }
 
     public function cron_validate_settings($input, $filtering = false): array
@@ -269,6 +300,112 @@ class Module
                 'body'  => sprintf('Wrong ajax request for %s', $this->slug),
                 'title' => 'Request error'
         ], 'error');
+    }
+
+    protected function handle_settings_autosave_ajax(string $serialized_form, array $messages = array(), array $nav_labels = array(), array $tool_icons = array()): void
+    {
+        $messages = array_merge(array(
+            'invalid_payload' => __('Cannot detect which module must be saved.', $this->context),
+            'invalid_module'  => __('Invalid module settings payload.', $this->context),
+            'save_failed'     => __('Autosave failed while updating settings.', $this->context),
+            'saved'           => __('Settings autosaved.', $this->context),
+        ), $messages);
+
+        parse_str($serialized_form, $form_data);
+
+        $context = wps($this->context)->settings->get_context();
+        $payload = $form_data[$context] ?? array();
+        $module_slug = is_array($payload) ? sanitize_key((string)($payload['change'] ?? '')) : '';
+        $requested_module = sanitize_key(wp_unslash($_POST['module'] ?? $_REQUEST['module'] ?? ''));
+
+        if (!$module_slug && $requested_module) {
+            $module_slug = $requested_module;
+        }
+
+        if (!$module_slug && !empty($form_data['option_panel'])) {
+            $module_slug = sanitize_key(preg_replace('#^settings-#', '', (string)$form_data['option_panel']));
+        }
+
+        if (!$module_slug && is_array($payload) && $this->looks_like_modules_handler_payload($payload)) {
+            $module_slug = 'modules_handler';
+        }
+
+        if (!$module_slug || !is_array($payload)) {
+            Ajax::response(array(
+                'text' => $messages['invalid_payload'],
+            ), 'error');
+        }
+
+        $module = wps($this->context)->moduleHandler->get_module_instance($module_slug);
+
+        if (is_null($module) || $module->restricted_access('settings')) {
+            Ajax::response(array(
+                'text' => $messages['invalid_module'],
+            ), 'error');
+        }
+
+        $valid = $module->validate_settings($payload);
+        $current_settings = wps($this->context)->settings->get('', array());
+        $settings = $current_settings;
+        $settings[$module->slug] = $valid;
+
+        $settings_changed = maybe_serialize($settings) !== maybe_serialize($current_settings);
+        $saved = true;
+
+        if ($settings_changed) {
+            if ($module->slug === 'modules_handler') {
+                wps($this->context)->moduleHandler->apply_module_status_changes($valid, $settings);
+            }
+
+            $saved = wps($this->context)->settings->reset($settings);
+        }
+
+        if (!$saved) {
+            Ajax::response(array(
+                'text' => $messages['save_failed'],
+            ), 'error');
+        }
+
+        $response = array(
+            'text'   => $messages['saved'],
+            'module' => $module->slug,
+        );
+
+        if ($module->slug === 'modules_handler') {
+            $response['nav_update'] = wps($this->context)->settings->build_admin_app_nav_update($valid, $nav_labels, $tool_icons);
+        }
+
+        Ajax::response($response, 'success');
+    }
+
+    protected function handle_module_reset_ajax(array $args, array $excluded_modules = array(), array $messages = array()): void
+    {
+        $messages = array_merge(array(
+            'invalid' => __('Invalid module reset request.', $this->context),
+            'failed'  => __('Factory reset failed for %s.', $this->context),
+            'success' => __('%s has been reset to factory settings.', $this->context),
+        ), $messages);
+
+        $options = is_array($args['options'] ?? null) ? $args['options'] : array();
+        $module_slug = sanitize_key((string)($options['module'] ?? ''));
+        $result = wps($this->context)->moduleHandler->reset_module_to_factory($module_slug, $excluded_modules);
+
+        if (empty($result['module'])) {
+            Ajax::response(array(
+                'text' => $messages['invalid'],
+            ), 'error');
+        }
+
+        if (empty($result['success'])) {
+            Ajax::response(array(
+                'text' => sprintf($messages['failed'], $result['name']),
+            ), 'error');
+        }
+
+        Ajax::response(array(
+            'text'   => sprintf($messages['success'], $result['name']),
+            'module' => $result['module'],
+        ), 'success');
     }
 
     public function render_settings($filter = ''): string
@@ -427,9 +564,26 @@ class Module
 
     public function filter_settings(): void
     {
-        // use the new settings available after import
-        $this->settings = $this->validate_settings(wps($this->context)->settings->get($this->slug), true);
+        // use the new settings available after import/reset before resolving field defaults
+        $settings = wps($this->context)->settings->get($this->slug);
+        $this->settings = is_array($settings) ? $settings : array();
+        $this->settings = $this->validate_settings($this->settings, true);
         wps($this->context)->settings->update($this->slug, $this->settings, true);
+    }
+
+    public function cleanup(array $settings = array(), array $all_settings = array()): bool
+    {
+        return true;
+    }
+
+    public function reset(array $settings = array(), array $all_settings = array()): bool
+    {
+        return $this->cleanup($settings, $all_settings);
+    }
+
+    public function activate(array $settings = array(), array $all_settings = array()): bool
+    {
+        return true;
     }
 
     /**
@@ -509,6 +663,29 @@ class Module
         $args['default_value'] = $this->option($id, $args['default_value'] ?? '');
 
         return Graphic::newField($name, $id, $type, $args);
+    }
+
+    protected function module_reset_button(string $slug, string $name, string $label = ''): string
+    {
+        $label = $label ?: sprintf(__('Reset %s to factory settings', $this->context), $name);
+
+        return sprintf(
+            '<button type="button" class="wps-module-reset-button" data-wps-module-reset="%1$s" data-module-name="%2$s" aria-label="%3$s" title="%3$s"><span class="dashicons dashicons-image-rotate" aria-hidden="true"></span><span class="screen-reader-text">%3$s</span></button>',
+            esc_attr($slug),
+            esc_attr($name),
+            esc_attr($label)
+        );
+    }
+
+    private function looks_like_modules_handler_payload(array $payload): bool
+    {
+        foreach (wps($this->context)->moduleHandler->get_modules('all', false) as $module) {
+            if (array_key_exists($module['slug'], $payload)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     public function option($path_name = '', $default = false)

@@ -224,11 +224,28 @@ class ModuleHandler
      */
     public function module_is_active($module_slug): bool
     {
-        if (isset($this->module_settings[$module_slug]) and !$this->module_settings[$module_slug]) {
+        return $this->module_is_active_in_settings($module_slug, $this->module_settings);
+    }
+
+    public function module_is_active_in_settings($module_slug, array $module_settings): bool
+    {
+        $module_slug = self::module_slug($module_slug, true);
+
+        if (isset($module_settings[$module_slug]) and !$module_settings[$module_slug]) {
             return false;
         }
 
         return true;
+    }
+
+    public function refresh_settings(?array $settings = null): void
+    {
+        $this->module_settings = is_array($settings)
+            ? ($settings['modules_handler'] ?? [])
+            : wps($this->context)->settings->get('modules_handler', []);
+
+        $this->filtered_modules_cache = [];
+        $this->setup_modules_cache = [];
     }
 
     /**
@@ -304,6 +321,146 @@ class ModuleHandler
         }
 
         return true;
+    }
+
+    public function cleanup_modules(?array $settings = null, bool $only_active = true): bool
+    {
+        return $this->run_modules_lifecycle('cleanup', $settings, $only_active);
+    }
+
+    public function reset_modules(?array $settings = null, bool $only_active = true): bool
+    {
+        return $this->run_modules_lifecycle('reset', $settings, $only_active);
+    }
+
+    public function get_resettable_module(string $module_slug, array $excluded_modules = array()): ?array
+    {
+        $module_slug = self::module_slug($module_slug, true);
+        $excluded_modules = array_unique(array_merge(array('modules_handler', 'settings'), $excluded_modules));
+
+        if (!$module_slug || in_array($module_slug, $excluded_modules, true)) {
+            return null;
+        }
+
+        foreach ($this->get_modules('all', false) as $module) {
+            if ((string)($module['slug'] ?? '') !== $module_slug) {
+                continue;
+            }
+
+            $object = $this->get_module_instance($module_slug);
+
+            if (is_null($object)) {
+                return null;
+            }
+
+            return array(
+                'object' => $object,
+                'name'   => (string)($module['name'] ?? $module_slug),
+                'slug'   => $module_slug,
+            );
+        }
+
+        return null;
+    }
+
+    public function reset_module_to_factory(string $module_slug, array $excluded_modules = array()): array
+    {
+        $module_data = $this->get_resettable_module($module_slug, $excluded_modules);
+
+        if (!$module_data) {
+            return array(
+                'success' => false,
+                'reason'  => 'invalid_module',
+            );
+        }
+
+        $module = $module_data['object'];
+        $current_settings = wps($this->context)->settings->get('', array());
+        $settings = $current_settings;
+        $reset = $this->run_module_lifecycle($module->slug, 'reset', $settings);
+
+        unset($settings[$module->slug]);
+
+        $settings_changed = maybe_serialize($settings) !== maybe_serialize($current_settings);
+        $saved = !$settings_changed || wps($this->context)->settings->reset($settings);
+        $cleanup = $this->run_module_lifecycle($module->slug, 'cleanup', $settings);
+
+        return array(
+            'success' => $reset && $saved && $cleanup,
+            'module'  => $module->slug,
+            'name'    => $module_data['name'],
+            'reset'   => $reset,
+            'saved'   => $saved,
+            'cleanup' => $cleanup,
+        );
+    }
+
+    public function activate_modules(?array $settings = null, bool $only_active = true): bool
+    {
+        return $this->run_modules_lifecycle('activate', $settings, $only_active);
+    }
+
+    public function activate_modules_for_settings(array $settings): bool
+    {
+        $previous_module_settings = $this->module_settings;
+        $this->refresh_settings($settings);
+
+        $response = $this->activate_modules($settings, true);
+
+        $this->module_settings = $previous_module_settings;
+        $this->filtered_modules_cache = [];
+        $this->setup_modules_cache = [];
+
+        return $response;
+    }
+
+    public function apply_module_status_changes(array $new_module_settings, ?array $settings = null): bool
+    {
+        $settings = is_array($settings) ? $settings : wps($this->context)->settings->get('', []);
+        $old_module_settings = is_array($this->module_settings) ? $this->module_settings : [];
+        $response = true;
+
+        foreach ($this->get_modules('all', false) as $module) {
+            $slug = $module['slug'];
+            $was_active = $this->module_is_active_in_settings($slug, $old_module_settings);
+            $is_active = $this->module_is_active_in_settings($slug, $new_module_settings);
+
+            if ($was_active && !$is_active) {
+                $response = $this->run_module_lifecycle($slug, 'cleanup', $settings) && $response;
+            }
+            elseif (!$was_active && $is_active) {
+                $response = $this->run_module_lifecycle($slug, 'activate', $settings) && $response;
+            }
+        }
+
+        return $response;
+    }
+
+    private function run_modules_lifecycle(string $method, ?array $settings = null, bool $only_active = true): bool
+    {
+        $settings = is_array($settings) ? $settings : wps($this->context)->settings->get('', []);
+        $response = true;
+
+        foreach ($this->get_modules('all', $only_active) as $module) {
+            $response = $this->run_module_lifecycle($module['slug'], $method, $settings) && $response;
+        }
+
+        return $response;
+    }
+
+    public function run_module_lifecycle(string $module, string $method, ?array $settings = null): bool
+    {
+        $settings = is_array($settings) ? $settings : wps($this->context)->settings->get('', []);
+        $module_object = $this->get_module_instance($module);
+
+        if (is_null($module_object) || !method_exists($module_object, $method)) {
+            return true;
+        }
+
+        $module_settings = $settings[$module_object->slug] ?? array();
+        $module_settings = is_array($module_settings) ? $module_settings : array();
+
+        return (bool)$module_object->{$method}($module_settings, $settings);
     }
 
     /**

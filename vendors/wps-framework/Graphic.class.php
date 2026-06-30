@@ -309,10 +309,13 @@ class Graphic
                         [
                             'class'        => self::parse_classes($args['classes']),
                             'autocomplete' => 'off',
-                            'type'         => 'time',
+                            'type'         => 'text',
+                            'inputmode'    => 'numeric',
+                            'pattern'      => '[0-9]{2}:[0-9]{2}',
+                            'maxlength'    => '5',
                             'name'         => $args['input_name'],
                             'id'           => $args['id'],
-                            'placeholder'  => $args['placeholder'],
+                            'placeholder'  => $args['placeholder'] ?: '00:00',
                             'spellcheck'   => 'false',
                             'value'        => esc_attr((string)$args['value']),
                         ],
@@ -406,6 +409,30 @@ class Graphic
                         $args['props']
                     ),
                     $args['value']
+                );
+                break;
+
+            case "conf":
+
+                $conf_value = is_array($args['value']) ? $args['value'] : array('href' => (string)$args['value']);
+                $conf_href = (string)($conf_value['href'] ?? '#');
+                $conf_text = (string)($conf_value['text'] ?? __('Configure'));
+
+                $args['classes'][] = 'button';
+                $args['classes'][] = 'button-secondary';
+                $args['classes'][] = 'wps-conf-button';
+
+                $o_inner .= self::buildField(
+                    'a',
+                    array_merge(
+                        [
+                            'class' => self::parse_classes($args['classes']),
+                            'href'  => esc_url($conf_href),
+                            'id'    => $args['id'],
+                        ],
+                        $args['props']
+                    ),
+                    $conf_text
                 );
                 break;
 
@@ -573,6 +600,10 @@ class Graphic
 
         if ($type === 'link') {
             return 'external';
+        }
+
+        if ($type === 'conf') {
+            return 'settings';
         }
 
         if ($type === 'dropdown') {
@@ -808,6 +839,7 @@ class Graphic
             'nav'         => [],
             'content'     => '',
             'brand_icon'  => 'zap',
+            'brand_logo'  => '',
             'help'        => '',
         ], $args);
 
@@ -817,15 +849,27 @@ class Graphic
         $context = sanitize_html_class((string)$args['context']);
         $breadcrumb = $args['breadcrumb'] ?: $title;
         $page_title = (string)($args['page_title'] ?: $breadcrumb);
+        $brand_logo = esc_url((string)$args['brand_logo']);
         ?>
         <section class="wps-app wps-admin-app <?php echo esc_attr($context ? "wps-app-$context" : ''); ?>">
             <aside class="wps-app-sidebar">
                 <header class="wps-app-brand">
-                    <span class="wps-app-logo"><?php echo self::icon((string)$args['brand_icon'], 'wps-app-logo-icon'); ?></span>
+                    <span class="wps-app-logo <?php echo $brand_logo !== '' ? 'has-image' : ''; ?>">
+                        <?php if ($brand_logo !== '') : ?>
+                            <img class="wps-app-logo-image" src="<?php echo $brand_logo; ?>" alt="" aria-hidden="true">
+                        <?php else : ?>
+                            <?php echo self::icon((string)$args['brand_icon'], 'wps-app-logo-icon'); ?>
+                        <?php endif; ?>
+                    </span>
                     <span>
                         <strong><?php echo $title; ?></strong>
                         <?php if ($version !== '') : ?><small><?php echo $version; ?></small><?php endif; ?>
                     </span>
+                    <button class="wps-app-menu-close" type="button" aria-expanded="true">
+                        <span class="screen-reader-text"><?php esc_html_e('Close menu', 'wps'); ?></span>
+                        <span aria-hidden="true"></span>
+                        <span aria-hidden="true"></span>
+                    </button>
                 </header>
                 <nav class="wps-app-nav" aria-label="<?php echo esc_attr($title); ?>">
                     <?php foreach ((array)$args['nav'] as $section) : ?>
@@ -861,6 +905,12 @@ class Graphic
                     <?php if (!empty($args['status'])) : ?>
                         <span class="wps-app-status <?php echo esc_attr(sanitize_html_class((string)$args['status_type'])); ?>"><?php echo esc_html((string)$args['status']); ?></span>
                     <?php endif; ?>
+                    <button class="wps-app-menu-toggle" type="button" aria-expanded="false">
+                        <span class="screen-reader-text"><?php esc_html_e('Open menu', 'wps'); ?></span>
+                        <span aria-hidden="true"></span>
+                        <span aria-hidden="true"></span>
+                        <span aria-hidden="true"></span>
+                    </button>
                 </header>
                 <section class="wps-app-tabsbar" data-wps-app-tabsbar hidden></section>
                 <section class="wps-app-content">

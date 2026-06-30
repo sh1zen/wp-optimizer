@@ -173,6 +173,11 @@ class Cache
         return $this->set_volatile($key, $value, $group, true);
     }
 
+    public function add($key, $value, $group = 'default', $expire = false): bool
+    {
+        return $this->set($key, $value, $group, false, $expire);
+    }
+
     /**
      * set new data in cache if expire = false use only volatile memory otherwise use persistent one if available
      */

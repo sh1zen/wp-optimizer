@@ -16,7 +16,15 @@ function wps_admin_enqueue_scripts(): void
     wp_register_script('vendor-wps-js', $script_asset['url'], ['jquery'], wps_core()->debug ? time() : ($script_asset['version'] ?: WPS_VERSION));
 
     wps_localize([
-        'text_close_warning' => 'Are you sure you want to leave?'
+        'text_close_warning' => 'Are you sure you want to leave?',
+        'popup_alertTitle'   => __('Notice'),
+        'popup_confirmTitle' => __('Confirm action'),
+        'popup_confirmLabel' => __('Confirm'),
+        'popup_cancelLabel'  => __('Cancel'),
+        'popup_closeLabel'   => __('Close'),
+        'wps_reset_module_confirm' => __('Reset %s to factory settings? Current module settings will be overwritten and the cleanup pipeline will run.'),
+        'wps_reset_module_success' => __('Module reset completed.'),
+        'wps_reset_module_failed'  => __('Module reset failed.'),
     ]);
 }
 

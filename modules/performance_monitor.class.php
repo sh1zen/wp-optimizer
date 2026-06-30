@@ -11,6 +11,7 @@ use DateTimeImmutable;
 use DateTimeZone;
 use WPS\core\CronActions;
 use WPS\core\Graphic;
+use WPS\core\List_Table;
 use WPS\core\RequestActions;
 use WPS\core\Rewriter;
 use WPS\core\UtilEnv;
@@ -77,6 +78,18 @@ class Mod_Performance_Monitor extends Module
     private ?string $request_uri_cache = null;
 
     private ?string $request_path_cache = null;
+
+    public function cleanup(array $settings = array(), array $all_settings = array()): bool
+    {
+        return wpopt_remove_cron_hooks(array('WPOPT-PerformanceMonitorCleanup'));
+    }
+
+    public function activate(array $settings = array(), array $all_settings = array()): bool
+    {
+        $this->schedule_history_cleanup();
+
+        return true;
+    }
 
     protected function init(): void
     {
@@ -317,9 +330,7 @@ class Mod_Performance_Monitor extends Module
 
     public function actions(): void
     {
-        CronActions::schedule('WPOPT-PerformanceMonitorCleanup', HOUR_IN_SECONDS, function () {
-            $this->cleanup_history();
-        }, '00:00');
+        $this->schedule_history_cleanup();
 
         if (!is_admin() || !current_user_can('manage_options')) {
             return;
@@ -350,6 +361,13 @@ class Mod_Performance_Monitor extends Module
                     break;
             }
         });
+    }
+
+    private function schedule_history_cleanup(): void
+    {
+        CronActions::schedule('WPOPT-PerformanceMonitorCleanup', HOUR_IN_SECONDS, function () {
+            $this->cleanup_history();
+        }, '00:00');
     }
 
     public function restricted_access($context = ''): bool
@@ -924,20 +942,7 @@ class Mod_Performance_Monitor extends Module
                 <?php if (empty($labels)): ?>
                     <?php echo $this->render_empty_state(__('No grouped request history available yet.', 'wpopt')); ?>
                 <?php else: ?>
-                    <table class="widefat wps">
-                        <thead><tr><th><?php _e('Type', 'wpopt'); ?></th><th><?php _e('Group', 'wpopt'); ?></th><th><?php _e('Hits', 'wpopt'); ?></th><th><?php _e('Average', 'wpopt'); ?></th><th><?php _e('Peak', 'wpopt'); ?></th></tr></thead>
-                        <tbody>
-                        <?php foreach ($labels as $index => $row): ?>
-                            <tr <?php echo $index % 2 ? "class='alternate'" : ''; ?>>
-                                <td><?php echo esc_html($this->humanize_type($row['request_type'])); ?></td>
-                                <td><code><?php echo esc_html($row['request_label']); ?></code></td>
-                                <td><?php echo number_format_i18n((int)$row['hits']); ?></td>
-                                <td><?php echo esc_html($this->format_ms($row['avg_ms'])); ?></td>
-                                <td><?php echo esc_html($this->format_ms($row['max_ms'])); ?></td>
-                            </tr>
-                        <?php endforeach; ?>
-                        </tbody>
-                    </table>
+                    <?php echo $this->render_request_groups_table($labels); ?>
                 <?php endif; ?>
             </block>
 
@@ -946,28 +951,74 @@ class Mod_Performance_Monitor extends Module
                 <?php if (empty($recent)): ?>
                     <?php echo $this->render_empty_state(__('No requests stored in the selected window.', 'wpopt')); ?>
                 <?php else: ?>
-                    <table class="widefat wps">
-                        <thead><tr><th><?php _e('Time', 'wpopt'); ?></th><th><?php _e('Type', 'wpopt'); ?></th><th><?php _e('Group', 'wpopt'); ?></th><th><?php _e('Method', 'wpopt'); ?></th><th><?php _e('Status', 'wpopt'); ?></th><th><?php _e('Duration', 'wpopt'); ?></th><th><?php _e('Memory', 'wpopt'); ?></th><th><?php _e('Queries', 'wpopt'); ?></th></tr></thead>
-                        <tbody>
-                        <?php foreach ($recent as $index => $row): ?>
-                            <tr <?php echo $index % 2 ? "class='alternate'" : ''; ?>>
-                                <td><?php echo esc_html(mysql2date('d M Y H:i', $row['created_at'])); ?></td>
-                                <td><?php echo esc_html($this->humanize_type($row['request_type'])); ?></td>
-                                <td title="<?php echo esc_attr($row['request_uri']); ?>"><code><?php echo esc_html($row['request_label']); ?></code></td>
-                                <td><?php echo esc_html($row['request_method']); ?></td>
-                                <td><?php echo number_format_i18n((int)$row['status_code']); ?></td>
-                                <td><?php echo esc_html($this->format_ms($row['response_time_ms'])); ?></td>
-                                <td><?php echo esc_html(size_format((int)$row['memory_peak'])); ?></td>
-                                <td><?php echo number_format_i18n((int)$row['query_count']); ?></td>
-                            </tr>
-                        <?php endforeach; ?>
-                        </tbody>
-                    </table>
+                    <?php echo $this->render_recent_requests_table($recent); ?>
                 <?php endif; ?>
             </block>
         </div>
         <?php
         return (string)ob_get_clean();
+    }
+
+    private function render_request_groups_table(array $labels): string
+    {
+        $rows = array();
+
+        foreach ($labels as $row) {
+            $rows[] = array(
+                'type' => esc_html($this->humanize_type($row['request_type'])),
+                'group' => '<code>' . esc_html($row['request_label']) . '</code>',
+                'hits' => esc_html(number_format_i18n((int)$row['hits'])),
+                'average' => esc_html($this->format_ms($row['avg_ms'])),
+                'peak' => esc_html($this->format_ms($row['max_ms'])),
+            );
+        }
+
+        return List_Table::generateHTML_table(array(
+            'class' => 'wps wpopt-perf-groups-table',
+            'columns' => array(
+                'type' => __('Type', 'wpopt'),
+                'group' => __('Group', 'wpopt'),
+                'hits' => __('Hits', 'wpopt'),
+                'average' => __('Average', 'wpopt'),
+                'peak' => __('Peak', 'wpopt'),
+            ),
+            'rows' => $rows,
+            'empty' => __('No grouped request history available yet.', 'wpopt'),
+        ));
+    }
+
+    private function render_recent_requests_table(array $recent): string
+    {
+        $rows = array();
+
+        foreach ($recent as $row) {
+            $rows[] = array(
+                'time' => esc_html(mysql2date('d M Y H:i', $row['created_at'])),
+                'type' => esc_html($this->humanize_type($row['request_type'])),
+                'group' => '<code title="' . esc_attr($row['request_uri']) . '">' . esc_html($row['request_label']) . '</code>',
+                'method' => esc_html($row['request_method']),
+                'status' => esc_html(number_format_i18n((int)$row['status_code'])),
+                'duration' => esc_html($this->format_ms($row['response_time_ms'])),
+                'memory' => esc_html(size_format((int)$row['memory_peak'])),
+                'queries' => esc_html(number_format_i18n((int)$row['query_count'])),
+            );
+        }
+
+        return List_Table::generateHTML_table(array(
+            'class' => 'wps wpopt-perf-recent-table',
+            'columns' => array(
+                'time' => __('Time', 'wpopt'),
+                'type' => __('Type', 'wpopt'),
+                'group' => __('Group', 'wpopt'),
+                'method' => __('Method', 'wpopt'),
+                'status' => __('Status', 'wpopt'),
+                'duration' => __('Duration', 'wpopt'),
+                'memory' => __('Memory', 'wpopt'),
+                'queries' => __('Queries', 'wpopt'),
+            ),
+            'rows' => $rows,
+            'empty' => __('No requests stored in the selected window.', 'wpopt'),
+        ));
     }
 
     public function render_monitor_slow_queries_panel(): string

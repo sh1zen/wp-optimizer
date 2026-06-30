@@ -104,13 +104,13 @@ function wps_error_handler_should_notify(string $file, int $line, string $error)
     return true;
 }
 
-function wps_error_handler($hook, ?callable $callback = null, $notify_dev = true): void
+function wps_error_handler($hook, ?callable $callback = null, $notify_dev = true, array $tracking_context = []): void
 {
     static $index = 0;
 
     $index++;
 
-    $error_handler = (function ($nro, $string, $file, $line) use ($index, $callback, $hook, $notify_dev) {
+    $error_handler = (function ($nro, $string, $file, $line) use ($index, $callback, $hook, $notify_dev, $tracking_context) {
 
         global $wp_version;
 
@@ -125,7 +125,8 @@ function wps_error_handler($hook, ?callable $callback = null, $notify_dev = true
                     "Details:",
                     "Err: $string",
                     "File $file:$line",
-                    "Conf: PHP:" . PHP_VERSION . ", WP:$wp_version",
+                    "Conf: PHP:" . PHP_VERSION . ", WP:$wp_version, WPS:" . (defined('WPS_VERSION') ? WPS_VERSION : 'n/a'),
+                    "Plugin: " . ($tracking_context['plugin_name'] ?? $hook) . " " . ($tracking_context['plugin_version'] ?? 'n/a'),
                     "Request: {$_SERVER['REQUEST_URI']}"
                 );
 

@@ -51,7 +51,10 @@ class Mod_Modules_Handler extends Module
 
         foreach ($this->modules_slug2name as $slug => $name) {
 
-            $settings[] = $this->setting_field($name, $slug, 'checkbox', ['value' => $this->option($slug, $this->is_active_by_default($slug))]);
+            $settings[] = $this->setting_field($name, $slug, 'checkbox', [
+                'value'  => $this->option($slug, $this->is_active_by_default($slug)),
+                'before' => $this->module_reset_button($slug, $name, sprintf(__('Reset %s to factory settings', 'wpopt'), $name)),
+            ]);
         }
 
         return $settings;
