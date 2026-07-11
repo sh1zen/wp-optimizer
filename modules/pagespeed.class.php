@@ -43,7 +43,11 @@ class Mod_Pagespeed extends Module
             return;
         }
 
-        ob_start(array($this, 'optimize_html'));
+        wps('wps')->services->get('html_output_buffer')->register(
+            'wpopt.pagespeed',
+            array($this, 'optimize_html'),
+            100
+        );
     }
 
     public function optimize_html($buffer)
@@ -116,7 +120,7 @@ class Mod_Pagespeed extends Module
             ),
             $this->group_setting_fields(
                 $this->setting_field(__('LCP optimizations', 'wpopt'), false, 'separator'),
-                $this->setting_field(__('Add missing images dimensions', 'wpopt'), 'add_missing_image_dimensions', 'checkbox', array('default_value' => true)),
+                $this->setting_field(__('Add missing images dimensions', 'wpopt'), 'add_missing_image_dimensions', 'checkbox', array('default_value' => false)),
                 $this->setting_field(__('Auto Preload Largest Image', 'wpopt'), 'auto_preload_largest_image', 'checkbox', array('default_value' => false))
             ),
             $this->group_setting_fields(

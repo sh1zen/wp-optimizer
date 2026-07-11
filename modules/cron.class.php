@@ -1253,7 +1253,7 @@ class Mod_Cron extends Module
 
             .wpopt-cron-schedules-wrap {
                 width:100%;
-                max-width:1120px;
+                max-width:none;
                 margin-right:auto;
                 margin-left:0;
                 overflow:hidden;

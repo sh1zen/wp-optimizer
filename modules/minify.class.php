@@ -211,7 +211,11 @@ class Mod_Minify extends Module
         require_once WPOPT_SUPPORTERS . '/minifier/Minify_CSS.class.php';
         require_once WPOPT_SUPPORTERS . '/minifier/Minify_JS.class.php';
 
-        ob_start([$this, "minify"]);
+        wps('wps')->services->get('html_output_buffer')->register(
+            'wpopt.minify',
+            array($this, 'minify'),
+            1000
+        );
     }
 
     protected function setting_fields($filter = ''): array

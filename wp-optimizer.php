@@ -8,15 +8,15 @@
 /**
  * Plugin Name: WP Optimizer
  * Plugin URI: https://github.com/sh1zen/wp-optimizer/
- * Description: Performance Optimization plugin, automatic image compression, integrated caching, deep WordPress and server enhancements.
+ * Description: Page cache, lazy load, minify CSS/JS/HTML, image optimization & CDN, LCP preload and more — everything you need to improve Core Web Vitals, in one plugin.
  * Author: sh1zen
  * Author URI: https://sh1zen.github.io/
  * Text Domain: wpopt
  * Domain Path: /languages
- * Version: 2.8.4
+ * Version: 2.8.5
  */
 
-const WPOPT_VERSION = '2.8.4';
+const WPOPT_VERSION = '2.8.5';
 const WPOPT_FILE = __FILE__;
 
 // setup constants

@@ -169,7 +169,7 @@ class Mod_Media extends Module
         ?>
         <block class="wps-options">
             <row class="wps-row">
-                <?php echo Graphic::icon('broom', 'wps-row-icon'); ?>
+                <?php echo Graphic::icon('media-cleaner', 'wps-row-icon'); ?>
                 <div class="wps-option">
                     <strong><?php _e('Scan orphaned media', 'wpopt'); ?></strong>
                     <span class="wps-option-description"><?php _e('Find uploaded files that are no longer referenced by WordPress content, then review the results before deleting anything.', 'wpopt'); ?></span>
@@ -341,8 +341,8 @@ class Mod_Media extends Module
                             'id'                => 'media-cleaner',
                             'panel-title'       => __('Media cleaner', 'wpopt'),
                             'panel-description' => __('Find attachments that are no longer referenced and review them before removal.', 'wpopt'),
-                            'panel-icon'        => 'broom',
-                            'tab-icon'          => 'broom',
+                            'panel-icon'        => 'media-cleaner',
+                            'tab-icon'          => 'media-cleaner',
                             'callback'          => array($this, 'render_mediaCleaner_Panel')
                         ),
                         array(

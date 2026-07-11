@@ -31,6 +31,8 @@ class CronForModules
         $this->modules = wps($this->context)->moduleHandler->get_modules('cron', true);
 
         CronActions::handle("$this->context-cron", [$this, 'exec_cron']);
+
+        $this->sync_schedule();
     }
 
     public function cron_setting_validator($input, $filtering): array
@@ -50,7 +52,8 @@ class CronForModules
             return $valid;
         }
 
-        $this->set_schedule($valid['execution-time'], $valid['recurrence']);
+        $this->settings = array_merge($this->settings, $valid);
+        $this->sync_schedule();
 
         foreach ($this->modules as $module) {
             $module_object = wps($this->context)->moduleHandler->get_module_instance($module);
@@ -67,6 +70,20 @@ class CronForModules
         }
 
         CronActions::schedule("$this->context-cron", $recurrence, [$this, 'exec_cron'], $time, true);
+    }
+
+    private function sync_schedule(): void
+    {
+        if (wp_doing_cron() || wp_doing_ajax()) {
+            return;
+        }
+
+        if (!$this->option('active')) {
+            $this->deactivate();
+            return;
+        }
+
+        $this->set_schedule($this->option('execution-time', '01:00'), $this->option('recurrence', 'daily'));
     }
 
     public function deactivate(): void
@@ -99,7 +116,7 @@ class CronForModules
 
     public function activate(): void
     {
-        $this->set_schedule($this->settings['execution-time'], $this->settings['recurrence']);
+        $this->sync_schedule();
     }
 
     public function exec_cron($args = array()): void

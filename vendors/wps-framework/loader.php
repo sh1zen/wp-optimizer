@@ -32,6 +32,8 @@ require_once WPS_FRAMEWORK . 'Rewriter.class.php';
 require_once WPS_FRAMEWORK . 'UtilEnv.php';
 require_once WPS_FRAMEWORK . 'Images.php';
 
+require_once WPS_FRAMEWORK . 'Services.class.php';
+require_once WPS_FRAMEWORK . 'HtmlOutputBuffer.class.php';
 require_once WPS_FRAMEWORK . 'Cache.class.php';
 require_once WPS_FRAMEWORK . 'Stack.php';
 require_once WPS_FRAMEWORK . 'Storage.class.php';
@@ -112,6 +114,7 @@ function wps_init(): void
             'table_name' => "wps_core",
         ],
         [
+            'services' => true,
             'cache'    => true,
             'options'  => true,
             'settings' => true,

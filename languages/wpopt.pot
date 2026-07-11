@@ -3,7 +3,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: wpopt-translation\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/wp-optimizer/\n"
-"POT-Creation-Date: 2026-07-03 17:45+0200\n"
+"POT-Creation-Date: 2026-07-12 00:51+0200\n"
 "PO-Revision-Date: 2020-05-13 02:34+0200\n"
 "Last-Translator: sh1zen\n"
 "Language-Team: sh1zen\n"
@@ -271,7 +271,7 @@ msgstr ""
 msgid "Control diagnostics and anonymous usage tracking."
 msgstr ""
 
-#: admin/PagesHandler.class.php:586 admin/PagesHandler.class.php:1563 modules/cache.class.php:2203 modules/cache.class.php:2223 modules/supporters/database/DB_List_Table.class.php:283 modules/wp_info.class.php:170
+#: admin/PagesHandler.class.php:586 admin/PagesHandler.class.php:1563 modules/cache.class.php:2401 modules/cache.class.php:2421 modules/supporters/database/DB_List_Table.class.php:283 modules/wp_info.class.php:170
 #: modules/wp_info.class.php:236
 msgid "N/A"
 msgstr ""
@@ -657,11 +657,11 @@ msgstr ""
 msgid "Quick overview"
 msgstr ""
 
-#: admin/PagesHandler.class.php:1432 admin/PagesHandler.class.php:1837 modules/cache.class.php:2097 modules/cache.class.php:2108 modules/cache.class.php:2119 modules/cache.class.php:2123
+#: admin/PagesHandler.class.php:1432 admin/PagesHandler.class.php:1837 modules/cache.class.php:2295 modules/cache.class.php:2306 modules/cache.class.php:2317 modules/cache.class.php:2321
 msgid "Active"
 msgstr ""
 
-#: admin/PagesHandler.class.php:1432 admin/PagesHandler.class.php:1837 modules/cache.class.php:2844
+#: admin/PagesHandler.class.php:1432 admin/PagesHandler.class.php:1837 modules/cache.class.php:3042
 msgid "Inactive"
 msgstr ""
 
@@ -874,7 +874,7 @@ msgstr ""
 msgid "TTFB"
 msgstr ""
 
-#: admin/PagesHandler.class.php:1569 modules/cache.class.php:1088
+#: admin/PagesHandler.class.php:1569 modules/cache.class.php:1100
 msgid "Cache"
 msgstr ""
 
@@ -1473,539 +1473,539 @@ msgstr ""
 msgid "No activity data available yet."
 msgstr ""
 
-#: modules/cache.class.php:706 modules/cache.class.php:751 modules/settings.class.php:129 modules/settings.class.php:143
+#: modules/cache.class.php:720 modules/cache.class.php:765 modules/settings.class.php:129 modules/settings.class.php:143
 msgid "Action was correctly executed"
 msgstr ""
 
-#: modules/cache.class.php:707 modules/cache.class.php:752 modules/settings.class.php:132 modules/settings.class.php:143
+#: modules/cache.class.php:721 modules/cache.class.php:766 modules/settings.class.php:132 modules/settings.class.php:143
 msgid "Action execution failed"
 msgstr ""
 
-#: modules/cache.class.php:733
+#: modules/cache.class.php:747
 msgid "You are not allowed to perform this action."
 msgstr ""
 
-#: modules/cache.class.php:737 modules/database.class.php:491 modules/database.class.php:583
+#: modules/cache.class.php:751 modules/database.class.php:491 modules/database.class.php:583
 msgid "Invalid request."
 msgstr ""
 
-#: modules/cache.class.php:867 modules/cache.class.php:1081 modules/cache.class.php:2096
+#: modules/cache.class.php:881 modules/cache.class.php:1093 modules/cache.class.php:2294
 msgid "WP_Query Cache"
 msgstr ""
 
-#: modules/cache.class.php:882 modules/cache.class.php:1083 modules/cache.class.php:2107
+#: modules/cache.class.php:895 modules/cache.class.php:1095 modules/cache.class.php:2305
 msgid "Database Query Cache"
 msgstr ""
 
-#: modules/cache.class.php:897 modules/cache.class.php:2118
+#: modules/cache.class.php:909 modules/cache.class.php:2316
 msgid "Object Cache"
 msgstr ""
 
-#: modules/cache.class.php:907 modules/cache.class.php:1085 modules/cache.class.php:2122
+#: modules/cache.class.php:919 modules/cache.class.php:1097 modules/cache.class.php:2320
 msgid "Static Pages Cache"
 msgstr ""
 
-#: modules/cache.class.php:1201
+#: modules/cache.class.php:1397
 msgid "2xx Success"
 msgstr ""
 
-#: modules/cache.class.php:1202
+#: modules/cache.class.php:1398
 msgid "3xx Redirects"
 msgstr ""
 
-#: modules/cache.class.php:1203
+#: modules/cache.class.php:1399
 msgid "4xx Client errors"
 msgstr ""
 
-#: modules/cache.class.php:1204
+#: modules/cache.class.php:1400
 msgid "5xx Server errors"
 msgstr ""
 
-#: modules/cache.class.php:1239
+#: modules/cache.class.php:1435
 msgid "Post queries"
 msgstr ""
 
-#: modules/cache.class.php:1240
+#: modules/cache.class.php:1436
 msgid "Page queries"
 msgstr ""
 
-#: modules/cache.class.php:1241
+#: modules/cache.class.php:1437
 msgid "Attachment queries"
 msgstr ""
 
-#: modules/cache.class.php:1242
+#: modules/cache.class.php:1438
 msgid "Custom post type queries"
 msgstr ""
 
-#: modules/cache.class.php:1243
+#: modules/cache.class.php:1439
 msgid "Taxonomy queries"
 msgstr ""
 
-#: modules/cache.class.php:1244
+#: modules/cache.class.php:1440
 msgid "Meta queries"
 msgstr ""
 
-#: modules/cache.class.php:1245
+#: modules/cache.class.php:1441
 msgid "Search queries"
 msgstr ""
 
-#: modules/cache.class.php:1246
+#: modules/cache.class.php:1442
 msgid "Author queries"
 msgstr ""
 
-#: modules/cache.class.php:1247
+#: modules/cache.class.php:1443
 msgid "Date queries"
 msgstr ""
 
-#: modules/cache.class.php:1248
+#: modules/cache.class.php:1444
 msgid "Specific ID/name queries"
 msgstr ""
 
-#: modules/cache.class.php:1249
+#: modules/cache.class.php:1445
 msgid "Feed queries"
 msgstr ""
 
-#: modules/cache.class.php:1396
+#: modules/cache.class.php:1592
 msgid "Static cache direct access is saved but inactive until static page cache is enabled."
 msgstr ""
 
-#: modules/cache.class.php:1405
+#: modules/cache.class.php:1601
 msgid "Static cache direct access is saved, but server rules or runtime files could not be updated. Check server rules file and cache directory permissions."
 msgstr ""
 
-#: modules/cache.class.php:1441
+#: modules/cache.class.php:1637
 msgid "Saved, but static page cache is disabled."
 msgstr ""
 
-#: modules/cache.class.php:1444
+#: modules/cache.class.php:1640
 msgid "Saved, but the WordPress root or cache directory is not writable."
 msgstr ""
 
-#: modules/cache.class.php:1447
+#: modules/cache.class.php:1643
 msgid "Saved, but the direct access runtime files are not installed yet."
 msgstr ""
 
-#: modules/cache.class.php:1451
+#: modules/cache.class.php:1647
 #, php-format
 msgid "Runtime ready, but the server rule is missing in %s."
 msgstr ""
 
-#: modules/cache.class.php:1457
+#: modules/cache.class.php:1653
 msgid "Installed: eligible anonymous and logged-in cache hits bypass WordPress."
 msgstr ""
 
-#: modules/cache.class.php:1458
+#: modules/cache.class.php:1654
 msgid "Installed: eligible anonymous cache hits bypass WordPress."
 msgstr ""
 
-#: modules/cache.class.php:2098 modules/cache.class.php:2101 modules/cache.class.php:2109 modules/cache.class.php:2112 modules/cache.class.php:2124 modules/cache.class.php:2127
+#: modules/cache.class.php:2296 modules/cache.class.php:2299 modules/cache.class.php:2307 modules/cache.class.php:2310 modules/cache.class.php:2322 modules/cache.class.php:2325
 msgid "Configure"
 msgstr ""
 
-#: modules/cache.class.php:2138
+#: modules/cache.class.php:2336
 msgid "Stores the results of WP_Query for faster retrieval on subsequent requests."
 msgstr ""
 
-#: modules/cache.class.php:2139
+#: modules/cache.class.php:2337
 msgid "Stores frequently used database queries in memory to reduce the number of queries made to the database, improving website performance."
 msgstr ""
 
-#: modules/cache.class.php:2140
+#: modules/cache.class.php:2338
 msgid "Use Configure to set this engine lifetime, regex rules and request exclusions. WPOPT_CACHE_DB_LIFETIME can still override the generated lifetime when explicitly defined."
 msgstr ""
 
-#: modules/cache.class.php:2141
+#: modules/cache.class.php:2339
 msgid "To enable caching also for option table paste \"define('WPOPT_CACHE_DB_OPTIONS', true)\" in wp.config."
 msgstr ""
 
-#: modules/cache.class.php:2142
+#: modules/cache.class.php:2340
 msgid "Stores PHP objects in memory for fast retrieval, reducing the need to recreate objects, improving website performance. Needs Redis or Memcached to be installed."
 msgstr ""
 
-#: modules/cache.class.php:2143
+#: modules/cache.class.php:2341
 msgid "Stores static HTML pages generated from dynamic content to avoid repeated processing."
 msgstr ""
 
-#: modules/cache.class.php:2184
+#: modules/cache.class.php:2382
 msgid "Cache size"
 msgstr ""
 
-#: modules/cache.class.php:2192
+#: modules/cache.class.php:2390
 msgid "Reset Cache"
 msgstr ""
 
-#: modules/cache.class.php:2213
+#: modules/cache.class.php:2411
 msgid "file"
 msgstr ""
 
-#: modules/cache.class.php:2213
+#: modules/cache.class.php:2411
 msgid "files"
 msgstr ""
 
-#: modules/cache.class.php:2276
+#: modules/cache.class.php:2474
 msgid "WP_Query cache configuration"
 msgstr ""
 
-#: modules/cache.class.php:2280
+#: modules/cache.class.php:2478
 msgid "Database query cache configuration"
 msgstr ""
 
-#: modules/cache.class.php:2284
+#: modules/cache.class.php:2482
 msgid "Static cache configuration"
 msgstr ""
 
-#: modules/cache.class.php:2287
+#: modules/cache.class.php:2485
 msgid "Cache configuration"
 msgstr ""
 
-#: modules/cache.class.php:2293 modules/cloudflare.class.php:137
+#: modules/cache.class.php:2491 modules/cloudflare.class.php:137
 msgid "This Module is disabled for you or for your settings."
 msgstr ""
 
-#: modules/cache.class.php:2303 modules/cache.class.php:2524
+#: modules/cache.class.php:2501 modules/cache.class.php:2722
 msgid "Configuration not found."
 msgstr ""
 
-#: modules/cache.class.php:2329 modules/cache.class.php:2457
+#: modules/cache.class.php:2527 modules/cache.class.php:2655
 msgid "No statuses selected"
 msgstr ""
 
-#: modules/cache.class.php:2332
+#: modules/cache.class.php:2530
 msgid "Both"
 msgstr ""
 
-#: modules/cache.class.php:2333
+#: modules/cache.class.php:2531
 msgid "Logged in"
 msgstr ""
 
-#: modules/cache.class.php:2334
+#: modules/cache.class.php:2532
 msgid "Not logged in"
 msgstr ""
 
-#: modules/cache.class.php:2343 modules/cache.class.php:2571
+#: modules/cache.class.php:2541 modules/cache.class.php:2769
 msgid "Back to Cache settings"
 msgstr ""
 
-#: modules/cache.class.php:2349
+#: modules/cache.class.php:2547
 msgid "Caching options"
 msgstr ""
 
-#: modules/cache.class.php:2353
+#: modules/cache.class.php:2551
 msgid "Static page cache is disabled."
 msgstr ""
 
-#: modules/cache.class.php:2354
+#: modules/cache.class.php:2552
 msgid "These options are saved, but no pages are stored until Static pages is enabled from the main Cache settings."
 msgstr ""
 
-#: modules/cache.class.php:2363 modules/cache.class.php:2591
+#: modules/cache.class.php:2561 modules/cache.class.php:2789
 msgid "Lifespan"
 msgstr ""
 
-#: modules/cache.class.php:2364
+#: modules/cache.class.php:2562
 msgid "How long each static page cache entry remains valid. Format: hours:minutes."
 msgstr ""
 
-#: modules/cache.class.php:2368 modules/cache.class.php:2596
+#: modules/cache.class.php:2566 modules/cache.class.php:2794
 msgid "Decrease time"
 msgstr ""
 
-#: modules/cache.class.php:2369 modules/cache.class.php:2597
+#: modules/cache.class.php:2567 modules/cache.class.php:2795
 msgid "Lifespan hours and minutes"
 msgstr ""
 
-#: modules/cache.class.php:2370 modules/cache.class.php:2598
+#: modules/cache.class.php:2568 modules/cache.class.php:2796
 msgid "Increase time"
 msgstr ""
 
-#: modules/cache.class.php:2376 modules/cache.class.php:2679
+#: modules/cache.class.php:2574 modules/cache.class.php:2877
 msgid "Cache only include regex rules"
 msgstr ""
 
-#: modules/cache.class.php:2377
+#: modules/cache.class.php:2575
 msgid "When disabled, all eligible pages are cached and include rules only track matching pages."
 msgstr ""
 
-#: modules/cache.class.php:2384 modules/cache.class.php:2688
+#: modules/cache.class.php:2582 modules/cache.class.php:2886
 msgid "Ignore query args"
 msgstr ""
 
-#: modules/cache.class.php:2385
+#: modules/cache.class.php:2583
 msgid "When enabled, query parameters are ignored for static cache. Search queries remain excluded."
 msgstr ""
 
-#: modules/cache.class.php:2392 modules/cache.class.php:2696
+#: modules/cache.class.php:2590 modules/cache.class.php:2894
 msgid "Auto purge on content changes"
 msgstr ""
 
-#: modules/cache.class.php:2393
+#: modules/cache.class.php:2591
 msgid "When content changes, only related static pages are cleared instead of flushing the whole cache."
 msgstr ""
 
-#: modules/cache.class.php:2400 modules/cache.class.php:2705
+#: modules/cache.class.php:2598 modules/cache.class.php:2903
 msgid "Cache admin requests"
 msgstr ""
 
-#: modules/cache.class.php:2401
+#: modules/cache.class.php:2599
 msgid "When enabled, static PHP cache can run on WordPress admin requests. Direct access remains outside wp-admin so WordPress admin bootstraps normally."
 msgstr ""
 
-#: modules/cache.class.php:2408
+#: modules/cache.class.php:2606
 msgid "Direct access"
 msgstr ""
 
-#: modules/cache.class.php:2409
+#: modules/cache.class.php:2607
 msgid "When enabled, server rules route eligible requests to the static cache script before WordPress loads."
 msgstr ""
 
-#: modules/cache.class.php:2421 modules/cache.class.php:2714
+#: modules/cache.class.php:2619 modules/cache.class.php:2912
 msgid "User-agent exclusions"
 msgstr ""
 
-#: modules/cache.class.php:2422
+#: modules/cache.class.php:2620
 msgid "When enabled, matching user agents skip static cache. Add one plain text or PHP regex pattern per line."
 msgstr ""
 
-#: modules/cache.class.php:2429 modules/cache.class.php:2722
+#: modules/cache.class.php:2627 modules/cache.class.php:2920
 msgid "User-agent patterns"
 msgstr ""
 
-#: modules/cache.class.php:2430 modules/cache.class.php:2723
+#: modules/cache.class.php:2628 modules/cache.class.php:2921
 msgid "Examples: Googlebot, curl, /bot|crawler/i"
 msgstr ""
 
-#: modules/cache.class.php:2436 modules/cache.class.php:2729
+#: modules/cache.class.php:2634 modules/cache.class.php:2927
 msgid "No caching cookies"
 msgstr ""
 
-#: modules/cache.class.php:2437
+#: modules/cache.class.php:2635
 msgid "When enabled, matching request cookies skip static cache. Leave the list empty to match any cookie."
 msgstr ""
 
-#: modules/cache.class.php:2439
+#: modules/cache.class.php:2637
 msgid "Admin/logged-in browser visits usually carry cookies and will not populate static cache."
 msgstr ""
 
-#: modules/cache.class.php:2447 modules/cache.class.php:2737
+#: modules/cache.class.php:2645 modules/cache.class.php:2935
 msgid "No caching cookie list"
 msgstr ""
 
-#: modules/cache.class.php:2448 modules/cache.class.php:2738
+#: modules/cache.class.php:2646 modules/cache.class.php:2936
 msgid "Add one cookie name or name fragment per line. Examples: wordpress_logged_in_, woocommerce_items_in_cart."
 msgstr ""
 
-#: modules/cache.class.php:2454
+#: modules/cache.class.php:2652
 msgid "HTTP status cache policy"
 msgstr ""
 
-#: modules/cache.class.php:2455
+#: modules/cache.class.php:2653
 msgid "Choose which response status families can be stored in static cache."
 msgstr ""
 
-#: modules/cache.class.php:2489
+#: modules/cache.class.php:2687
 msgid "User cache scope"
 msgstr ""
 
-#: modules/cache.class.php:2490
+#: modules/cache.class.php:2688
 msgid "Choose which visitor sessions can use static page cache."
 msgstr ""
 
-#: modules/cache.class.php:2546
+#: modules/cache.class.php:2744
 msgid "When enabled, matching user agents skip this cache engine. Add one plain text or PHP regex pattern per line."
 msgstr ""
 
-#: modules/cache.class.php:2547
+#: modules/cache.class.php:2745
 msgid "When enabled, matching user-agent text fragments skip this cache engine. Add one text fragment per line."
 msgstr ""
 
-#: modules/cache.class.php:2554 modules/cache.class.php:2608
+#: modules/cache.class.php:2752 modules/cache.class.php:2806
 msgid "No query types selected"
 msgstr ""
 
-#: modules/cache.class.php:2562 modules/cache.class.php:2645
+#: modules/cache.class.php:2760 modules/cache.class.php:2843
 msgid "No tables selected"
 msgstr ""
 
-#: modules/cache.class.php:2577
+#: modules/cache.class.php:2775
 #, php-format
 msgid "%s options"
 msgstr ""
 
-#: modules/cache.class.php:2581
+#: modules/cache.class.php:2779
 #, php-format
 msgid "%s is disabled."
 msgstr ""
 
-#: modules/cache.class.php:2582
+#: modules/cache.class.php:2780
 msgid "These options are saved, but no entries are stored until this cache engine is enabled from the main Cache settings."
 msgstr ""
 
-#: modules/cache.class.php:2592
+#: modules/cache.class.php:2790
 msgid "How long each cache entry remains valid. Format: hours:minutes."
 msgstr ""
 
-#: modules/cache.class.php:2605
+#: modules/cache.class.php:2803
 msgid "Cached query types"
 msgstr ""
 
-#: modules/cache.class.php:2606
+#: modules/cache.class.php:2804
 msgid "Choose which WP_Query types can be stored by this cache engine."
 msgstr ""
 
-#: modules/cache.class.php:2642
+#: modules/cache.class.php:2840
 msgid "Cached database tables"
 msgstr ""
 
-#: modules/cache.class.php:2643
+#: modules/cache.class.php:2841
 msgid "Choose which database tables can be stored by this cache engine."
 msgstr ""
 
-#: modules/cache.class.php:2680
+#: modules/cache.class.php:2878
 msgid "When enabled, this engine stores entries only for requests matching active include rules. Exclude rules always skip caching."
 msgstr ""
 
-#: modules/cache.class.php:2689
+#: modules/cache.class.php:2887
 msgid "When enabled, request query parameters are not added to this engine cache key."
 msgstr ""
 
-#: modules/cache.class.php:2697
+#: modules/cache.class.php:2895
 msgid "When content, terms, comments or users change, this cache layer is flushed automatically."
 msgstr ""
 
-#: modules/cache.class.php:2706
+#: modules/cache.class.php:2904
 msgid "When enabled, this cache engine can run during WordPress admin requests."
 msgstr ""
 
-#: modules/cache.class.php:2730
+#: modules/cache.class.php:2928
 msgid "When enabled, matching request cookies skip this cache engine. Leave the list empty to match any cookie."
 msgstr ""
 
-#: modules/cache.class.php:2780
+#: modules/cache.class.php:2978
 #, php-format
 msgid "%s regex rules"
 msgstr ""
 
-#: modules/cache.class.php:2781
+#: modules/cache.class.php:2979
 msgid "Create targeted rules for this cache engine and monitor their disk usage and cache activity."
 msgstr ""
 
-#: modules/cache.class.php:2783
+#: modules/cache.class.php:2981
 msgid "Regex mode"
 msgstr ""
 
-#: modules/cache.class.php:2790
+#: modules/cache.class.php:2988
 msgid "Rule name"
 msgstr ""
 
-#: modules/cache.class.php:2791
+#: modules/cache.class.php:2989
 msgid "Listings pages"
 msgstr ""
 
-#: modules/cache.class.php:2794
+#: modules/cache.class.php:2992
 msgid "Regex rule"
 msgstr ""
 
-#: modules/cache.class.php:2795
+#: modules/cache.class.php:2993
 msgid "^vendita-"
 msgstr ""
 
-#: modules/cache.class.php:2798 modules/cache.class.php:2888
+#: modules/cache.class.php:2996 modules/cache.class.php:3086
 msgid "Mode"
 msgstr ""
 
-#: modules/cache.class.php:2802 modules/cache.class.php:2868
+#: modules/cache.class.php:3000 modules/cache.class.php:3066
 msgid "Include"
 msgstr ""
 
-#: modules/cache.class.php:2806 modules/cache.class.php:2868
+#: modules/cache.class.php:3004 modules/cache.class.php:3066
 msgid "Exclude"
 msgstr ""
 
-#: modules/cache.class.php:2812
+#: modules/cache.class.php:3010
 msgid "Matched against request paths such as \"categoria/prodotto\". Full PHP regex delimiters are supported."
 msgstr ""
 
-#: modules/cache.class.php:2813
+#: modules/cache.class.php:3011
 msgid "Add"
 msgstr ""
 
-#: modules/cache.class.php:2823
+#: modules/cache.class.php:3021
 msgid "No regex rules configured"
 msgstr ""
 
-#: modules/cache.class.php:2824
+#: modules/cache.class.php:3022
 msgid "Add a rule above to start tracking disk usage, hits and misses for this cache engine."
 msgstr ""
 
-#: modules/cache.class.php:2860
+#: modules/cache.class.php:3058
 msgid "Clear cache"
 msgstr ""
 
-#: modules/cache.class.php:2861
+#: modules/cache.class.php:3059
 msgid "Reset stats"
 msgstr ""
 
-#: modules/cache.class.php:2862
+#: modules/cache.class.php:3060
 msgid "Set include"
 msgstr ""
 
-#: modules/cache.class.php:2862
+#: modules/cache.class.php:3060
 msgid "Set exclude"
 msgstr ""
 
-#: modules/cache.class.php:2863
+#: modules/cache.class.php:3061
 msgid "Delete this rule and its stats?"
 msgstr ""
 
-#: modules/cache.class.php:2863
+#: modules/cache.class.php:3061
 msgid "Delete rule"
 msgstr ""
 
-#: modules/cache.class.php:2875
+#: modules/cache.class.php:3073
 msgid "Never"
 msgstr ""
 
-#: modules/cache.class.php:2886
+#: modules/cache.class.php:3084
 msgid "Rule"
 msgstr ""
 
-#: modules/cache.class.php:2887
+#: modules/cache.class.php:3085
 msgid "Regex"
 msgstr ""
 
-#: modules/cache.class.php:2889
+#: modules/cache.class.php:3087
 msgid "Disk space"
 msgstr ""
 
-#: modules/cache.class.php:2890 modules/performance_monitor.class.php:3806 modules/widget.class.php:198
+#: modules/cache.class.php:3088 modules/performance_monitor.class.php:3806 modules/widget.class.php:198
 msgid "Files"
 msgstr ""
 
-#: modules/cache.class.php:2891 modules/performance_monitor.class.php:1027 modules/performance_monitor.class.php:3580 modules/performance_monitor.class.php:3653 modules/performance_monitor.class.php:3727
+#: modules/cache.class.php:3089 modules/performance_monitor.class.php:1027 modules/performance_monitor.class.php:3580 modules/performance_monitor.class.php:3653 modules/performance_monitor.class.php:3727
 msgid "Hits"
 msgstr ""
 
-#: modules/cache.class.php:2892 modules/performance_monitor.class.php:3584 modules/performance_monitor.class.php:3654 modules/performance_monitor.class.php:3731
+#: modules/cache.class.php:3090 modules/performance_monitor.class.php:3584 modules/performance_monitor.class.php:3654 modules/performance_monitor.class.php:3731
 msgid "Misses"
 msgstr ""
 
-#: modules/cache.class.php:2893
+#: modules/cache.class.php:3091
 msgid "Writes"
 msgstr ""
 
-#: modules/cache.class.php:2894 modules/performance_monitor.class.php:3573
+#: modules/cache.class.php:3092 modules/performance_monitor.class.php:3573
 msgid "Hit ratio"
 msgstr ""
 
-#: modules/cache.class.php:2895
+#: modules/cache.class.php:3093
 msgid "Last activity"
 msgstr ""
 
-#: modules/cache.class.php:2896 modules/cron.class.php:1789 modules/database.class.php:280 modules/database.class.php:1164 modules/settings.class.php:481
+#: modules/cache.class.php:3094 modules/cron.class.php:1789 modules/database.class.php:280 modules/database.class.php:1164 modules/settings.class.php:481
 msgid "Actions"
 msgstr ""
 
-#: modules/cache.class.php:2899
+#: modules/cache.class.php:3097
 msgid "No static cache rules configured"
 msgstr ""
 
@@ -3195,31 +3195,31 @@ msgstr ""
 msgid "WebP is a modern image format with superior compression efficiency, reducing file size and improving website performance."
 msgstr ""
 
-#: modules/minify.class.php:221
+#: modules/minify.class.php:225
 msgid "Minify HTML"
 msgstr ""
 
-#: modules/minify.class.php:222
+#: modules/minify.class.php:226
 msgid "Remove Comments"
 msgstr ""
 
-#: modules/minify.class.php:223
+#: modules/minify.class.php:227
 msgid "Minify inline css"
 msgstr ""
 
-#: modules/minify.class.php:224
+#: modules/minify.class.php:228
 msgid "Minify inline js"
 msgstr ""
 
-#: modules/minify.class.php:227
+#: modules/minify.class.php:231
 msgid "Minify JavaScript"
 msgstr ""
 
-#: modules/minify.class.php:228 modules/minify.class.php:232
+#: modules/minify.class.php:232 modules/minify.class.php:236
 msgid "Try to combine scripts"
 msgstr ""
 
-#: modules/minify.class.php:231
+#: modules/minify.class.php:235
 msgid "Minify CSS"
 msgstr ""
 
@@ -3228,83 +3228,83 @@ msgstr ""
 msgid "Reset %s to factory settings"
 msgstr ""
 
-#: modules/pagespeed.class.php:104
+#: modules/pagespeed.class.php:108
 msgid "Lazy loading"
 msgstr ""
 
-#: modules/pagespeed.class.php:105
+#: modules/pagespeed.class.php:109
 msgid "Lazyload images"
 msgstr ""
 
-#: modules/pagespeed.class.php:109
+#: modules/pagespeed.class.php:113
 msgid "Lazy load iframes"
 msgstr ""
 
-#: modules/pagespeed.class.php:110
+#: modules/pagespeed.class.php:114
 msgid "Lazy load video"
 msgstr ""
 
-#: modules/pagespeed.class.php:113
+#: modules/pagespeed.class.php:117
 msgid "Font Optimization"
 msgstr ""
 
-#: modules/pagespeed.class.php:114
+#: modules/pagespeed.class.php:118
 msgid "Force Font Display Swap"
 msgstr ""
 
-#: modules/pagespeed.class.php:115
+#: modules/pagespeed.class.php:119
 msgid "Lazyload Fonts"
 msgstr ""
 
-#: modules/pagespeed.class.php:118
+#: modules/pagespeed.class.php:122
 msgid "LCP optimizations"
 msgstr ""
 
-#: modules/pagespeed.class.php:119
+#: modules/pagespeed.class.php:123
 msgid "Add missing images dimensions"
 msgstr ""
 
-#: modules/pagespeed.class.php:120
+#: modules/pagespeed.class.php:124
 msgid "Auto Preload Largest Image"
 msgstr ""
 
-#: modules/pagespeed.class.php:123
+#: modules/pagespeed.class.php:127
 msgid "Navigation"
 msgstr ""
 
-#: modules/pagespeed.class.php:124
+#: modules/pagespeed.class.php:128
 msgid "Enable page prefetching"
 msgstr ""
 
-#: modules/pagespeed.class.php:132
+#: modules/pagespeed.class.php:136
 msgid "Adds native loading=\"lazy\" to images that do not already define a loading strategy."
 msgstr ""
 
-#: modules/pagespeed.class.php:133
+#: modules/pagespeed.class.php:137
 msgid "Adds font-display: swap to all @font-face declarations. Prevents invisible text while fonts load."
 msgstr ""
 
-#: modules/pagespeed.class.php:134
+#: modules/pagespeed.class.php:138
 msgid "Strips @font-face blocks from Used CSS so they don't block rendering. Fonts load after the critical CSS."
 msgstr ""
 
-#: modules/pagespeed.class.php:135
+#: modules/pagespeed.class.php:139
 msgid "Adds native loading=\"lazy\" to iframes that do not already define a loading strategy."
 msgstr ""
 
-#: modules/pagespeed.class.php:136
+#: modules/pagespeed.class.php:140
 msgid "Prevents videos from preloading data before the browser needs them."
 msgstr ""
 
-#: modules/pagespeed.class.php:137
+#: modules/pagespeed.class.php:141
 msgid "Adds width and height attributes to WordPress attachment images when metadata is available, reducing layout shifts and improving LCP stability."
 msgstr ""
 
-#: modules/pagespeed.class.php:138
+#: modules/pagespeed.class.php:142
 msgid "Detects the Largest Contentful Paint image at runtime and preloads it with fetchpriority=\"high\"."
 msgstr ""
 
-#: modules/pagespeed.class.php:139
+#: modules/pagespeed.class.php:143
 msgid "Prefetches same-origin pages on hover or touch intent to speed up likely next navigations."
 msgstr ""
 

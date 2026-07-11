@@ -28,6 +28,8 @@ Static page cache supports regex include/exclude rules and optional direct serve
 
 The database module includes table maintenance, database backups and `wp_options` autoload review tools for safer cleanup work.
 
+The Cron Manager is the administrative interface for viewing and managing WordPress cron events and custom schedules.
+
 The admin dashboard includes a Page Test tool that runs four browser-based scans against a site URL:
 
 1. A signed request with WP Optimizer modules and direct/server cache bypassed.
@@ -36,6 +38,8 @@ The admin dashboard includes a Page Test tool that runs four browser-based scans
 4. A measured signed request with the current configuration.
 
 The diagnostic warmup pass collects optimization hints such as slow queries, repeated queries, heavier hooks, callback samples and memory/query totals.
+
+Runtime HTML transformations are coordinated by the WPS `html_output_buffer` service. Modules register ordered transformers with this service instead of opening independent output buffers; PageSpeed transformations run before final HTML minification.
 
 ### Configuration safety
 

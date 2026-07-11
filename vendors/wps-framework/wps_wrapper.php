@@ -9,6 +9,8 @@ namespace WPS\core;
 
 class wps_wrapper
 {
+    public ?Services $services = null;
+
     public ?Cache $cache = null;
 
     public ?Storage $storage = null;
@@ -56,6 +58,7 @@ class wps_wrapper
         }
 
         $this->components = array_merge([
+            'services'      => false,
             'cache'         => false,
             'storage'       => false,
             'cron'          => false,
@@ -74,6 +77,13 @@ class wps_wrapper
 
     public function setup(): void
     {
+        if ($this->components['services'] and is_null($this->services)) {
+            $this->services = new Services();
+            $this->services->register('html_output_buffer', static function (): HtmlOutputBuffer {
+                return new HtmlOutputBuffer();
+            });
+        }
+
         if ($this->components['cache'] and is_null($this->cache)) {
             $this->cache = new Cache($this->context, defined('WP_PERSISTENT_CACHE') and WP_PERSISTENT_CACHE);
         }

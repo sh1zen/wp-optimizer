@@ -1295,6 +1295,13 @@ input[type="checkbox"][readonly] {
     -webkit-overflow-scrolling: touch;
 }
 
+.wps-multiselect__wrapper.wps-dropdown-portal {
+    position: fixed !important;
+    right: auto !important;
+    bottom: auto !important;
+    z-index: 100000 !important;
+}
+
 .wps-multiselect {
     margin: 0;
     padding: 0;
