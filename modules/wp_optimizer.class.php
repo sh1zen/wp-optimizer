@@ -151,6 +151,9 @@ class Mod_WP_Optimizer extends Module
         if (WP_Htaccess::is_nginx()) {
             $header .= "<p><b>" . esc_html__('Nginx server rules', 'wpopt') . "</b><br>" . sprintf(esc_html__("WP-Optimizer writes Nginx rules to %s. Include this file inside your Nginx server block, then reload Nginx after changes. Optional module directives such as Brotli and PageSpeed are written as comments to avoid reload errors when the module is not installed.", 'wpopt'), '<code>' . esc_html(WP_Htaccess::get_rules_path()) . '</code>') . "</p>";
         }
+        elseif (WP_Htaccess::is_openlitespeed()) {
+            $header .= "<p><b>" . esc_html__('OpenLiteSpeed server rules', 'wpopt') . "</b><br>" . esc_html__('WP-Optimizer writes supported rewrite rules to .htaccess. Enable Auto Load from .htaccess in OpenLiteSpeed WebAdmin; configure compression, cache headers and other non-rewrite directives in WebAdmin.', 'wpopt') . "</p>";
+        }
 
         if (!WP_Htaccess::is_rules_file_writable()) {
             $htaccess = new WP_Htaccess($this->option());
@@ -183,14 +186,12 @@ class Mod_WP_Optimizer extends Module
                 $this->setting_field(__('wp-admin Heartbeat interval (seconds)', 'wpopt'), "heartbeat.admin_interval", "numeric", ['parent' => 'heartbeat.admin_control', 'default_value' => 60, 'props' => ['min' => 15, 'max' => 120]]),
             ),
 
-            $this->setting_field(__('Server configuration (Apache/Nginx)', 'wpopt'), false, "separator"),
-
             $this->group_setting_fields(
                 $this->setting_field(__('Server Enhancements', 'wpopt'), "srv_enhancements.active", "checkbox"),
-                $this->setting_field(__('Remove www', 'wpopt'), "srv_enhancements.remove_www", "checkbox", ['parent' => 'srv_enhancements.active']),
-                $this->setting_field(__('Redirect HTTP to HTTPS', 'wpopt'), "srv_enhancements.redirect_https", "checkbox", ['parent' => 'srv_enhancements.active']),
+                $this->setting_field(__('Remove www', 'wpopt'), "srv_enhancements.remove_www", "checkbox", ['parent' => 'srv_enhancements.active', 'risk' => 'danger']),
+                $this->setting_field(__('Redirect HTTP to HTTPS', 'wpopt'), "srv_enhancements.redirect_https", "checkbox", ['parent' => 'srv_enhancements.active', 'risk' => 'danger']),
                 $this->setting_field(__('Connection keep alive', 'wpopt'), "srv_enhancements.keep_alive", "checkbox", ['parent' => 'srv_enhancements.active', 'default_value' => true]),
-                $this->setting_field(__('Follow symlinks', 'wpopt'), "srv_enhancements.follow_symlinks", "checkbox", ['parent' => 'srv_enhancements.active']),
+                $this->setting_field(__('Follow symlinks', 'wpopt'), "srv_enhancements.follow_symlinks", "checkbox", ['parent' => 'srv_enhancements.active', 'risk' => 'danger']),
                 $this->setting_field(__('Timezone', 'wpopt'), "srv_enhancements.timezone", "checkbox", ['parent' => 'srv_enhancements.active']),
                 $this->setting_field(__('Default Charset UTF-8', 'wpopt'), "srv_enhancements.default_utf8", "checkbox", ['parent' => 'srv_enhancements.active']),
                 $this->setting_field(__('Enable PageSpeed if installed', 'wpopt'), "srv_enhancements.pagespeed", "checkbox", ['parent' => 'srv_enhancements.active']),
@@ -223,7 +224,7 @@ class Mod_WP_Optimizer extends Module
             'cron.timenext'                      => __("Interval in seconds used to trigger background cron checks when cron optimization is enabled.", 'wpopt'),
             'heartbeat.admin_control'            => __("Reduce wp-admin Heartbeat traffic by forcing a custom interval for the WordPress Heartbeat API in admin pages.", 'wpopt'),
             'heartbeat.admin_interval'           => __("Interval in seconds for wp-admin Heartbeat requests. WordPress supports values between 15 and 120 seconds.", 'wpopt'),
-            'srv_enhancements.active'            => __("Enable server enhancement directives for Apache or Nginx.", 'wpopt'),
+            'srv_enhancements.active'            => __("Enable server enhancement directives for Apache, Nginx, LiteSpeed or OpenLiteSpeed.", 'wpopt'),
             'srv_enhancements.remove_www'        => __("Redirect www URLs to non-www URLs to enforce a single canonical hostname.", 'wpopt'),
             'srv_enhancements.redirect_https'    => __("Force HTTP requests to redirect to HTTPS.", 'wpopt'),
             'srv_enhancements.keep_alive'        => __("Connection keep-alive is a feature that maintains an open connection between a client and a server, reducing the need to repeatedly establish connections, improving website performance.", 'wpopt'),

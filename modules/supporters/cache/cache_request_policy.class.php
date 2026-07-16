@@ -9,6 +9,7 @@ namespace WPOptimizer\modules\supporters;
 
 use WPS\core\Settings;
 use WPS\core\StringHelper;
+use WPOptimizer\core\Compatibility;
 
 class CacheRequestPolicy
 {
@@ -93,6 +94,11 @@ class CacheRequestPolicy
         }
 
         return false;
+    }
+
+    public function automatic_bypass_reason(): string
+    {
+        return Compatibility::cache_bypass_reason();
     }
 
     public static function normalize_request_path(): string

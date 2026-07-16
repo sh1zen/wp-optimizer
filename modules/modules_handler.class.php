@@ -20,7 +20,6 @@ class Mod_Modules_Handler extends Module
         'performance_monitor',
         'wp_mail',
         'wp_updates',
-        'widget',
         'wp_info',
     ];
 

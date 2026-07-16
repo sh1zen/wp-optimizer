@@ -848,6 +848,27 @@ class UtilEnv
     }
 
     /**
+     * Check whether server is OpenLiteSpeed.
+     *
+     * OpenLiteSpeed identifies itself with a more specific server signature, but
+     * remains part of the LiteSpeed family for backwards-compatible checks.
+     */
+    public static function is_openlitespeed(): bool
+    {
+        $server_type = defined('LITESPEED_SERVER_TYPE') ? strtoupper((string)LITESPEED_SERVER_TYPE) : '';
+        if (in_array($server_type, array('OLS', 'LITESPEED_SERVER_OLS'), true)) {
+            return true;
+        }
+
+        $edition = $_SERVER['LSWS_EDITION'] ?? getenv('LSWS_EDITION');
+        if (is_string($edition) and stristr($edition, 'OpenLiteSpeed') !== false) {
+            return true;
+        }
+
+        return isset($_SERVER['SERVER_SOFTWARE']) and stristr($_SERVER['SERVER_SOFTWARE'], 'OpenLiteSpeed') !== false;
+    }
+
+    /**
      * Returns true if server is nginx
      */
     public static function is_nginx(): bool

@@ -10,6 +10,7 @@ namespace WPOptimizer\modules\supporters;
 use WPS\core\Settings;
 use WPS\core\UtilEnv;
 use WPS\core\RuleUtil;
+use WPOptimizer\core\Compatibility;
 
 require_once dirname(__DIR__) . '/cache/staticcache_direct.class.php';
 
@@ -61,7 +62,15 @@ class WP_Htaccess
 
     public static function get_server_label(): string
     {
-        return self::is_nginx() ? 'Nginx' : 'Apache';
+        if (self::is_nginx()) {
+            return 'Nginx';
+        }
+
+        if (self::is_openlitespeed()) {
+            return 'OpenLiteSpeed';
+        }
+
+        return self::is_litespeed() ? 'LiteSpeed' : 'Apache';
     }
 
     public static function is_rules_file_writable(): bool
@@ -82,6 +91,16 @@ class WP_Htaccess
     public static function is_nginx(): bool
     {
         return UtilEnv::is_nginx();
+    }
+
+    public static function is_litespeed(): bool
+    {
+        return UtilEnv::is_litespeed();
+    }
+
+    public static function is_openlitespeed(): bool
+    {
+        return UtilEnv::is_openlitespeed();
     }
 
     public function get_rules()
@@ -117,6 +136,13 @@ class WP_Htaccess
     {
         $rules = "\n$start_marker\n";
 
+        if (self::is_openlitespeed()) {
+            $rules .= self::generate_openlitespeed_rules($item, $settings);
+            $rules .= "\n$end_marker\n";
+
+            return $rules;
+        }
+
         if (self::is_nginx()) {
             $rules .= self::generate_nginx_rules($item, $settings);
             $rules .= "\n$end_marker\n";
@@ -150,6 +176,83 @@ class WP_Htaccess
         }
 
         $rules .= "\n$end_marker\n";
+
+        return $rules;
+    }
+
+    /**
+     * Generate only directives that OpenLiteSpeed supports when loading .htaccess.
+     * Other server settings must be configured in the OpenLiteSpeed WebAdmin.
+     */
+    private static function generate_openlitespeed_rules($item, $settings = array()): string
+    {
+        switch ($item) {
+            case 'srv_mime_types':
+                return "# OpenLiteSpeed manages MIME types in WebAdmin; .htaccess supports rewrite rules only.\n";
+
+            case 'srv_browser_cache':
+                return "# Configure browser-cache headers in OpenLiteSpeed WebAdmin; .htaccess supports rewrite rules only.\n";
+
+            case 'srv_compression':
+                return "# Configure GZIP or Brotli in OpenLiteSpeed WebAdmin; .htaccess supports rewrite rules only.\n";
+
+            case 'srv_security':
+                return self::generate_openlitespeed_rules_security($settings);
+
+            case 'srv_enhancements':
+                return self::generate_openlitespeed_rules_enhancements($settings);
+
+            case 'static_direct_access':
+                return self::generate_rules_static_direct_access($settings);
+        }
+
+        return '';
+    }
+
+    private static function generate_openlitespeed_rules_security($settings): string
+    {
+        $rules = '';
+
+        if (Settings::get_option($settings, 'srv_security.http_track&trace')) {
+            $rules .= "RewriteEngine On\n";
+            $rules .= "RewriteCond %{QUERY_STRING} !(^|&)wpopt_page_test=disabled(&|$) [NC]\n";
+            $rules .= "RewriteCond %{REQUEST_METHOD} ^(TRACE|TRACK)$ [NC]\n";
+            $rules .= "RewriteRule .* - [F,L]\n";
+        }
+
+        if (Settings::get_option($settings, 'srv_security.protect_htaccess')) {
+            $rules .= "RewriteEngine On\n";
+            $rules .= "RewriteCond %{REQUEST_URI} /(?:\\.ht|nginx\\.conf$) [NC]\n";
+            $rules .= "RewriteRule .* - [F,L]\n";
+        }
+
+        $rules .= "# Configure response headers, directory listing and server-signature controls in OpenLiteSpeed WebAdmin.\n";
+
+        return $rules;
+    }
+
+    private static function generate_openlitespeed_rules_enhancements($settings): string
+    {
+        $rules = '';
+
+        if (Settings::get_option($settings, 'srv_enhancements.redirect_https')) {
+            $rules .= self::apache_page_test_rewrite_cond();
+            $rules .= "RewriteCond %{HTTPS} off\n";
+            $rules .= "RewriteRule (.*) https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]\n";
+        }
+
+        if (Settings::get_option($settings, 'srv_enhancements.remove_www')) {
+            $rules .= self::apache_page_test_rewrite_cond();
+            $rules .= "RewriteCond %{HTTP_HOST} ^www\\.(.*)$ [NC]\n";
+            $scheme = Settings::get_option($settings, 'srv_enhancements.redirect_https') ? 'https' : 'http';
+            $rules .= "RewriteRule ^(.*)$ {$scheme}://%1%{REQUEST_URI} [R=301,QSA,NC,L]\n";
+        }
+
+        if ($rules !== '') {
+            $rules = "RewriteEngine On\n" . $rules;
+        }
+
+        $rules .= "# Configure charset, timezone, keep-alive, symlinks and PageSpeed in OpenLiteSpeed WebAdmin.\n";
 
         return $rules;
     }
@@ -201,7 +304,7 @@ class WP_Htaccess
         $rules->add('RewriteCond %{HTTP_ACCEPT} (^$|text/html) [NC]', 4);
         $rules->add('RewriteCond %{REQUEST_URI} !^' . preg_quote($script_uri_path, '#') . '$ [NC]', 4);
         $rules->add('RewriteCond %{REQUEST_URI} !/(' . self::static_direct_excluded_paths_pattern() . ')(/|$) [NC]', 4);
-        $rules->add('RewriteCond %{QUERY_STRING} !(^|&)(s|preview)= [NC]', 4);
+        $rules->add('RewriteCond %{QUERY_STRING} !(^|&)(s|' . self::static_direct_automatic_query_keys_pattern() . ')(=|&|$) [NC]', 4);
 
         if ($cookie_condition !== '') {
             $rules->add('RewriteCond %{HTTP_COOKIE} !(' . $cookie_condition . ') [NC]', 4);
@@ -231,7 +334,7 @@ class WP_Htaccess
         $rules .= "if (\$http_accept !~* \"(^$|text/html)\") { set \$wpopt_static_direct 0; }\n";
         $rules .= "if (\$request_uri ~* \"^" . self::quote_nginx_regex_part($script_uri_path) . "$\") { set \$wpopt_static_direct 0; }\n";
         $rules .= "if (\$request_uri ~* \"/(" . self::static_direct_excluded_paths_pattern() . ")(/|$)\") { set \$wpopt_static_direct 0; }\n";
-        $rules .= "if (\$args ~* \"(^|&)(s|preview)=\") { set \$wpopt_static_direct 0; }\n";
+        $rules .= "if (\$args ~* \"(^|&)(s|" . self::static_direct_automatic_query_keys_pattern() . ")(=|&|$)\") { set \$wpopt_static_direct 0; }\n";
 
         $cookie_condition = StaticCacheDirectAccess::apache_cookie_rewrite_condition($static_settings);
         if ($cookie_condition !== '') {
@@ -245,7 +348,18 @@ class WP_Htaccess
 
     private static function static_direct_excluded_paths_pattern(): string
     {
-        return 'wp-admin|wp-login\\.php|wp-cron\\.php|xmlrpc\\.php|wp-json';
+        $paths = array_map(static function (string $path): string {
+            return preg_quote(trim($path, '/'), '#');
+        }, Compatibility::woocommerce_sensitive_paths());
+
+        return implode('|', array_merge(array('wp-admin', 'wp-login\\.php', 'wp-cron\\.php', 'xmlrpc\\.php', 'wp-json'), array_filter($paths)));
+    }
+
+    private static function static_direct_automatic_query_keys_pattern(): string
+    {
+        return implode('|', array_map(static function (string $key): string {
+            return preg_quote($key, '#');
+        }, array_merge(Compatibility::woocommerce_cache_query_keys(), Compatibility::page_builder_query_keys())));
     }
 
     private static function static_direct_asset_extensions_pattern(): string

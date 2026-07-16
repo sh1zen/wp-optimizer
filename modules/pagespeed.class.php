@@ -9,6 +9,7 @@ namespace WPOptimizer\modules;
 
 use WPS\core\UtilEnv;
 use WPS\modules\Module;
+use WPOptimizer\core\Compatibility;
 
 /**
  * Frontend PageSpeed optimizations for rendered HTML.
@@ -52,7 +53,7 @@ class Mod_Pagespeed extends Module
 
     public function optimize_html($buffer)
     {
-        if (!is_string($buffer) || $buffer === '' || !UtilEnv::is_safe_buffering()) {
+        if (Compatibility::should_bypass_optimization() || !is_string($buffer) || $buffer === '' || !UtilEnv::is_safe_buffering()) {
             return $buffer;
         }
 

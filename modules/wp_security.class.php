@@ -219,6 +219,9 @@ class Mod_WP_Security extends Module
         if (WP_Htaccess::is_nginx()) {
             $header .= "<p><b>" . esc_html__('Nginx server rules', 'wpopt') . "</b><br>" . sprintf(esc_html__("WP-Optimizer writes Nginx rules to %s. Include this file inside your Nginx server block, then reload Nginx after changes. Optional module directives such as Brotli and PageSpeed are written as comments to avoid reload errors when the module is not installed.", 'wpopt'), '<code>' . esc_html(WP_Htaccess::get_rules_path()) . '</code>') . "</p>";
         }
+        elseif (WP_Htaccess::is_openlitespeed()) {
+            $header .= "<p><b>" . esc_html__('OpenLiteSpeed server rules', 'wpopt') . "</b><br>" . esc_html__('WP-Optimizer writes supported rewrite rules to .htaccess. Enable Auto Load from .htaccess in OpenLiteSpeed WebAdmin; configure security headers and other non-rewrite directives in WebAdmin.', 'wpopt') . "</p>";
+        }
 
         if (!WP_Htaccess::is_rules_file_writable()) {
             $htaccess = new WP_Htaccess($this->option());
@@ -243,7 +246,7 @@ class Mod_WP_Security extends Module
     {
         $file_mods_hint = __('Locked by DISALLOW_FILE_MODS in wp-config.php. WordPress has disabled file modifications, so WP Optimizer cannot manage server rules or filesystem-writing features from this screen.', 'wpopt');
         $file_editor_hint = __('Locked by DISALLOW_FILE_EDIT in wp-config.php. The WordPress file editor is already disabled by configuration.', 'wpopt');
-        $srv_security_active_args = $this->locked_checkbox_args(['default_value' => true], 'DISALLOW_FILE_MODS', false, $file_mods_hint);
+        $srv_security_active_args = $this->locked_checkbox_args(['default_value' => true, 'risk' => 'danger'], 'DISALLOW_FILE_MODS', false, $file_mods_hint);
         $disable_file_editor_args = $this->locked_checkbox_args(['parent' => 'a_api.active'], 'DISALLOW_FILE_EDIT', true, $file_editor_hint);
 
         return $this->group_setting_fields(
@@ -251,7 +254,7 @@ class Mod_WP_Security extends Module
                 $this->setting_field(__('Requests and Server', 'wpopt'), "srv_security.active", "checkbox", $srv_security_active_args),
                 $this->setting_field(__('Disable directory listing', 'wpopt'), "srv_security.listings", "checkbox", ['parent' => 'srv_security.active', 'default_value' => true]),
                 $this->setting_field(__('Disable access to configuration files (.htaccess/nginx.conf)', 'wpopt'), "srv_security.protect_htaccess", "checkbox", ['parent' => 'srv_security.active', 'default_value' => true]),
-                $this->setting_field(__('Enable HTTPS Strict Transport Security', 'wpopt'), "srv_security.hsts", "checkbox", ['parent' => 'srv_security.active', 'default_value' => true]),
+                $this->setting_field(__('Enable HTTPS Strict Transport Security', 'wpopt'), "srv_security.hsts", "checkbox", ['parent' => 'srv_security.active', 'default_value' => true, 'risk' => 'danger']),
                 $this->setting_field(__('Disable Cross-Origin Resource Sharing', 'wpopt'), "srv_security.cors", "checkbox", ['parent' => 'srv_security.active', 'default_value' => true]),
                 $this->setting_field(__('Disable HTTP Track & Trace', 'wpopt'), "srv_security.http_track&trace", "checkbox", ['parent' => 'srv_security.active', 'default_value' => true]),
                 $this->setting_field(__('Block Cross Site Scripting', 'wpopt'), "srv_security.xss", "checkbox", ['parent' => 'srv_security.active', 'default_value' => true]),
@@ -278,7 +281,7 @@ class Mod_WP_Security extends Module
     protected function infos(): array
     {
         return [
-            'srv_security.active'           => __("Enable server-level security hardening rules for Apache or Nginx environments.", 'wpopt'),
+            'srv_security.active'           => __("Enable server-level security hardening rules for Apache, Nginx, LiteSpeed or OpenLiteSpeed environments.", 'wpopt'),
             'srv_security.listings'         => __("Directory listing is a web server feature that displays the contents of a directory when an index file is not present, potentially exposing sensitive information.", 'wpopt'),
             'srv_security.protect_htaccess' => __("Disabling public access to server configuration files prevents unauthorized reads of rewrite and hardening rules, improving website security.", 'wpopt'),
             'srv_security.hsts'             => __("Enabling HTTPS Strict Transport Security (HSTS) enforces secure HTTPS connections, reducing the risk of man-in-the-middle attacks and improving website security.", 'wpopt'),

@@ -10,6 +10,7 @@ namespace WPOptimizer\modules;
 use WPS\core\Disk;
 use WPS\core\UtilEnv;
 use WPS\modules\Module;
+use WPOptimizer\core\Compatibility;
 use WPOptimizer\modules\supporters\Minify_CSS;
 use WPOptimizer\modules\supporters\Minify_HTML;
 use WPOptimizer\modules\supporters\Minify_JS;
@@ -34,11 +35,11 @@ class Mod_Minify extends Module
 
     public function minify($buffer)
     {
-        if (!UtilEnv::is_safe_buffering() or !$this->is_valid_buffer($buffer)) {
+        if (Compatibility::should_bypass_optimization() || !UtilEnv::is_safe_buffering() or !$this->is_valid_buffer($buffer)) {
             return $buffer;
         }
 
-        if (apply_filters("wpopt_allow_minify_html", $this->option('html.active'))) {
+        if (!Compatibility::buffer_contains_page_builder_markup($buffer) && apply_filters("wpopt_allow_minify_html", $this->option('html.active'))) {
 
             $buffer = Minify_HTML::minify($buffer, [
                     'comments'   => !$this->option('html.remove_comments', false),
@@ -52,6 +53,10 @@ class Mod_Minify extends Module
             $buffer = preg_replace_callback('#<script.*src=["\']([^"\']+)["\'].*></script>#iU', function ($matches) {
 
                 list($script, $original_url) = $matches;
+
+                if (Compatibility::is_optimization_sensitive_asset($original_url)) {
+                    return $script;
+                }
 
                 if (!str_contains($original_url, 'min') and str_starts_with($original_url, wps_core()->home_url)) {
 
@@ -86,6 +91,10 @@ class Mod_Minify extends Module
             $buffer = preg_replace_callback('#<link.*href=["\'\s]+([^"\']+)["\'\s]+.*/?>#iU', function ($matches) {
 
                 list($script, $original_url) = $matches;
+
+                if (Compatibility::is_optimization_sensitive_asset($original_url)) {
+                    return $script;
+                }
 
                 if (!str_contains($original_url, 'min') and str_starts_with($original_url, wps_core()->home_url) and str_contains($script, 'stylesheet')) {
 

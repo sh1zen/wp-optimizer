@@ -39,10 +39,6 @@
     --wps-btn-danger-border: #7a2f1f;
     --wps-btn-danger-bg: #b54d33;
     --wps-btn-danger-shadow: 0 6px 14px rgb(140 55 36 / 30%);
-    --wpopt-info-1: #eaf4ff;
-    --wpopt-info-2: #dcecff;
-    --wpopt-info-border: #8eb9da;
-    --wpopt-info-text: #0f4c81;
 }
 
 .wps-wrap a:hover,
@@ -57,7 +53,6 @@
 }
 
 .wpopt-shell,
-.wpopt-main,
 .wpopt-sidebar {
     position: relative;
     z-index: 1;
@@ -74,12 +69,6 @@ body.wpopt-admin-screen .wpopt-dashboard-shell {
     padding: var(--wps-admin-page-gutter) !important;
 }
 
-body.wpopt-admin-screen .wpopt-dashboard-shell .wpopt-main {
-    display: grid;
-    gap: 22px;
-}
-
-body.wpopt-admin-screen .wpopt-dashboard-shell .wpopt-main > *,
 body.wpopt-admin-screen .wpopt-dashboard-shell .wpopt-sidebar > * {
     margin-top: 0 !important;
 }
@@ -88,14 +77,6 @@ body.wpopt-admin-screen .wpopt-dashboard-shell block.wps,
 body.wpopt-admin-screen .wpopt-dashboard-shell .wps-box {
     margin-right: 0 !important;
     margin-left: 0 !important;
-}
-
-body.wpopt-admin-screen .wpopt-dashboard-shell .wpopt-main > block.wps {
-    margin-bottom: 0 !important;
-}
-
-body.wpopt-admin-screen .wpopt-dashboard-shell .wpopt-page-title {
-    margin: 0 !important;
 }
 
 body.wpopt-admin-screen .wpopt-dashboard-shell .wpopt-panel {
@@ -469,98 +450,6 @@ body.wpopt-admin-screen .wps-admin-app .wpopt-app-dashboard .wpopt-sidebar .wps-
     border-radius: 999px;
 }
 
-.wpopt-kpi-grid {
-    display: flex;
-    gap: 10px;
-    min-width: max-content;
-    padding: 0 2px;
-}
-
-.wpopt-kpi-card {
-    width: 185px;
-    flex: 0 0 185px;
-    background: #f6f7f7;
-    border: 1px solid #c3c4c7;
-    border-radius: 12px;
-    padding: 12px 14px;
-    min-height: 92px;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-}
-
-.wpopt-kpi-label {
-    color: #50575e;
-    font-size: 0.78rem;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-}
-
-.wpopt-kpi-value {
-    margin-top: 4px;
-    color: #1d2327;
-    font-size: 1.1rem;
-}
-
-.wpopt-notice-card {
-    border-left: 4px solid #2271b1 !important;
-}
-
-.wpopt-warning-notice {
-    display: grid !important;
-    grid-template-columns: 42px minmax(0, 1fr);
-    align-items: start;
-    gap: 14px;
-    width: auto !important;
-    max-width: 100% !important;
-    margin: 0 24px 20px !important;
-    padding: 18px 20px !important;
-    overflow: visible !important;
-    border: 1px solid rgb(var(--wps-accent-rgb, 34 113 177) / 26%) !important;
-    border-left: 4px solid var(--wps-border-color) !important;
-    border-radius: 12px !important;
-    background:
-        linear-gradient(135deg, rgb(var(--wps-accent-rgb, 34 113 177) / 9%) 0%, transparent 46%),
-        #ffffff !important;
-    box-shadow: 0 10px 24px rgb(var(--wps-accent-rgb, 34 113 177) / 8%) !important;
-    color: #22395a !important;
-}
-
-.wpopt-warning-notice-icon {
-    display: inline-grid;
-    place-items: center;
-    width: 38px;
-    height: 38px;
-    border-radius: 10px;
-    background: rgb(var(--wps-accent-rgb, 34 113 177) / 12%);
-    color: var(--wps-border-color);
-    font-size: 20px;
-    line-height: 38px;
-}
-
-.wpopt-warning-notice-copy {
-    display: grid;
-    gap: 7px;
-    min-width: 0;
-}
-
-.wpopt-warning-notice-copy strong {
-    margin: 0;
-    padding: 0 0 8px;
-    border-bottom: 1px solid rgb(var(--wps-accent-rgb, 34 113 177) / 28%);
-    color: #15345c;
-    font-size: 15px;
-    font-weight: 800;
-    line-height: 1.35;
-}
-
-.wpopt-warning-notice-copy span {
-    color: #4c607b;
-    font-size: 13px;
-    font-weight: 600;
-    line-height: 1.55;
-}
-
 @keyframes wpoptAdvertiseOverlayIn {
     from { opacity: 0; }
     to { opacity: 1; }
@@ -629,6 +518,120 @@ body.wpopt-admin-screen .wps-admin-app .wpopt-app-dashboard .wpopt-sidebar .wps-
 .wpopt-advertise-page.is-welcome > :not(.wpopt-advertise-close) {
     position: relative;
     z-index: 1;
+}
+
+body.wpopt-deactivation-dialog-open {
+    overflow: hidden;
+}
+
+.wpopt-deactivation-feedback[hidden],
+.wpopt-deactivation-other[hidden] {
+    display: none;
+}
+
+.wpopt-deactivation-feedback {
+    display: grid;
+    align-items: start;
+    justify-items: center;
+}
+
+.wpopt-advertise-page.is-deactivation {
+    width: min(820px, 100%);
+    min-height: 0;
+    gap: 26px;
+}
+
+.wpopt-advertise-page.is-deactivation .wpopt-advertise-hero {
+    padding: 0 44px 0 0;
+}
+
+.wpopt-advertise-page.is-deactivation .wpopt-advertise-hero h1 {
+    font-size: 36px;
+}
+
+.wpopt-deactivation-form,
+.wpopt-deactivation-reasons {
+    display: grid;
+    gap: 12px;
+}
+
+.wpopt-deactivation-reasons {
+    margin: 0;
+    padding: 0;
+    border: 0;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.wpopt-deactivation-reason {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    box-sizing: border-box;
+    min-height: 54px;
+    padding: 14px 16px;
+    border: 1px solid #d9e2ef;
+    border-radius: 8px;
+    background: #f8fafc;
+    color: #1d2939;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: border-color 160ms ease, background 160ms ease, transform 160ms ease;
+}
+
+.wpopt-deactivation-reason:hover,
+.wpopt-deactivation-reason:has(input:focus-visible),
+.wpopt-deactivation-reason:has(input:checked) {
+    border-color: #3f6df6;
+    background: #eef5ff;
+    transform: translateY(-1px);
+}
+
+.wpopt-deactivation-reason input {
+    margin: 0;
+}
+
+.wpopt-deactivation-other {
+    display: grid;
+    gap: 8px;
+}
+
+.wpopt-deactivation-other label {
+    color: #344054;
+    font-weight: 700;
+}
+
+.wpopt-deactivation-other textarea {
+    width: 100%;
+    min-height: 112px;
+    box-sizing: border-box;
+    padding: 12px;
+    border-color: #b8c5d6;
+    border-radius: 8px;
+    resize: vertical;
+}
+
+.wpopt-advertise-page.is-deactivation .wpopt-advertise-actions {
+    justify-content: flex-start;
+    margin-top: 6px;
+}
+
+@media (max-width: 782px) {
+    .wpopt-deactivation-feedback {
+        padding: 18px;
+    }
+
+    .wpopt-advertise-page.is-deactivation {
+        padding: 24px;
+    }
+
+    .wpopt-advertise-page.is-deactivation .wpopt-advertise-hero h1 {
+        font-size: 30px;
+    }
+
+    .wpopt-deactivation-reasons {
+        grid-template-columns: minmax(0, 1fr);
+    }
 }
 
 .wpopt-advertise-page.is-hidden {
@@ -1183,10 +1186,6 @@ body.wpopt-admin-screen .wps-admin-app .wpopt-app-dashboard .wpopt-sidebar .wps-
     }
 }
 
-.wpopt-actions-form {
-    margin-top: 8px;
-}
-
 .wpopt-cache-reset-panel {
     display: grid;
     grid-template-columns: repeat(2, minmax(280px, 1fr));
@@ -1703,13 +1702,6 @@ body.wpopt-admin-screen .wps-admin-app .wpopt-app-dashboard .wpopt-sidebar .wps-
     min-width: 0;
 }
 
-.wpopt-static-time-unit {
-    color: #5f6b7a;
-    font-size: 12px;
-    font-weight: 700;
-    white-space: nowrap;
-}
-
 .wpopt-cache-multiselect .wps-multiselect__element.is-selected {
     background: #e9f3ff;
     color: #0a4b78;
@@ -1951,8 +1943,7 @@ body.wpopt-admin-screen .wps-admin-app .wpopt-app-dashboard .wpopt-sidebar .wps-
     box-shadow: var(--wpopt-btn-shadow-active, 0 2px 5px rgb(16 24 40 / 12%));
 }
 
-.wps-wrap .wpopt-btn.is-success,
-.wps-wrap .wpopt-btn-success {
+.wps-wrap .wpopt-btn.is-success {
     --wpopt-btn-text: var(--wps-btn-success-text);
     --wpopt-btn-border: var(--wps-btn-success-border);
     --wpopt-btn-bg: var(--wps-btn-success-bg);
@@ -1961,8 +1952,7 @@ body.wpopt-admin-screen .wps-admin-app .wpopt-app-dashboard .wpopt-sidebar .wps-
     --wpopt-btn-shadow-active: 0 2px 5px rgb(21 128 61 / 20%);
 }
 
-.wps-wrap .wpopt-btn.is-warning,
-.wps-wrap .wpopt-btn-warning {
+.wps-wrap .wpopt-btn.is-warning {
     --wpopt-btn-text: var(--wps-btn-warning-text);
     --wpopt-btn-border: var(--wps-btn-warning-border);
     --wpopt-btn-bg: var(--wps-btn-warning-bg);
@@ -1971,8 +1961,7 @@ body.wpopt-admin-screen .wps-admin-app .wpopt-app-dashboard .wpopt-sidebar .wps-
     --wpopt-btn-shadow-active: 0 2px 5px rgb(194 65 12 / 19%);
 }
 
-.wps-wrap .wpopt-btn.is-info,
-.wps-wrap .wpopt-btn-info {
+.wps-wrap .wpopt-btn.is-info {
     --wpopt-btn-text: var(--wps-btn-info-text);
     --wpopt-btn-border: var(--wps-btn-info-border);
     --wpopt-btn-bg: var(--wps-btn-info-bg);
@@ -1990,8 +1979,7 @@ body.wpopt-admin-screen .wps-admin-app .wpopt-app-dashboard .wpopt-sidebar .wps-
     --wpopt-btn-shadow-active: 0 2px 6px rgb(16 24 40 / 10%);
 }
 
-.wps-wrap .wpopt-btn.is-danger,
-.wps-wrap .wpopt-btn-danger {
+.wps-wrap .wpopt-btn.is-danger {
     --wpopt-btn-text: var(--wps-btn-danger-text);
     --wpopt-btn-border: var(--wps-btn-danger-border);
     --wpopt-btn-bg: var(--wps-btn-danger-bg);
@@ -3111,14 +3099,6 @@ body.wpopt-admin-screen .wps-admin-app .wpopt-app-dashboard .wpopt-sidebar .wps-
     max-width: 320px;
 }
 
-.wpopt-page-title {
-    margin: 0 0 18px;
-    color: #0d1f3a;
-    font-size: 28px;
-    font-weight: 800;
-    line-height: 1.15;
-}
-
 .wpopt-dashboard-hero {
     position: relative;
     display: grid !important;
@@ -3225,23 +3205,6 @@ body.wpopt-admin-screen .wps-admin-app .wpopt-app-dashboard .wpopt-sidebar .wps-
     background: transparent;
 }
 
-.wpopt-hero-svg .wpopt-hero-accent-fill,
-.wpopt-hero-svg .wpopt-hero-dot {
-    fill: var(--wps-accent, #2271b1);
-}
-
-.wpopt-hero-svg .wpopt-hero-accent-stroke {
-    stroke: var(--wps-accent, #2271b1);
-}
-
-.wpopt-hero-svg .wpopt-hero-blob {
-    opacity: 0.9;
-}
-
-.wpopt-hero-svg .wpopt-hero-dot {
-    opacity: 0.38;
-}
-
 .wpopt-panel {
     border: 1px solid #d9e5f5 !important;
     background: #ffffff !important;
@@ -3288,6 +3251,7 @@ body.wpopt-admin-screen .wps-admin-app .wpopt-app-dashboard .wpopt-sidebar .wps-
     grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
     gap: 12px;
     min-width: 0;
+    padding: 0 2px;
 }
 
 .wpopt-kpi-card {
@@ -4191,10 +4155,6 @@ body.wpopt-admin-screen .wps-admin-app .wpopt-app-dashboard .wpopt-sidebar .wps-
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
-    .wpopt-page-title {
-        font-size: 24px;
-    }
-
     .wpopt-dashboard-hero {
         padding: 20px !important;
     }
@@ -4977,34 +4937,17 @@ body.wpopt-admin-screen .wpopt-faq-shell .wpopt-hero > * {
     z-index: 1;
 }
 
-body.wpopt-admin-screen .wpopt-faq-hero-icon,
 body.wpopt-admin-screen .wpopt-faq-row-icon {
     display: inline-flex;
     align-items: center;
     justify-content: center;
     flex: 0 0 auto;
-    color: var(--wpopt-faq-blue);
-    background: var(--wpopt-faq-icon-bg);
-    box-shadow: inset 0 0 0 1px rgba(89, 104, 242, 0.06), 0 8px 18px rgba(89, 104, 242, 0.12);
-}
-
-body.wpopt-admin-screen .wpopt-faq-hero-icon {
-    width: 42px;
-    height: 42px;
-    border-radius: 12px;
-    color: #ffffff;
-    background: linear-gradient(135deg, #6171f7 0%, #4f63e6 100%);
-}
-
-body.wpopt-admin-screen .wpopt-faq-hero-icon .wps-svg-icon {
-    width: 20px;
-    height: 20px;
-}
-
-body.wpopt-admin-screen .wpopt-faq-row-icon {
     width: 34px;
     height: 34px;
     border-radius: 999px;
+    color: var(--wpopt-faq-blue);
+    background: var(--wpopt-faq-icon-bg);
+    box-shadow: inset 0 0 0 1px rgba(89, 104, 242, 0.06), 0 8px 18px rgba(89, 104, 242, 0.12);
 }
 
 body.wpopt-admin-screen .wpopt-faq-row-icon .wps-svg-icon {
@@ -5250,15 +5193,12 @@ body.wpopt-admin-screen .wpopt-faq-shell .wps-faq-answer ul:last-child {
     align-items: center;
     justify-content: center;
     flex: 0 0 auto;
-    color: var(--wpopt-system-info-icon);
-    background: var(--wpopt-system-info-icon-bg);
-    box-shadow: inset 0 0 0 1px rgb(var(--wps-accent-rgb, 34 113 177) / 6%), 0 8px 18px rgb(var(--wps-accent-rgb, 34 113 177) / 12%);
-}
-
-.wpopt-system-info-title-icon {
     width: 34px;
     height: 34px;
     border-radius: 9px;
+    color: var(--wpopt-system-info-icon);
+    background: var(--wpopt-system-info-icon-bg);
+    box-shadow: inset 0 0 0 1px rgb(var(--wps-accent-rgb, 34 113 177) / 6%), 0 8px 18px rgb(var(--wps-accent-rgb, 34 113 177) / 12%);
 }
 
 .wpopt-system-info-title-icon .wps-svg-icon {
@@ -5361,25 +5301,6 @@ body.wpopt-admin-screen .wpopt-system-info-table.widefat tbody tr.alternate td {
     line-height: 1.45;
 }
 
-.wpopt-system-info-label-cell {
-    display: table-cell;
-}
-
-.wpopt-system-info-label-cell b {
-    vertical-align: middle;
-}
-
-.wpopt-system-info-value-cell a {
-    color: #4f46e5;
-    text-decoration: none;
-}
-
-.wpopt-system-info-value-cell a:hover,
-.wpopt-system-info-value-cell a:focus {
-    color: #3730a3;
-    text-decoration: underline;
-}
-
 @media (max-width: 960px) {
     .wpopt-system-info-table.widefat,
     .wpopt-system-info-table tbody,
@@ -5404,9 +5325,6 @@ body.wpopt-admin-screen .wpopt-system-info-table.widefat tbody tr.alternate td {
         border-bottom: 0;
     }
 
-    .wpopt-system-info-empty-cell {
-        display: none !important;
-    }
 }
 
 /* Performance Monitor */
@@ -6893,9 +6811,6 @@ body.wps-admin-screen .wpopt-core-settings-page .wpopt-configuration-backups-act
 
     body.wps-admin-screen .wpopt-core-settings-page .wpopt-configuration-backups-actions {
         justify-content: flex-start !important;
-    }
-
-    body.wps-admin-screen .wpopt-core-settings-page .wpopt-configuration-backups-actions {
         display: grid !important;
         grid-template-columns: 1fr !important;
         width: 100% !important;
@@ -7884,5 +7799,33 @@ body.wps-admin-screen .wps-core-settings-page .wpopt-cloudflare-form {
     to {
         opacity: 1;
         transform: translateY(0);
+    }
+}
+
+/*
+ * Mail log columns need semantic proportions. The shared WPS table class uses
+ * automatic column sizing, which lets a long message collapse the recipient,
+ * subject and date columns until their text wraps one character at a time.
+ */
+@media (min-width: 981px) {
+    .wps-wrap .wpopt-mail-log-form table.wp-list-table.wps-table {
+        table-layout: fixed;
+    }
+
+    .wps-wrap .wpopt-mail-log-form table.wp-list-table .column-id {
+        width: 64px;
+    }
+
+    .wps-wrap .wpopt-mail-log-form table.wp-list-table .column-to_email,
+    .wps-wrap .wpopt-mail-log-form table.wp-list-table .column-subject {
+        width: 20%;
+    }
+
+    .wps-wrap .wpopt-mail-log-form table.wp-list-table .column-attachments {
+        width: 112px;
+    }
+
+    .wps-wrap .wpopt-mail-log-form table.wp-list-table .column-sent_date {
+        width: 132px;
     }
 }

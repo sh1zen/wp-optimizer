@@ -185,7 +185,6 @@ class Mod_Settings extends Module
             'minify'              => 'tools',
             'pagespeed'           => 'pagespeed',
             'performance_monitor' => 'chart',
-            'widget'              => 'box',
             'wp_customizer'       => 'sliders',
             'wp_info'             => 'info',
             'wp_mail'             => 'mail',

@@ -155,9 +155,9 @@ class Mod_WP_Updates extends Module
     protected function setting_fields($filter = ''): array
     {
         return $this->group_setting_fields(
-            $this->setting_field(__('Disable Wordpress Core Updates', 'wpopt'), "core-updates", "checkbox"),
-            $this->setting_field(__('Disable Plugins Updates', 'wpopt'), "plugin-updates", "checkbox"),
-            $this->setting_field(__('Disable Themes Updates', 'wpopt'), "theme-update", "checkbox"),
+            $this->setting_field(__('Disable Wordpress Core Updates', 'wpopt'), "core-updates", "checkbox", ['risk' => 'danger']),
+            $this->setting_field(__('Disable Plugins Updates', 'wpopt'), "plugin-updates", "checkbox", ['risk' => 'danger']),
+            $this->setting_field(__('Disable Themes Updates', 'wpopt'), "theme-update", "checkbox", ['risk' => 'danger']),
             $this->setting_field(__('Disable Updates Messages', 'wpopt'), "message-updates", "checkbox"),
             $this->setting_field(__('Remove Updates Page', 'wpopt'), "page-updates", "checkbox"),
             $this->setting_field(__('Disable Automatic Updates', 'wpopt'), "automatic-updates", "checkbox"),

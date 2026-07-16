@@ -104,7 +104,7 @@ class QueryCache extends Cache_Dispatcher
 
         $this->query_request_path = CacheRequestPolicy::normalize_request_path();
 
-        if ($this->request_policy()->has_no_cache_cookie() || $this->request_policy()->user_agent_is_excluded()) {
+        if ($this->request_policy()->automatic_bypass_reason() !== '' || $this->request_policy()->has_no_cache_cookie() || $this->request_policy()->user_agent_is_excluded()) {
             return false;
         }
 

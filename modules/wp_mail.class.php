@@ -417,7 +417,7 @@ class Mod_WP_Mail extends Module
                 $this->setting_field(__('Encryption', 'wpopt'), "smtp.encryption", "dropdown", ['parent' => 'smtp.active', 'list' => ['ssl', 'tls', ''], 'default_value' => 'ssl']),
                 $this->setting_field(__('AutoTLS', 'wpopt'), "smtp.autotls", "text", ['parent' => 'smtp.active', 'default_value' => false]),
                 $this->setting_field(__('SSL', 'wpopt'), false, "separator"),
-                $this->setting_field(__('Allow self signed ssl certificate', 'wpopt'), "ssl.self-signed", "checkbox", ['default_value' => false]),
+                $this->setting_field(__('Allow self signed ssl certificate', 'wpopt'), "ssl.self-signed", "checkbox", ['default_value' => false, 'risk' => 'danger']),
             ),
 
             $this->group_setting_fields(

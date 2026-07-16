@@ -10,6 +10,7 @@ namespace WPOptimizer\modules\supporters;
 use WPS\core\Disk;
 use WPS\core\Settings;
 use WPS\core\UtilEnv;
+use WPOptimizer\core\Compatibility;
 
 class StaticCacheDirectAccess
 {
@@ -47,6 +48,25 @@ class StaticCacheDirectAccess
         return self::write_config(self::build_config($options)) && self::write_bootstrap();
     }
 
+    public static function refresh_installed_runtime(): bool
+    {
+        if (!is_file(self::bootstrap_path()) && !is_file(self::config_path())) {
+            return true;
+        }
+
+        if (!is_file(self::config_path())) {
+            return self::write_disabled_runtime();
+        }
+
+        $options = include self::config_path();
+
+        if (!is_array($options) || empty($options['enabled'])) {
+            return self::write_disabled_runtime();
+        }
+
+        return self::write_runtime_files($options);
+    }
+
     public static function status(): array
     {
         $config = array();
@@ -73,7 +93,7 @@ class StaticCacheDirectAccess
             return false;
         }
 
-        if (self::is_admin_request_path($request_path)) {
+        if (self::is_admin_request_path($request_path) || Compatibility::path_is_woocommerce_sensitive($request_path)) {
             return false;
         }
 
@@ -145,8 +165,10 @@ class StaticCacheDirectAccess
 
     public static function apache_cookie_rewrite_condition(array $options): string
     {
+        $automatic_patterns = Compatibility::woocommerce_cache_cookie_patterns();
+
         if ((bool)Settings::get_option($options, 'no_cache_cookies_enabled', true)) {
-            $patterns = self::no_cache_cookie_patterns($options);
+            $patterns = array_merge($automatic_patterns, self::no_cache_cookie_patterns($options));
 
             if (empty($patterns)) {
                 return '.+';
@@ -160,15 +182,19 @@ class StaticCacheDirectAccess
         }
 
         if (self::logged_in_direct_access_allowed($options)) {
-            return '';
+            return self::apache_cookie_pattern_condition($automatic_patterns);
         }
 
-        return self::apache_cookie_pattern_condition(self::logged_in_cookie_patterns());
+        return self::apache_cookie_pattern_condition(array_merge($automatic_patterns, self::logged_in_cookie_patterns()));
     }
 
     public static function is_supported(): bool
     {
-        return is_writable(ABSPATH) && (is_writable(self::base_dir()) || is_writable(dirname(self::base_dir())));
+        $storage_is_writable = is_dir(self::base_dir())
+            ? is_writable(self::base_dir())
+            : is_writable(WP_CONTENT_DIR);
+
+        return is_writable(ABSPATH) && $storage_is_writable;
     }
 
     private static function write_config(array $config): bool
@@ -185,7 +211,7 @@ class StaticCacheDirectAccess
         $site_path = parse_url(home_url('/'), PHP_URL_PATH) ?: '/';
 
         return array(
-            'enabled'                       => true,
+            'enabled'                       => !empty($options['direct_access_enabled']) || !empty($options['enabled']),
             'abspath'                       => '',
             'site_path'                     => '/' . trim($site_path, '/'),
             'index_dir'                     => self::relative_path(ABSPATH, self::index_dir()),
@@ -199,7 +225,27 @@ class StaticCacheDirectAccess
             'no_cache_cookies_enabled'      => (bool)Settings::get_option($options, 'no_cache_cookies_enabled', true),
             'no_cache_cookies'              => self::no_cache_cookie_patterns($options),
             'status_cache_policy'           => self::normalize_status_cache_policy(Settings::get_option($options, 'status_cache_policy', self::DEFAULT_STATUS_CACHE_POLICY)),
+            'woocommerce_sensitive_paths'   => Compatibility::woocommerce_sensitive_paths(),
+            'woocommerce_cache_query_keys'  => Compatibility::woocommerce_cache_query_keys(),
+            'woocommerce_cookie_patterns'   => Compatibility::woocommerce_cache_cookie_patterns(),
+            'page_builder_query_keys'       => Compatibility::page_builder_query_keys(),
         );
+    }
+
+    private static function write_disabled_runtime(): bool
+    {
+        if (!self::is_supported() || !Disk::make_path(self::base_dir(), true)) {
+            return false;
+        }
+
+        $site_path = parse_url(home_url('/'), PHP_URL_PATH) ?: '/';
+        $config = array(
+            'enabled'   => false,
+            'abspath'   => '',
+            'site_path' => '/' . trim($site_path, '/'),
+        );
+
+        return self::write_config($config) && self::write_bootstrap();
     }
 
     private static function write_bootstrap(): bool
@@ -566,6 +612,22 @@ function wpopt_static_direct_cookie_is_blocked(array $config): bool
         return false;
     }
 
+    $automatic_patterns = (array)($config['woocommerce_cookie_patterns'] ?? array(
+        'woocommerce_cart_hash',
+        'woocommerce_items_in_cart',
+        'wp_woocommerce_session_',
+        'woocommerce_recently_viewed',
+        'store_notice',
+    ));
+
+    foreach (array_keys($_COOKIE) as $cookie_name) {
+        foreach ($automatic_patterns as $pattern) {
+            if (wpopt_static_direct_pattern_matches((string)$pattern, (string)$cookie_name)) {
+                return true;
+            }
+        }
+    }
+
     if (!empty($config['no_cache_cookies_enabled'])) {
         $patterns = (array)($config['no_cache_cookies'] ?? array());
         if (empty($patterns)) {
@@ -608,6 +670,31 @@ function wpopt_static_direct_user_agent_is_blocked(array $config): bool
 
     foreach ((array)($config['user_agent_exclusions'] ?? array()) as $pattern) {
         if (wpopt_static_direct_pattern_matches((string)$pattern, $user_agent)) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+function wpopt_static_direct_is_automatically_excluded(array $config, string $path): bool
+{
+    $path = trim(str_replace('\\', '/', $path), '/');
+    foreach ((array)($config['woocommerce_sensitive_paths'] ?? array('cart', 'checkout', 'my-account')) as $sensitive_path) {
+        $sensitive_path = trim(str_replace('\\', '/', (string)$sensitive_path), '/');
+        if ($sensitive_path !== '' && ($path === $sensitive_path || strpos($path, $sensitive_path . '/') === 0)) {
+            return true;
+        }
+    }
+
+    foreach ((array)($config['woocommerce_cache_query_keys'] ?? array('add-to-cart', 'wc-api', 'wc-ajax')) as $query_key) {
+        if (is_string($query_key) && array_key_exists($query_key, $_GET)) {
+            return true;
+        }
+    }
+
+    foreach ((array)($config['page_builder_query_keys'] ?? array()) as $query_key) {
+        if (is_string($query_key) && array_key_exists($query_key, $_GET)) {
             return true;
         }
     }
@@ -701,6 +788,10 @@ if (
 }
 
 $request_path = wpopt_static_direct_request_path($config);
+if (wpopt_static_direct_is_automatically_excluded($config, $request_path)) {
+    wpopt_static_direct_fallback($config);
+}
+
 $query_string = wpopt_static_direct_query_string($config);
 if ($query_string === null || !wpopt_static_direct_rules_allow($config, $request_path)) {
     wpopt_static_direct_fallback($config);

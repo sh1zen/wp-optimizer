@@ -131,6 +131,7 @@ class Graphic
             'parent'       => false,
             'depend'       => false,
             'icon'         => '',
+            'risk'         => '',
             'nexted_level' => 0,
             'context'      => 'table'
         ), $args);
@@ -177,11 +178,12 @@ class Graphic
                 $row_class = $padding_left ? 'wps-child' : '';
                 $row_type_class = sanitize_html_class('wps-row-type-' . str_replace('_', '-', $args['type']));
                 $row_id_class = $args['id'] ? sanitize_html_class('wps-row-' . str_replace(['.', '_'], '-', $args['id'])) : '';
+                $row_risk_class = $args['risk'] ? sanitize_html_class('wps-row-risk-' . sanitize_key((string)$args['risk'])) : '';
                 $row_icon = self::icon($args['icon'] ?: self::field_icon($args['id'], $args['type']), 'wps-row-icon');
 
                 $_style = $padding_left ? "style='padding-left: {$padding_left}px'" : '';
 
-                $p_open_wrapper = "<row class='wps-row $row_class $row_type_class $row_id_class' $_style>{$row_icon}<div class='wps-option'><strong>{$args['name']}</strong>$description$label_icon</div><div class='wps-value'>";
+                $p_open_wrapper = "<row class='wps-row $row_class $row_type_class $row_id_class $row_risk_class' $_style>{$row_icon}<div class='wps-option'><strong>{$args['name']}</strong>$description$label_icon</div><div class='wps-value'>";
                 $o_close_wrapper = "</div>$label</row>";
                 break;
         }
@@ -536,6 +538,7 @@ class Graphic
             'placeholder' => $args['placeholder'],
             'list'        => $args['list'],
             'icon'        => $args['icon'] ?? '',
+            'risk'        => $args['risk'] ?? '',
             'classes'     => $args['classes'] ?? '',
             'props'       => $args['props'] ?? [],
             'before'      => $args['before'] ?? false,

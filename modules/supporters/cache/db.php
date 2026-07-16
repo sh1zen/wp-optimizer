@@ -6,6 +6,7 @@
  */
 
 use WPS\core\Cache;
+use WPOptimizer\core\Compatibility;
 use WPOptimizer\modules\supporters\StaticCacheRules;
 
 if (!defined('ABSPATH')) {
@@ -148,7 +149,13 @@ class WPOPT_DB extends wpdb
             return true;
         }
 
-        if ($this->request_has_no_cache_cookie() || $this->user_agent_is_excluded() || !$this->query_matches_selected_tables((string)$query)) {
+        if (
+            $this->request_is_compatibility_excluded()
+            || $this->query_uses_woocommerce_session_storage((string)$query)
+            || $this->request_has_no_cache_cookie()
+            || $this->user_agent_is_excluded()
+            || !$this->query_matches_selected_tables((string)$query)
+        ) {
             return true;
         }
 
@@ -161,6 +168,49 @@ class WPOPT_DB extends wpdb
         }
 
         return false;
+    }
+
+    private function request_is_compatibility_excluded(): bool
+    {
+        if (class_exists(Compatibility::class, false)) {
+            return Compatibility::cache_bypass_reason() !== '';
+        }
+
+        $query_keys = array(
+            'add-to-cart', 'wc-api', 'wc-ajax', 'preview', 'preview_id', 'preview_nonce', 'elementor-preview', 'elementor_library', 'fl_builder', 'fl_builder_ui',
+            'et_fb', 'et_bfb', 'et_pb_preview', 'bricks', 'bricks_preview', 'ct_builder',
+            'oxygen_iframe', 'oxy_preview_revision', 'breakdance', 'breakdance_iframe', 'breakdance_builder',
+        );
+        foreach ($query_keys as $query_key) {
+            if (array_key_exists($query_key, $_GET)) {
+                return true;
+            }
+        }
+
+        foreach (array_keys(is_array($_COOKIE ?? null) ? $_COOKIE : array()) as $cookie_name) {
+            foreach (array('woocommerce_cart_hash', 'woocommerce_items_in_cart', 'wp_woocommerce_session_', 'woocommerce_recently_viewed', 'store_notice') as $pattern) {
+                if (strpos((string)$cookie_name, $pattern) === 0) {
+                    return true;
+                }
+            }
+        }
+
+        $path = parse_url((string)($_SERVER['REQUEST_URI'] ?? '/'), PHP_URL_PATH);
+        $path = trim((string)preg_replace('#/+#', '/', rawurldecode((string)$path)), '/');
+        foreach (array('cart', 'checkout', 'my-account') as $sensitive_path) {
+            if ($path === $sensitive_path || strpos($path, $sensitive_path . '/') === 0) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private function query_uses_woocommerce_session_storage(string $query): bool
+    {
+        $query = strtolower($query);
+
+        return strpos($query, 'woocommerce_sessions') !== false || strpos($query, '_wc_session_') !== false;
     }
 
     private function generate_key($query, ...$args): string

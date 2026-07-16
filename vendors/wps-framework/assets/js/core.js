@@ -1147,9 +1147,57 @@
         positionWpsDropdownList($dropdown);
     }
 
+    const externalizeWpsAppTabs = function (scope = document) {
+        const $scope = $(scope);
+        let $apps = $scope.filter('.wps-admin-app').add($scope.find('.wps-admin-app'));
+
+        if (!$apps.length && scope.nodeType === 1) {
+            $apps = $scope.closest('.wps-admin-app');
+        }
+
+        $apps.each(function (appIndex) {
+            const $app = $(this);
+            const $tabsbar = $app.find('> .wps-app-main > .wps-app-tabsbar').first();
+            if (!$tabsbar.length) return;
+
+            const $tabs = $app.find('> .wps-app-main > .wps-app-content .wps-ar-tabs').filter(function () {
+                return $(this).closest('.wps-ar-tabcontent').length === 0;
+            }).first();
+
+            if (!$tabs.length) return;
+
+            const $tabList = $tabs.children('.wps-ar-tablist').first();
+            if (!$tabList.length || $tabList.closest('.wps-app-tabsbar').length) return;
+
+            const tabsId = $tabs.attr('data-wps-tabs-id') || `wps-tabs-${appIndex}`;
+            $tabs.attr('data-wps-tabs-id', tabsId).addClass('wps-ar-tabs-has-external-list');
+            $tabList.attr('data-wps-tabs-owner', tabsId);
+            $tabsbar.empty().append($tabList).removeAttr('hidden');
+        });
+    };
+
+    // The script loads in the document head. Observe parser mutations so app
+    // tabs reach their final toolbar before the first paint, avoiding a jump
+    // from the content panel when the DOM-ready handlers run.
+    let appTabsObserver = null;
+
+    if (window.MutationObserver && document.documentElement) {
+        appTabsObserver = new window.MutationObserver(function () {
+            externalizeWpsAppTabs(document);
+        });
+        appTabsObserver.observe(document.documentElement, {childList: true, subtree: true});
+    }
+
+    externalizeWpsAppTabs(document);
+
     $(function () {
         $window = $(window);
         $body = $('body');
+        if (appTabsObserver) {
+            appTabsObserver.disconnect();
+            appTabsObserver = null;
+        }
+        externalizeWpsAppTabs(document);
         const adminContext = wps.currentAdminContext();
         wpsAutosaveNonce = adminContext ? wps.locale.get(adminContext + "_ajax_nonce", "") : "";
         const hadServerNoticeToast = initServerNoticeToasts();
@@ -1312,26 +1360,6 @@
                 $chart.data('size') || 100,
                 $chart.data('stroke') || 1
             ));
-        });
-
-        $('.wps-admin-app').each(function (appIndex) {
-            const $app = $(this);
-            const $tabsbar = $app.find('> .wps-app-main > .wps-app-tabsbar').first();
-            if (!$tabsbar.length) return;
-
-            const $tabs = $app.find('> .wps-app-main > .wps-app-content .wps-ar-tabs').filter(function () {
-                return $(this).closest('.wps-ar-tabcontent').length === 0;
-            }).first();
-
-            if (!$tabs.length) return;
-
-            const $tabList = $tabs.children('.wps-ar-tablist').first();
-            if (!$tabList.length || $tabList.closest('.wps-app-tabsbar').length) return;
-
-            const tabsId = $tabs.attr('data-wps-tabs-id') || `wps-tabs-${appIndex}`;
-            $tabs.attr('data-wps-tabs-id', tabsId).addClass('wps-ar-tabs-has-external-list');
-            $tabList.attr('data-wps-tabs-owner', tabsId);
-            $tabsbar.empty().append($tabList).removeAttr('hidden');
         });
 
         // Tabs

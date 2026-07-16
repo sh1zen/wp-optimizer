@@ -125,6 +125,29 @@ finally {
 
 The successful path resumes with `$flush_if_dirty = true`, so WP Optimizer performs one final flush of dirty active cache layers. The abort path resumes with `$flush_if_dirty = false`, avoiding an expensive final flush after an incomplete operation.
 
+## Compatibility Filters
+
+WP Optimizer automatically protects WooCommerce purchase routes and the supported visual builders. Integrations with custom endpoints or builder variants can extend that policy without replacing it.
+
+- `wpopt_woocommerce_sensitive_paths` filters the normalized route prefixes excluded from cache and runtime HTML optimization. Return paths relative to the site URL, without query strings.
+- `wpopt_page_builder_query_keys` filters the query keys that identify editor or preview requests.
+- `wpopt_is_page_builder_request` can mark the current request as a builder request.
+- `wpopt_is_page_builder_asset` can preserve an additional CSS or JavaScript URL from minifier rewriting.
+- `wpopt_buffer_contains_page_builder_markup` can preserve an HTML response from HTML minification.
+- `wpopt_compatibility_bypass_optimization` can request an additional runtime-optimization bypass. It cannot disable a built-in safety exclusion.
+
+Add custom WooCommerce-compatible endpoints by appending to the existing list:
+
+```php
+add_filter('wpopt_woocommerce_sensitive_paths', static function (array $paths): array {
+    $paths[] = 'area-clienti/ordini';
+
+    return $paths;
+});
+```
+
+Built-in WooCommerce paths and builder query keys are always retained. Path/key filters append compatibility rules; returning a shorter list cannot remove mandatory protections. Filters that detect the current request or buffer should return the incoming decision when they do not recognize their own integration.
+
 ## Media API
 
 ### `wpopt_optimize_image(string $path, bool $replace = true, array $settings = [])`

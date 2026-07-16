@@ -5349,6 +5349,23 @@ body.wps-admin-screen .wps-wrap:not(.wps-home) .wps-options .wps-row {
     border-bottom: 1px solid var(--wps-admin-page-line);
 }
 
+body.wps-admin-screen .wps-core-settings-page .wps-options .wps-row-risk-danger,
+body.wps-admin-screen .wps-wrap:not(.wps-home) .wps-options .wps-row-risk-danger {
+    position: relative;
+}
+
+body.wps-admin-screen .wps-core-settings-page .wps-options .wps-row-risk-danger::before,
+body.wps-admin-screen .wps-wrap:not(.wps-home) .wps-options .wps-row-risk-danger::before {
+    content: '';
+    position: absolute;
+    top: 12px;
+    bottom: 12px;
+    left: -22px;
+    width: 4px;
+    border-radius: 0 4px 4px 0;
+    background: #d63638;
+}
+
 body.wps-admin-screen :is(.wps-core-settings-page, .wps-wrap:not(.wps-home)) .wps-options :is(.wps-row-type-textarea, .wps-row-type-textarea-array) {
     display: flex;
     align-items: start;

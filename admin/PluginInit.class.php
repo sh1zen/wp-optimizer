@@ -17,6 +17,7 @@ use WPS\core\UtilEnv;
 class PluginInit
 {
     private const WELCOME_SEEN_OPTION = 'wpopt_welcome_seen';
+    private const DEACTIVATION_FEEDBACK_TRANSIENT = 'wpopt_deactivation_feedback_';
 
     private static ?PluginInit $_instance;
 
@@ -33,7 +34,10 @@ class PluginInit
 
         if (is_admin()) {
             $this->register_actions();
-            $this->do_welcome();
+
+            if (self::should_do_welcome()) {
+                $this->do_welcome();
+            }
         }
 
         if (did_action('init')) {
@@ -46,6 +50,11 @@ class PluginInit
         wps_maybe_upgrade('wpopt', WPOPT_VERSION, WPOPT_ADMIN . "upgrades/");
     }
 
+    public static function should_do_welcome(): bool
+    {
+        return false;
+    }
+
     private function register_actions(): void
     {
         // Plugin Activation/Deactivation.
@@ -54,9 +63,34 @@ class PluginInit
 
         add_action('wp_ajax_wpopt_page_test_prepare', array($this, 'ajax_prepare_page_test'));
         add_action('wp_ajax_wpopt_page_test_diagnostics', array($this, 'ajax_page_test_diagnostics'));
+        add_action('wp_ajax_wpopt_submit_deactivation_feedback', array($this, 'ajax_submit_deactivation_feedback'));
+        add_action('activated_plugin', array($this, 'refresh_after_woocommerce_activation'), 10, 1);
+        add_action('admin_enqueue_scripts', array($this, 'enqueue_deactivation_feedback_assets'), 30, 1);
+        add_action('admin_footer-plugins.php', array($this, 'render_deactivation_feedback_dialog'));
+        add_action('admin_footer-plugins-network.php', array($this, 'render_deactivation_feedback_dialog'));
+
+        foreach (array('woocommerce_cart_page_id', 'woocommerce_checkout_page_id', 'woocommerce_myaccount_page_id') as $option) {
+            add_action("update_option_{$option}", array($this, 'refresh_compatibility_runtime'), 10, 0);
+        }
 
         add_filter("plugin_action_links_$this->plugin_basename", array($this, 'extra_plugin_link'), 10, 2);
         add_filter('plugin_row_meta', array($this, 'donate_link'), 10, 4);
+    }
+
+    public function refresh_after_woocommerce_activation(string $plugin): void
+    {
+        if (strtolower(wp_normalize_path($plugin)) !== 'woocommerce/woocommerce.php') {
+            return;
+        }
+
+        $this->refresh_compatibility_runtime();
+    }
+
+    public function refresh_compatibility_runtime(): void
+    {
+        require_once WPOPT_SUPPORTERS . 'cache/staticcache_direct.class.php';
+
+        \WPOptimizer\modules\supporters\StaticCacheDirectAccess::refresh_installed_runtime();
     }
 
     /**
@@ -718,7 +752,6 @@ class PluginInit
             'performance_monitor',
             'wp_mail',
             'wp_updates',
-            'widget',
             'wp_info',
         );
 
@@ -743,19 +776,35 @@ class PluginInit
     {
         global $wp_version;
 
-        if (wps('wpopt')->settings->get('tracking.usage', true)) {
+        $tracking_enabled = (bool)wps('wpopt')->settings->get('tracking.usage', true);
+        $feedback = get_transient(self::DEACTIVATION_FEEDBACK_TRANSIENT . get_current_user_id());
+        $feedback_lines = array();
 
-            $mail_content = StringHelper::stringBuilder(
-                "Details:",
-                "Settings: " . maybe_serialize(wps('wpopt')->settings->get()),
-                "Conf: PHP:" . PHP_VERSION . ", WP:$wp_version",
-                "\nAutomatically sent message by wps framework."
-            );
+        if (is_array($feedback) && !empty($feedback['reason'])) {
+            $feedback_lines[] = 'Deactivation reason: ' . $feedback['reason'];
+
+            if (!empty($feedback['details'])) {
+                $feedback_lines[] = 'Deactivation details: ' . $feedback['details'];
+            }
+        }
+
+        if ($tracking_enabled || $feedback_lines) {
+            $mail_lines = array_merge(array("Details:"), $feedback_lines);
+
+            if ($tracking_enabled) {
+                $mail_lines[] = "Settings: " . maybe_serialize(wps('wpopt')->settings->get());
+                $mail_lines[] = "Conf: PHP:" . PHP_VERSION . ", WP:$wp_version";
+            }
+
+            $mail_lines[] = "\nAutomatically sent message by wps framework.";
+            $mail_content = StringHelper::stringBuilder(...$mail_lines);
 
             if (wps_core()->online) {
                 wp_mail('dev.sh1zen@outlook.it', 'WPOPT uninstall report ' . wps_domain(), $mail_content);
             }
         }
+
+        delete_transient(self::DEACTIVATION_FEEDBACK_TRANSIENT . get_current_user_id());
 
         wpopt_cleanup_media_cron_hooks();
 
@@ -767,6 +816,114 @@ class PluginInit
          * Hook for the plugin deactivation
          */
         do_action('wpopt-deactivate');
+    }
+
+    public function enqueue_deactivation_feedback_assets(string $hook_suffix): void
+    {
+        if (!in_array($hook_suffix, array('plugins.php', 'plugins-network.php'), true) || !current_user_can('activate_plugins')) {
+            return;
+        }
+
+        wp_enqueue_style('wpopt_css');
+
+        $asset = UtilEnv::resolve_asset(WPOPT_ABSPATH, 'assets/deactivation-feedback.js', wps_core()->online);
+        $version = $asset['version'] ?: (file_exists(WPOPT_ABSPATH . 'assets/deactivation-feedback.js') ? filemtime(WPOPT_ABSPATH . 'assets/deactivation-feedback.js') : WPOPT_VERSION);
+
+        wp_enqueue_script('wpopt_deactivation_feedback', $asset['url'], array(), $version, true);
+        wp_localize_script('wpopt_deactivation_feedback', 'wpoptDeactivationFeedback', array(
+            'ajaxUrl'    => admin_url('admin-ajax.php'),
+            'nonce'      => wp_create_nonce('wpopt-deactivation-feedback'),
+            'pluginFile' => $this->plugin_basename,
+        ));
+    }
+
+    public function ajax_submit_deactivation_feedback(): void
+    {
+        if (!current_user_can('activate_plugins')) {
+            wp_send_json_error(array('message' => __('You are not allowed to deactivate plugins.', 'wpopt')), 403);
+        }
+
+        check_ajax_referer('wpopt-deactivation-feedback', 'nonce');
+
+        $reasons = $this->get_deactivation_feedback_reasons();
+        $reason_key = isset($_POST['reason']) ? sanitize_key(wp_unslash($_POST['reason'])) : '';
+
+        if (!isset($reasons[$reason_key])) {
+            wp_send_json_error(array('message' => __('Select a reason before continuing.', 'wpopt')), 400);
+        }
+
+        $details = '';
+
+        if ($reason_key === 'other' && isset($_POST['details'])) {
+            $details = wp_html_excerpt(sanitize_textarea_field(wp_unslash($_POST['details'])), 1000, '');
+        }
+
+        set_transient(
+            self::DEACTIVATION_FEEDBACK_TRANSIENT . get_current_user_id(),
+            array(
+                'reason'  => $reasons[$reason_key],
+                'details' => $details,
+            ),
+            10 * MINUTE_IN_SECONDS
+        );
+
+        wp_send_json_success();
+    }
+
+    public function render_deactivation_feedback_dialog(): void
+    {
+        if (!current_user_can('activate_plugins')) {
+            return;
+        }
+
+        $reasons = $this->get_deactivation_feedback_reasons();
+        ?>
+        <div class="wpopt-advertise-overlay wpopt-deactivation-feedback" data-wpopt-deactivation-dialog hidden role="dialog" aria-modal="true" aria-labelledby="wpopt-deactivation-title">
+            <div class="wpopt-advertise-page is-welcome is-deactivation">
+                <button type="button" class="wpopt-advertise-close" data-wpopt-deactivation-close aria-label="<?php esc_attr_e('Close', 'wpopt'); ?>">&times;</button>
+                <section class="wpopt-advertise-hero">
+                    <span class="wpopt-advertise-eyebrow"><?php esc_html_e('Before you go', 'wpopt'); ?></span>
+                    <h1 id="wpopt-deactivation-title"><?php esc_html_e('Help us improve WP Optimizer', 'wpopt'); ?></h1>
+                    <p><?php esc_html_e('Your answer helps us improve the plugin. Choose the option that best describes your experience.', 'wpopt'); ?></p>
+                </section>
+
+                <form class="wpopt-deactivation-form" data-wpopt-deactivation-form>
+                    <fieldset class="wpopt-deactivation-reasons">
+                        <legend class="screen-reader-text"><?php esc_html_e('Deactivation reason', 'wpopt'); ?></legend>
+                        <?php foreach ($reasons as $value => $label) : ?>
+                            <label class="wpopt-deactivation-reason">
+                                <input type="radio" name="reason" value="<?php echo esc_attr($value); ?>">
+                                <span><?php echo esc_html($label); ?></span>
+                            </label>
+                        <?php endforeach; ?>
+                    </fieldset>
+
+                    <div class="wpopt-deactivation-other" data-wpopt-deactivation-other hidden>
+                        <label for="wpopt-deactivation-details"><?php esc_html_e('Tell us more', 'wpopt'); ?></label>
+                        <textarea id="wpopt-deactivation-details" name="details" rows="5" maxlength="1000" placeholder="<?php esc_attr_e('Describe the reason for deactivating the plugin...', 'wpopt'); ?>"></textarea>
+                    </div>
+
+                    <div class="wpopt-advertise-actions">
+                        <button type="submit" class="wpopt-advertise-button is-primary" disabled><?php esc_html_e('Send feedback and deactivate', 'wpopt'); ?></button>
+                        <button type="button" class="wpopt-advertise-button is-muted" data-wpopt-deactivation-skip><?php esc_html_e('Skip and deactivate', 'wpopt'); ?></button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        <?php
+    }
+
+    private function get_deactivation_feedback_reasons(): array
+    {
+        return array(
+            'temporary'       => __('I am deactivating it temporarily', 'wpopt'),
+            'not_needed'      => __('I no longer need the plugin', 'wpopt'),
+            'too_complicated' => __('It is too complicated; I need a tutorial', 'wpopt'),
+            'missing_feature' => __('A feature I need is missing', 'wpopt'),
+            'technical_issue' => __('I encountered a technical issue', 'wpopt'),
+            'alternative'     => __('I found a better alternative', 'wpopt'),
+            'other'           => __('Other', 'wpopt'),
+        );
     }
 
     /**

@@ -5,370 +5,139 @@ Donate link: https://www.paypal.com/donate/?hosted_button_id=8G8VR4APG9JRU
 Requires at least: 5.0.0
 Tested up to: 7.0.0
 Requires PHP: 7.4
-Stable tag: 2.8.5
+Stable tag: 2.8.6
 License: GPLv2 or later
 
 All-in-one speed optimization plugin: cache, lazy load, minify, LCP preload, WebP media optimization & Core Web Vitals. Free & privacy safe.
 
 == Description ==
 
-Make WordPress faster, lighter and easier to maintain from one modular control center.
+WP Optimizer brings performance, maintenance, diagnostics and site-management tools into one modular WordPress plugin.
 
-WP Optimizer combines page caching, object caching, HTML/CSS/JavaScript minification, image optimization, WebP conversion, database maintenance, PageSpeed tools and performance diagnostics in a single plugin.
+You can use the complete toolkit or enable only the modules your site needs. Its main optimization tasks run on your server, with no required subscription, cloud service or CDN.
 
-Use it as a complete WordPress optimization solution or enable only the modules your website needs. Disabled modules stay out of the way, so you can avoid overlapping features and keep full control of your configuration.
+= Cache and front-end performance =
 
-WP Optimizer works with Apache and Nginx, supports WordPress Multisite and performs optimization tasks directly on your server.
+WP Optimizer provides separate cache layers for different types of work:
 
-No required subscription. No mandatory cloud service.
+* **Static Page Cache** stores complete HTML responses so repeat visits do not rebuild the page through WordPress, PHP and the database.
+* **Direct Cache Delivery** can serve eligible cached pages before WordPress loads by using server rules generated for the current environment.
+* **Object Cache** integrates with the WordPress object-cache system and can use Redis or Memcached when either service is available.
+* **WP_Query Cache** stores selected WordPress query results and clears affected entries when related content changes.
+* **Database Query Cache** caches selected database results, can be limited to specific tables and invalidates entries when the underlying data changes.
 
-= Core features =
+Each cache layer has its own lifespan, URL rules, query-string handling, cookie and user-agent exclusions, purge behavior and scope controls. Reports show hits, misses, writes, disk usage and hit ratio.
 
-* **Static Page Cache:** Store rendered HTML pages and serve repeat requests without rebuilding the complete WordPress response. Configure cache lifespan, URL rules, query-string behavior, cookies, user agents and automatic purging.
+When a cache module or direct-delivery option is disabled, WP Optimizer removes the files, drop-ins, server rules and scheduled cleanup tasks managed by that feature.
 
-* **Direct Cache Delivery:** Route eligible static-cache requests before WordPress loads. WP Optimizer can generate the required rules for Apache and Nginx, reducing PHP and database work on cached visits.
+The plugin can also:
 
-* **Object Cache:** Use the WordPress object-cache integration with Redis or Memcached when a compatible service is available on the server.
+* Minify HTML, CSS and JavaScript independently.
+* Optionally combine CSS or JavaScript files.
+* Configure browser cache policies.
+* Generate GZIP compression rules and optional Brotli directives.
+* Apply lazy loading and preload resources related to Largest Contentful Paint.
+* Run coordinated PageSpeed transformations before final HTML minification.
 
-* **WP_Query Cache:** Cache selected WordPress query results, filter them by query type and automatically purge entries when related content changes.
+Enable asset optimizations one at a time. Themes and plugins can depend on the original file order or markup, so clear the cache and test important pages after each change.
 
-* **Database Query Cache:** Store selected database-query results, restrict caching to specific tables and invalidate entries according to database changes.
+= Image optimization and WebP =
 
-* **HTML, CSS and JavaScript Minification:** Reduce front-end file and response size by removing unnecessary characters. Each asset type can be enabled and tested separately.
+The Media module processes images on your server without requiring an external optimization subscription.
 
-* **Compression and Browser Cache:** Generate Apache or Nginx rules for GZIP compression, optional Brotli directives and browser cache policies that reduce transfer size and repeated downloads.
+It can:
 
-* **Image Optimization and WebP:** Optimize WordPress images, convert supported files to WebP and process new uploads automatically without requiring an external image-optimization subscription.
+* Optimize existing images and generated thumbnails.
+* Convert supported files to WebP.
+* Process new uploads automatically.
+* Scan the WordPress media library or a selected filesystem path.
+* Split large jobs into background operations for hosts with limited PHP execution time.
+* Help identify and clean unused media.
 
-* **Lazy Loading and LCP Preload:** Improve resource delivery by deferring supported offscreen content and preloading important resources related to Largest Contentful Paint.
+Because the main media workflow is local, images do not need to be sent to a third-party optimization platform.
 
-* **PageSpeed Tools:** Apply coordinated front-end transformations and server optimizations designed to improve loading performance and support better Core Web Vitals.
+= Page Test and performance diagnostics =
 
-* **Page Test:** Compare a real page with and without the active WP Optimizer configuration using response time, TTFB, peak memory and response size.
+Page Test measures a selected URL through four browser-based steps:
 
-* **Performance Monitor:** Inspect slow requests, database queries, WordPress hooks, callbacks and memory use to find where execution time is being spent.
-
-* **Database Maintenance:** Clean and optimize WordPress tables, create database backups, remove orphaned data and inspect heavy autoloaded options.
-
-* **Cron Manager:** Review WordPress cron events and custom schedules, manage scheduled tasks and optimize cron execution.
-
-* **Activity and Request Monitoring:** Record relevant user, post and term activity, monitor suspicious requests and define custom monitoring rules.
-
-* **WordPress and Server Controls:** Apply selected hardening rules, manage WordPress updates, customize admin behavior and disable features the website does not need.
-
-* **SMTP and Mail Logging:** Configure outgoing WordPress email and keep a log that helps diagnose mail-delivery problems.
-
-* **Configuration Backups and Recovery:** Automatically protect settings changes, restore previous configurations and recover from fatal errors related to WP Optimizer.
-
-= Multiple cache layers, one control center =
-
-Different WordPress requests benefit from different types of caching. WP Optimizer therefore provides independent cache layers instead of placing every request behind one global switch.
-
-The static page cache stores complete front-end responses. Object caching reduces repeated WordPress data lookups, while the WP_Query and database-query caches target selected expensive query results.
-
-Available cache controls include:
-
-* Cache lifespan
-* Query-argument handling
-* URL inclusion and exclusion rules
-* User-agent exclusions
-* No-cache cookies
-* Administrative-request behavior
-* WP_Query type filtering
-* Database table filtering
-* Content-change purging
-* Dependency-aware invalidation
-
-Cache reports show hits, misses, writes, disk usage and hit ratio. This gives you real information about cache activity and helps identify where configuration changes are useful.
-
-When a cache module or direct-access option is disabled, WP Optimizer removes the related managed files, drop-ins, server rules and scheduled cleanup tasks.
-
-= Apache and Nginx support =
-
-WP Optimizer is designed for both Apache and Nginx web servers.
-
-On compatible Apache installations, the plugin can manage optimization directives through the local `.htaccess` file.
-
-For Nginx websites, WP Optimizer generates a dedicated configuration file. Add this file to the website's Nginx server block and reload Nginx after changing server-level settings.
-
-Generated Apache and Nginx rules can cover:
-
-* Direct static-cache routing
-* Browser cache headers
-* GZIP compression
-* MIME type configuration
-* Server enhancements
-* Security and access restrictions
-* Page Test cache-bypass behavior
-
-Optional Brotli and PageSpeed directives are kept commented when enabling them automatically could cause errors on servers where the corresponding modules are not installed.
-
-This approach provides native rules for each supported server without treating Nginx as an Apache installation.
-
-= Image optimization without a mandatory cloud service =
-
-WP Optimizer processes images on your own server.
-
-The Media module can:
-
-* Optimize image files
-* Convert supported images to WebP
-* Process new uploads automatically
-* Scan the WordPress media library
-* Scan a selected filesystem path
-* Optimize generated thumbnails
-* Run larger jobs in the background
-* Help identify and clean unused media
-
-Background processing divides large workloads into smaller operations. This helps image optimization continue on hosting environments with limited PHP execution time.
-
-Because processing remains local, the core media workflow does not require sending images to a third-party optimization platform.
-
-= Minify WordPress pages and assets =
-
-The Minify module reduces the size of HTML responses and local CSS or JavaScript resources.
-
-HTML, CSS and JavaScript minification can be activated independently. This allows you to test one optimization at a time and add exclusions where required by a theme, page builder or plugin.
-
-Runtime HTML transformations use the shared WPS output-buffer service. PageSpeed transformations run in a defined order before final HTML minification, avoiding multiple independent output buffers competing for the same response.
-
-= Improve Core Web Vitals with a controlled workflow =
-
-WP Optimizer combines caching, minification, media optimization, compression, browser caching, lazy loading and LCP preloading to address the technical areas that influence page speed and Core Web Vitals.
-
-The final result also depends on the hosting environment, active theme, page content, third-party scripts and installed plugins. For this reason, WP Optimizer does not rely on a universal configuration or promise a fixed performance score.
-
-Instead, it gives you the tools to apply changes gradually, measure the result and keep only the optimizations that benefit the website.
-
-= Compare performance before and after optimization =
-
-The integrated Page Test measures the effect of WP Optimizer on a selected URL.
-
-It performs a four-step browser-based workflow:
-
-1. A signed baseline request with WP Optimizer modules and direct server cache bypassed.
-2. A clean request using the current active configuration.
+1. A baseline request with WP Optimizer and direct cache delivery bypassed.
+2. A clean request using the current configuration.
 3. A diagnostic warmup that collects data and populates available caches.
-4. A measured request using the warmed active configuration.
+4. A measured request using the warmed configuration.
 
-The final comparison includes:
+The comparison reports response time, Time to First Byte, peak memory and response size. Warmup data can reveal slow or repeated database queries, expensive hooks, callback samples, query totals and memory use.
 
-* Response time
-* Time to First Byte
-* Peak memory usage
-* Response size
+Performance Monitor records request history and helps trace slow execution to WordPress core, the active theme, installed plugins, database queries, hooks or callbacks.
 
-Warmup diagnostics can reveal:
+Caching, minification, compression, media optimization, lazy loading and LCP preloading can improve the technical foundation behind Core Web Vitals. Results still depend on the hosting environment, theme, content and third-party scripts, so WP Optimizer does not promise a fixed score. Use the diagnostic tools to measure each change and keep the settings that help your site.
 
-* Slow database queries
-* Repeated queries
-* Expensive WordPress hooks
-* Callback samples
-* Query totals
-* Memory totals
+= Database, cron and site maintenance =
 
-This makes it easier to determine whether caching, minification or PageSpeed settings are helping the tested page or introducing additional overhead.
+The Database module provides:
 
-= Find slow WordPress requests =
+* Database cleanup and table optimization.
+* Database backups.
+* Orphaned-data removal.
+* Guarded maintenance actions.
+* `wp_options` inspection and autoload-size analysis.
 
-The Performance Monitor records request history and presents slow executions through reports and charts.
+Create a database backup before running aggressive cleanup operations.
 
-Diagnostic data can help identify performance costs associated with:
+Cron Handler lists scheduled WordPress events and custom schedules. It lets administrators inspect recurring work, manage cron entries and identify obsolete tasks.
 
-* WordPress core
-* The active theme
-* Installed plugins
-* Database queries
-* Hooks and callbacks
-* Memory consumption
-* The current WP Optimizer configuration
+WP Info collects details about WordPress, PHP, the database, web server, filesystem and storage use. This provides a single place to review the environment before changing performance settings.
 
-Instead of showing only a general speed score, the monitor exposes activity from the WordPress request itself.
+= Activity, security and WordPress controls =
 
-= Clean and inspect the WordPress database =
+Activity Log records relevant user, post and term actions. Request monitoring detects common suspicious patterns, including XSS and SQL-injection probes, and supports custom monitoring rules.
 
-The Database module provides maintenance tools for data that can accumulate as a website changes over time.
+WP Security provides configurable WordPress and server hardening. Depending on the selected settings, it can protect sensitive files, restrict unwanted access, add security headers and reduce exposed server information. These controls complement secure hosting, updated software and reliable backups; they do not replace them.
 
-Available operations include:
+Additional modules can:
 
-* Database cleanup
-* Table optimization
-* Database backups
-* Orphaned-data cleanup
-* Guarded maintenance actions
-* `wp_options` inspection
-* Autoload-size analysis
+* Control updates for WordPress core, plugins and themes.
+* Restrict dashboard access or hide the Admin Bar.
+* Disable comments, selected Block Editor features and unused WordPress output.
+* Remove selected dashboard panels and simplify the administration interface.
+* Configure SMTP and log outgoing WordPress email.
+* Purge the Cloudflare edge cache when the local cache is cleared.
 
-The options browser helps identify large autoloaded values that may consume memory on every WordPress request.
+= Configuration backups and recovery =
 
-Create a database backup before running more aggressive cleanup operations to maintain a safer production workflow.
+WP Optimizer creates a configuration backup before its main settings are updated. To avoid duplicate snapshots during rapid autosaves, it reuses a backup created within the previous 15 minutes and retains the newest 50 backups.
 
-= Manage WordPress cron events =
+From the Settings module, administrators can review or delete backups, restore a previous configuration, import or export settings and reset individual modules. Restoring settings runs the normal configuration lifecycle so modules, managed cache drop-ins and generated server rules stay synchronized.
 
-The Cron Handler provides an administrative view of WordPress scheduled events and registered custom schedules.
+If a fatal error comes from WP Optimizer or a plugin-managed `object-cache.php` or `db.php` drop-in, the recovery service can try saved configurations or perform a controlled factory reset. A reset can remove plugin-managed drop-ins, generated server rules, static cache data, minified resources, direct-cache files and scheduled optimization tasks. Recovery does not reset unrelated themes, plugins or server configuration.
 
-Use it to:
+= Server, WooCommerce and page-builder compatibility =
 
-* Review scheduled events
-* Inspect recurring tasks
-* Manage cron entries
-* Check custom schedule intervals
-* Identify obsolete scheduled work
+WP Optimizer supports WordPress Multisite and detects Apache, Nginx, LiteSpeed Enterprise and OpenLiteSpeed.
 
-Additional cron controls can reduce inefficient execution and help administrators understand which recurring tasks are registered on the website.
+* **Apache and LiteSpeed Enterprise** use managed rules in the local `.htaccess` file.
+* **Nginx** uses a generated configuration file that must be included in the website server block before Nginx is reloaded.
+* **OpenLiteSpeed** receives compatible rewrite rules for direct cache delivery, redirects and rewrite-based security controls. Enable **Auto Load from .htaccess** for the virtual host. Configure compression, response headers, MIME types and other non-rewrite options in WebAdmin, then restart OpenLiteSpeed after rewrite changes.
 
-= Review WordPress and server information =
+WooCommerce cart, checkout and account routes are excluded from caching and runtime HTML optimization. Session cookies, add-to-cart requests, WC API calls, WooCommerce AJAX and session-storage queries also bypass incompatible cache layers. Custom WooCommerce page slugs are detected from their configured page IDs.
 
-The WP Info module collects technical information about the current installation.
+Elementor, Beaver Builder, Divi, Gutenberg, Bricks, Oxygen and Breakdance editor and preview requests bypass cache and output transformations. Builder assets are not rewritten by the CSS or JavaScript minifier, and generated markup is preserved during HTML minification.
 
-It provides visibility into:
+WP Optimizer can coexist with other performance plugins, but only one plugin should manage each cache, minification, asset-combination or server-rule layer.
 
-* WordPress configuration
-* PHP environment
-* Database information
-* Web server details
-* Filesystem data
-* Directory and storage usage
+= Recommended setup =
 
-Dashboard widgets can also display server and folder-size information for quicker access to common diagnostics.
+For an existing or production site:
 
-= Monitor activity and suspicious requests =
-
-The Activity Log records relevant actions involving WordPress users, posts and terms.
-
-Request monitoring provides additional visibility into suspicious traffic, including common XSS and SQL-injection probes. Custom rules can be added for installation-specific monitoring requirements.
-
-These tools help with investigation and operational awareness without requiring every optimization module to be enabled.
-
-= Apply WordPress and server hardening =
-
-The WP Security module provides configurable hardening options for WordPress, Apache and Nginx environments.
-
-Depending on the selected settings, generated rules can:
-
-* Protect sensitive configuration files
-* Restrict unwanted access
-* Apply security-related response headers
-* Reduce exposed server information
-* Support suspicious-request monitoring
-
-These features complement secure hosting, maintained WordPress software and reliable backups. They are not presented as a replacement for a complete security strategy.
-
-= Control WordPress updates and admin features =
-
-The WP Updates module controls update behavior for:
-
-* WordPress core
-* Plugins
-* Themes
-
-The WP Customizer module can adjust common WordPress behavior without editing core or theme files.
-
-Available controls include:
-
-* Restricting dashboard access
-* Hiding the WordPress Admin Bar
-* Disabling comments
-* Controlling the Block Editor and related features
-* Removing selected dashboard panels
-* Managing sitemap, short-link and self-ping behavior
-* Disabling selected non-essential WordPress output
-* Simplifying the administration interface
-
-These options allow WordPress to be adapted to the real requirements of the website.
-
-= Configure SMTP and log WordPress email =
-
-The WP Mail module provides SMTP settings and outgoing email logs.
-
-Mail logging helps verify whether WordPress attempted to send a message and provides useful information when investigating contact forms, notifications, password resets and other email-delivery issues.
-
-= Automatic configuration backups =
-
-WP Optimizer creates a configuration backup before updating its main settings.
-
-To avoid redundant snapshots during rapid autosaves, backup creation is skipped when the latest snapshot is less than 15 minutes old. The newest 50 backups are retained automatically.
-
-Administrators can:
-
-* Review saved configurations
-* Restore a previous configuration
-* Delete obsolete backups
-* Import settings
-* Export settings
-* Reset an individual module
-
-Restoring a backup runs the normal plugin configuration lifecycle so modules, managed cache drop-ins and generated server rules remain synchronized with the restored settings.
-
-= Recovery from WP Optimizer errors =
-
-WP Optimizer registers a recovery service early during plugin startup.
-
-If a fatal error originates from WP Optimizer or from a plugin-managed `object-cache.php` or `db.php` drop-in, administrators can try saved configurations one by one or perform a controlled factory reset.
-
-The reset process can remove:
-
-* Plugin-managed cache drop-ins
-* Generated Apache or Nginx rules
-* Static cache data
-* Minified resources
-* Direct-cache runtime files
-* Scheduled optimization tasks
-
-Recovery is intentionally limited to WP Optimizer-related failures. It does not automatically reset unrelated themes, plugins or server configuration.
-
-= Works with your WordPress installation =
-
-* **WordPress:** Version 5.0 or later
-* **PHP:** Version 7.4 or later
-* **Web servers:** Apache and Nginx
-* **Cache services:** Redis and Memcached when available
-* **Networks:** WordPress Multisite support
-* **Configuration:** Modular features with independent activation
-* **Processing:** Local server-side optimization
-* **Telemetry:** Optional controls available
-
-Themes, page builders, membership systems, e-commerce plugins and personalized content may require cache or minification exclusions. Avoid running two plugins that perform the same page-cache, object-cache or minification task at the same time.
-
-= Included modules =
-
-* **Activity Log:** Records relevant user, post and term activity.
-* **Cache:** Manages static, object, WP_Query and database-query caching.
-* **Cron Handler:** Displays and manages WordPress scheduled events.
-* **Database:** Provides cleanup, backup, optimization and autoload inspection.
-* **Media:** Optimizes images, generates WebP files and manages media processing.
-* **Minify:** Reduces HTML, CSS and JavaScript size.
-* **Performance Monitor:** Analyzes requests, queries, hooks and memory usage.
-* **PageSpeed:** Improves front-end loading and resource delivery.
-* **Settings:** Manages backups, imports, exports, restores and module resets.
-* **Widget:** Adds dashboard information widgets.
-* **WP Customizer:** Controls WordPress features and admin behavior.
-* **WP Info:** Displays WordPress, PHP, database and server diagnostics.
-* **WP Mail:** Configures SMTP and records outgoing email.
-* **WP Optimizer:** Manages compression, browser caching and server enhancements.
-* **WP Security:** Provides request monitoring and hardening controls.
-* **WP Updates:** Controls WordPress core, plugin and theme updates.
-
-= Recommended first setup =
-
-For an existing or production website:
-
-1. Review the environment information in WP Info.
-2. Enable browser caching and supported compression.
-3. Configure image optimization for new uploads.
-4. Create a database backup before running cleanup tasks.
-5. Enable static page caching and test dynamic pages.
-6. Configure direct cache delivery after verifying the standard cache.
-7. Enable additional cache layers only when supported by the server.
-8. Activate HTML, CSS and JavaScript minification separately.
-9. Clear generated caches after important configuration changes.
-10. Test forms, search, login areas and other dynamic workflows.
-11. Use Page Test to compare the active configuration with the bypass baseline.
-12. Review Performance Monitor data for slow requests or unexpected overhead.
-
-WP Optimizer gives you a complete, measurable and modular way to make WordPress faster.
-
-Use the tools your website needs, keep processing under your control and build an optimization setup that works with your server—not against it.
+1. Review the environment in WP Info.
+2. Enable browser caching, supported compression and image optimization for new uploads.
+3. Create a database backup before cleanup.
+4. Enable the standard page cache and test dynamic pages.
+5. Configure direct cache delivery only after the standard cache works correctly.
+6. Enable extra cache layers only when the required server services are available.
+7. Activate HTML, CSS and JavaScript optimization separately.
+8. Clear generated caches after important setting changes.
+9. Test forms, search, login, account and checkout flows.
+10. Use Page Test and Performance Monitor to verify the result.
 
 == Installation ==
 
@@ -402,6 +171,10 @@ Start with lower-risk optimizations: browser cache, compression and media optimi
 = Can cache or minify break my layout? =
 
 Yes. Like any performance plugin, aggressive cache or minification settings can expose theme or plugin conflicts. Enable HTML, CSS and JavaScript minification separately. If something breaks, disable the last option you enabled, clear cache and test again.
+
+= Is WP Optimizer compatible with WooCommerce and page builders? =
+
+Yes. WooCommerce cart, checkout and my-account routes are automatically excluded from caching and runtime HTML optimization. WooCommerce session cookies and cart/API actions also bypass cache. WP Optimizer detects editing and preview requests from Elementor, Beaver Builder, Divi, Gutenberg, Bricks, Oxygen and Breakdance, preserves their generated markup and does not rewrite their CSS or JavaScript assets. Built-in exclusions cannot be removed by integration filters.
 
 = How does the cache system work? =
 
@@ -455,17 +228,55 @@ If the fatal error is caused by WP Optimizer code or a WP Optimizer-managed cach
 
 Disable the last module or option you enabled, clear cache and test again. Use Page Test to compare the active configuration with the bypass baseline. If needed, use the Settings module to restore an automatic configuration backup or reset options, then re-enable features one by one.
 
+= Is WP Optimizer compatible with WP Rocket, FlyingPress, Perfmatters, LiteSpeed Cache and other optimization plugins? =
+
+WP Optimizer can coexist with other optimization plugins, but the same optimization layer should not be enabled in more than one plugin. Choose a single owner for page cache, minification, asset combination and server rules, then clear every cache and test the site after changing the configuration.
+
+= How do I exclude a page from caching? =
+
+Open the Static Pages Cache configuration and add an exclude rule for the required path or URL pattern. WooCommerce cart, checkout and account routes are excluded automatically.
+
+= Does WP Optimizer minify and combine CSS and JavaScript? =
+
+Yes. The Minify module can minify HTML, CSS and JavaScript and can optionally try to combine CSS or JavaScript files. Enable each option separately, clear cache and verify important pages after every change because themes and plugins may depend on asset order.
+
+= Do I need a CDN to use WP Optimizer? =
+
+No. Caching, minification, media optimization and server features run without a CDN. You can still use a CDN independently; if it caches HTML, coordinate its purge behavior with WP Optimizer so visitors do not receive stale pages.
+
+= Will WP Optimizer slow down my wp-admin dashboard? =
+
+Front-end transformations do not normally run on wp-admin pages, and cache layers can be configured to skip administrative requests. Monitoring, backups and bulk media or database jobs still use server resources, so schedule heavy work outside busy periods and disable modules you do not need.
+
+= Can I use WP Optimizer with Cloudflare? =
+
+Yes. The Cloudflare module can purge the Cloudflare edge cache when WP Optimizer cache is cleared, using a scoped API token and Zone ID. Avoid duplicating HTML caching or optimization features without testing, and verify that both cache layers are purged after content changes.
+
+= What happens to my cache when I edit a post or product? =
+
+When automatic purge is enabled, WordPress content-change hooks invalidate affected static-page and query cache entries after posts, products, terms or comments change. WooCommerce-sensitive routes remain excluded. If the Cloudflare integration is enabled, WP Optimizer also requests the configured edge-cache purge.
+
+= How do I completely uninstall WP Optimizer and remove its data? =
+
+For the cleanest removal, first reset active modules to factory settings so their cleanup lifecycle removes managed drop-ins, generated storage and local server rules. Then deactivate and delete WP Optimizer from the WordPress Plugins screen. The uninstall routine removes plugin options, scheduled media hooks and plugin database tables; shared WPS framework data is removed only when no other installed component uses it.
+
+= Is there a developer API for clearing the cache? =
+
+Yes. Integration code can guard with `function_exists()` and call `wpopt_flush_cache('integration-name')` to flush active WP Optimizer cache layers. Bulk processes can use `wpopt_suspend_cache_auto_purge()` and `wpopt_resume_cache_auto_purge()` to avoid repeated purges. See `EXTERNAL-API.md` for the supported functions and examples.
+
 == Changelog ==
 
-= 2.8.5 =
+= 2.8.6 =
 
-* improved core performances
-* fixed some bugs
-* updated translations
+* improved core performance
+* added automatic WooCommerce and page-builder compatibility safeguards
+* removed the unused legacy implementations
+* hardened WooCommerce session, cart action and database-cache exclusions
+* made direct-cache migration fail safe when runtime configuration is missing or invalid
 
 = 2.8.4 =
 
-* added dedicated db tables to performances monitor and cache
+* added dedicated db tables to performance monitor and cache
 * improved performances
 * removed legacy fallbacks
 * fixed some bugs
@@ -509,7 +320,7 @@ Disable the last module or option you enabled, clear cache and test again. Use P
 * hardened request actions with mandatory nonce validation and admin-only execution for sensitive actions
 * secured settings import, database action arguments and wpsargs parsing against unsafe deserialization
 * hardened database backup excluded-table handling in mysqldump commands
-* limited WP Mail message preview in the table and added popup view for full content
+* limited WP Mail message preview in the table and added a popup view for full content
 
 = 2.5.0 =
 
@@ -580,34 +391,3 @@ Disable the last module or option you enabled, clear cache and test again. Use P
 * improved activity log module
 * updated translations file
 * extended support to WordPress 6.3
-
-= 2.1.2 =
-
-* added runtime actualization of imported settings
-* improved settings reset
-* updated some options
-* fixed a bug where no active modules where found in same cases
-
-= 2.1.0 =
-
-* added a new module to register WordPress activity log and bad requests
-* added possibility to hash versioned styles and scripts
-* added auto-clean cache on interval to reduce space used especially for static caching method
-* added possibility to try to fix plugin settings, without fully reset settings
-* improved core performances
-* fixed some bugs
-
-= 2.0.0 =
-
-* added object caching
-* added support to Redis, Memcached
-* added behaviour info for each setting
-* improved browser-caching
-* improved core performances
-* extended support to WordPress 6.2
-* extended support to PHP 8.2
-* updated faqs
-* updated UI/UX
-* updated translations file
-* fixed .htaccess bug
-* moved minimum WordPress support to version 4.6.0

@@ -111,6 +111,12 @@ class StaticCache extends Cache_Dispatcher
         $this->is_cacheable = true;
         $this->bypass_reason = '';
 
+        $automatic_bypass_reason = $this->request_policy()->automatic_bypass_reason();
+        if ($automatic_bypass_reason !== '') {
+            $this->mark_not_cacheable($automatic_bypass_reason);
+            return;
+        }
+
         $this->check_rule_cacheability();
         if (!$this->is_cacheable) {
             $this->is_cacheable = (bool)apply_filters('wpopt_allow_static_cache', false, $wp_query);
@@ -136,6 +142,12 @@ class StaticCache extends Cache_Dispatcher
     {
         $this->is_cacheable = true;
         $this->bypass_reason = '';
+
+        $automatic_bypass_reason = $this->request_policy()->automatic_bypass_reason();
+        if ($automatic_bypass_reason !== '') {
+            $this->mark_not_cacheable($automatic_bypass_reason);
+            return;
+        }
 
         if ($this->admin_requests_are_disabled()) {
             $this->mark_not_cacheable('admin_disabled');

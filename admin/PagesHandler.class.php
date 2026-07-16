@@ -26,7 +26,6 @@ class PagesHandler
         'performance_monitor',
         'wp_mail',
         'wp_updates',
-        'widget',
         'wp_info',
     );
 
@@ -783,11 +782,117 @@ class PagesHandler
                             </div>
                         </div>
                     </div>
+                    <?php foreach ($this->additional_faqs() as $faq) : ?>
+                        <div class="wps-faq-item">
+                            <div class="wps-faq-question-wrapper">
+                                <div class="wps-faq-question wpopt-faq-toggle">
+                                    <?php echo $this->faq_icon($faq['icon']); ?>
+                                    <span class="wpopt-faq-question-text"><?php echo esc_html($faq['question']); ?></span>
+                                    <icon class="wps-collapse-icon">+</icon>
+                                </div>
+                                <div class="wps-faq-answer wps-collapse">
+                                    <?php foreach ($faq['answers'] as $answer) : ?>
+                                        <p><?php echo wp_kses_post($answer); ?></p>
+                                    <?php endforeach; ?>
+                                </div>
+                            </div>
+                        </div>
+                    <?php endforeach; ?>
                     </div>
                 </section>
             </block>
         </section>
         <?php
+    }
+
+    /**
+     * Additional product FAQs that complement the module-specific guidance above.
+     *
+     * @return array<int, array{icon: string, question: string, answers: string[]}>
+     */
+    private function additional_faqs(): array
+    {
+        return array(
+            array(
+                'icon'     => 'external',
+                'question' => __('Is WP Optimizer compatible with WP Rocket, FlyingPress, Perfmatters, LiteSpeed Cache and other optimization plugins?', 'wpopt'),
+                'answers'  => array(
+                    __('WP Optimizer can coexist with other optimization plugins, but the same optimization layer should not be enabled in more than one plugin.', 'wpopt'),
+                    __('Choose a single owner for page cache, minification, asset combination, and server rules. Then clear every cache and test the site after changing the configuration.', 'wpopt'),
+                ),
+            ),
+            array(
+                'icon'     => 'box',
+                'question' => __('Will WP Optimizer speed up my WooCommerce store?', 'wpopt'),
+                'answers'  => array(
+                    __('It can improve cacheable storefront pages, assets, images, and database work, but the result depends on the store, hosting, theme, extensions, and traffic.', 'wpopt'),
+                    __('Cart, checkout, and account routes are excluded from page caching and runtime HTML optimization automatically. Test product, cart, checkout, account, payment, and multilingual flows before using aggressive settings.', 'wpopt'),
+                ),
+            ),
+            array(
+                'icon'     => 'sliders',
+                'question' => __('How do I exclude a page from caching?', 'wpopt'),
+                'answers'  => array(
+                    sprintf(__('Open the <a href="%s">Static Pages Cache configuration</a> and add an exclude rule for the required path or URL pattern. WooCommerce cart, checkout, and account routes are excluded automatically.', 'wpopt'), wps_admin_route_url('wpopt', 'conf-cache-static_pages')),
+                ),
+            ),
+            array(
+                'icon'     => 'tools',
+                'question' => __('Does WP Optimizer minify and combine CSS and JavaScript?', 'wpopt'),
+                'answers'  => array(
+                    sprintf(__('Yes. The <a href="%s">Minify module</a> can minify HTML, CSS, and JavaScript and can optionally try to combine CSS or JavaScript files.', 'wpopt'), wps_module_setting_url('wpopt', 'minify')),
+                    __('Enable each option separately, clear cache, and verify important pages after every change because themes and plugins may depend on asset order.', 'wpopt'),
+                ),
+            ),
+            array(
+                'icon'     => 'external',
+                'question' => __('Do I need a CDN to use WP Optimizer?', 'wpopt'),
+                'answers'  => array(
+                    __('No. Caching, minification, media optimization, and server features run without a CDN.', 'wpopt'),
+                    __('You can still use a CDN independently. If it caches HTML, coordinate its purge behavior with WP Optimizer so visitors do not receive stale pages.', 'wpopt'),
+                ),
+            ),
+            array(
+                'icon'     => 'settings',
+                'question' => __('Will WP Optimizer slow down my wp-admin dashboard?', 'wpopt'),
+                'answers'  => array(
+                    __('Front-end transformations do not normally run on wp-admin pages, and cache layers can be configured to skip administrative requests.', 'wpopt'),
+                    __('Monitoring, backups, and bulk media or database jobs still use server resources. Schedule heavy work outside busy periods and disable modules you do not need.', 'wpopt'),
+                ),
+            ),
+            array(
+                'icon'     => 'external',
+                'question' => __('Can I use WP Optimizer with Cloudflare?', 'wpopt'),
+                'answers'  => array(
+                    sprintf(__('Yes. The <a href="%s">Cloudflare module</a> can purge the Cloudflare edge cache when WP Optimizer cache is cleared, using a scoped API token and Zone ID.', 'wpopt'), wps_module_setting_url('wpopt', 'cloudflare')),
+                    __('Avoid duplicating HTML caching or optimization features without testing, and verify that both cache layers are purged after content changes.', 'wpopt'),
+                ),
+            ),
+            array(
+                'icon'     => 'database',
+                'question' => __('What happens to my cache when I edit a post or product?', 'wpopt'),
+                'answers'  => array(
+                    __('When automatic purge is enabled, WordPress content-change hooks invalidate affected static-page and query cache entries after posts, products, terms, or comments change.', 'wpopt'),
+                    __('WooCommerce-sensitive routes remain excluded. If the Cloudflare integration is enabled, WP Optimizer also requests the configured edge-cache purge.', 'wpopt'),
+                ),
+            ),
+            array(
+                'icon'     => 'settings',
+                'question' => __('How do I completely uninstall WP Optimizer and remove its data?', 'wpopt'),
+                'answers'  => array(
+                    sprintf(__('For the cleanest removal, first use the <a href="%s">module reset tools</a> so active modules can remove managed drop-ins, generated storage, and local server rules. Then deactivate and delete WP Optimizer from the WordPress Plugins screen.', 'wpopt'), wps_module_setting_url('wpopt')),
+                    __('The uninstall routine removes plugin options, scheduled media hooks, and plugin database tables. Shared WPS framework data is removed only when no other installed component uses it.', 'wpopt'),
+                ),
+            ),
+            array(
+                'icon'     => 'tools',
+                'question' => __('Is there a developer API for clearing the cache?', 'wpopt'),
+                'answers'  => array(
+                    __('Yes. Integration code can guard with function_exists() and call wpopt_flush_cache() to flush active WP Optimizer cache layers.', 'wpopt'),
+                    __('Bulk processes can use wpopt_suspend_cache_auto_purge() and wpopt_resume_cache_auto_purge() to avoid repeated purges. The supported functions and examples are documented in EXTERNAL-API.md.', 'wpopt'),
+                ),
+            ),
+        );
     }
 
     private function faq_icon(string $icon): string
@@ -1049,7 +1154,6 @@ class PagesHandler
             'cron'          => 'dashicons-clock',
             'pagespeed'     => 'dashicons-dashboard',
             'performance_monitor' => 'dashicons-chart-line',
-            'widget'        => 'dashicons-screenoptions',
         );
     }
 
@@ -1202,12 +1306,16 @@ class PagesHandler
         $route = isset($_GET['wps-page']) ? sanitize_key(wp_unslash($_GET['wps-page'])) : '';
 
         if ($route !== '') {
+            if (!PluginInit::should_do_welcome() && $route === 'welcome') {
+                return 'dashboard';
+            }
+
             return $route;
         }
 
         $direct_welcome = isset($_GET['do_welcome']) ? sanitize_text_field(wp_unslash($_GET['do_welcome'])) : '';
 
-        if (in_array(strtolower((string)$direct_welcome), array('1', 'true', 'yes'), true)) {
+        if (PluginInit::should_do_welcome() && in_array(strtolower((string)$direct_welcome), array('1', 'true', 'yes'), true)) {
             return 'welcome';
         }
 
@@ -1510,7 +1618,6 @@ class PagesHandler
             'minify'              => __('Asset cleanup', 'wpopt'),
             'pagespeed'           => __('PageSpeed checks', 'wpopt'),
             'performance_monitor' => __('Request metrics', 'wpopt'),
-            'widget'              => __('Dashboard data', 'wpopt'),
             'wp_customizer'       => __('WordPress toggles', 'wpopt'),
             'wp_info'             => __('System details', 'wpopt'),
             'wp_mail'             => __('Mail logging', 'wpopt'),
@@ -1532,7 +1639,6 @@ class PagesHandler
             'minify'              => __('Riduce HTML, CSS e JavaScript per alleggerire le pagine e limitare asset non necessari.', 'wpopt'),
             'pagespeed'           => __('Aiuta a configurare e verificare ottimizzazioni PageSpeed quando disponibili sul server.', 'wpopt'),
             'performance_monitor' => __('Monitora richieste lente, tempi di risposta e metriche utili per capire dove intervenire.', 'wpopt'),
-            'widget'              => __('Aggiunge widget diagnostici alla dashboard per informazioni rapide su server e installazione.', 'wpopt'),
             'wp_customizer'       => __('Permette di disattivare o regolare funzioni WordPress e admin non necessarie al progetto.', 'wpopt'),
             'wp_info'             => __('Mostra informazioni tecniche su WordPress, server e ambiente per supportare il debug.', 'wpopt'),
             'wp_mail'             => __('Registra le email inviate da WordPress per controllare contenuti, stato e tracciabilita.', 'wpopt'),

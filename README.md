@@ -14,38 +14,29 @@ If you are not a developer, please use the [WP Optimizer plugin page](https://wo
 ## Description
 
 WP Optimizer is a modular WordPress optimization toolkit for performance, maintenance, diagnostics and site control.
-It brings together the common tools needed to keep a WordPress installation fast and manageable: cache, media optimization, database maintenance, Page Test diagnostics, update controls, configuration backups and module resets.
-
-After first activation, administrators see a one-time welcome page that explains the modular workflow and links directly to the modules manager. The welcome flag is stored separately from runtime module settings so reactivating an already configured installation does not show the page again.
+It brings together the common tools needed to keep a WordPress installation fast and easy to maintain: cache, media optimization, database managment, Page Test diagnostics, update controls, configuration backups and module resets.
 
 ### Performance and cache
 
-The cache module includes dedicated configuration pages for static page cache, WP_Query cache and database query cache. Each cache layer can define its own lifespan, query-argument behavior, purge rules, user-agent exclusions and no-cache cookie handling.
-
-Static page cache supports regex include/exclude rules and optional direct server access. WP_Query cache can be limited to selected query types, while database query cache can be limited to selected tables. Automatic purge is dependency-aware for WP_Query entries and table-aware for database query entries.
+- **Three configurable cache layers:** static pages, `WP_Query` results and database queries, each with independent lifetimes, query-argument handling, purge rules, user-agent exclusions and no-cache cookies. Page cache supports regex rules and optional direct server access; query and database caches can target selected query types or tables and purge only affected entries.
+- **Safe compatibility defaults:** compatible with WooCommerce and with editing and preview flows from Elementor, Beaver Builder, Divi, Gutenberg, Bricks, Oxygen and Breakdance. Builder requests bypass cache and output optimization, preserving generated assets and markup.
+- **Protected and extensible behavior:** built-in exclusions cannot be removed, but filters can add project-specific routes, request signatures and assets. Invalid or missing direct-cache configuration is regenerated in a disabled fail-safe state.
 
 ### Maintenance and diagnostics
 
-The database module includes table maintenance, database backups and `wp_options` autoload review tools for safer cleanup work.
-
-The Cron Manager is the administrative interface for viewing and managing WordPress cron events and custom schedules.
-
-The admin dashboard includes a Page Test tool that runs four browser-based scans against a site URL:
-
-1. A signed request with WP Optimizer modules and direct/server cache bypassed.
-2. An empty current-configuration scan.
-3. A diagnostic warmup request with the current configuration.
-4. A measured signed request with the current configuration.
-
-The diagnostic warmup pass collects optimization hints such as slow queries, repeated queries, heavier hooks, callback samples and memory/query totals.
-
-Runtime HTML transformations are coordinated by the WPS `html_output_buffer` service. Modules register ordered transformers with this service instead of opening independent output buffers; PageSpeed transformations run before final HTML minification.
+- **Database and scheduling tools:** maintain tables, create database backups, review `wp_options` autoload data and manage WordPress cron events and custom schedules.
+- **Four-stage Page Test:** scans a site URL with a signed optimization/cache-bypass request, an empty current-configuration pass, a diagnostic warmup and a final measured signed request using the current configuration.
+- **Actionable diagnostics:** the warmup identifies slow or repeated queries, heavier hooks, callback samples and memory/query totals. Runtime HTML transformations use ordered handlers in the WPS `html_output_buffer` service, with PageSpeed processing before final HTML minification.
 
 ### Configuration safety
 
-Automatic configuration backups are created before plugin settings changes. Backup creation is throttled to avoid duplicate autosave snapshots, and only the newest 50 entries are kept.
+- **Automatic backups:** configuration snapshots are created before settings changes, throttled to prevent duplicate autosaves and limited to the 50 newest entries.
+- **Safe module resets:** after confirmation, individual modules can be restored to factory settings from the modules screen, including their cleanup lifecycle.
 
-Each module can be reset from the modules settings screen. A module reset restores that module to factory settings and runs its cleanup lifecycle after confirmation.
+### Web server compatibility
+
+- **Automatic detection:** identifies Apache, Nginx, LiteSpeed Enterprise and OpenLiteSpeed. Apache and LiteSpeed Enterprise use generated `.htaccess` directives, while Nginx uses a generated `nginx.conf` include file.
+- **OpenLiteSpeed support:** because `.htaccess` accepts only Apache `mod_rewrite` syntax, WP Optimizer writes compatible rules for direct cache delivery, redirects and rewrite-based security controls. Enable **Auto Load from .htaccess** for the virtual host; configure compression, response headers, MIME types and other non-rewrite options in WebAdmin, then restart OpenLiteSpeed after rewrite changes.
 
 ### Developer integrations
 
@@ -57,4 +48,3 @@ This repository is not suitable for support. Please don't use our issue tracker 
 place through the appropriate channel on [our community forum on wp.org](https://wordpress.org/support/plugin/wp-optimizer/).
 
 Support requests in issues on this repository will be closed on sight.
-
