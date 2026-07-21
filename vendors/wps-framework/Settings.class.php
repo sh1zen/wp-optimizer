@@ -24,6 +24,11 @@ class Settings
         }
     }
 
+    public function switch_to_blog(): void
+    {
+        $this->settings = get_option($this->context) ?: array();
+    }
+
     public static function check($settings, $key, $default = false)
     {
         $res = self::get_option($settings, $key, null);

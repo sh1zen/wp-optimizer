@@ -23,8 +23,6 @@ use WPS\core\UtilEnv;
 
 class ImagesProcessor
 {
-    private static string $allowedMimeTypeRegex = "(jpe?g|jpe|p(jpe|n)g|gif|webp|bmp|xbm|wbmp|tiff?|heic)";
-
     private array $settings;
 
     private array $metadata = [];

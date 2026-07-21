@@ -8,7 +8,7 @@
 global $wpdb;
 
 WPS\core\UtilEnv::db_create(
-    WPOPT_TABLE_REQUEST_PERFORMANCE,
+    wpopt_db_table_name('request_performance'),
     [
         'fields'      => [
             'id'              => 'bigint unsigned NOT NULL AUTO_INCREMENT',
@@ -31,7 +31,7 @@ WPS\core\UtilEnv::db_create(
     true
 );
 
-$wpdb->query("ALTER TABLE " . WPOPT_TABLE_REQUEST_PERFORMANCE . " ADD INDEX `idx_request_type` (`request_type`) USING BTREE;");
-$wpdb->query("ALTER TABLE " . WPOPT_TABLE_REQUEST_PERFORMANCE . " ADD INDEX `idx_created_at_gmt` (`created_at_gmt`) USING BTREE;");
-$wpdb->query("ALTER TABLE " . WPOPT_TABLE_REQUEST_PERFORMANCE . " ADD INDEX `idx_is_slow` (`is_slow`) USING BTREE;");
-$wpdb->query("ALTER TABLE " . WPOPT_TABLE_REQUEST_PERFORMANCE . " ADD INDEX `idx_type_created` (`request_type`, `created_at_gmt`) USING BTREE;");
+$wpdb->query("ALTER TABLE " . wpopt_db_table_name('request_performance') . " ADD INDEX `idx_request_type` (`request_type`) USING BTREE;");
+$wpdb->query("ALTER TABLE " . wpopt_db_table_name('request_performance') . " ADD INDEX `idx_created_at_gmt` (`created_at_gmt`) USING BTREE;");
+$wpdb->query("ALTER TABLE " . wpopt_db_table_name('request_performance') . " ADD INDEX `idx_is_slow` (`is_slow`) USING BTREE;");
+$wpdb->query("ALTER TABLE " . wpopt_db_table_name('request_performance') . " ADD INDEX `idx_type_created` (`request_type`, `created_at_gmt`) USING BTREE;");

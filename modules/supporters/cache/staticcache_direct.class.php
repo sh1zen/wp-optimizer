@@ -18,6 +18,7 @@ class StaticCacheDirectAccess
     private const BOOTSTRAP_FILE = 'wpopt-static-direct.php';
     private const CONFIG_FILE = 'config.php';
     private const INDEX_DIR = 'index';
+    private const SITES_DIR = 'sites';
     private const DEFAULT_USER_SCOPE = 'not_logged_in';
     private const DEFAULT_STATUS_CACHE_POLICY = array('2xx', '4xx', '5xx');
 
@@ -29,6 +30,21 @@ class StaticCacheDirectAccess
     public static function deactivate(): bool
     {
         self::clear_index();
+
+        if (self::is_multisite_runtime()) {
+            if (!self::write_route_config(self::current_site_identity())) {
+                return false;
+            }
+
+            if (self::has_enabled_sites()) {
+                return self::write_bootstrap();
+            }
+
+            self::delete_bootstrap();
+
+            return !is_file(self::bootstrap_path());
+        }
+
         self::delete_bootstrap();
         self::delete_runtime_storage();
 
@@ -41,7 +57,14 @@ class StaticCacheDirectAccess
             return false;
         }
 
-        if (!Disk::make_path(self::base_dir(), true) || !Disk::make_path(self::index_dir(), true)) {
+        self::remove_legacy_runtime();
+
+        if (
+            !Disk::make_path(self::base_dir(), true)
+            || !Disk::make_path(self::sites_dir(), true)
+            || !self::ensure_multisite_routes()
+            || !Disk::make_path(self::index_dir(), true)
+        ) {
             return false;
         }
 
@@ -50,11 +73,15 @@ class StaticCacheDirectAccess
 
     public static function refresh_installed_runtime(): bool
     {
-        if (!is_file(self::bootstrap_path()) && !is_file(self::config_path())) {
+        if (!is_file(self::bootstrap_path()) && !is_file(self::config_path()) && !self::has_site_configs()) {
             return true;
         }
 
         if (!is_file(self::config_path())) {
+            if (self::has_site_configs()) {
+                return self::write_bootstrap();
+            }
+
             return self::write_disabled_runtime();
         }
 
@@ -197,9 +224,74 @@ class StaticCacheDirectAccess
         return is_writable(ABSPATH) && $storage_is_writable;
     }
 
+    public static function has_enabled_sites(): bool
+    {
+        foreach (self::site_config_paths() as $config_path) {
+            $config = include $config_path;
+            if (is_array($config) && !empty($config['enabled'])) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    public static function register_multisite_hooks(): void
+    {
+        if (!self::is_multisite_runtime() || !function_exists('add_action')) {
+            return;
+        }
+
+        add_action('wp_initialize_site', array(self::class, 'register_site_route'), 200, 1);
+        add_action('wp_uninitialize_site', array(self::class, 'unregister_site_route'), 10, 1);
+    }
+
+    public static function register_site_route($site): void
+    {
+        $blog_id = self::site_blog_id($site);
+        if ($blog_id <= 0) {
+            return;
+        }
+
+        $identity = self::site_identity($blog_id, self::site_url($site, $blog_id));
+        if (!is_file(self::config_path($identity))) {
+            self::write_route_config($identity);
+        }
+    }
+
+    public static function unregister_site_route($site): void
+    {
+        $blog_id = self::site_blog_id($site);
+        if ($blog_id <= 0) {
+            return;
+        }
+
+        $identity = self::site_identity($blog_id, self::site_url($site, $blog_id));
+        self::delete_directory(self::site_dir($identity));
+
+        if (!self::has_enabled_sites()) {
+            self::delete_bootstrap();
+        }
+    }
+
+    public static function remove_legacy_runtime(): void
+    {
+        $legacy_config = trailingslashit(self::base_dir()) . self::CONFIG_FILE;
+        if (is_file($legacy_config)) {
+            @unlink($legacy_config);
+        }
+
+        $legacy_index = trailingslashit(self::base_dir()) . self::INDEX_DIR;
+        if (is_dir($legacy_index)) {
+            self::delete_directory($legacy_index);
+        }
+    }
+
     private static function write_config(array $config): bool
     {
-        if (!Disk::make_path(self::base_dir(), true)) {
+        self::remove_stale_site_routes((int)($config['blog_id'] ?? 0), (string)($config['tenant'] ?? ''));
+
+        if (!Disk::make_path(self::site_dir(), true)) {
             return false;
         }
 
@@ -208,12 +300,15 @@ class StaticCacheDirectAccess
 
     private static function build_config(array $options): array
     {
-        $site_path = parse_url(home_url('/'), PHP_URL_PATH) ?: '/';
+        $identity = self::current_site_identity();
 
         return array(
             'enabled'                       => !empty($options['direct_access_enabled']) || !empty($options['enabled']),
             'abspath'                       => '',
-            'site_path'                     => '/' . trim($site_path, '/'),
+            'blog_id'                       => $identity['blog_id'],
+            'tenant'                        => $identity['tenant'],
+            'site_host'                     => $identity['host'],
+            'site_path'                     => $identity['path'],
             'index_dir'                     => self::relative_path(ABSPATH, self::index_dir()),
             'cache_query_args'              => !empty($options['cache_query_args']),
             'disable_admin_cache'           => (bool)Settings::get_option($options, 'disable_admin_cache', true),
@@ -234,25 +329,23 @@ class StaticCacheDirectAccess
 
     private static function write_disabled_runtime(): bool
     {
-        if (!self::is_supported() || !Disk::make_path(self::base_dir(), true)) {
+        if (
+            !self::is_supported()
+            || !Disk::make_path(self::base_dir(), true)
+            || !Disk::make_path(self::sites_dir(), true)
+            || !self::ensure_multisite_routes()
+        ) {
             return false;
         }
 
-        $site_path = parse_url(home_url('/'), PHP_URL_PATH) ?: '/';
-        $config = array(
-            'enabled'   => false,
-            'abspath'   => '',
-            'site_path' => '/' . trim($site_path, '/'),
-        );
-
-        return self::write_config($config) && self::write_bootstrap();
+        return self::write_route_config(self::current_site_identity()) && self::write_bootstrap();
     }
 
     private static function write_bootstrap(): bool
     {
         return Disk::write(
             self::bootstrap_path(),
-            self::script_source(self::relative_path(ABSPATH, self::config_path())),
+            self::script_source(self::relative_path(ABSPATH, self::sites_dir())),
             0
         );
     }
@@ -262,9 +355,21 @@ class StaticCacheDirectAccess
         return trailingslashit(WP_CONTENT_DIR) . self::STORAGE_DIR;
     }
 
-    private static function index_dir(): string
+    private static function sites_dir(): string
     {
-        return trailingslashit(self::base_dir()) . self::INDEX_DIR;
+        return trailingslashit(self::base_dir()) . self::SITES_DIR;
+    }
+
+    private static function site_dir(?array $identity = null): string
+    {
+        $identity = $identity ?: self::current_site_identity();
+
+        return trailingslashit(self::sites_dir()) . $identity['tenant'];
+    }
+
+    private static function index_dir(?array $identity = null): string
+    {
+        return trailingslashit(self::site_dir($identity)) . self::INDEX_DIR;
     }
 
     private static function bootstrap_path(): string
@@ -314,9 +419,145 @@ class StaticCacheDirectAccess
         @rmdir($path);
     }
 
-    private static function config_path(): string
+    private static function config_path(?array $identity = null): string
     {
-        return trailingslashit(self::base_dir()) . self::CONFIG_FILE;
+        return trailingslashit(self::site_dir($identity)) . self::CONFIG_FILE;
+    }
+
+    private static function ensure_multisite_routes(): bool
+    {
+        if (!self::is_multisite_runtime() || !function_exists('get_sites')) {
+            return true;
+        }
+
+        $sites = get_sites(array('number' => 0));
+        if (!is_array($sites)) {
+            return false;
+        }
+
+        foreach ($sites as $site) {
+            $blog_id = self::site_blog_id($site);
+            if ($blog_id <= 0) {
+                continue;
+            }
+
+            $identity = self::site_identity($blog_id, self::site_url($site, $blog_id));
+            if (!is_file(self::config_path($identity)) && !self::write_route_config($identity)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private static function write_route_config(array $identity): bool
+    {
+        self::remove_stale_site_routes((int)$identity['blog_id'], (string)$identity['tenant']);
+
+        $config = array(
+            'enabled'   => false,
+            'abspath'   => '',
+            'blog_id'   => $identity['blog_id'],
+            'tenant'    => $identity['tenant'],
+            'site_host' => $identity['host'],
+            'site_path' => $identity['path'],
+            'index_dir' => self::relative_path(ABSPATH, self::index_dir($identity)),
+        );
+
+        return Disk::write(
+            self::config_path($identity),
+            "<?php\nreturn " . var_export($config, true) . ";\n",
+            0
+        );
+    }
+
+    private static function current_site_identity(): array
+    {
+        $blog_id = function_exists('get_current_blog_id') ? (int)get_current_blog_id() : 0;
+
+        return self::site_identity($blog_id, home_url('/'));
+    }
+
+    private static function site_identity(int $blog_id, string $site_url = ''): array
+    {
+        if ($site_url === '') {
+            $site_url = self::site_url(null, $blog_id);
+        }
+
+        $host = strtolower(rtrim((string)(parse_url($site_url, PHP_URL_HOST) ?: ''), '.'));
+        $path = '/' . trim((string)(parse_url($site_url, PHP_URL_PATH) ?: '/'), '/');
+        if ($path !== '/') {
+            $path = rtrim($path, '/');
+        }
+
+        return array(
+            'blog_id' => $blog_id,
+            'host'    => $host,
+            'path'    => $path,
+            'tenant'  => hash('sha256', $blog_id . "\n" . $host . "\n" . $path),
+        );
+    }
+
+    private static function site_url($site, int $blog_id): string
+    {
+        if (function_exists('get_home_url')) {
+            $url = get_home_url($blog_id, '/');
+            if (is_string($url) && $url !== '') {
+                return $url;
+            }
+        }
+
+        if (is_object($site) && !empty($site->domain)) {
+            return 'http://' . $site->domain . '/' . ltrim((string)($site->path ?? '/'), '/');
+        }
+
+        return home_url('/');
+    }
+
+    private static function site_blog_id($site): int
+    {
+        if (is_numeric($site)) {
+            return (int)$site;
+        }
+
+        if (is_object($site)) {
+            return (int)($site->blog_id ?? $site->id ?? 0);
+        }
+
+        return 0;
+    }
+
+    private static function site_config_paths(): array
+    {
+        $paths = glob(trailingslashit(self::sites_dir()) . '*/' . self::CONFIG_FILE);
+
+        return is_array($paths) ? $paths : array();
+    }
+
+    private static function has_site_configs(): bool
+    {
+        return !empty(self::site_config_paths());
+    }
+
+    private static function remove_stale_site_routes(int $blog_id, string $current_tenant): void
+    {
+        foreach (self::site_config_paths() as $config_path) {
+            $config = include $config_path;
+            if (
+                !is_array($config)
+                || (int)($config['blog_id'] ?? -1) !== $blog_id
+                || (string)($config['tenant'] ?? '') === $current_tenant
+            ) {
+                continue;
+            }
+
+            self::delete_directory(dirname($config_path));
+        }
+    }
+
+    private static function is_multisite_runtime(): bool
+    {
+        return function_exists('is_multisite') && is_multisite();
     }
 
     private static function index_file(string $signature): string
@@ -326,7 +567,11 @@ class StaticCacheDirectAccess
 
     private static function signature(string $request_path, string $query_string, string $cookie_vary = ''): string
     {
-        return hash('sha256', trim($request_path, '/') . "\n" . $query_string . ($cookie_vary !== '' ? "\n" . $cookie_vary : ''));
+        return hash(
+            'sha256',
+            self::current_site_identity()['tenant'] . "\n" . trim($request_path, '/') . "\n" . $query_string
+            . ($cookie_vary !== '' ? "\n" . $cookie_vary : '')
+        );
     }
 
     private static function logged_in_direct_access_allowed(array $options): bool
@@ -435,9 +680,9 @@ class StaticCacheDirectAccess
         return implode('|', $patterns);
     }
 
-    private static function script_source(string $config_path): string
+    private static function script_source(string $sites_path): string
     {
-        return "<?php\n\nconst WPOPT_STATIC_DIRECT_CONFIG_PATH = " . var_export($config_path, true) . ";\n" . <<<'PHP'
+        return "<?php\n\nconst WPOPT_STATIC_DIRECT_SITES_PATH = " . var_export($sites_path, true) . ";\n" . <<<'PHP'
 
 const WPOPT_STATIC_DIRECT_DEFAULT_USER_SCOPE = 'not_logged_in';
 const WPOPT_STATIC_DIRECT_DEFAULT_STATUS_POLICY = array('2xx', '4xx', '5xx');
@@ -459,19 +704,60 @@ function wpopt_static_direct_resolve_path(string $path, ?string $base_path = nul
 
 function wpopt_static_direct_load_config(): array
 {
-    $config_file = wpopt_static_direct_resolve_path(WPOPT_STATIC_DIRECT_CONFIG_PATH);
-    if (!is_file($config_file)) {
-        http_response_code(404);
-        exit;
+    $sites_dir = wpopt_static_direct_resolve_path(WPOPT_STATIC_DIRECT_SITES_PATH);
+    $config_files = glob(rtrim($sites_dir, '/\\') . DIRECTORY_SEPARATOR . '*' . DIRECTORY_SEPARATOR . 'config.php');
+    if (!is_array($config_files)) {
+        $config_files = array();
     }
 
-    $config = require $config_file;
-    if (!is_array($config)) {
-        http_response_code(404);
-        exit;
+    $authority = trim((string)($_SERVER['HTTP_HOST'] ?? ''));
+    $request_host = $authority !== '' ? parse_url('http://' . $authority, PHP_URL_HOST) : '';
+    $request_host = strtolower(rtrim((string)$request_host, '.'));
+
+    $request_path = parse_url((string)($_SERVER['REQUEST_URI'] ?? '/'), PHP_URL_PATH);
+    $request_path = preg_replace('#/+#', '/', rawurldecode((string)($request_path ?: '/')));
+
+    $matched = null;
+    $matched_path_length = -1;
+    $ambiguous = false;
+
+    foreach ($config_files as $config_file) {
+        $config = require $config_file;
+        if (!is_array($config) || empty($config['tenant'])) {
+            continue;
+        }
+
+        $site_host = strtolower(rtrim((string)($config['site_host'] ?? ''), '.'));
+        $site_path = '/' . trim((string)($config['site_path'] ?? '/'), '/');
+        if ($site_path !== '/') {
+            $site_path = rtrim($site_path, '/');
+        }
+
+        $path_matches = $site_path === '/'
+            || strcasecmp($request_path, $site_path) === 0
+            || (strlen($request_path) > strlen($site_path)
+                && strncasecmp($request_path, $site_path . '/', strlen($site_path) + 1) === 0);
+
+        if ($site_host === '' || $request_host === '' || $site_host !== $request_host || !$path_matches) {
+            continue;
+        }
+
+        $path_length = strlen($site_path);
+        if ($path_length > $matched_path_length) {
+            $matched = $config;
+            $matched_path_length = $path_length;
+            $ambiguous = false;
+        }
+        elseif ($path_length === $matched_path_length && ($matched['tenant'] ?? '') !== $config['tenant']) {
+            $ambiguous = true;
+        }
     }
 
-    return $config;
+    if ($ambiguous || !is_array($matched)) {
+        return array('enabled' => false, 'abspath' => '', 'site_path' => '/');
+    }
+
+    return $matched;
 }
 
 function wpopt_static_direct_fallback(array $config): void
@@ -741,7 +1027,11 @@ function wpopt_static_direct_rules_allow(array $config, string $path): bool
 function wpopt_static_direct_index_file(array $config, string $path, string $query_string): string
 {
     $cookie_vary = wpopt_static_direct_cookie_vary_fragment($config);
-    $signature = hash('sha256', trim($path, '/') . "\n" . $query_string . ($cookie_vary !== '' ? "\n" . $cookie_vary : ''));
+    $signature = hash(
+        'sha256',
+        (string)($config['tenant'] ?? '') . "\n" . trim($path, '/') . "\n" . $query_string
+        . ($cookie_vary !== '' ? "\n" . $cookie_vary : '')
+    );
 
     return rtrim(wpopt_static_direct_resolve_path((string)($config['index_dir'] ?? '')), '/\\') . DIRECTORY_SEPARATOR . substr($signature, 0, 2) . DIRECTORY_SEPARATOR . $signature . '.php';
 }

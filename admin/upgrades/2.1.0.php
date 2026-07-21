@@ -6,7 +6,7 @@
  */
 
 WPS\core\UtilEnv::db_create(
-    WPOPT_TABLE_ACTIVITY_LOG,
+    wpopt_db_table_name('activity_log'),
     [
         "fields"      => [
             "id"         => "bigint NOT NULL AUTO_INCREMENT",

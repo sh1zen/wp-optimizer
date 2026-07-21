@@ -39,7 +39,7 @@ $sync_final_indexes = static function (string $table, array $obsolete_indexes) u
 };
 
 WPS\core\UtilEnv::db_create(
-    WPOPT_TABLE_REQUEST_PERFORMANCE,
+    wpopt_db_table_name('request_performance'),
     [
         'fields'      => [
             'id'                     => 'bigint unsigned NOT NULL AUTO_INCREMENT',
@@ -70,12 +70,12 @@ WPS\core\UtilEnv::db_create(
 );
 
 $sync_final_indexes(
-    WPOPT_TABLE_REQUEST_PERFORMANCE,
+    wpopt_db_table_name('request_performance'),
     array('idx_request_type', 'idx_is_slow', 'idx_type_created', 'idx_created_type')
 );
 
 WPS\core\UtilEnv::db_create(
-    WPOPT_TABLE_SLOW_QUERIES,
+    wpopt_db_table_name('slow_queries'),
     [
         'fields'      => [
             'id'              => 'bigint unsigned NOT NULL AUTO_INCREMENT',
@@ -99,6 +99,6 @@ WPS\core\UtilEnv::db_create(
 );
 
 $sync_final_indexes(
-    WPOPT_TABLE_SLOW_QUERIES,
+    wpopt_db_table_name('slow_queries'),
     array('idx_sql_signature', 'idx_query_time_ms', 'idx_request_log_id', 'idx_created_request')
 );

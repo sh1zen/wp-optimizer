@@ -48,6 +48,7 @@ class Mod_Cache extends Module
     private const STATIC_STATUS_CACHE_GROUPS = array('2xx', '3xx', '4xx', '5xx');
     private const DEFAULT_LAYER_DISABLE_ADMIN_CACHE = true;
     private const DYNAMIC_CACHE_LAYERS = array('wp_query', 'wp_db');
+    private const GLOBAL_DROPIN_LAYERS = array('wp_db', 'object_cache');
     private const CACHE_LAYERS = array('static_pages', 'wp_query', 'wp_db', 'object_cache');
     private const CACHE_RUNTIME_SUSPEND_LAYERS = array('wp_query', 'wp_db', 'object_cache');
     private const CACHE_TRASH_CLEANUP_HOOK = 'WPOPT-CacheTrashCleanup';
@@ -87,6 +88,8 @@ class Mod_Cache extends Module
     public function validate_settings($input, $filtering = false): array
     {
         $new_valid = parent::validate_settings($input, $filtering);
+        $can_manage_global_dropins = $this->can_manage_global_dropins();
+        $new_valid = $this->protect_global_dropin_settings($new_valid);
 
         $this->load_dependencies();
 
@@ -100,6 +103,10 @@ class Mod_Cache extends Module
 
         $dynamic_options_changed = array();
         foreach (self::DYNAMIC_CACHE_LAYERS as $layer) {
+            if ($layer === 'wp_db' && !$can_manage_global_dropins) {
+                continue;
+            }
+
             $layer_options_changed = false;
             $new_valid[$layer] = $this->validate_cache_layer_settings(
                 $layer,
@@ -142,19 +149,19 @@ class Mod_Cache extends Module
             $this->deactivate_static_cache_layer();
         }
 
-        if ($this->activating('object_cache.active', $new_valid)) {
+        if ($can_manage_global_dropins && $this->activating('object_cache.active', $new_valid)) {
             ObjectCache::activate($this->layer_admin_cache_disabled_from_settings($new_valid, 'object_cache'));
         }
 
-        if ($this->deactivating('object_cache.active', $new_valid)) {
+        if ($can_manage_global_dropins && $this->deactivating('object_cache.active', $new_valid)) {
             ObjectCache::deactivate();
         }
 
-        if (($this->activating('wp_db.active', $new_valid) || !empty($dynamic_options_changed['wp_db'])) && !empty($new_valid['wp_db']['active'])) {
+        if ($can_manage_global_dropins && ($this->activating('wp_db.active', $new_valid) || !empty($dynamic_options_changed['wp_db'])) && !empty($new_valid['wp_db']['active'])) {
             DBCache::activate($this->layer_options_from_settings($new_valid, 'wp_db'));
         }
 
-        if ($wp_db_deactivating) {
+        if ($can_manage_global_dropins && $wp_db_deactivating) {
             Disk::delete(WP_CONTENT_DIR . DIRECTORY_SEPARATOR . "db.php");
             $this->flush_single_cache_layer('wp_db');
         }
@@ -456,17 +463,41 @@ class Mod_Cache extends Module
         return $defaults;
     }
 
+    private function can_manage_global_dropins(): bool
+    {
+        return !is_multisite() || current_user_can('manage_network_options');
+    }
+
+    private function protect_global_dropin_settings(array $settings): array
+    {
+        if ($this->can_manage_global_dropins()) {
+            return $settings;
+        }
+
+        foreach (self::GLOBAL_DROPIN_LAYERS as $layer) {
+            $settings[$layer] = (array)$this->option($layer, array());
+        }
+
+        return $settings;
+    }
+
+    private function can_manage_cache_layer(string $layer): bool
+    {
+        return !in_array($layer, self::GLOBAL_DROPIN_LAYERS, true) || $this->can_manage_global_dropins();
+    }
+
     public function cleanup(array $settings = array(), array $all_settings = array()): bool
     {
         $this->load_dependencies();
 
         $static_settings = (array)Settings::get_option($settings, 'static_pages', $this->option('static_pages', array()));
-        $response = $this->toggle_static_direct_access_rules(false, $static_settings);
-
         $this->deactivate_static_direct_access_fast();
-        ObjectCache::deactivate();
-        Disk::delete(WP_CONTENT_DIR . DIRECTORY_SEPARATOR . "db.php");
-        $this->flush_single_cache_layer('wp_db');
+        $response = $this->toggle_static_direct_access_rules(StaticCacheDirectAccess::has_enabled_sites(), $static_settings);
+        if ($this->can_manage_global_dropins()) {
+            ObjectCache::deactivate();
+            Disk::delete(WP_CONTENT_DIR . DIRECTORY_SEPARATOR . "db.php");
+            $this->flush_single_cache_layer('wp_db');
+        }
         $this->deactivate_static_cache_layer();
         $this->flush_single_cache_layer('wp_query');
         wpopt_remove_cron_hooks(array('WPOPT-ClearCache'));
@@ -486,15 +517,15 @@ class Mod_Cache extends Module
             $this->sync_static_direct_access($static_settings);
         }
         else {
-            $this->toggle_static_direct_access_rules(false, $static_settings);
             $this->deactivate_static_direct_access_fast();
+            $this->toggle_static_direct_access_rules(StaticCacheDirectAccess::has_enabled_sites(), $static_settings);
         }
 
-        if (Settings::get_option($settings, 'object_cache.active')) {
+        if ($this->can_manage_global_dropins() && Settings::get_option($settings, 'object_cache.active')) {
             ObjectCache::activate($this->layer_admin_cache_disabled_from_settings($settings, 'object_cache'));
         }
 
-        if (Settings::get_option($settings, 'wp_db.active')) {
+        if ($this->can_manage_global_dropins() && Settings::get_option($settings, 'wp_db.active')) {
             DBCache::activate($this->layer_options_from_settings($settings, 'wp_db'));
         }
 
@@ -777,9 +808,11 @@ class Mod_Cache extends Module
         if ($action === 'reset_cache') {
             $this->flush_single_cache_layer('wp_query');
             $this->flush_single_cache_layer('static_pages');
-            $this->flush_single_cache_layer('wp_db');
 
-            ObjectCache::flush();
+            if ($this->can_manage_global_dropins()) {
+                $this->flush_single_cache_layer('wp_db');
+                ObjectCache::flush();
+            }
 
             $this->purge_cloudflare_cache();
 
@@ -861,6 +894,10 @@ class Mod_Cache extends Module
     private function reset_cache_layer(string $layer): bool
     {
         $layer = sanitize_key($layer);
+        if (!$this->can_manage_cache_layer($layer)) {
+            return false;
+        }
+
         $layers = $this->get_cache_layers();
 
         if (!isset($layers[$layer]) || empty($layers[$layer]['active'])) {
@@ -876,7 +913,7 @@ class Mod_Cache extends Module
     {
         $this->load_dependencies();
 
-        return [
+        $layers = [
             'wp_query' => [
                 'label' => __('WP_Query Cache', 'wpopt'),
                 'active' => (bool)$this->option('wp_query.active'),
@@ -930,6 +967,12 @@ class Mod_Cache extends Module
                 },
             ],
         ];
+
+        if (!$this->can_manage_global_dropins()) {
+            unset($layers['wp_db'], $layers['object_cache']);
+        }
+
+        return $layers;
     }
 
     private function add_cache_rule(string $layer, array $input): bool
@@ -1073,7 +1116,7 @@ class Mod_Cache extends Module
     {
         $layer = sanitize_key($layer);
 
-        return $this->cache_layer_is_configurable($layer) ? $layer : '';
+        return $this->cache_layer_is_configurable($layer) && $this->can_manage_cache_layer($layer) ? $layer : '';
     }
 
     private function cache_layer_is_configurable(string $layer): bool
@@ -1156,20 +1199,12 @@ class Mod_Cache extends Module
 
     private function flush_static_direct_index(): void
     {
-        $this->detach_cache_storage_path(trailingslashit(WPOPT_STORAGE) . 'direct-static/index', 'direct-static-index');
+        StaticCacheDirectAccess::clear_index();
     }
 
     private function deactivate_static_direct_access_fast(): bool
     {
-        $bootstrap_path = trailingslashit(ABSPATH) . 'wpopt-static-direct.php';
-
-        if (is_file($bootstrap_path)) {
-            @unlink($bootstrap_path);
-        }
-
-        $this->detach_cache_storage_path(trailingslashit(WPOPT_STORAGE) . 'direct-static', 'direct-static');
-
-        return !is_file($bootstrap_path);
+        return StaticCacheDirectAccess::deactivate();
     }
 
     private function flush_cache_storage_group(string $storage_group, int $blog_id = 0): void
@@ -1549,11 +1584,6 @@ class Mod_Cache extends Module
         return $table;
     }
 
-    private function update_static_page_rules(array $rules): bool
-    {
-        return $this->update_cache_layer_rules('static_pages', $rules);
-    }
-
     private function update_cache_layer_rules(string $layer, array $rules): bool
     {
         $layer = $this->normalize_cache_layer($layer);
@@ -1581,14 +1611,14 @@ class Mod_Cache extends Module
         $requested = !empty($static_options['direct_access_enabled']);
 
         if (!$requested) {
-            $this->toggle_static_direct_access_rules(false, $static_options);
             $this->deactivate_static_direct_access_fast();
+            $this->toggle_static_direct_access_rules(StaticCacheDirectAccess::has_enabled_sites(), $static_options);
             return false;
         }
 
         if (empty($static_options['active'])) {
-            $this->toggle_static_direct_access_rules(false, $static_options);
             $this->deactivate_static_direct_access_fast();
+            $this->toggle_static_direct_access_rules(StaticCacheDirectAccess::has_enabled_sites(), $static_options);
             $this->add_notices('warning', __('Static cache direct access is saved but inactive until static page cache is enabled.', 'wpopt'));
 
             return true;
@@ -1673,6 +1703,7 @@ class Mod_Cache extends Module
         }
 
         $this->load_dependencies();
+        StaticCacheDirectAccess::register_multisite_hooks();
 
         $this->cache_flush_hooks();
 
@@ -2289,7 +2320,7 @@ class Mod_Cache extends Module
 
     protected function setting_fields($filter = ''): array
     {
-        return $this->group_setting_fields(
+        $fields = array(
             $this->group_setting_fields(
                 $this->setting_field(__('WP_Query Cache'), 'wp_query_cache', 'separator'),
                 $this->setting_field(__('Active', 'wpopt'), "wp_query.active", "checkbox", ['default' => true]),
@@ -2301,7 +2332,10 @@ class Mod_Cache extends Module
                     ],
                 ]),
             ),
-            $this->group_setting_fields(
+        );
+
+        if ($this->can_manage_global_dropins()) {
+            $fields[] = $this->group_setting_fields(
                 $this->setting_field(__('Database Query Cache'), 'db_query_cache', 'separator'),
                 $this->setting_field(__('Active', 'wpopt'), "wp_db.active", "checkbox", ['default' => true]),
                 $this->setting_field(__('Configure', 'wpopt'), "wp_db.configuration", "conf", [
@@ -2311,12 +2345,14 @@ class Mod_Cache extends Module
                         'href' => wps_admin_route_url('wpopt', 'conf-cache-wp_db'),
                     ],
                 ]),
-            ),
-            $this->group_setting_fields(
+            );
+            $fields[] = $this->group_setting_fields(
                 $this->setting_field(__('Object Cache'), 'object_cache', 'separator'),
                 $this->setting_field(__('Active', 'wpopt'), "object_cache.active", "checkbox"),
-            ),
-            $this->group_setting_fields(
+            );
+        }
+
+        $fields[] = $this->group_setting_fields(
                 $this->setting_field(__('Static Pages Cache'), 'static_page_cache', 'separator'),
                 $this->setting_field(__('Active', 'wpopt'), "static_pages.active", "checkbox"),
                 $this->setting_field(__('Configure', 'wpopt'), "static_pages.configuration", "conf", [
@@ -2326,8 +2362,9 @@ class Mod_Cache extends Module
                         'href' => wps_admin_route_url('wpopt', 'conf-cache-static_pages'),
                     ],
                 ]),
-            )
         );
+
+        return $this->group_setting_fields(...$fields);
     }
 
     protected function infos(): array
@@ -2489,6 +2526,11 @@ class Mod_Cache extends Module
     {
         if ($this->restricted_access('settings')) {
             echo '<block><h2>' . esc_html__('This Module is disabled for you or for your settings.', 'wpopt') . '</h2></block>';
+            return;
+        }
+
+        if (!$this->can_manage_cache_layer($target)) {
+            echo '<block><h2>' . esc_html__('Only a Multisite network administrator can manage global cache drop-ins.', 'wpopt') . '</h2></block>';
             return;
         }
 

@@ -24,7 +24,8 @@ It brings together the common tools needed to keep a WordPress installation fast
 
 ### Maintenance and diagnostics
 
-- **Database and scheduling tools:** maintain tables, create database backups, review `wp_options` autoload data and manage WordPress cron events and custom schedules.
+- **Database and scheduling tools:** maintain tables, create database backups, review `wp_options` autoload data and manage WordPress cron events and custom schedules. On WordPress Multisite, site administrators retain Database Manager access, while SQL script execution requires the `manage_network_options` capability.
+- **Multisite lifecycle:** network-wide activation, upgrades and deactivation are applied independently to every site while preserving each site's settings, cron state and database-table prefix.
 - **Four-stage Page Test:** scans a site URL with a signed optimization/cache-bypass request, an empty current-configuration pass, a diagnostic warmup and a final measured signed request using the current configuration.
 - **Actionable diagnostics:** the warmup identifies slow or repeated queries, heavier hooks, callback samples and memory/query totals. Runtime HTML transformations use ordered handlers in the WPS `html_output_buffer` service, with PageSpeed processing before final HTML minification.
 
@@ -32,6 +33,8 @@ It brings together the common tools needed to keep a WordPress installation fast
 
 - **Automatic backups:** configuration snapshots are created before settings changes, throttled to prevent duplicate autosaves and limited to the 50 newest entries.
 - **Safe module resets:** after confirmation, individual modules can be restored to factory settings from the modules screen, including their cleanup lifecycle.
+- **Multisite direct-cache isolation:** each blog has its own runtime configuration, index directory and request signature; the shared bootstrap routes by hostname and the most specific registered site path.
+- **Network-owned cache drop-ins:** on Multisite, only users with `manage_network_options` can configure, install or remove the global `object-cache.php` and `db.php` drop-ins. Subsite administrators retain access to WP_Query and static-page cache settings.
 
 ### Web server compatibility
 

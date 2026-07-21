@@ -94,6 +94,12 @@ class Mod_Database extends Module
      */
     public function render_execSQL_panel(): string
     {
+        if (!$this->can_execute_sql_scripts()) {
+            return '<div class="notice notice-error inline"><p>'
+                    . esc_html__('Only a Multisite network administrator can execute SQL scripts.', 'wpopt')
+                    . '</p></div>';
+        }
+
         ob_start();
         ?>
         <form class="wpopt-ajax-db" method="post" data-module="<?php echo $this->slug ?>"
@@ -398,10 +404,20 @@ class Mod_Database extends Module
         $this->load_dependencies();
 
         $response = false;
+        $action = (string)($args['action'] ?? '');
 
-        if (($args['action'] ?? '') === 'render_panel') {
+        if ('exec-sql' === $action && !$this->can_execute_sql_scripts()) {
+            Ajax::response($this->sql_execution_denied_response(), 'error');
+        }
+
+        if ('render_panel' === $action) {
             $panel_id = $this->get_requested_panel_id($args['options'] ?? '');
             $panel_options = is_array($args['options'] ?? null) ? $args['options'] : array();
+
+            if ('db-runsql' === $panel_id && !$this->can_execute_sql_scripts()) {
+                Ajax::response($this->sql_execution_denied_response(), 'error');
+            }
+
             $html = $this->render_database_panel_content($panel_id, $panel_options);
 
             if ($html !== '') {
@@ -428,7 +444,7 @@ class Mod_Database extends Module
         $form_data = array();
         parse_str((string)($args['form_data'] ?? ''), $form_data);
 
-        switch ($args['action']) {
+        switch ($action) {
 
             case 'exec-sql':
                 $response = $this->exec_sql((string)($form_data['sql_query'] ?? ''));
@@ -438,7 +454,7 @@ class Mod_Database extends Module
             case 'download':
             case 'restore':
             case 'backup':
-                $response = $this->handle_database_actions($args['action'], array('file' => $form_data['file'] ?? $action_args['file'] ?? ''));
+                $response = $this->handle_database_actions($action, array('file' => $form_data['file'] ?? $action_args['file'] ?? ''));
                 break;
 
             case 'sweep_details':
@@ -474,7 +490,7 @@ class Mod_Database extends Module
             case 'option_toggle_autoload':
             case 'option_delete':
                 $option_name = (string)($action_args['option-name'] ?? '');
-                $response = $this->handle_option_action($args['action'], $option_name);
+                $response = $this->handle_option_action($action, $option_name);
                 break;
 
             case 'option_preview':
@@ -494,6 +510,10 @@ class Mod_Database extends Module
 
     private function exec_sql($sql): array
     {
+        if (!$this->can_execute_sql_scripts()) {
+            return $this->sql_execution_denied_response();
+        }
+
         $sql = trim($sql);
 
         if (empty($sql)) {
@@ -539,6 +559,14 @@ class Mod_Database extends Module
     private function new_response($text, $status = 'success', $extra_data = []): array
     {
         return array('text' => $text, 'status' => $status, 'list' => $extra_data);
+    }
+
+    private function sql_execution_denied_response(): array
+    {
+        return $this->new_response(
+                __('Only a Multisite network administrator can execute SQL scripts.', 'wpopt'),
+                'error'
+        );
     }
 
     private function handle_option_action(string $action, string $option_name): array
@@ -701,6 +729,11 @@ class Mod_Database extends Module
         return defined('DISALLOW_FILE_MODS') && DISALLOW_FILE_MODS;
     }
 
+    private function can_execute_sql_scripts(): bool
+    {
+        return !is_multisite() || current_user_can('manage_network_options');
+    }
+
     public function enqueue_scripts(): void
     {
         parent::enqueue_scripts();
@@ -710,55 +743,59 @@ class Mod_Database extends Module
 
     public function render_sub_modules(bool $standalone = true): void
     {
+        $panels = array(
+                array(
+                        'id'          => 'db-sweeper',
+                        'tab-title'   => __('Database sweeper', 'wpopt'),
+                        'panel-title' => __('Database Sweeper', 'wpopt'),
+                        'panel-icon'  => 'broom',
+                        'panel-description' => __('Remove unnecessary data and optimize your site database.', 'wpopt'),
+                        'callback'    => array($this, 'render_lazy_panel_placeholder'),
+                        'args'        => array('db-sweeper')
+                ),
+                array(
+                        'id'          => 'db-tables',
+                        'tab-title'   => __('Tables', 'wpopt'),
+                        'panel-title' => __('Database tables', 'wpopt'),
+                        'panel-icon'  => 'grid',
+                        'callback'    => array($this, 'render_lazy_panel_placeholder'),
+                        'args'        => array('db-tables')
+                ),
+                array(
+                        'id'          => 'db-options',
+                        'tab-title'   => __('Options', 'wpopt'),
+                        'panel-title' => __('WordPress options', 'wpopt'),
+                        'panel-icon'  => 'settings',
+                        'panel-description' => __('Review wp_options rows, autoload cost and risky cleanup actions.', 'wpopt'),
+                        'callback'    => array($this, 'render_lazy_panel_placeholder'),
+                        'args'        => array('db-options')
+                ),
+                array(
+                        'id'          => 'db-backup',
+                        'tab-title'   => __('Backup Manager', 'wpopt'),
+                        'panel-title' => __('Backup your database', 'wpopt'),
+                        'panel-icon'  => 'database',
+                        'callback'    => array($this, 'render_lazy_panel_placeholder'),
+                        'args'        => array('db-backup')
+                )
+        );
+
+        if ($this->can_execute_sql_scripts()) {
+            $panels[] = array(
+                    'id'          => 'db-runsql',
+                    'tab-title'   => __('Run SQL Query', 'wpopt'),
+                    'panel-title' => __('Run SQL Query', 'wpopt'),
+                    'panel-icon'  => 'settings',
+                    'callback'    => array($this, 'render_lazy_panel_placeholder'),
+                    'args'        => array('db-runsql')
+            );
+        }
+
         ?>
         <section class="wps-wrap wpopt-db-manager-page">
             <block class="wps wpopt-db-shell">
                 <?php
-                echo Graphic::generateHTML_tabs_panels(array(
-                        array(
-                                'id'          => 'db-sweeper',
-                                'tab-title'   => __('Database sweeper', 'wpopt'),
-                                'panel-title' => __('Database Sweeper', 'wpopt'),
-                                'panel-icon'  => 'broom',
-                                'panel-description' => __('Remove unnecessary data and optimize your site database.', 'wpopt'),
-                                'callback'    => array($this, 'render_lazy_panel_placeholder'),
-                                'args'        => array('db-sweeper')
-                        ),
-                        array(
-                                'id'          => 'db-tables',
-                                'tab-title'   => __('Tables', 'wpopt'),
-                                'panel-title' => __('Database tables', 'wpopt'),
-                                'panel-icon'  => 'grid',
-                                'callback'    => array($this, 'render_lazy_panel_placeholder'),
-                                'args'        => array('db-tables')
-                        ),
-                        array(
-                                'id'          => 'db-options',
-                                'tab-title'   => __('Options', 'wpopt'),
-                                'panel-title' => __('WordPress options', 'wpopt'),
-                                'panel-icon'  => 'settings',
-                                'panel-description' => __('Review wp_options rows, autoload cost and risky cleanup actions.', 'wpopt'),
-                                'callback'    => array($this, 'render_lazy_panel_placeholder'),
-                                'args'        => array('db-options')
-                        ),
-
-                        array(
-                                'id'          => 'db-backup',
-                                'tab-title'   => __('Backup Manager', 'wpopt'),
-                                'panel-title' => __('Backup your database', 'wpopt'),
-                                'panel-icon'  => 'database',
-                                'callback'    => array($this, 'render_lazy_panel_placeholder'),
-                                'args'        => array('db-backup')
-                        ),
-                        array(
-                                'id'          => 'db-runsql',
-                                'tab-title'   => __('Run SQL Query', 'wpopt'),
-                                'panel-title' => __('Run SQL Query', 'wpopt'),
-                                'panel-icon'  => 'settings',
-                                'callback'    => array($this, 'render_lazy_panel_placeholder'),
-                                'args'        => array('db-runsql')
-                        )
-                ));
+                echo Graphic::generateHTML_tabs_panels($panels);
                 ?>
             </block>
         </section>

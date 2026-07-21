@@ -51,33 +51,33 @@ $wpopt_284_add_index = static function (string $table, string $name, string $def
 };
 
 $wpopt_284_add_index(
-    WPOPT_TABLE_REQUEST_PERFORMANCE,
+    wpopt_db_table_name('request_performance'),
     'idx_perf_window_type',
     'INDEX `idx_perf_window_type` (`created_at_gmt`, `request_type`) USING BTREE'
 );
 $wpopt_284_add_index(
-    WPOPT_TABLE_REQUEST_PERFORMANCE,
+    wpopt_db_table_name('request_performance'),
     'idx_perf_window_label',
     'INDEX `idx_perf_window_label` (`created_at_gmt`, `request_type`, `request_label`(120)) USING BTREE'
 );
 $wpopt_284_add_index(
-    WPOPT_TABLE_REQUEST_PERFORMANCE,
+    wpopt_db_table_name('request_performance'),
     'idx_perf_recent',
     'INDEX `idx_perf_recent` (`created_at_gmt`, `id`) USING BTREE'
 );
 
 $wpopt_284_add_index(
-    WPOPT_TABLE_SLOW_QUERIES,
+    wpopt_db_table_name('slow_queries'),
     'idx_slow_window_runtime',
     'INDEX `idx_slow_window_runtime` (`created_at_gmt`, `query_time_ms`) USING BTREE'
 );
 $wpopt_284_add_index(
-    WPOPT_TABLE_SLOW_QUERIES,
+    wpopt_db_table_name('slow_queries'),
     'idx_slow_signature_window',
     'INDEX `idx_slow_signature_window` (`sql_signature`, `created_at_gmt`, `query_time_ms`) USING BTREE'
 );
 $wpopt_284_add_index(
-    WPOPT_TABLE_SLOW_QUERIES,
+    wpopt_db_table_name('slow_queries'),
     'idx_slow_request_log',
     'INDEX `idx_slow_request_log` (`request_log_id`) USING BTREE'
 );

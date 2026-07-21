@@ -469,25 +469,62 @@ class PagesHandler
             array($this, 'render_main')
         );
 
-        $labels = array(
-            'modules_handler' => __('Modules', $text_domain),
-            'cron'            => __('Schedule', $text_domain),
-            'cloudflare'      => __('Cloudflare', $text_domain),
-            'settings'        => __('Settings', $text_domain),
-            'tracking'        => __('Tracking', $text_domain),
+        $submenu_pages = array(
+            array(
+                'label' => __('Modules', $text_domain),
+                'route' => 'setting-modules_handler',
+            ),
+            array(
+                'label' => __('Schedule', $text_domain),
+                'route' => 'setting-cron',
+            ),
+            array(
+                'label' => __('PageSpeed', $text_domain),
+                'route' => 'module-setting-pagespeed',
+            ),
+            array(
+                'label' => __('Settings', $text_domain),
+                'route' => 'setting-settings',
+            ),
+            array(
+                'label' => __('FAQ', $text_domain),
+                'route' => 'faq',
+            ),
         );
 
-        foreach (wps($context)->settings->get_core_setting_pages() as $page) {
-            if (!isset($labels[$page['id']])) {
-                continue;
-            }
-
+        foreach ($submenu_pages as $page) {
             add_submenu_page(
                 $parent_slug,
-                $labels[$page['id']],
-                $labels[$page['id']],
+                $page['label'],
+                $page['label'],
                 'manage_options',
-                $parent_slug . '&wps-page=setting-' . $page['id'],
+                $parent_slug . '&wps-page=' . $page['route'],
+                array($this, 'render_main')
+            );
+        }
+
+        $active_tools = wps($context)->moduleHandler->get_modules(array('scopes' => 'admin-page'), true);
+
+        if (empty($active_tools)) {
+            return;
+        }
+
+        add_submenu_page(
+            $parent_slug,
+            __('Tools', $text_domain),
+            '<span class="wpopt-admin-tools-heading">' . esc_html__('Tools', $text_domain) . '</span>',
+            'manage_options',
+            $parent_slug . '&wps-page=tools',
+            array($this, 'render_main')
+        );
+
+        foreach ($active_tools as $module) {
+            add_submenu_page(
+                $parent_slug,
+                $module['name'],
+                '<span class="wpopt-admin-tool-item">' . esc_html($module['name']) . '</span>',
+                'manage_options',
+                $parent_slug . '&wps-page=module-' . $module['slug'],
                 array($this, 'render_main')
             );
         }
@@ -570,11 +607,17 @@ class PagesHandler
     public function register_assets($hook_suffix = ''): void
     {
         $style_asset = UtilEnv::resolve_asset(WPOPT_ABSPATH, 'assets/style.css', wps_core()->online);
+        $menu_style_asset = UtilEnv::resolve_asset(WPOPT_ABSPATH, 'assets/admin-menu.css', wps_core()->online);
+        $menu_script_asset = UtilEnv::resolve_asset(WPOPT_ABSPATH, 'assets/admin-menu.js', wps_core()->online);
         $script_asset = UtilEnv::resolve_asset(WPOPT_ABSPATH, 'assets/admin.js', wps_core()->online);
 
         $style_version = $style_asset['version'] ?: (file_exists(WPOPT_ABSPATH . 'assets/style.css') ? filemtime(WPOPT_ABSPATH . 'assets/style.css') : WPOPT_VERSION);
+        $menu_style_version = $menu_style_asset['version'] ?: (file_exists(WPOPT_ABSPATH . 'assets/admin-menu.css') ? filemtime(WPOPT_ABSPATH . 'assets/admin-menu.css') : WPOPT_VERSION);
+        $menu_script_version = $menu_script_asset['version'] ?: (file_exists(WPOPT_ABSPATH . 'assets/admin-menu.js') ? filemtime(WPOPT_ABSPATH . 'assets/admin-menu.js') : WPOPT_VERSION);
 
         wp_register_style("wpopt_css", $style_asset['url'], ['vendor-wps-css'], $style_version);
+        wp_enqueue_style('wpopt_admin_menu_css', $menu_style_asset['url'], array(), $menu_style_version);
+        wp_enqueue_script('wpopt_admin_menu_js', $menu_script_asset['url'], array(), $menu_script_version, true);
         wp_register_script("wpopt_admin_js", $script_asset['url'], ['vendor-wps-js'], $script_asset['version'] ?: WPOPT_VERSION, true);
 
         if ($this->is_wp_optimizer_admin_screen($hook_suffix)) {
@@ -881,7 +924,7 @@ class PagesHandler
                 'question' => __('How do I completely uninstall WP Optimizer and remove its data?', 'wpopt'),
                 'answers'  => array(
                     sprintf(__('For the cleanest removal, first use the <a href="%s">module reset tools</a> so active modules can remove managed drop-ins, generated storage, and local server rules. Then deactivate and delete WP Optimizer from the WordPress Plugins screen.', 'wpopt'), wps_module_setting_url('wpopt')),
-                    __('The uninstall routine removes plugin options, scheduled media hooks, and plugin database tables. Shared WPS framework data is removed only when no other installed component uses it.', 'wpopt'),
+                    __('The uninstall routine removes plugin options, scheduled media hooks, and plugin database tables from every site in a Multisite network. Shared WPS framework data is removed only when no other installed component uses it.', 'wpopt'),
                 ),
             ),
             array(
@@ -1370,6 +1413,7 @@ class PagesHandler
             'welcome'   => __('Welcome', 'wpopt'),
             'page-test' => __('Page test', 'wpopt'),
             'faq'       => __('FAQ', 'wpopt'),
+            'tools'     => __('Tools', 'wpopt'),
         );
 
         if (isset($labels[$route])) {
@@ -1426,6 +1470,11 @@ class PagesHandler
     {
         if ($route === 'core-settings') {
             $this->render_first_core_setting_page('wpopt');
+            return;
+        }
+
+        if ($route === 'tools') {
+            wps('wpopt')->settings->render_core_setting_page('modules_handler', false);
             return;
         }
 

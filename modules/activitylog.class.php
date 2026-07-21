@@ -92,7 +92,7 @@ class Mod_ActivityLog extends Module
     {
         global $wpdb;
 
-        $table = defined('WPOPT_TABLE_ACTIVITY_LOG') ? (string)WPOPT_TABLE_ACTIVITY_LOG : '';
+        $table = wpopt_db_table_name('activity_log');
 
         if ('' === $table || !preg_match('/^[A-Za-z0-9_]+$/', $table)) {
             return false;
@@ -730,40 +730,6 @@ class Mod_ActivityLog extends Module
         ];
     }
 
-    private function get_activity_context_breakdown(int $limit = 8): array
-    {
-        global $wpdb;
-
-        return (array)$wpdb->get_results(
-            $wpdb->prepare(
-                'SELECT context, COUNT(*) AS total
-                 FROM ' . WPOPT_TABLE_ACTIVITY_LOG . '
-                 GROUP BY context
-                 ORDER BY total DESC
-                 LIMIT %d',
-                $limit
-            ),
-            ARRAY_A
-        );
-    }
-
-    private function get_activity_action_breakdown(int $limit = 8): array
-    {
-        global $wpdb;
-
-        return (array)$wpdb->get_results(
-            $wpdb->prepare(
-                'SELECT action, COUNT(*) AS total
-                 FROM ' . WPOPT_TABLE_ACTIVITY_LOG . '
-                 GROUP BY action
-                 ORDER BY total DESC
-                 LIMIT %d',
-                $limit
-            ),
-            ARRAY_A
-        );
-    }
-
     private function get_activity_daily_series(int $days = 30): array
     {
         global $wpdb;
@@ -993,53 +959,6 @@ class Mod_ActivityLog extends Module
             '#16a34a',
             '#334155',
         );
-    }
-
-    private function format_activity_context_label(string $context): string
-    {
-        return ucwords(str_replace(array('_', '-'), ' ', $context));
-    }
-
-    private function render_activity_bar_chart(array $rows, string $label_key, string $color, bool $translate_action = false): string
-    {
-        $width = 460;
-        $height = 260;
-        $padding_top = 18;
-        $padding_right = 20;
-        $padding_bottom = 26;
-        $padding_left = 140;
-        $plot_width = $width - $padding_left - $padding_right;
-        $plot_height = $height - $padding_top - $padding_bottom;
-        $count = max(1, count($rows));
-        $slot_height = $plot_height / $count;
-        $bar_height = min(22, $slot_height * 0.64);
-        $max_value = max(1, ...array_map(static function ($row) {
-            return (int)$row['total'];
-        }, $rows));
-
-        ob_start();
-        ?>
-        <svg viewBox="0 0 <?php echo $width; ?> <?php echo $height; ?>" width="100%" height="260" role="img">
-            <?php foreach ($rows as $index => $row): ?>
-                <?php
-                $value = (int)$row['total'];
-                $label = (string)$row[$label_key];
-                if ($translate_action) {
-                    $label = ucwords(str_replace('-', ' ', __($label, 'wpopt')));
-                }
-                else {
-                    $label = ucwords(str_replace(['_', '-'], ' ', $label));
-                }
-                $y = $padding_top + ($slot_height * $index) + (($slot_height - $bar_height) / 2);
-                $bar_width = $plot_width * ($value / $max_value);
-                ?>
-                <text x="<?php echo $padding_left - 10; ?>" y="<?php echo round($y + ($bar_height / 2) + 4, 2); ?>" text-anchor="end" fill="#334155" font-size="12"><?php echo esc_html($label); ?></text>
-                <rect x="<?php echo $padding_left; ?>" y="<?php echo round($y, 2); ?>" width="<?php echo round($bar_width, 2); ?>" height="<?php echo round($bar_height, 2); ?>" rx="10" fill="<?php echo esc_attr($color); ?>" opacity="0.9"></rect>
-                <text x="<?php echo round($padding_left + $bar_width + 8, 2); ?>" y="<?php echo round($y + ($bar_height / 2) + 4, 2); ?>" fill="#0f172a" font-size="12"><?php echo number_format_i18n($value); ?></text>
-            <?php endforeach; ?>
-        </svg>
-        <?php
-        return ob_get_clean();
     }
 
     private function render_activity_empty(): string

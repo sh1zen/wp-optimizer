@@ -8,7 +8,7 @@
 global $wpdb;
 
 WPS\core\UtilEnv::db_create(
-    WPOPT_TABLE_CACHE_ENTRIES,
+    wpopt_db_table_name('cache_entries'),
     [
         'fields'      => [
             'id'                      => 'bigint unsigned NOT NULL AUTO_INCREMENT',
@@ -47,13 +47,13 @@ $wpopt_283_get_table_indexes = static function (string $table) use ($wpdb): arra
 };
 
 $wpopt_283_add_index = static function (string $name, string $definition) use ($wpdb, $wpopt_283_get_table_indexes): void {
-    $indexes = $wpopt_283_get_table_indexes(WPOPT_TABLE_CACHE_ENTRIES);
+    $indexes = $wpopt_283_get_table_indexes(wpopt_db_table_name('cache_entries'));
 
     if (isset($indexes[$name])) {
         return;
     }
 
-    $wpdb->query('ALTER TABLE ' . WPOPT_TABLE_CACHE_ENTRIES . ' ADD ' . $definition);
+        $wpdb->query('ALTER TABLE ' . wpopt_db_table_name('cache_entries') . ' ADD ' . $definition);
 };
 
 $wpopt_283_add_index(
@@ -99,7 +99,7 @@ $wpopt_283_insert_index_row = static function (string $cache_key, string $namesp
     $dependency_value = sanitize_key($dependency_value);
 
     $wpdb->replace(
-        WPOPT_TABLE_CACHE_ENTRIES,
+        wpopt_db_table_name('cache_entries'),
         [
             'namespace'               => $namespace,
             'cache_key'               => $cache_key,

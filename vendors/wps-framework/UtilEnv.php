@@ -34,7 +34,8 @@ class UtilEnv
 
             $next_ver = array_shift($upgrades);
 
-            require_once $upgrade_path . "$next_ver.php";
+            // Each Multisite blog owns its schema and must execute the same migration file.
+            require $upgrade_path . "$next_ver.php";
 
             $current_ver = $next_ver;
         }

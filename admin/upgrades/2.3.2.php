@@ -8,7 +8,7 @@
 global $wpdb;
 
 WPS\core\UtilEnv::db_create(
-    WPOPT_TABLE_LOG_MAILS,
+    wpopt_db_table_name('log_mails'),
     [
         "fields"      => [
             "id"               => "bigint NOT NULL AUTO_INCREMENT",

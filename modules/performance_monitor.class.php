@@ -374,8 +374,8 @@ class Mod_Performance_Monitor extends Module
         global $wpdb;
 
         $tables = array_filter(array(
-            defined('WPOPT_TABLE_SLOW_QUERIES') ? (string)WPOPT_TABLE_SLOW_QUERIES : '',
-            defined('WPOPT_TABLE_REQUEST_PERFORMANCE') ? (string)WPOPT_TABLE_REQUEST_PERFORMANCE : '',
+            wpopt_db_table_name('slow_queries'),
+            wpopt_db_table_name('request_performance'),
         ));
 
         $success = true;
@@ -1647,11 +1647,6 @@ class Mod_Performance_Monitor extends Module
         }
     }
 
-    private function resolve_slow_query_threshold_ms(int $slow_threshold): float
-    {
-        return max(10.0, min(100.0, round($slow_threshold / 20, 3)));
-    }
-
     private function normalize_sql_capture_string(string $query): string
     {
         $query = trim($query);
@@ -2502,27 +2497,6 @@ class Mod_Performance_Monitor extends Module
         return array();
     }
 
-    private function apply_included_component_footprint(): void
-    {
-        foreach ((array)get_included_files() as $file) {
-            $component = $this->resolve_component_from_file((string)$file);
-
-            if (empty($component)) {
-                continue;
-            }
-
-            $component_key = $component['key'];
-            $this->touch_component_metric($component);
-            $this->component_metrics[$component_key]['file_count'] += 1;
-
-            $normalized_file = $this->normalize_path_for_matching((string)$file);
-
-            if ($normalized_file !== '' && is_file($normalized_file) && is_readable($normalized_file)) {
-                $this->component_metrics[$component_key]['file_bytes'] += (int)filesize($normalized_file);
-            }
-        }
-    }
-
     private function capture_component_load_footprint(array $preferred_keys = array()): void
     {
         if (empty($this->component_load_checkpoint)) {
@@ -2873,27 +2847,6 @@ class Mod_Performance_Monitor extends Module
         }
 
         return '';
-    }
-
-    private function resolve_component_from_backtrace(array $trace): ?array
-    {
-        $monitor_file = $this->normalize_path_for_matching(__FILE__);
-
-        foreach ($trace as $frame) {
-            $file = $this->normalize_path_for_matching((string)($frame['file'] ?? ''));
-
-            if ($file === '' || $file === $monitor_file) {
-                continue;
-            }
-
-            $component = $this->resolve_component_from_file($file);
-
-            if (!empty($component)) {
-                return $component;
-            }
-        }
-
-        return null;
     }
 
     private function resolve_component_candidates_from_backtrace(array $trace): array
@@ -3326,48 +3279,6 @@ class Mod_Performance_Monitor extends Module
         unset($row);
 
         return $rows;
-    }
-
-    private function get_slow_query_samples(string $from_gmt, array $signatures): array
-    {
-        global $wpdb;
-
-        $signatures = array_values(array_unique(array_filter(array_map('strval', $signatures))));
-
-        if (empty($signatures)) {
-            return array();
-        }
-
-        $placeholders = implode(', ', array_fill(0, count($signatures), '%s'));
-        $sql = 'SELECT slow.sql_signature,
-                       slow.sql_query,
-                       slow.query_caller,
-                       COALESCE(NULLIF(req.request_type, ""), slow.request_type) AS request_type,
-                       COALESCE(NULLIF(req.request_label, ""), slow.request_label) AS request_label,
-                       COALESCE(NULLIF(req.request_method, ""), slow.request_method) AS request_method,
-                       COALESCE(NULLIF(req.request_uri, ""), slow.request_uri) AS request_uri,
-                       COALESCE(req.created_at, slow.created_at) AS created_at
-                FROM ' . WPOPT_TABLE_SLOW_QUERIES . ' slow
-                LEFT JOIN ' . WPOPT_TABLE_REQUEST_PERFORMANCE . ' req ON req.id = slow.request_log_id
-                WHERE slow.created_at_gmt >= %s AND slow.sql_signature IN (' . $placeholders . ')
-                ORDER BY slow.query_time_ms DESC, slow.created_at_gmt DESC';
-
-        $rows = (array)$wpdb->get_results(
-            $wpdb->prepare($sql, array_merge(array($from_gmt), $signatures)),
-            ARRAY_A
-        );
-
-        $samples = array();
-
-        foreach ($rows as $row) {
-            if (isset($samples[$row['sql_signature']])) {
-                continue;
-            }
-
-            $samples[$row['sql_signature']] = $row;
-        }
-
-        return $samples;
     }
 
     private function get_time_series(array $window, string $from_gmt, array $request_types): array

@@ -22,12 +22,12 @@ class Options
 
     private string $table_name;
 
+    private string $base_table_name;
+
     private Cache $cache;
 
-    public function __construct($context, $table_name, $cache_object = null)
+    public function __construct($context, $table_name, $cache_object = null, bool $create_table = true)
     {
-        global $wpdb;
-
         if ($cache_object and $cache_object instanceof Cache) {
             $this->cache = $cache_object;
         }
@@ -35,18 +35,13 @@ class Options
             $this->cache = wps_loaded($context) ? wps($context)->cache : new Cache($context);
         }
 
-        if (empty($table_name)) {
+        $this->base_table_name = (string)$table_name;
+
+        if (empty($this->base_table_name)) {
             wps_debug_log("WPS Framework >> Options has not defined table name");
         }
-        else {
-            if (!str_starts_with($table_name, $wpdb->prefix)) {
-                $table_name = $wpdb->prefix . $table_name;
-            }
-        }
 
-        $this->table_name = $table_name;
-
-        $this->maybe_create_options_table();
+        $this->switch_to_blog($create_table);
 
         wps_hook('init', function () use ($context) {
             CronActions::schedule("$context-clear-options", 'daily', function () {
@@ -242,6 +237,27 @@ class Options
         $this->cache->set($obj_id . $option . $context, $value, 'db_cache', true);
 
         return true;
+    }
+
+    public function switch_to_blog(bool $create_table = false): void
+    {
+        global $wpdb;
+
+        $this->cache->switch_to_blog();
+
+        if ('' === $this->base_table_name) {
+            $this->table_name = '';
+
+            return;
+        }
+
+        $this->table_name = str_starts_with($this->base_table_name, $wpdb->prefix)
+            ? $this->base_table_name
+            : $wpdb->prefix . $this->base_table_name;
+
+        if ($create_table && '' !== $this->table_name) {
+            $this->maybe_create_options_table();
+        }
     }
 
     private function execute_with_db_lock_retries(string $sql)

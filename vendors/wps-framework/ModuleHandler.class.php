@@ -11,9 +11,15 @@ use WPS\modules\Module;
 
 class ModuleHandler
 {
+    private static array $module_namespace_cache = array();
+
+    private static array $module_catalog_cache = array();
+
     private string $modules_path;
 
     private array $modules;
+
+    private array $module_classes = array();
 
     private $module_settings;
 
@@ -34,7 +40,23 @@ class ModuleHandler
         $this->context = $context;
         $this->modules_path = $load_path;
 
-        $this->init_modules($this->modules_path);
+        $catalog_key = str_replace('\\', '/', rtrim($this->modules_path, '/\\'));
+
+        if (isset(self::$module_catalog_cache[$catalog_key])) {
+            $this->modules = self::$module_catalog_cache[$catalog_key]['modules'];
+            $this->module_classes = self::$module_catalog_cache[$catalog_key]['classes'];
+
+            foreach ($this->module_classes as $module_slug => $class) {
+                wps($this->context)->cache->set($module_slug, $class, 'modules-handler', true, false);
+            }
+        }
+        else {
+            $this->init_modules($this->modules_path);
+            self::$module_catalog_cache[$catalog_key] = array(
+                'modules' => $this->modules,
+                'classes' => $this->module_classes,
+            );
+        }
 
         $this->module_settings = wps($context)->settings->get('modules_handler', []);
     }
@@ -83,13 +105,23 @@ class ModuleHandler
 
         $module_name = basename($file, '.class.php');
 
-        $namespace = include_once($file);
+        if (isset(self::$module_namespace_cache[$file])) {
+            $namespace = self::$module_namespace_cache[$file];
+        }
+        else {
+            $namespace = include_once($file);
+
+            if (is_string($namespace) && '' !== $namespace) {
+                self::$module_namespace_cache[$file] = $namespace;
+            }
+        }
 
         $module_slug = self::module_slug($module_name, true);
 
-        if (class_exists("$namespace\\Mod_" . $module_slug)) {
+        if (is_string($namespace) && class_exists("$namespace\\Mod_" . $module_slug)) {
 
             $class = "$namespace\\Mod_" . $module_slug;
+            $this->module_classes[$module_slug] = $class;
 
             wps($this->context)->cache->set($module_slug, $class, 'modules-handler', true, false);
         }
@@ -138,7 +170,13 @@ class ModuleHandler
      */
     public function module2classname($name)
     {
-        return wps($this->context)->cache->get(self::module_slug($name, true), 'modules-handler', false);
+        $module_slug = self::module_slug($name, true);
+
+        if (isset($this->module_classes[$module_slug])) {
+            return $this->module_classes[$module_slug];
+        }
+
+        return wps($this->context)->cache->get($module_slug, 'modules-handler', false);
     }
 
     /**

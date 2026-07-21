@@ -113,6 +113,31 @@ class wps_wrapper
         }
     }
 
+    public function switch_to_blog(bool $create_options_table = false): void
+    {
+        if ($this->components['cache']) {
+            $this->cache = new Cache($this->context, defined('WP_PERSISTENT_CACHE') and WP_PERSISTENT_CACHE);
+        }
+
+        if ($this->components['storage']) {
+            $this->storage = new Storage($this->context);
+        }
+
+        $this->settings = new Settings($this->context);
+
+        if ($this->components['options'] && !empty($this->args['table_name'])) {
+            $this->options = new Options($this->context, $this->args['table_name'], $this->cache, $create_options_table);
+        }
+
+        if ($this->components['moduleHandler'] && !empty($this->args['modules_path'])) {
+            $this->moduleHandler = new ModuleHandler($this->context, $this->args['modules_path']);
+        }
+
+        if ($this->components['cron']) {
+            $this->cron = new CronForModules($this->context);
+        }
+    }
+
     public function get_path()
     {
         return $this->path;

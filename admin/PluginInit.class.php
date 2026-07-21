@@ -707,8 +707,17 @@ class PluginInit
      * @param boolean $network_wide Is network wide.
      * @return void
      */
-    public function plugin_activation($network_wide)
+    public function plugin_activation($network_wide): void
     {
+        $this->run_site_lifecycle((bool)$network_wide, true, function (): void {
+            $this->activate_site();
+        });
+    }
+
+    private function activate_site(): void
+    {
+        wps_maybe_upgrade('wpopt', WPOPT_VERSION, WPOPT_ADMIN . "upgrades/");
+
         $had_module_settings = $this->has_module_settings();
 
         if (!get_option('wpopt_activated_at', false)) {
@@ -774,6 +783,16 @@ class PluginInit
      */
     public function plugin_deactivation($network_wide): void
     {
+        $this->send_deactivation_report();
+        delete_transient(self::DEACTIVATION_FEEDBACK_TRANSIENT . get_current_user_id());
+
+        $this->run_site_lifecycle((bool)$network_wide, false, function (): void {
+            $this->deactivate_site();
+        });
+    }
+
+    private function send_deactivation_report(): void
+    {
         global $wp_version;
 
         $tracking_enabled = (bool)wps('wpopt')->settings->get('tracking.usage', true);
@@ -804,8 +823,10 @@ class PluginInit
             }
         }
 
-        delete_transient(self::DEACTIVATION_FEEDBACK_TRANSIENT . get_current_user_id());
+    }
 
+    private function deactivate_site(): void
+    {
         wpopt_cleanup_media_cron_hooks();
 
         wps('wpopt')->moduleHandler->cleanup_modules(null, false);
@@ -816,6 +837,70 @@ class PluginInit
          * Hook for the plugin deactivation
          */
         do_action('wpopt-deactivate');
+    }
+
+    private function run_site_lifecycle(bool $network_wide, bool $create_options_table, callable $callback): void
+    {
+        if (!is_multisite() || !$network_wide) {
+            $callback();
+
+            return;
+        }
+
+        $wps_context_rebound = false;
+
+        try {
+            foreach ($this->network_site_ids() as $site_id) {
+                $switched = $site_id !== (int)get_current_blog_id();
+
+                if ($switched) {
+                    switch_to_blog($site_id);
+                }
+
+                try {
+                    wps('wpopt')->switch_to_blog($create_options_table);
+                    $wps_context_rebound = true;
+                    $callback();
+                }
+                finally {
+                    if ($switched) {
+                        restore_current_blog();
+                    }
+                }
+            }
+        }
+        finally {
+            if ($wps_context_rebound) {
+                wps('wpopt')->switch_to_blog(false);
+            }
+        }
+    }
+
+    private function network_site_ids(): iterable
+    {
+        $batch_size = 100;
+        $offset = 0;
+
+        do {
+            $sites = get_sites(array(
+                'fields'  => 'ids',
+                'number'  => $batch_size,
+                'offset'  => $offset,
+                'orderby' => 'id',
+                'order'   => 'ASC',
+            ));
+
+            foreach ($sites as $site) {
+                $site_id = is_object($site) ? (int)$site->blog_id : (int)$site;
+
+                if ($site_id > 0) {
+                    yield $site_id;
+                }
+            }
+
+            $site_count = count($sites);
+            $offset += $site_count;
+        } while ($site_count === $batch_size);
     }
 
     public function enqueue_deactivation_feedback_assets(string $hook_suffix): void

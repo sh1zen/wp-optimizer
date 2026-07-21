@@ -7,17 +7,18 @@
 
 global $wpdb;
 
-$table_exists = $wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s', WPOPT_TABLE_LOG_MAILS));
+$table_name = wpopt_db_table_name('log_mails');
+$table_exists = $wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s', $table_name));
 
 if (!$table_exists) {
     return;
 }
 
-$indexes = (array)$wpdb->get_results('SHOW INDEX FROM ' . WPOPT_TABLE_LOG_MAILS, ARRAY_A);
+$indexes = (array)$wpdb->get_results('SHOW INDEX FROM ' . $table_name, ARRAY_A);
 
 foreach ($indexes as $index) {
     if (($index['Key_name'] ?? '') === 'speeder') {
-        $wpdb->query('ALTER TABLE ' . WPOPT_TABLE_LOG_MAILS . ' DROP INDEX `speeder`');
+        $wpdb->query('ALTER TABLE ' . $table_name . ' DROP INDEX `speeder`');
         break;
     }
 }

@@ -282,38 +282,6 @@ class Mod_WP_Info extends Module
         );
     }
 
-    private function get_phpinfo()
-    {
-        if (!class_exists('DOMDocument'))
-            return;
-
-        ob_start();
-        phpinfo();
-        $phpinfo = ob_get_clean();
-
-        // Use DOMDocument to parse phpinfo()
-        $html = new \DOMDocument('1.0', 'UTF-8');
-        $html->loadHTML($phpinfo);
-
-        // Style process
-        $tables = $html->getElementsByTagName('table');
-        foreach ($tables as $table) {
-            $table->setAttribute('class', 'widefat');
-        }
-
-        // We only need the <body>
-        $xpath = new \DOMXPath($html);
-        $body = $xpath->query('/html/body');
-
-        // Save HTML fragment
-        $phpinfo_html = $html->saveXml($body->item(0));
-
-        echo '<div class="wrap" id="PHPinfo" style="display: none;">';
-        echo '<h2>PHP ' . phpversion() . '</h2>';
-
-        echo $phpinfo_html;
-        echo '</div>';
-    }
 }
 
 return __NAMESPACE__;

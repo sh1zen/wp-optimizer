@@ -69,20 +69,33 @@ wps(
 
 define('WPOPT_DEBUG', !wps_core()->online);
 
-function wpopt_setup_db_table_constants(): void
+function wpopt_db_table_name(string $table): string
 {
     global $wpdb;
 
+    static $tables = array(
+        'log_mails'           => 'wpopt_mails',
+        'activity_log'        => 'wpopt_activity_log',
+        'request_performance' => 'wpopt_performance_monitor',
+        'slow_queries'        => 'wpopt_performance_slow_queries',
+        'cache_entries'       => 'wpopt_cache_entries',
+    );
+
+    return isset($tables[$table]) ? $wpdb->prefix . $tables[$table] : '';
+}
+
+function wpopt_setup_db_table_constants(): void
+{
     // prevent double initialization
     if (defined('WPOPT_TABLE_LOG_MAILS')) {
         return;
     }
 
-    define('WPOPT_TABLE_LOG_MAILS', "{$wpdb->prefix}wpopt_mails");
-    define('WPOPT_TABLE_ACTIVITY_LOG', "{$wpdb->prefix}wpopt_activity_log");
-    define('WPOPT_TABLE_REQUEST_PERFORMANCE', "{$wpdb->prefix}wpopt_performance_monitor");
-    define('WPOPT_TABLE_SLOW_QUERIES', "{$wpdb->prefix}wpopt_performance_slow_queries");
-    define('WPOPT_TABLE_CACHE_ENTRIES', "{$wpdb->prefix}wpopt_cache_entries");
+    define('WPOPT_TABLE_LOG_MAILS', wpopt_db_table_name('log_mails'));
+    define('WPOPT_TABLE_ACTIVITY_LOG', wpopt_db_table_name('activity_log'));
+    define('WPOPT_TABLE_REQUEST_PERFORMANCE', wpopt_db_table_name('request_performance'));
+    define('WPOPT_TABLE_SLOW_QUERIES', wpopt_db_table_name('slow_queries'));
+    define('WPOPT_TABLE_CACHE_ENTRIES', wpopt_db_table_name('cache_entries'));
 
 }
 
