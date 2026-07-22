@@ -3,7 +3,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: wpfs-translation\n"
 "Report-Msgid-Bugs-To: https://github.com/sh1zen/flexy-seo/issues\n"
-"POT-Creation-Date: 2026-07-21 02:52+0200\n"
+"POT-Creation-Date: 2026-07-22 13:01+0200\n"
 "PO-Revision-Date: 2020-05-13 02:34+0200\n"
 "Last-Translator: sh1zen\n"
 "Language-Team: sh1zen\n"
@@ -1015,7 +1015,7 @@ msgstr ""
 msgid "Status"
 msgstr ""
 
-#: admin/PagesHandler.class.php:1722
+#: admin/PagesHandler.class.php:1722 modules/widget.class.php:191
 msgid "Total"
 msgstr ""
 
@@ -2211,7 +2211,7 @@ msgstr ""
 msgid "Disk space"
 msgstr ""
 
-#: modules/cache.class.php:3130 modules/performance_monitor.class.php:3717
+#: modules/cache.class.php:3130 modules/performance_monitor.class.php:3717 modules/widget.class.php:198
 msgid "Files"
 msgstr ""
 
@@ -4574,6 +4574,98 @@ msgstr ""
 msgid "If enabled, this feature allow sending report about THIS plugin features used, just to know witch features are useful."
 msgstr ""
 
+#: modules/widget.class.php:105 modules/wp_info.class.php:127
+msgid "OS"
+msgstr ""
+
+#: modules/widget.class.php:106 modules/wp_info.class.php:128
+msgid "Server"
+msgstr ""
+
+#: modules/widget.class.php:107
+msgid "Hostname"
+msgstr ""
+
+#: modules/widget.class.php:108
+msgid "IP:Port"
+msgstr ""
+
+#: modules/widget.class.php:109
+msgid "Document Root"
+msgstr ""
+
+#: modules/widget.class.php:111 modules/widget.class.php:117
+msgid "version"
+msgstr ""
+
+#: modules/widget.class.php:112 modules/wp_info.class.php:142
+msgid "Memory Limit"
+msgstr ""
+
+#: modules/widget.class.php:113
+msgid "Max Script Execute Time"
+msgstr ""
+
+#: modules/widget.class.php:114
+msgid "Max Post Size"
+msgstr ""
+
+#: modules/widget.class.php:115
+msgid "Max Upload Size"
+msgstr ""
+
+#: modules/widget.class.php:118
+msgid "Data Disk Usage"
+msgstr ""
+
+#: modules/widget.class.php:119
+msgid "Index Disk Usage"
+msgstr ""
+
+#: modules/widget.class.php:127
+msgid "View all"
+msgstr ""
+
+#: modules/widget.class.php:179
+msgid "Info"
+msgstr ""
+
+#: modules/widget.class.php:180 modules/wp_info.class.php:62
+msgid "Value"
+msgstr ""
+
+#: modules/widget.class.php:183
+msgid "No server information available."
+msgstr ""
+
+#: modules/widget.class.php:199
+msgid "size"
+msgstr ""
+
+#: modules/widget.class.php:202
+msgid "No folder information available."
+msgstr ""
+
+#: modules/widget.class.php:245
+msgid "Removes saved folder-size snapshots from older versions. Current sizes are calculated from disk each time."
+msgstr ""
+
+#: modules/widget.class.php:246
+msgid "Check to empty the saved snapshots"
+msgstr ""
+
+#: modules/widget.class.php:252
+msgid "Installation size"
+msgstr ""
+
+#: modules/widget.class.php:253
+msgid "Paths (one per line)"
+msgstr ""
+
+#: modules/widget.class.php:254
+msgid "Server info"
+msgstr ""
+
 #: modules/wp_customizer.class.php:157
 #, php-format
 msgid "Filter %s"
@@ -4863,10 +4955,6 @@ msgstr ""
 msgid "Name"
 msgstr ""
 
-#: modules/wp_info.class.php:62
-msgid "Value"
-msgstr ""
-
 #: modules/wp_info.class.php:124
 msgid "SITE URL"
 msgstr ""
@@ -4877,14 +4965,6 @@ msgstr ""
 
 #: modules/wp_info.class.php:126
 msgid "Server IP : port"
-msgstr ""
-
-#: modules/wp_info.class.php:127
-msgid "OS"
-msgstr ""
-
-#: modules/wp_info.class.php:128
-msgid "Server"
 msgstr ""
 
 #: modules/wp_info.class.php:129
@@ -4942,10 +5022,6 @@ msgstr ""
 
 #: modules/wp_info.class.php:137
 msgid "GD Version"
-msgstr ""
-
-#: modules/wp_info.class.php:142
-msgid "Memory Limit"
 msgstr ""
 
 #: modules/wp_info.class.php:143

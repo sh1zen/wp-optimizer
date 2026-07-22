@@ -369,7 +369,9 @@ class WP_Htaccess
 
     private static function generate_rules_mime_types(): string
     {
-        $ext_types = self::get_ext_types(array('image', 'font', 'audio', 'document', 'spreadsheet', 'text', 'code'));
+        // Server-executable extensions must keep the handler selected by the host.
+        // Mapping PHP/CGI files as MIME types can bypass a per-site PHP selector.
+        $ext_types = self::get_ext_types(array('image', 'font', 'audio', 'document', 'spreadsheet', 'text'));
         $mime_types = self::get_mime_types($ext_types);
 
         if (!$mime_types) {
@@ -423,7 +425,6 @@ class WP_Htaccess
             'interactive' => array('swf', 'key', 'ppt', 'pptx', 'pptm', 'pps', 'ppsx', 'ppsm', 'sldx', 'sldm', 'odp'),
             'text'        => array('asc', 'csv', 'tsv', 'txt', 'js', 'less', 'htc', 'css', 'xml'),
             'archive'     => array('bz2', 'cab', 'dmg', 'gz', 'rar', 'sea', 'sit', 'sqx', 'tar', 'tgz', 'zip', '7z'),
-            'code'        => array('php', 'pl', 'cgi', 'spl'),
             'web_pages'   => array('htm', 'html'),
         );
 
@@ -556,11 +557,6 @@ class WP_Htaccess
             'svg'                          => 'image/svg+xml',
             'eot'                          => 'application/vnd.ms-fontobject',
             'sfnt'                         => 'application/font-sfnt',
-            //code
-            'php'                          => 'application/x-httpd-php',
-            'pl'                           => 'text/x-script.perl',
-            'cgi'                          => 'application/x-httpd-cgi',
-            'spl'                          => 'application/futuresplash',
         );
 
         $matched_types = array();
@@ -692,7 +688,6 @@ class WP_Htaccess
             'interactive' => $default_lifetime,
             'text'        => MONTH_IN_SECONDS,
             'archive'     => DAY_IN_SECONDS,
-            'code'        => 0,
             'web_pages'   => 0,
         );
 
@@ -800,7 +795,6 @@ class WP_Htaccess
             'interactive' => $default_lifetime,
             'text'        => MONTH_IN_SECONDS,
             'archive'     => DAY_IN_SECONDS,
-            'code'        => 0,
             'web_pages'   => 0,
         );
 
@@ -884,7 +878,7 @@ class WP_Htaccess
 
     private static function generate_rules_compression($settings): string
     {
-        $ext_types = self::get_ext_types(array('image', 'document', 'spreadsheet', 'text', 'code'));
+        $ext_types = self::get_ext_types(array('image', 'document', 'spreadsheet', 'text'));
 
         $mime_types = self::get_mime_types($ext_types, 'keys');
         $extensions = self::get_mime_types($ext_types, 'flat_values');
@@ -956,7 +950,7 @@ class WP_Htaccess
 
     private static function generate_nginx_rules_compression($settings): string
     {
-        $ext_types = self::get_ext_types(array('image', 'document', 'spreadsheet', 'text', 'code'));
+        $ext_types = self::get_ext_types(array('image', 'document', 'spreadsheet', 'text'));
         $mime_types = self::get_mime_types($ext_types, 'keys');
 
         $rules = '';
