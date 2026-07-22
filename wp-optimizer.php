@@ -13,11 +13,19 @@
  * Author URI: https://sh1zen.github.io/
  * Text Domain: wpopt
  * Domain Path: /languages
- * Version: 2.8.7
+ * Version: 2.8.8
+ * Requires at least: 5.0.0
+ * Requires PHP: 7.4
  */
 
-const WPOPT_VERSION = '2.8.7';
+const WPOPT_VERSION = '2.8.8';
 const WPOPT_FILE = __FILE__;
+
+// WordPress blocks new activations through the plugin header. This additional
+// guard protects already-active installations after a server PHP downgrade.
+if (version_compare(PHP_VERSION, '7.4', '<')) {
+    return;
+}
 
 // setup constants
 require_once __DIR__ . '/inc/wps_and_constants.php';

@@ -206,13 +206,14 @@ Yes. Integration code can guard with `function_exists()` and call `wpopt_flush_c
   
 == Changelog ==  
 
-  
-= 2.8.7 =
+= 2.8.8 =
 
+* added plugin compatibility headers
 * improved core performances
 * improved Multisite experience
 * updated docs
-  
+* fixed some bugs
+
 = 2.8.6 =  
 
 * added automatic WooCommerce and page-builder compatibility safeguards  
