@@ -37,11 +37,13 @@ class ImagesProcessor
                     'png'    => false,
                     'gif'    => true,
                     'webp'   => false,
+                    'avif'   => false,
                     'others' => false
                 ),
                 'quality'              => 80,
                 'keep_exif'            => false,
                 'convert_to_webp'      => true,
+                'convert_to_avif'      => false,
                 'resize_larger_images' => false,
                 'resize_width_px'      => 2560,
                 'resize_height_px'     => 1440
@@ -387,6 +389,9 @@ class ImagesProcessor
             case 'webp':
                 return Settings::check($this->settings, 'format.webp');
 
+            case 'avif':
+                return Settings::check($this->settings, 'format.avif');
+
             case 'bmp':
             case 'xbm':
             case 'wbmp':
@@ -402,6 +407,7 @@ class ImagesProcessor
     private function optimize_imagick($image_path)
     {
         $wpopt = array();
+        $source_path = $image_path;
 
         try {
 
@@ -435,14 +441,17 @@ class ImagesProcessor
 
             //$imagick->resampleImage(50, 50, \Imagick::FILTER_LANCZOS, 1);
 
-            if (Settings::check($this->settings, 'convert_to_webp')) {
-                $imagick->setImageFormat('webp');
+            $conversion_format = $this->conversion_format();
+            if ($conversion_format !== null) {
+                if (!$imagick->setImageFormat($conversion_format)) {
+                    return false;
+                }
 
-                if (pathinfo($image_path, PATHINFO_EXTENSION) !== 'webp') {
+                if (strtolower(pathinfo($image_path, PATHINFO_EXTENSION)) !== $conversion_format) {
                     $wpopt['prev_ext'] = pathinfo($image_path, PATHINFO_EXTENSION);
                 }
 
-                $image_path = UtilEnv::change_file_extension($image_path, 'webp', true);
+                $image_path = UtilEnv::change_file_extension($image_path, $conversion_format, true);
             }
 
             $quality = Settings::check($this->settings, 'quality', 80);
@@ -453,7 +462,12 @@ class ImagesProcessor
 
             $imagick->setImageCompressionQuality($quality);
 
-            $imagick->writeImage($image_path);
+            if (!$imagick->writeImage($image_path)) {
+                if ($image_path !== $source_path) {
+                    self::unlink_file_safely($image_path);
+                }
+                return false;
+            }
 
             $width = $imagick->getImageWidth();
             $height = $imagick->getImageHeight();
@@ -463,10 +477,19 @@ class ImagesProcessor
             $imagick->destroy();
 
         } catch (\Exception $e) {
+            if ($image_path !== $source_path) {
+                self::unlink_file_safely($image_path);
+            }
             return false;
         }
 
         clearstatcache(true, $image_path);
+        if (!is_file($image_path) || filesize($image_path) === 0) {
+            if ($image_path !== $source_path) {
+                self::unlink_file_safely($image_path);
+            }
+            return false;
+        }
 
         $wpopt['prev_size'] = $original_size;
         $wpopt['size'] = UtilEnv::filesize($image_path);
@@ -477,6 +500,7 @@ class ImagesProcessor
     private function optimize_gd($image_path)
     {
         $wpopt = array();
+        $source_path = $image_path;
 
         $original_size = UtilEnv::filesize($image_path);
 
@@ -494,14 +518,17 @@ class ImagesProcessor
             );
         }
 
-        if (Settings::check($this->settings, 'convert_to_webp')) {
-            $imageGD->setImageFormat('webp');
+        $conversion_format = $this->conversion_format();
+        if ($conversion_format !== null) {
+            if (!$imageGD->setImageFormat($conversion_format)) {
+                return false;
+            }
 
-            if (pathinfo($image_path, PATHINFO_EXTENSION) !== 'webp') {
+            if (strtolower(pathinfo($image_path, PATHINFO_EXTENSION)) !== $conversion_format) {
                 $wpopt['prev_ext'] = pathinfo($image_path, PATHINFO_EXTENSION);
             }
 
-            $image_path = UtilEnv::change_file_extension($image_path, 'webp', true);
+            $image_path = UtilEnv::change_file_extension($image_path, $conversion_format, true);
         }
 
         $quality = Settings::check($this->settings, 'quality', 80);
@@ -516,16 +543,37 @@ class ImagesProcessor
         $height = $imageGD->height;
         $mimetype = $imageGD->getImageMimeType();
 
-        if ($width > 0 and $height > 0 and !$imageGD->writeImage($image_path)) {
+        if ($width <= 0 || $height <= 0 || !$imageGD->writeImage($image_path)) {
+            if ($image_path !== $source_path) {
+                self::unlink_file_safely($image_path);
+            }
             return false;
         }
 
         clearstatcache(true, $image_path);
+        if (!is_file($image_path) || filesize($image_path) === 0) {
+            if ($image_path !== $source_path) {
+                self::unlink_file_safely($image_path);
+            }
+            return false;
+        }
 
         $wpopt['prev_size'] = $original_size;
         $wpopt['size'] = UtilEnv::filesize($image_path);
 
         return ['width' => $width, 'height' => $height, 'mime-type' => $mimetype, 'file' => $image_path, 'filesize' => $wpopt['size'], 'wpopt' => $wpopt];
+    }
+
+    /**
+     * Select the requested output format; AVIF wins if both converters are enabled.
+     */
+    private function conversion_format(): ?string
+    {
+        if (Settings::check($this->settings, 'convert_to_avif')) {
+            return 'avif';
+        }
+
+        return Settings::check($this->settings, 'convert_to_webp') ? 'webp' : null;
     }
 
     public function get_metadata($filter = '', $default = '')

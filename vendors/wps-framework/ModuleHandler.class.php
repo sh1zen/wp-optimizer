@@ -11,15 +11,20 @@ use WPS\modules\Module;
 
 class ModuleHandler
 {
-    private static array $module_namespace_cache = array();
+    private const DEFINITION_FILE = 0;
+    private const DEFINITION_CLASS = 1;
+    private const DEFINITION_NAME = 2;
+    private const DEFINITION_SCOPES = 3;
 
-    private static array $module_catalog_cache = array();
+    private array $module_catalog = array();
 
-    private string $modules_path;
+    private array $module_instances = array();
 
-    private array $modules;
+    private array $failed_modules = array();
 
-    private array $module_classes = array();
+    private static array $normalized_catalog_cache = array();
+
+    private static array $logged_catalog_errors = array();
 
     private $module_settings;
 
@@ -31,136 +36,166 @@ class ModuleHandler
 
     private array $module_method_cache = [];
 
-    private array $class_vars_cache = [];
-
     private array $setup_modules_cache = [];
 
-    public function __construct($context, $load_path)
+    public function __construct(string $context, $catalog_source = null)
     {
         $this->context = $context;
-        $this->modules_path = $load_path;
-
-        $catalog_key = str_replace('\\', '/', rtrim($this->modules_path, '/\\'));
-
-        if (isset(self::$module_catalog_cache[$catalog_key])) {
-            $this->modules = self::$module_catalog_cache[$catalog_key]['modules'];
-            $this->module_classes = self::$module_catalog_cache[$catalog_key]['classes'];
-
-            foreach ($this->module_classes as $module_slug => $class) {
-                wps($this->context)->cache->set($module_slug, $class, 'modules-handler', true, false);
-            }
-        }
-        else {
-            $this->init_modules($this->modules_path);
-            self::$module_catalog_cache[$catalog_key] = array(
-                'modules' => $this->modules,
-                'classes' => $this->module_classes,
-            );
-        }
+        $this->initialize_catalog($catalog_source);
 
         $this->module_settings = wps($context)->settings->get('modules_handler', []);
     }
 
-    private function init_modules($load_path): void
+    private function initialize_catalog($catalog_source): void
     {
-        $this->modules = array();
+        $cache_key = $this->catalog_cache_key($catalog_source);
 
-        //$this_hash = $this->hash_file_sec(__FILE__);
+        if ($cache_key !== '' && isset(self::$normalized_catalog_cache[$cache_key])) {
+            $this->module_catalog = self::$normalized_catalog_cache[$cache_key];
+            return;
+        }
 
-        foreach (glob($load_path . '*.php') as $file) {
+        $catalog = $this->load_catalog($catalog_source);
 
-            // prevent external added content to module path.
-            // only files with same owner, group and permissions are loaded
-            // todo think of a better solution
-            //if ($this->hash_file_sec($file) !== $this_hash) {
-            //    continue;
-            //}
+        if (empty($catalog)) {
+            $this->log_catalog_error('Module catalog is missing or empty. No modules were registered.');
+            return;
+        }
 
-            $module_slug = $this->load_module($file);
+        $namespace = isset($catalog['namespace']) && is_string($catalog['namespace'])
+            ? trim($catalog['namespace'], " \t\n\r\0\x0B\\")
+            : '';
+        $directory = $this->resolve_module_directory($catalog['directory'] ?? null, $catalog_source);
+        $modules = $catalog['modules'] ?? null;
 
-            if (empty($module_slug)) {
+        if (!$this->is_valid_class_name($namespace) || $directory === '' || !is_array($modules)) {
+            $this->log_catalog_error('Module catalog header is invalid. A namespace, relative directory, and modules array are required.');
+            return;
+        }
+
+        foreach ($modules as $catalog_slug => $entry) {
+            if (!is_array($entry)) {
+                $this->log_catalog_error(sprintf('Module catalog entry "%s" must be an array.', (string)$catalog_slug));
                 continue;
             }
 
-            $this->modules[] = array(
-                'slug' => $module_slug,
-                'name' => $this->get_module_name($module_slug, $module_slug)
+            $catalog_key = is_string($catalog_slug) ? self::module_slug($catalog_slug, true) : false;
+            $slug = self::module_slug((string)($entry['slug'] ?? $catalog_slug), true);
+            $name = isset($entry['name']) && is_string($entry['name']) ? trim($entry['name']) : '';
+            $scopes = $entry['scopes'] ?? null;
+
+            if (
+                !$slug
+                || !$catalog_key
+                || $catalog_key !== $slug
+                || isset($this->module_catalog[$slug])
+                || $name === ''
+                || !is_array($scopes)
+            ) {
+                $this->log_catalog_error(sprintf('Module catalog entry "%s" is invalid and was skipped.', (string)$catalog_slug));
+                continue;
+            }
+
+            $scopes = array_values(array_unique(array_filter(array_map(static function ($scope): string {
+                return is_scalar($scope) ? trim((string)$scope) : '';
+            }, $scopes))));
+
+            $this->module_catalog[$slug] = array(
+                self::DEFINITION_FILE   => $directory . DIRECTORY_SEPARATOR . $slug . '.class.php',
+                self::DEFINITION_CLASS  => $namespace . '\\Mod_' . $slug,
+                self::DEFINITION_NAME   => $name,
+                self::DEFINITION_SCOPES => $scopes,
             );
+        }
+
+        if (empty($this->module_catalog)) {
+            $this->log_catalog_error('Module catalog contains no valid entries. No modules were registered.');
+            return;
+        }
+
+        if ($cache_key !== '') {
+            self::$normalized_catalog_cache[$cache_key] = $this->module_catalog;
         }
     }
 
-    /**
-     * create a hash from file permission, owner and group
-     */
-    private function hash_file_sec($filename): string
+    private function resolve_module_directory($directory, $catalog_source): string
     {
-        return md5(fileowner($filename) . filegroup($filename) . fileperms($filename) . WPS_SALT);
-    }
-
-    private function load_module($file): string
-    {
-        if (!file_exists($file)) {
+        if (!is_string($directory) || trim($directory) === '') {
             return '';
         }
 
-        $module_name = basename($file, '.class.php');
+        $directory = rtrim(trim($directory), '/\\');
 
-        if (isset(self::$module_namespace_cache[$file])) {
-            $namespace = self::$module_namespace_cache[$file];
-        }
-        else {
-            $namespace = include_once($file);
-
-            if (is_string($namespace) && '' !== $namespace) {
-                self::$module_namespace_cache[$file] = $namespace;
+        if (!$this->is_absolute_path($directory)) {
+            if (!is_string($catalog_source) || !$this->is_absolute_path($catalog_source)) {
+                return '';
             }
+
+            $directory = dirname($catalog_source) . DIRECTORY_SEPARATOR . $directory;
         }
 
-        $module_slug = self::module_slug($module_name, true);
+        $resolved = realpath($directory);
 
-        if (is_string($namespace) && class_exists("$namespace\\Mod_" . $module_slug)) {
-
-            $class = "$namespace\\Mod_" . $module_slug;
-            $this->module_classes[$module_slug] = $class;
-
-            wps($this->context)->cache->set($module_slug, $class, 'modules-handler', true, false);
-        }
-
-        return $module_name;
+        return $resolved !== false && is_dir($resolved) ? $resolved : '';
     }
 
-    public static function module_slug($name, $remove_namespace = false)
+    private function catalog_cache_key($catalog_source): string
     {
-        if (is_array($name) and isset($name['slug'])) {
-            // get the page name of the module
-            $name = $name['slug'];
+        if (!is_string($catalog_source) || !$this->is_absolute_path($catalog_source)) {
+            return '';
         }
 
-        if (!is_string($name))
-            return false;
+        $real_path = realpath($catalog_source);
 
-        // remove everything that is not a text char or - \ / _
-        $name = preg_replace('#[^a-z/\\\_-]#', '', strtolower($name));
-
-        if ($remove_namespace) {
-            $name = basename(str_replace('\\', DIRECTORY_SEPARATOR, $name));
-        }
-
-        return preg_replace("#(mod_|mod-)#", '', $name);
+        return $real_path === false ? '' : str_replace('\\', '/', $real_path);
     }
 
-    private function get_module_name($module, $default = ''): string
+    private function load_catalog($catalog_source): array
     {
-        $module_name = $default;
-
-        if ($class = $this->module2classname($module)) {
-
-            if (!empty($class::$name)) {
-                $module_name = $class::$name;
-            }
+        if (is_array($catalog_source)) {
+            return $catalog_source;
         }
 
-        return ucwords(str_replace('_', ' ', $module_name));
+        if (!is_string($catalog_source) || !$this->is_absolute_path($catalog_source) || !is_file($catalog_source) || !is_readable($catalog_source)) {
+            return array();
+        }
+
+        try {
+            $catalog = require $catalog_source;
+        }
+        catch (\Throwable $throwable) {
+            $this->log_catalog_error(sprintf('Catalog file "%s" could not be loaded: %s', $catalog_source, $throwable->getMessage()));
+            return array();
+        }
+
+        if (!is_array($catalog)) {
+            $this->log_catalog_error(sprintf('Catalog file "%s" must return an array.', $catalog_source));
+            return array();
+        }
+
+        return $catalog;
+    }
+
+    private function is_absolute_path(string $path): bool
+    {
+        return $path !== '' && (bool)preg_match('#^(?:[A-Za-z]:[\\\\/]|/|\\\\\\\\)#', $path);
+    }
+
+    private function is_valid_class_name(string $class): bool
+    {
+        return $class !== '' && (bool)preg_match('/^[A-Za-z_][A-Za-z0-9_]*(?:\\\\[A-Za-z_][A-Za-z0-9_]*)*$/D', $class);
+    }
+
+    private function log_catalog_error(string $message): void
+    {
+        $message = sprintf('WPS module catalog [%s]: %s', $this->context, $message);
+
+        if (isset(self::$logged_catalog_errors[$message])) {
+            return;
+        }
+
+        self::$logged_catalog_errors[$message] = true;
+        error_log($message);
     }
 
     /**
@@ -172,20 +207,61 @@ class ModuleHandler
     {
         $module_slug = self::module_slug($name, true);
 
-        if (isset($this->module_classes[$module_slug])) {
-            return $this->module_classes[$module_slug];
+        if (!$module_slug || isset($this->failed_modules[$module_slug]) || !isset($this->module_catalog[$module_slug])) {
+            return false;
         }
 
-        return wps($this->context)->cache->get($module_slug, 'modules-handler', false);
+        $definition = $this->module_catalog[$module_slug];
+        $class = $definition[self::DEFINITION_CLASS];
+
+        if (!class_exists($class, false)) {
+            if (!is_file($definition[self::DEFINITION_FILE]) || !is_readable($definition[self::DEFINITION_FILE])) {
+                $this->failed_modules[$module_slug] = true;
+                $this->log_catalog_error(sprintf('Module "%s" file "%s" is unavailable.', $module_slug, $definition[self::DEFINITION_FILE]));
+                return false;
+            }
+
+            try {
+                require_once $definition[self::DEFINITION_FILE];
+            }
+            catch (\Throwable $throwable) {
+                $this->failed_modules[$module_slug] = true;
+                $this->log_catalog_error(sprintf('Module "%s" could not be loaded: %s', $module_slug, $throwable->getMessage()));
+                return false;
+            }
+        }
+
+        if (!class_exists($class, false) || !is_subclass_of($class, Module::class)) {
+            $this->failed_modules[$module_slug] = true;
+            $this->log_catalog_error(sprintf('Module "%s" did not load its declared class "%s".', $module_slug, $class));
+            return false;
+        }
+
+        return $class;
+    }
+
+    public static function module_slug($name, $remove_namespace = false)
+    {
+        if (is_array($name) and isset($name['slug'])) {
+            $name = $name['slug'];
+        }
+
+        if (!is_string($name)) {
+            return false;
+        }
+
+        $name = preg_replace('#[^a-z/\\\_-]#', '', strtolower($name));
+
+        if ($remove_namespace) {
+            $name = basename(str_replace('\\', DIRECTORY_SEPARATOR, $name));
+        }
+
+        return preg_replace("#(mod_|mod-)#", '', $name);
     }
 
     /**
-     * Load active modules, so they can perform their actions
-     * Some modules can be loaded only if requested.
-     *
-     * The activation of a module is set by code.
-     * If a user disable some modules, they will be loaded anyway.
-     * Each module has to handle user settings
+     * Load active modules for a request scope.
+     * Catalog filtering happens before module files are loaded.
      * @param string $scope
      * @param bool $only_active
      */
@@ -234,7 +310,12 @@ class ModuleHandler
             return $this->filtered_modules_cache[$cache_key];
         }
 
-        foreach ($this->modules as $module) {
+        foreach ($this->module_catalog as $slug => $definition) {
+
+            $module = array(
+                'slug' => $slug,
+                'name' => $definition[self::DEFINITION_NAME],
+            );
 
             if ($only_active and !$this->module_is_active($module['slug'])) {
                 continue;
@@ -295,36 +376,35 @@ class ModuleHandler
             return false;
         }
 
-        $cache_Key = $module['slug'] . maybe_serialize($scope) . $compare;
+        $module_slug = self::module_slug($module, true);
+
+        if (!$module_slug || !isset($this->module_catalog[$module_slug])) {
+            return false;
+        }
+
+        $cache_Key = $module_slug . '|' . $compare . '|' . (is_array($scope) ? maybe_serialize($scope) : (string)$scope);
 
         if (isset($this->module_scope_cache[$cache_Key])) {
             return $this->module_scope_cache[$cache_Key];
-        }
-
-        if (!is_null($found = wps($this->context)->cache->get($cache_Key, 'module_has_scope', null))) {
-            $this->module_scope_cache[$cache_Key] = $found;
-            return $found;
         }
 
         if (!is_array($scope)) {
             $scope = array($scope);
         }
 
-        if (!$class = self::module2classname($module)) {
-            return false;
+        $registered_scopes = $this->module_catalog[$module_slug][self::DEFINITION_SCOPES];
+        $res = $compare === 'AND';
+
+        foreach ($scope as $requested_scope) {
+            $found = in_array($requested_scope, $registered_scopes, true);
+
+            if (($compare === 'AND' && !$found) || ($compare !== 'AND' && $found)) {
+                $res = $found;
+                break;
+            }
         }
-
-        if (!isset($this->class_vars_cache[$class])) {
-            $this->class_vars_cache[$class] = get_class_vars($class);
-        }
-
-        $found = array_intersect($scope, $this->class_vars_cache[$class]['scopes']);
-
-        $res = ($compare === 'AND') ? (count($found) === count($scope)) : !empty($found);
 
         $this->module_scope_cache[$cache_Key] = $res;
-
-        wps($this->context)->cache->set($cache_Key, $res, 'module_has_scope', true, DAY_IN_SECONDS);
 
         return $res;
     }
@@ -334,19 +414,25 @@ class ModuleHandler
      */
     public function get_module_instance($module): ?Module
     {
+        $module_slug = self::module_slug($module, true);
+
+        if (!$module_slug) {
+            return null;
+        }
+
+        if (isset($this->module_instances[$module_slug])) {
+            return $this->module_instances[$module_slug];
+        }
+
         $class = $this->module2classname($module);
 
         if (!$class) {
             return null;
         }
 
-        if ($object = wps($this->context)->cache->get($class, 'modules_object', null, false)) {
-            return $object;
-        }
-
         $object = new $class();
 
-        wps($this->context)->cache->set($class, $object, 'modules_object', true, false);
+        $this->module_instances[$module_slug] = $object;
 
         return $object;
     }
@@ -355,7 +441,10 @@ class ModuleHandler
     {
         foreach ($this->get_modules('all', false) as $module) {
             $module_object = $this->get_module_instance($module);
-            $module_object->filter_settings();
+
+            if ($module_object) {
+                $module_object->filter_settings();
+            }
         }
 
         return true;
@@ -380,25 +469,21 @@ class ModuleHandler
             return null;
         }
 
-        foreach ($this->get_modules('all', false) as $module) {
-            if ((string)($module['slug'] ?? '') !== $module_slug) {
-                continue;
-            }
-
-            $object = $this->get_module_instance($module_slug);
-
-            if (is_null($object)) {
-                return null;
-            }
-
-            return array(
-                'object' => $object,
-                'name'   => (string)($module['name'] ?? $module_slug),
-                'slug'   => $module_slug,
-            );
+        if (!isset($this->module_catalog[$module_slug])) {
+            return null;
         }
 
-        return null;
+        $object = $this->get_module_instance($module_slug);
+
+        if (is_null($object)) {
+            return null;
+        }
+
+        return array(
+            'object' => $object,
+            'name'   => $this->module_catalog[$module_slug][self::DEFINITION_NAME],
+            'slug'   => $module_slug,
+        );
     }
 
     public function reset_module_to_factory(string $module_slug, array $excluded_modules = array()): array
@@ -520,7 +605,7 @@ class ModuleHandler
             $method = array($method);
         }
 
-        if (!$class = self::module2classname($module)) {
+        if (!$class = $this->module2classname($module)) {
             return false;
         }
 

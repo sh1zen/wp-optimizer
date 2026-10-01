@@ -22,7 +22,6 @@ class Mod_Minify extends Module
 {
     public static ?string $name = 'Minify';
 
-    public array $scopes = array('settings', 'autoload');
 
     protected string $context = 'wpopt';
 
@@ -253,4 +252,3 @@ class Mod_Minify extends Module
     }
 }
 
-return __NAMESPACE__;

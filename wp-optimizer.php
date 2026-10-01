@@ -13,12 +13,12 @@
  * Author URI: https://sh1zen.github.io/
  * Text Domain: wpopt
  * Domain Path: /languages
- * Version: 2.8.8
+ * Version: 2.8.9
  * Requires at least: 5.0.0
  * Requires PHP: 7.4
  */
 
-const WPOPT_VERSION = '2.8.8';
+const WPOPT_VERSION = '2.8.9';
 const WPOPT_FILE = __FILE__;
 
 // WordPress blocks new activations through the plugin header. This additional

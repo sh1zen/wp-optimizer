@@ -17,7 +17,6 @@ use WPOptimizer\modules\supporters\WP_Htaccess;
  */
 class Mod_WP_Security extends Module
 {
-    public array $scopes = array('settings', 'autoload');
     protected string $context = 'wpopt';
     private array $server_conf_hooks = array(
         'srv_security' => array(
@@ -304,4 +303,3 @@ class Mod_WP_Security extends Module
     }
 }
 
-return __NAMESPACE__;

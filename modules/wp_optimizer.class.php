@@ -16,7 +16,6 @@ use WPOptimizer\modules\supporters\WP_Htaccess;
  */
 class Mod_WP_Optimizer extends Module
 {
-    public array $scopes = array('settings', 'autoload');
 
     protected string $context = 'wpopt';
 
@@ -248,4 +247,3 @@ class Mod_WP_Optimizer extends Module
     }
 }
 
-return __NAMESPACE__;

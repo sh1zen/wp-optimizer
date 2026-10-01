@@ -18,7 +18,7 @@ It brings together the common tools needed to keep a WordPress installation fast
 
 ### Performance and cache
 
-- **Three configurable cache layers:** static pages, `WP_Query` results and database queries, each with independent lifetimes, query-argument handling, purge rules, user-agent exclusions and no-cache cookies. Page cache supports regex rules and optional direct server access; query and database caches can target selected query types or tables and purge only affected entries.
+- **Layered cache storage:** the shared WPS cache uses request memory first, Redis (or Memcached) when available, and WPS `Storage` as the durable fallback under `WP_CONTENT_DIR/cache`. Positive lifetimes are applied to both remote and disk entries; a zero lifetime is request-local and is not persisted. WP Optimizer's static page, `WP_Query` and database-query caches continue to use their dedicated WPS Storage groups and independent lifetime, purge and exclusion rules.
 - **Safe compatibility defaults:** compatible with WooCommerce and with editing and preview flows from Elementor, Beaver Builder, Divi, Gutenberg, Bricks, Oxygen and Breakdance. Builder requests bypass cache and output optimization, preserving generated assets and markup.
 - **Protected and extensible behavior:** built-in exclusions cannot be removed, but filters can add project-specific routes, request signatures and assets. Invalid or missing direct-cache configuration is regenerated in a disabled fail-safe state.
 
@@ -28,6 +28,8 @@ It brings together the common tools needed to keep a WordPress installation fast
 - **Multisite lifecycle:** network-wide activation, upgrades and deactivation are applied independently to every site while preserving each site's settings, cron state and database-table prefix.
 - **Four-stage Page Test:** scans a site URL with a signed optimization/cache-bypass request, an empty current-configuration pass, a diagnostic warmup and a final measured signed request using the current configuration.
 - **Actionable diagnostics:** the warmup identifies slow or repeated queries, heavier hooks, callback samples and memory/query totals. Runtime HTML transformations use ordered handlers in the WPS `html_output_buffer` service, with PageSpeed processing before final HTML minification.
+- **Navigation prefetch:** enabling early page prefetching uses WordPress Core speculation rules with moderate eagerness on WordPress 6.8+ when Core defaults are unchanged; explicit site and hosting settings remain in control. Older versions retain the hover/touch prefetch script. Core's default speculative loading remains active even when this PageSpeed option is off. A separate switch can disable Core speculative loading when it causes unwanted requests; it does not affect the older script.
+- **AVIF conversion:** Media Optimizer can convert selected images to AVIF with the same replacement workflow used for WebP. AVIF takes priority when both conversion options are enabled. If encoding fails, the source file and attachment metadata remain unchanged. Generated server rules include the `image/avif` MIME type.
 
 ### Configuration safety
 
@@ -39,11 +41,16 @@ It brings together the common tools needed to keep a WordPress installation fast
 ### Web server compatibility
 
 - **Automatic detection:** identifies Apache, Nginx, LiteSpeed Enterprise and OpenLiteSpeed. Apache and LiteSpeed Enterprise use generated `.htaccess` directives, while Nginx uses a generated `nginx.conf` include file.
+- **Portable directory protection:** generated Apache-style security rules use `Options -Indexes`, avoiding the invalid mixed `Options All -Indexes` syntax that can make LiteSpeed reject the site `.htaccess`.
 - **OpenLiteSpeed support:** because `.htaccess` accepts only Apache `mod_rewrite` syntax, WP Optimizer writes compatible rules for direct cache delivery, redirects and rewrite-based security controls. Enable **Auto Load from .htaccess** for the virtual host; configure compression, response headers, MIME types and other non-rewrite options in WebAdmin, then restart OpenLiteSpeed after rewrite changes.
 
 ### Developer integrations
 
 External plugins, themes, importers and maintenance scripts can use the documented public PHP functions in [EXTERNAL-API.md](EXTERNAL-API.md).
+
+### Module architecture
+
+WP Optimizer registers modules through the explicit catalog in `inc/module-catalog.php`. The catalog declares one relative module directory and namespace; each module entry contains only its display name and scopes. The entry slug deterministically produces `<slug>.class.php` and `WPOptimizer\modules\Mod_<slug>`, so file paths and classes are never duplicated per module. The bundled WPS framework normalizes the catalog into one compact, request-shared registry and loads module files on demand. New top-level module classes must follow this convention and be registered explicitly; unregistered files are ignored and there is no discovery fallback.
 
 
 ## Support

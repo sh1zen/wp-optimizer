@@ -24,11 +24,13 @@ class Storage
      */
     private ?bool $autosave_action = null;
 
-    public function __construct($context, $active = true)
+    public function __construct($context, $active = true, $use_cache = true, $use_multisite_prefix = true)
     {
-        $this->cache = new Cache('wps-storage');
+        // Storage owns its multisite path, so the inner cache must not prefix it again.
+        // Its storage fallback is disabled to avoid recursively creating Storage.
+        $this->cache = $use_cache ? new Cache('wps-storage', $active, false, false) : null;
 
-        $this->is_multisite = is_multisite();
+        $this->is_multisite = $use_multisite_prefix && is_multisite();
 
         $this->active = $active;
 
@@ -50,7 +52,15 @@ class Storage
 
     public function autosave()
     {
+        if (!$this->cache) {
+            return;
+        }
+
         $this->cache->iterate(function ($data, $key, $context) {
+
+            if (empty($data['write'])) {
+                return;
+            }
 
             if ($data['expire'] and $data['expire'] < time()) {
                 return;
@@ -62,6 +72,10 @@ class Storage
 
     private function save($data, $key, $context, $force = false): bool
     {
+        if (!$this->active) {
+            return false;
+        }
+
         if (isset($data['write']) and !$data['write']) {
             return true;
         }
@@ -129,16 +143,19 @@ class Storage
         return $context;
     }
 
-    public function get($key = '', $context = 'default', $blog_id = 0)
+    public function get($key = '', $context = 'default', $blog_id = 0, &$expires_at = null)
     {
-        if ($this->cache and ($res = $this->cache->get($key, $this->filter_context($context, $blog_id)))) {
+        $res = $this->cache ? $this->cache->get($key, $this->filter_context($context, $blog_id), null) : null;
+
+        if (is_array($res) && array_key_exists('data', $res)) {
+            $expires_at = (int)($res['expire'] ?? 0);
             return $res['data'];
         }
 
-        return $this->load($key, $context, true, $blog_id);
+        return $this->load($key, $context, true, $blog_id, $expires_at);
     }
 
-    public function load($key, $context = 'default', $cache = false, $blog_id = 0)
+    public function load($key, $context = 'default', $cache = false, $blog_id = 0, &$expires_at = null)
     {
         $context = $this->filter_context($context, $blog_id);
 
@@ -148,17 +165,20 @@ class Storage
             return false;
         }
 
-        $data = unserialize(file_get_contents($path) ?: '');
+        $data = @unserialize(file_get_contents($path) ?: '');
 
         if (empty($data) or ($data['expire'] and $data['expire'] < time())) {
             @unlink($path);
             return false;
         }
 
+        $expires_at = (int)($data['expire'] ?? 0);
+
         $data['write'] = false;
 
         if ($cache and $this->cache) {
-            $this->cache->set($key, $data, $context, true, $data['expire']);
+            $remaining_lifetime = !empty($data['expire']) ? max(1, (int)$data['expire'] - time()) : 0;
+            $this->cache->set($key, $data, $context, true, $remaining_lifetime);
         }
 
         return $data['data'];
@@ -172,22 +192,33 @@ class Storage
 
         $context = $this->filter_context($context, $blog_id);
 
-        if (!$force and $this->cache and $this->cache->has($key, $context)) {
+        $retention = max(0, (int)$expire);
+        $expires_at = $retention > 0 ? time() + $retention : 0;
+
+        $args = array(
+            'expire' => $expires_at,
+            'data'   => $data,
+            'force'  => $force,
+            'write'  => $retention > 0
+        );
+
+        $cached = true;
+        if ($this->cache) {
+            $cached = $this->cache->set($key, $args, $context, $force, $retention);
+        }
+
+        if (!$cached) {
             return false;
         }
 
-        // convert duration time into timestamp from now
-        $expire += time();
+        // Zero retention deliberately means request-local memory only.
+        if ($retention === 0 || !$this->active) {
+            if ($retention === 0) {
+                // Prevent a previous durable version of this key resurfacing later.
+                @unlink($this->generate_path($context, $key));
+            }
 
-        $args = array(
-            'expire' => $expire,
-            'data'   => $data,
-            'force'  => $force,
-            'write'  => true
-        );
-
-        if ($this->cache) {
-            $this->cache->set($key, $args, $context, true, $expire);
+            return $cached;
         }
 
         return $this->handle_autosave($args, $key, $context, $force);
@@ -195,6 +226,10 @@ class Storage
 
     private function handle_autosave($content, $key, $context, $force): bool
     {
+        if (!$this->cache) {
+            return $this->save($content, $key, $context, $force);
+        }
+
         if (is_null($this->autosave_action)) {
             $this->autosave_action = add_action('shutdown', array($this, 'autosave'));
         }

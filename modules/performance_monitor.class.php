@@ -32,7 +32,6 @@ class Mod_Performance_Monitor extends Module
     private const CACHE_METRICS_ITEM = 'cumulative_cache_metrics';
     private const CACHE_METRICS_CONTEXT = 'performance_monitor';
 
-    public array $scopes = array('autoload', 'admin-page', 'settings');
 
     protected string $context = 'wpopt';
 
@@ -4241,5 +4240,3 @@ class Mod_Performance_Monitor extends Module
         return $this->short_label((string)$label, 48);
     }
 }
-
-return __NAMESPACE__;

@@ -9,6 +9,12 @@ namespace WPS\core;
 
 class UtilEnv
 {
+    private const DATABASE_TABLES_CACHE_GROUP = 'database-schema';
+
+    private const DATABASE_TABLES_CACHE_TTL = 300;
+
+    private static array $database_tables = [];
+
     static $dynamic_time_limit = true;
 
     public static function handle_upgrade($ver_start, $ver_to, $upgrade_path)
@@ -91,7 +97,13 @@ class UtilEnv
 
         require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
 
-        return dbDelta($sql);
+        $result = dbDelta($sql);
+        $cache_key = self::database_tables_cache_key();
+
+        unset(self::$database_tables[$cache_key]);
+        wps_core()->cache->delete($cache_key, self::DATABASE_TABLES_CACHE_GROUP);
+
+        return $result;
     }
 
     public static function db_search_replace($search, $replace, $table, $column, $where = [])
@@ -977,16 +989,43 @@ class UtilEnv
     public static function table_exist(string $table_name): bool
     {
         global $wpdb;
-        static $tables = [];
 
         if (empty($table_name)) {
             return false;
         }
 
-        if (empty($tables)) {
-            $tables = array_flip($wpdb->get_col("SHOW TABLES"));
+        $cache_key = self::database_tables_cache_key();
+
+        if (!isset(self::$database_tables[$cache_key])) {
+            $tables = wps_core()->cache->get($cache_key, self::DATABASE_TABLES_CACHE_GROUP, null);
+
+            if (!is_array($tables)) {
+                $tables = array_fill_keys($wpdb->get_col("SHOW TABLES"), true);
+
+                wps_core()->cache->set(
+                    $cache_key,
+                    $tables,
+                    self::DATABASE_TABLES_CACHE_GROUP,
+                    true,
+                    self::DATABASE_TABLES_CACHE_TTL
+                );
+            }
+
+            self::$database_tables[$cache_key] = $tables;
         }
 
-        return isset($tables[$table_name]);
+        return isset(self::$database_tables[$cache_key][$table_name]);
     }
+
+    private static function database_tables_cache_key(): string
+    {
+        global $wpdb;
+
+        return Cache::generate_key(
+            'database-tables',
+            defined('DB_NAME') ? DB_NAME : '',
+            $wpdb->prefix
+        );
+    }
+
 }

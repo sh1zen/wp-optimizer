@@ -18,7 +18,6 @@ class Mod_Pagespeed extends Module
 {
     public static ?string $name = "PageSpeed";
 
-    public array $scopes = array('autoload', 'settings');
 
     protected string $context = 'wpopt';
 
@@ -40,6 +39,11 @@ class Mod_Pagespeed extends Module
             return;
         }
 
+        if (function_exists('wp_get_speculation_rules_configuration') &&
+            ($this->is_enabled('page_prefetching') || $this->is_enabled('disable_native_speculative_loading'))) {
+            add_filter('wp_speculation_rules_configuration', array($this, 'configure_native_prefetch'));
+        }
+
         if (!$this->has_enabled_optimization()) {
             return;
         }
@@ -49,6 +53,40 @@ class Mod_Pagespeed extends Module
             array($this, 'optimize_html'),
             100
         );
+    }
+
+    /**
+     * Configure Core's speculation rules without re-enabling contexts Core has disabled.
+     */
+    public function configure_native_prefetch($configuration)
+    {
+        if ($this->is_enabled('disable_native_speculative_loading')) {
+            return null;
+        }
+
+        if ($this->is_enabled('page_prefetching') && is_array($configuration) &&
+            ($configuration['mode'] ?? 'auto') === 'auto' &&
+            ($configuration['eagerness'] ?? 'auto') === 'auto' &&
+            !$this->has_native_default_override()) {
+            $configuration['mode'] = 'prefetch';
+            $configuration['eagerness'] = 'moderate';
+        }
+
+        return $configuration;
+    }
+
+    /**
+     * Preserve site-level defaults introduced in WordPress 7.1.
+     */
+    private function has_native_default_override(): bool
+    {
+        foreach (array('WP_SPECULATIVE_LOADING_DEFAULT_MODE', 'WP_SPECULATIVE_LOADING_DEFAULT_EAGERNESS') as $name) {
+            if (defined($name) || getenv($name) !== false) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     public function optimize_html($buffer)
@@ -91,7 +129,7 @@ class Mod_Pagespeed extends Module
             $head_injections[] = $this->largest_image_preload_script();
         }
 
-        if ($this->is_enabled('page_prefetching', false)) {
+        if ($this->is_enabled('page_prefetching', false) && !function_exists('wp_get_speculation_rules_configuration')) {
             $head_injections[] = $this->page_prefetching_script();
         }
 
@@ -126,7 +164,8 @@ class Mod_Pagespeed extends Module
             ),
             $this->group_setting_fields(
                 $this->setting_field(__('Navigation', 'wpopt'), false, 'separator'),
-                $this->setting_field(__('Enable page prefetching', 'wpopt'), 'page_prefetching', 'checkbox', array('default_value' => false))
+                $this->setting_field(__('Enable early page prefetching', 'wpopt'), 'page_prefetching', 'checkbox', array('default_value' => false)),
+                $this->setting_field(__('Disable WordPress speculative loading', 'wpopt'), 'disable_native_speculative_loading', 'checkbox', array('default_value' => false))
             )
         );
     }
@@ -141,7 +180,8 @@ class Mod_Pagespeed extends Module
             'lazyload_video'               => __("Prevents videos from preloading data before the browser needs them.", 'wpopt'),
             'add_missing_image_dimensions' => __("Adds width and height attributes to WordPress attachment images when metadata is available, reducing layout shifts and improving LCP stability.", 'wpopt'),
             'auto_preload_largest_image'   => __("Detects the Largest Contentful Paint image at runtime and preloads it with fetchpriority=\"high\".", 'wpopt'),
-            'page_prefetching'             => __("Prefetches same-origin pages on hover or touch intent to speed up likely next navigations.", 'wpopt'),
+            'page_prefetching'             => __("On WordPress 6.8 or newer, uses Core's speculation rules with moderate eagerness when Core's defaults are unchanged. Explicit site settings are preserved. On older versions, prefetches same-origin links on hover or touch. WordPress may already load pages speculatively when this option is off.", 'wpopt'),
+            'disable_native_speculative_loading' => __("Stops WordPress Core from prefetching or prerendering pages. Use only if speculative requests conflict with site behavior; disabling them does not speed up navigation. Has no effect before WordPress 6.8.", 'wpopt'),
         );
     }
 
@@ -403,5 +443,3 @@ HTML;
 HTML;
     }
 }
-
-return __NAMESPACE__;

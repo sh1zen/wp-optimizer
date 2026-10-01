@@ -24,7 +24,6 @@ class Mod_ActivityLog extends Module
 {
     public static ?string $name = 'Activity Log';
 
-    public array $scopes = array('autoload', 'admin-page', 'settings');
 
     protected string $context = 'wpopt';
 
@@ -967,5 +966,4 @@ class Mod_ActivityLog extends Module
     }
 }
 
-return __NAMESPACE__;
 

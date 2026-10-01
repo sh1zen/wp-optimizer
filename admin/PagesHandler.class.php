@@ -479,8 +479,8 @@ class PagesHandler
                 'route' => 'setting-cron',
             ),
             array(
-                'label' => __('PageSpeed', $text_domain),
-                'route' => 'module-setting-pagespeed',
+                'label' => __('Speed Test', $text_domain),
+                'route' => 'page-test',
             ),
             array(
                 'label' => __('Settings', $text_domain),
@@ -1049,7 +1049,9 @@ class PagesHandler
         $class = '\\WPOptimizer\\modules\\supporters\\StaticCache';
 
         if (!class_exists($class) && defined('WPOPT_SUPPORTERS')) {
-            $loader = WPOPT_SUPPORTERS . 'cache/staticcache_runtime.class.php';
+            // The runtime extends Cache_Dispatcher and relies on the shared
+            // static-cache support classes. Load their canonical entry point.
+            $loader = WPOPT_SUPPORTERS . 'cache/staticcache.class.php';
 
             if (is_file($loader)) {
                 require_once $loader;
@@ -1646,7 +1648,7 @@ class PagesHandler
                 'slug'        => $slug,
                 'name'        => (string)($module['name'] ?? $slug),
                 'short'       => $short_labels[$slug] ?? __('Focused tool', 'wpopt'),
-                'description' => $descriptions[$slug] ?? sprintf(__('Gestisce le funzioni del modulo %s mantenendo separata la relativa configurazione.', 'wpopt'), (string)($module['name'] ?? $slug)),
+                'description' => $descriptions[$slug] ?? sprintf(__('Manages the features of the %s module while keeping its configuration separate.', 'wpopt'), (string)($module['name'] ?? $slug)),
                 'active'      => $active,
                 'url'         => $url,
             );
@@ -1679,21 +1681,21 @@ class PagesHandler
     private function get_welcome_module_descriptions(): array
     {
         return array(
-            'activitylog'         => __('Registra le attivita rilevanti di utenti, contenuti e tassonomie per aiutare controllo e diagnosi.', 'wpopt'),
-            'cache'               => __('Gestisce cache statica, oggetti, WP_Query e query database con regole, scadenze e pulizia dedicate.', 'wpopt'),
-            'cloudflare'          => __('Gestisce configurazioni e azioni Cloudflare collegate a questa installazione WordPress.', 'wpopt'),
-            'cron'                => __('Programma le ottimizzazioni automatiche e centralizza le attivita ricorrenti del plugin.', 'wpopt'),
-            'database'            => __('Pulisce, ottimizza e salva backup del database, inclusa la revisione delle opzioni autoload.', 'wpopt'),
-            'media'               => __('Ottimizza immagini, conversioni e pulizia media per ridurre peso e banda usata dagli upload.', 'wpopt'),
-            'minify'              => __('Riduce HTML, CSS e JavaScript per alleggerire le pagine e limitare asset non necessari.', 'wpopt'),
-            'pagespeed'           => __('Aiuta a configurare e verificare ottimizzazioni PageSpeed quando disponibili sul server.', 'wpopt'),
-            'performance_monitor' => __('Monitora richieste lente, tempi di risposta e metriche utili per capire dove intervenire.', 'wpopt'),
-            'wp_customizer'       => __('Permette di disattivare o regolare funzioni WordPress e admin non necessarie al progetto.', 'wpopt'),
-            'wp_info'             => __('Mostra informazioni tecniche su WordPress, server e ambiente per supportare il debug.', 'wpopt'),
-            'wp_mail'             => __('Registra le email inviate da WordPress per controllare contenuti, stato e tracciabilita.', 'wpopt'),
-            'wp_optimizer'        => __('Applica ottimizzazioni server e WordPress come compressione, browser cache e regole locali.', 'wpopt'),
-            'wp_security'         => __('Indurisce impostazioni WordPress e server per ridurre superfici di rischio comuni.', 'wpopt'),
-            'wp_updates'          => __('Gestisce il comportamento degli aggiornamenti di core, plugin e temi secondo le tue regole.', 'wpopt'),
+            'activitylog'         => __('Logs relevant user, content, and taxonomy activity to support monitoring and diagnostics.', 'wpopt'),
+            'cache'               => __('Manages static, object, WP_Query, and database query caches with dedicated rules, expiration, and cleanup.', 'wpopt'),
+            'cloudflare'          => __('Manages Cloudflare configurations and actions connected to this WordPress installation.', 'wpopt'),
+            'cron'                => __('Schedules automatic optimizations and centralizes recurring plugin tasks.', 'wpopt'),
+            'database'            => __('Cleans, optimizes, and backs up the database, including a review of autoloaded options.', 'wpopt'),
+            'media'               => __('Optimizes images, conversions, and media cleanup to reduce upload size and bandwidth usage.', 'wpopt'),
+            'minify'              => __('Minifies HTML, CSS, and JavaScript to reduce page weight and limit unnecessary assets.', 'wpopt'),
+            'pagespeed'           => __('Helps configure and verify PageSpeed optimizations when they are available on the server.', 'wpopt'),
+            'performance_monitor' => __('Monitors slow requests, response times, and useful metrics to identify where improvements are needed.', 'wpopt'),
+            'wp_customizer'       => __('Lets you disable or adjust WordPress and admin features that the project does not need.', 'wpopt'),
+            'wp_info'             => __('Displays technical information about WordPress, the server, and the environment to support debugging.', 'wpopt'),
+            'wp_mail'             => __('Logs emails sent by WordPress so you can review their content, status, and traceability.', 'wpopt'),
+            'wp_optimizer'        => __('Applies server and WordPress optimizations such as compression, browser caching, and local rules.', 'wpopt'),
+            'wp_security'         => __('Hardens WordPress and server settings to reduce common attack surfaces.', 'wpopt'),
+            'wp_updates'          => __('Controls core, plugin, and theme update behavior according to your rules.', 'wpopt'),
         );
     }
 
@@ -2166,4 +2168,3 @@ class PagesHandler
         return 'https://wordpress.org/support/plugin/wp-optimizer/reviews/';
     }
 }
-

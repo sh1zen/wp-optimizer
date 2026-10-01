@@ -136,7 +136,7 @@ function wps_error_handler($hook, ?callable $callback = null, $notify_dev = true
                     }
                 }
                 else {
-                    wps_log("$mail_content\n\n", 'wps-error-handler.log');
+                    wps_log("$mail_content\n\n", 'framework', 'error');
                 }
             }
         }

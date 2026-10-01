@@ -121,6 +121,10 @@ class GD
     {
         $type = $this->conversion_type ? $this->conversion_type : $this->type;
 
+        if (defined('IMAGETYPE_AVIF') && $type === constant('IMAGETYPE_AVIF')) {
+            return 'image/avif';
+        }
+
         switch ($type) {
             case IMAGETYPE_JPEG:
                 $imageType = "image/jpeg";
@@ -162,9 +166,10 @@ class GD
         $this->quality = $quality;
     }
 
-    public function setImageFormat($format)
+    public function setImageFormat($format): bool
     {
         $this->conversion_type = $this->extension_to_imageType($format);
+        return $this->conversion_type !== IMAGETYPE_UNKNOWN;
     }
 
     private function extension_to_imageType($extension, $unknown = IMAGETYPE_UNKNOWN)
@@ -200,6 +205,11 @@ class GD
                 $imageType = IMAGETYPE_WEBP;
                 break;
 
+            case 'avif':
+                $imageType = defined('IMAGETYPE_AVIF') && function_exists('imageavif')
+                    ? constant('IMAGETYPE_AVIF') : IMAGETYPE_UNKNOWN;
+                break;
+
             case 'bmp':
             case IMAGETYPE_BMP:
                 $imageType = IMAGETYPE_BMP;
@@ -226,35 +236,39 @@ class GD
     {
         $type = $this->conversion_type ? $this->conversion_type : $this->type;
 
-        switch ($type) {
+        if (defined('IMAGETYPE_AVIF') && $type === constant('IMAGETYPE_AVIF')) {
+            $return = function_exists('imageavif') && imageavif($this->image, $image_path, $this->quality);
+        }
+        else {
+            switch ($type) {
+                case IMAGETYPE_GIF:
+                    $return = imagegif($this->image, $image_path);
+                    break;
 
-            case IMAGETYPE_GIF:
-                $return = imagegif($this->image, $image_path);
-                break;
+                case IMAGETYPE_PNG:
+                    $return = imagepng($this->image, $image_path, ceil($this->quality * 9 / 100));
+                    break;
 
-            case IMAGETYPE_PNG:
-                $return = imagepng($this->image, $image_path, ceil($this->quality * 9 / 100));
-                break;
+                case IMAGETYPE_WBMP:
+                    $return = imagewbmp($this->image, $image_path);
+                    break;
 
-            case IMAGETYPE_WBMP:
-                $return = imagewbmp($this->image, $image_path);
-                break;
+                case IMAGETYPE_BMP:
+                    $return = imagebmp($this->image, $image_path, true);
+                    break;
 
-            case IMAGETYPE_BMP:
-                $return = imagebmp($this->image, $image_path, true);
-                break;
+                case IMAGETYPE_XBM:
+                    $return = imagexbm($this->image, $image_path);
+                    break;
 
-            case IMAGETYPE_XBM:
-                $return = imagexbm($this->image, $image_path);
-                break;
+                case IMAGETYPE_WEBP:
+                    $return = imagewebp($this->image, $image_path, $this->quality);
+                    break;
 
-            case IMAGETYPE_WEBP:
-                $return = imagewebp($this->image, $image_path, $this->quality);
-                break;
-
-            default:
-                $return = imagejpeg($this->image, $image_path, $this->quality);
-                break;
+                default:
+                    $return = imagejpeg($this->image, $image_path, $this->quality);
+                    break;
+            }
         }
 
         if ($return and $type === IMAGETYPE_JPEG and !empty($this->info)) {

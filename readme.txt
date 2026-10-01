@@ -3,9 +3,9 @@ Contributors: sh1zen
 Tags: cache, core web vitals, pagespeed, performance, image optimization
 Donate link: https://www.paypal.com/donate/?hosted_button_id=8G8VR4APG9JRU
 Requires at least: 5.0.0
-Tested up to: 7.0.0
+Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 2.8.8
+Stable tag: 2.8.9
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -707,12 +707,17 @@ The uninstall routine removes plugin options, scheduled media hooks and plugin d
 
 == Upgrade Notice ==
 
-= 2.8.8 =
+= 2.8.9 =
 
 Recommended update with compatibility improvements, Multisite enhancements, performance refinements and bug fixes.
 
 
 == Changelog ==
+
+= 2.8.9 =
+
+* fixed invalid directory-listing syntax that could make LiteSpeed reject the generated `.htaccess`
+* refreshes the managed security-rule block during upgrade
 
 = 2.8.8 =
 

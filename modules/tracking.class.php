@@ -11,7 +11,6 @@ use WPS\modules\Module;
 
 class Mod_Tracking extends Module
 {
-    public array $scopes = array('core-settings');
 
     protected string $context = 'wpopt';
 
@@ -36,4 +35,3 @@ class Mod_Tracking extends Module
     }
 }
 
-return __NAMESPACE__;

@@ -25,7 +25,6 @@ class wps_wrapper
 
     public ?ModuleHandler $moduleHandler = null;
 
-    private string $path = '';
     private array $args = [];
     private string $context;
     private array $components = [];
@@ -38,16 +37,14 @@ class wps_wrapper
 
         $this->filter_args($args);
 
-        $this->path = $this->args['modules_path'];
-
         $this->filter_components($components);
     }
 
     private function filter_args($args): void
     {
         $this->args = array_merge($this->args, [
-            'modules_path' => '',
-            'table_name'   => ''
+            'module_catalog' => null,
+            'table_name'     => ''
         ], (array)$args);
     }
 
@@ -100,8 +97,8 @@ class wps_wrapper
             $this->settings = new Settings($this->context);
         }
 
-        if ($this->components['moduleHandler'] and !empty($this->args['modules_path']) and is_null($this->moduleHandler)) {
-            $this->moduleHandler = new ModuleHandler($this->context, $this->args['modules_path']);
+        if ($this->components['moduleHandler'] and is_null($this->moduleHandler)) {
+            $this->moduleHandler = new ModuleHandler($this->context, $this->args['module_catalog']);
         }
 
         if ($this->components['ajax'] and wp_doing_ajax() and is_null($this->ajax)) {
@@ -129,18 +126,13 @@ class wps_wrapper
             $this->options = new Options($this->context, $this->args['table_name'], $this->cache, $create_options_table);
         }
 
-        if ($this->components['moduleHandler'] && !empty($this->args['modules_path'])) {
-            $this->moduleHandler = new ModuleHandler($this->context, $this->args['modules_path']);
+        if ($this->components['moduleHandler']) {
+            $this->moduleHandler = new ModuleHandler($this->context, $this->args['module_catalog']);
         }
 
         if ($this->components['cron']) {
             $this->cron = new CronForModules($this->context);
         }
-    }
-
-    public function get_path()
-    {
-        return $this->path;
     }
 
     public function __get($name)

@@ -53,8 +53,8 @@ if ( function_exists('wp_cache_init') && ! $wp_object_cache ) {
 wps(
     'wpopt',
     [
-        'modules_path' => WPOPT_MODULES,
-        'table_name'   => "wp_wpopt",
+        'module_catalog' => WPOPT_INCPATH . 'module-catalog.php',
+        'table_name'     => "wp_wpopt",
     ],
     [
         'cache'         => true,

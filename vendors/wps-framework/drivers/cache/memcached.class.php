@@ -16,6 +16,21 @@ class MemcacheD extends CacheInterface
         $this->conn->addServer('localhost', 11211, 1);
     }
 
+    public function is_available(): bool
+    {
+        if (!$this->conn) {
+            return false;
+        }
+
+        foreach ((array)$this->conn->getStats() as $stats) {
+            if (is_array($stats)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     public function set($key, $value, $group, $force = false, $expire = 0): bool
     {
         if (!$this->conn) {
@@ -37,18 +52,24 @@ class MemcacheD extends CacheInterface
             return false;
         }
 
-        $key = $this->co_group($key, $group);
+        $this->conn->get($this->co_group($key, $group));
 
-        return (bool)$this->conn->get($key);
+        return $this->conn->getResultCode() !== \Memcached::RES_NOTFOUND;
     }
 
     public function get($key, $group, $default = false)
     {
         if (!$this->conn) {
-            return false;
+            return $default;
         }
 
-        return $this->conn->get($this->co_group($key, $group)) ?: $default;
+        $value = $this->conn->get($this->co_group($key, $group));
+
+        if ($this->conn->getResultCode() === \Memcached::RES_NOTFOUND) {
+            return $default;
+        }
+
+        return $value;
     }
 
     public function dump($group = ''): array

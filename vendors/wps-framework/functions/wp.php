@@ -274,7 +274,7 @@ function wps_debug_log($message, $level = 0): void
     }
 
     //exclude this function with $level + 1
-    wps_log($message, 'debug.log', $level + 1);
+    \WPS\core\Debug::log($message, 'framework', 'debug');
 }
 
 function wps_debug_backtrace($level = 0, $full = false): string
@@ -456,44 +456,7 @@ function wps_get_page_args($item = null, $default = false)
     return $args;
 }
 
-function wps_log($message, $file_name = 'wps-debug.log', $skip_frames = 1, $mode = FILE_APPEND): void
+function wps_log($message, string $context = 'framework', string $level = 'debug'): void
 {
-    $trace = debug_backtrace();
-    $callers = array();
-
-    //exclude this function
-    $skip_frames++;
-
-    foreach ($trace as $index => $caller) {
-
-        if ($skip_frames > $index) {
-            continue;
-        }
-        elseif (isset($caller['class'])) {
-            $callers[] = "{$caller['class']}{$caller['type']}{$caller['function']}(" . wps_stringify_arguments($caller['args']) . ")";
-        }
-        else {
-            if (in_array($caller['function'], array('do_action', 'apply_filters', 'do_action_ref_array', 'apply_filters_ref_array'), true)) {
-                $callers[] = "{$caller['function']}('{$caller['args'][0]}')";
-            }
-            elseif (in_array($caller['function'], array('include', 'include_once', 'require', 'require_once'), true)) {
-                $filename = $caller['args'][0] ?? '';
-                $callers[] = $caller['function'] . "('" . str_replace(UtilEnv::normalize_path(ABSPATH), '', UtilEnv::normalize_path($filename)) . "')";
-            }
-            else {
-                $callers[] = "{$caller['function']}(" . wps_stringify_arguments($caller['args']) . ")";
-            }
-        }
-    }
-
-    $data = '[' . wps_time("d-M-Y H:i:s") . ']' . PHP_EOL . print_r($message, true) . PHP_EOL;
-
-    foreach ($callers as $index => $caller) {
-        $data .= "#$index $caller" . PHP_EOL;
-    }
-
-    $data .= "#URL " . $_SERVER['REQUEST_URI'] . PHP_EOL;
-    $data .= "#FILE " . str_replace(UtilEnv::normalize_path(ABSPATH), '', UtilEnv::normalize_path($trace[$skip_frames]['file'] ?? '')) . ":" . ($trace[$skip_frames]['line'] ?? '') . PHP_EOL;
-
-    file_put_contents(WP_CONTENT_DIR . DIRECTORY_SEPARATOR . $file_name, $data, $mode);
+    \WPS\core\Debug::log($message, $context, $level);
 }

@@ -21,7 +21,6 @@ class Mod_WP_Mail extends Module
 {
     public static ?string $name = 'WP Mail';
 
-    public array $scopes = array('settings', 'autoload', 'admin-page');
 
     protected string $context = 'wpopt';
 
@@ -436,5 +435,4 @@ class Mod_WP_Mail extends Module
     }
 }
 
-return __NAMESPACE__;
 

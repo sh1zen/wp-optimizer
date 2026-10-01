@@ -23,7 +23,6 @@ class Mod_Settings extends Module
     private const BACKUP_MIN_INTERVAL_SECONDS = 900;
     private const BACKUP_MAX_ENTRIES = 50;
 
-    public array $scopes = array('core-settings', 'admin', 'ajax');
 
     protected string $context = 'wpopt';
 
@@ -485,5 +484,4 @@ class Mod_Settings extends Module
     }
 }
 
-return __NAMESPACE__;
 

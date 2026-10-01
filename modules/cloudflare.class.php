@@ -14,7 +14,6 @@ class Mod_Cloudflare extends Module
 {
     public static ?string $name = 'Cloudflare';
 
-    public array $scopes = array('core-settings', 'admin', 'ajax');
 
     protected string $context = 'wpopt';
 
@@ -334,5 +333,3 @@ class Mod_Cloudflare extends Module
         );
     }
 }
-
-return __NAMESPACE__;

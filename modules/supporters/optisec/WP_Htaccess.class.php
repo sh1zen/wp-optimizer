@@ -128,7 +128,7 @@ class WP_Htaccess
     private static function get_ext_types($filter = array(), $key_value = false): array
     {
         $types = array(
-            'image'       => array('jpg', 'jpeg', 'jpe', 'webp', 'gif', 'png', 'bmp', 'tif', 'tiff', 'ico', 'heic'),
+            'image'       => array('jpg', 'jpeg', 'jpe', 'webp', 'avif', 'gif', 'png', 'bmp', 'tif', 'tiff', 'ico', 'heic'),
             'font'        => array('ttf', 'woff', 'woff2', 'otf', 'svg', 'eot', 'sfnt'),
             'audio'       => array('aac', 'ac3', 'aif', 'aiff', 'flac', 'm3a', 'm4a', 'm4b', 'mka', 'mp1', 'mp2', 'mp3', 'ogg', 'oga', 'ram', 'wav', 'wma'),
             'video'       => array('3g2', '3gp', '3gpp', 'asf', 'avi', 'divx', 'dv', 'flv', 'm4v', 'mkv', 'mov', 'mp4', 'mpeg', 'mpg', 'mpv', 'ogm', 'ogv', 'qt', 'rm', 'vob', 'wmv'),
@@ -167,6 +167,7 @@ class WP_Htaccess
             'gif'                          => 'image/gif',
             'png'                          => 'image/png',
             'webp'                         => 'image/webp',
+            'avif'                         => 'image/avif',
             'bmp'                          => 'image/bmp',
             'tiff|tif'                     => 'image/tiff',
             'ico'                          => 'image/x-icon',
@@ -532,7 +533,8 @@ class WP_Htaccess
         $rules = '';
 
         if (Settings::get_option($settings, 'srv_security.listings')) {
-            $rules .= "Options All -Indexes\n";
+            // Keep the legacy writer safe if it is loaded by an integration.
+            $rules .= "Options -Indexes\n";
         }
 
         if (Settings::get_option($settings, 'srv_security.http_track&trace')) {

@@ -39,7 +39,7 @@ class Utility
             require_once ABSPATH . '/wp-includes/pluggable.php';
         }
 
-        $this->cache = new Cache('wps_core');
+        $this->cache = new Cache('wps_core', defined('WP_PERSISTENT_CACHE') and WP_PERSISTENT_CACHE);
 
         $this->meter = new PerformanceMeter();
 

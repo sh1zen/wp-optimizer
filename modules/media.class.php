@@ -23,7 +23,6 @@ class Mod_Media extends Module
 {
     public static ?string $name = "Media Optimizer";
 
-    public array $scopes = array('autoload', 'cron', 'admin-page', 'settings');
 
     protected string $context = 'wpopt';
 
@@ -553,10 +552,12 @@ class Mod_Media extends Module
             $this->group_setting_fields(
                 $this->setting_field(__('Formats', 'wpopt'), false, 'separator'),
                 $this->setting_field(__('Convert all images to new webp format', 'wpopt'), "convert_to_webp", "checkbox", ['default_value' => false]),
+                $this->setting_field(__('Convert images to AVIF', 'wpopt'), "convert_to_avif", "checkbox", ['default_value' => false]),
                 $this->setting_field(__('Optimize JPG/JPEG', 'wpopt'), "format.jpg", "checkbox", ['default_value' => true]),
                 $this->setting_field(__('Optimize PNG', 'wpopt'), "format.png", "checkbox", ['default_value' => true]),
                 $this->setting_field(__('Optimize GIF', 'wpopt'), "format.gif", "checkbox", ['default_value' => true]),
                 $this->setting_field(__('Optimize WEBP', 'wpopt'), "format.webp", "checkbox", ['default_value' => true]),
+                $this->setting_field(__('Optimize AVIF', 'wpopt'), "format.avif", "checkbox", ['default_value' => true]),
                 $this->setting_field(__('Optimize other formats (tiff, heic, bmp)', 'wpopt'), "format.others", "checkbox", ['default_value' => false]),
             )
         );
@@ -579,8 +580,7 @@ class Mod_Media extends Module
             'auto_optimize_uploads' => __("Automatically compresses and resizes images for faster loading, improving website performance.", 'wpopt'),
             'use_imagick'           => __("A PHP extension for creating, modifying and manipulating images, it makes optimization faster.", 'wpopt'),
             'convert_to_webp'       => __("WebP is a modern image format with superior compression efficiency, reducing file size and improving website performance.", 'wpopt'),
+            'convert_to_avif'       => __("Convert selected images to AVIF using the active image library. A successful conversion replaces the original; a failed conversion keeps it. When WebP and AVIF conversion are both enabled, AVIF takes priority.", 'wpopt'),
         ];
     }
 }
-
-return __NAMESPACE__;

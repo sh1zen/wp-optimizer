@@ -9,6 +9,8 @@ namespace WPS\core\Drivers;
 
 class Redis extends CacheInterface
 {
+    private const VALUE_PREFIX = 'wps-cache:v1:';
+
     public function __construct()
     {
         parent::__construct();
@@ -16,39 +18,51 @@ class Redis extends CacheInterface
         $this->conn = new \Redis();
 
         try {
-            $this->conn->connect('localhost', 6379);
+            $host = defined('WPS_REDIS_HOST') ? (string)WPS_REDIS_HOST : '127.0.0.1';
+            $port = defined('WPS_REDIS_PORT') ? (int)WPS_REDIS_PORT : 6379;
+
+            if (!$this->conn->connect($host, $port)) {
+                $this->conn = null;
+                return;
+            }
 
             if (defined('WPS_REDIS_PASSWORD')) {
                 $this->conn->auth(WPS_REDIS_PASSWORD);
             }
 
-            $memory_size = 128;
-            if (defined('WPS_REDIS_MAX_MEMORY')) {
-                $memory_size = WPS_REDIS_MAX_MEMORY;
+            if (defined('WPS_REDIS_DATABASE')) {
+                $this->conn->select((int)WPS_REDIS_DATABASE);
             }
 
-            $this->conn->config('set', 'maxmemory', $memory_size * 1024 * 1024);
-
-        } catch (\RedisException $e) {
+        } catch (\Throwable $e) {
             $this->conn = null;
         }
+    }
+
+    public function is_available(): bool
+    {
+        return $this->conn !== null;
     }
 
     public function get($key, $group, $default = false)
     {
         if (!$this->conn) {
-            return false;
+            return $default;
         }
 
         $key = $this->co_group($key, $group);
 
         try {
             $value = $this->conn->get($key);
-        } catch (\RedisException $e) {
-            $value = false;
+        } catch (\Throwable $e) {
+            return $default;
         }
 
-        return $value ?: $default;
+        if ($value === false) {
+            return $default;
+        }
+
+        return $this->decode($value, $default);
     }
 
     public function dump($group = ''): array
@@ -67,7 +81,7 @@ class Redis extends CacheInterface
                 $res[$key] = $this->conn->dump($key);
             }
 
-        } catch (\RedisException $e) {
+        } catch (\Throwable $e) {
             $res = [];
         }
 
@@ -88,7 +102,7 @@ class Redis extends CacheInterface
 
             $res = $this->conn->unlink($key);
 
-        } catch (\RedisException $e) {
+        } catch (\Throwable $e) {
             $res = false;
         }
 
@@ -110,7 +124,7 @@ class Redis extends CacheInterface
 
             return true;
 
-        } catch (\RedisException $e) {
+        } catch (\Throwable $e) {
             return false;
         }
     }
@@ -123,7 +137,7 @@ class Redis extends CacheInterface
 
         try {
             $exist = (bool)$this->conn->sCard($group);
-        } catch (\RedisException $e) {
+        } catch (\Throwable $e) {
             $exist = false;
         }
 
@@ -138,7 +152,7 @@ class Redis extends CacheInterface
 
         try {
             return $this->conn->flushAll();
-        } catch (\RedisException $e) {
+        } catch (\Throwable $e) {
             return false;
         }
     }
@@ -158,8 +172,14 @@ class Redis extends CacheInterface
         }
 
         try {
-            return $this->conn->set($key, $data, $options);
-        } catch (\RedisException $e) {
+            $updated = $this->conn->set($key, $this->encode($data), $options);
+
+            if ($updated && $group) {
+                $this->conn->sAdd($group, $key);
+            }
+
+            return $updated;
+        } catch (\Throwable $e) {
             return false;
         }
     }
@@ -176,19 +196,15 @@ class Redis extends CacheInterface
 
         $key = $this->co_group($key, $group);
 
-        if ($group) {
-            $this->conn->sAdd($group, $key);
-        }
-
-        $options = ['KEEPTTL' => true];
-
-        if ($expire) {
-            $options['EX'] = $expire;
-        }
+        $options = $expire ? ['EX' => $expire] : ['KEEPTTL' => true];
 
         try {
-            $res = $this->conn->set($key, $value, $options);
-        } catch (\RedisException $e) {
+            $res = $this->conn->set($key, $this->encode($value), $options);
+
+            if ($res && $group) {
+                $this->conn->sAdd($group, $key);
+            }
+        } catch (\Throwable $e) {
             $res = false;
         }
 
@@ -205,7 +221,7 @@ class Redis extends CacheInterface
 
         try {
             $exist = $this->conn->exists($key);
-        } catch (\RedisException $e) {
+        } catch (\Throwable $e) {
             $exist = false;
         }
 
@@ -224,7 +240,7 @@ class Redis extends CacheInterface
 
             $stats = ['hits' => $info['keyspace_hits'], 'miss' => $info['keyspace_misses'], 'total' => $this->conn->dbSize()];
 
-        } catch (\RedisException $e) {
+        } catch (\Throwable $e) {
             $stats = parent::stats();
         }
 
@@ -233,10 +249,36 @@ class Redis extends CacheInterface
 
     public function close(): bool
     {
+        if (!$this->conn) {
+            return true;
+        }
+
         try {
             return $this->conn->close();
-        } catch (\RedisException $e) {
+        } catch (\Throwable $e) {
             return false;
         }
+    }
+
+    private function encode($value): string
+    {
+        return self::VALUE_PREFIX . serialize($value);
+    }
+
+    private function decode($value, $default = false)
+    {
+        if (!is_string($value) || strpos($value, self::VALUE_PREFIX) !== 0) {
+            // Keep entries written by older framework versions readable.
+            return $value;
+        }
+
+        $serialized = substr($value, strlen(self::VALUE_PREFIX));
+        $decoded = @unserialize($serialized);
+
+        if ($decoded === false && $serialized !== 'b:0;') {
+            return $default;
+        }
+
+        return $decoded;
     }
 }

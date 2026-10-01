@@ -30,7 +30,6 @@ class Mod_Cache extends Module
 
     public static string $storage_internal = 'cache';
 
-    public array $scopes = array('settings', 'autoload', 'ajax');
 
     protected string $context = 'wpopt';
 
@@ -3151,5 +3150,3 @@ class Mod_Cache extends Module
         return round(($hits / $total) * 100, 1) . '%';
     }
 }
-
-return __NAMESPACE__;

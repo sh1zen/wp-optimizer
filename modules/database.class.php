@@ -22,7 +22,6 @@ class Mod_Database extends Module
 
     const BACKUP_PATH = WPOPT_STORAGE . 'backup-db/';
 
-    public array $scopes = array('admin-page', 'cron', 'settings');
     private int $ajax_limit = 100;
 
     protected string $context = 'wpopt';
@@ -1436,5 +1435,4 @@ class Mod_Database extends Module
     }
 }
 
-return __NAMESPACE__;
 

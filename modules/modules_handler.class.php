@@ -11,7 +11,6 @@ use WPS\modules\Module;
 
 class Mod_Modules_Handler extends Module
 {
-    public array $scopes = array('core-settings');
 
     private array $modules_slug2name = [];
 
@@ -65,4 +64,3 @@ class Mod_Modules_Handler extends Module
     }
 }
 
-return __NAMESPACE__;

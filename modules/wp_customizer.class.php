@@ -18,7 +18,6 @@ class Mod_WP_Customizer extends Module
 {
     public static ?string $name = 'WP Customizer';
 
-    public array $scopes = array('settings', 'autoload');
 
     protected string $context = 'wpopt';
 
@@ -442,7 +441,7 @@ class Mod_WP_Customizer extends Module
                 $this->setting_field(__('Add a selection filter in category list', 'wpopt'), 'category-filter', 'checkbox'),
                 $this->setting_field(__('Disable Block Editor (Gutenberg)', 'wpopt'), "blocks-editor", "checkbox"),
                 $this->setting_field(__('Disable Core Blocks', 'wpopt'), "core-blocks", "checkbox", ['parent' => 'blocks-editor']),
-                $this->setting_field(__('Disable Fonts Management', 'wpopt'), "fonts-management", "checkbox", ['parent' => 'blocks-editor']),
+                $this->setting_field(__('Disable Fonts Management', 'wpopt'), "fonts-management", "checkbox"),
                 $this->setting_field(__('Disable Auto Paragraph', 'wpopt'), "wpautop", "checkbox"),
             ),
             $this->group_setting_fields(
@@ -494,7 +493,7 @@ class Mod_WP_Customizer extends Module
             'core-blocks'          => __('Disable registration of WordPress core blocks.', 'wpopt'),
             'fonts-management'     => __('Disable WordPress built-in font management features.', 'wpopt'),
             'wpautop'              => __('Disable automatic paragraph formatting applied to post content and excerpts.', 'wpopt'),
-            'global-style-disable'  => __('If your theme does not support blocks, this feature is safe to disable.', 'wpopt'),
+            'global-style-disable'  => __('Stop WordPress from outputting Global Styles. Even classic themes can use theme.json and depend on these styles; check the site appearance after enabling this option.', 'wpopt'),
             'widgets-disable'      => __('Disable WordPress widgets initialization and related widget editor hooks.', 'wpopt'),
             'disable-comments'     => __('Disable comments and trackbacks on the front-end and post types.', 'wpopt'),
             'admin-hide-comments'  => __('Hide comments shortcuts and related dashboard items in admin.', 'wpopt'),
@@ -515,4 +514,3 @@ class Mod_WP_Customizer extends Module
     }
 }
 
-return __NAMESPACE__;

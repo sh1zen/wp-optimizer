@@ -38,6 +38,7 @@ require_once WPS_FRAMEWORK . 'Cache.class.php';
 require_once WPS_FRAMEWORK . 'Stack.php';
 require_once WPS_FRAMEWORK . 'Storage.class.php';
 require_once WPS_FRAMEWORK . 'Disk.class.php';
+require_once WPS_FRAMEWORK . 'Debug.class.php';
 require_once WPS_FRAMEWORK . 'Settings.class.php';
 require_once WPS_FRAMEWORK . 'Options.class.php';
 
@@ -50,6 +51,8 @@ require_once WPS_FRAMEWORK . 'RuleUtil.php';
 require_once WPS_FRAMEWORK . 'PerformanceMeter.class.php';
 require_once WPS_FRAMEWORK . 'Module.class.php';
 require_once WPS_FRAMEWORK . 'ModuleHandler.class.php';
+
+\WPS\core\Debug::initialize();
 
 
 add_action('admin_enqueue_scripts', 'wps_admin_enqueue_scripts', 10, 0);

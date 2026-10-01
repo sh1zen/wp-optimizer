@@ -16,7 +16,6 @@ class Mod_Widget extends Module
 {
     public static ?string $name = "Widget";
 
-    public array $scopes = array('settings', 'admin');
 
     private array $paths = [];
 
@@ -256,4 +255,3 @@ class Mod_Widget extends Module
     }
 }
 
-return __NAMESPACE__;

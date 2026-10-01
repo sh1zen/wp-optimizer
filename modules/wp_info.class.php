@@ -16,7 +16,6 @@ class Mod_WP_Info extends Module
 {
     public static ?string $name = "System Info";
 
-    public array $scopes = array('admin-page');
 
     protected string $context = 'wpopt';
 
@@ -284,4 +283,3 @@ class Mod_WP_Info extends Module
 
 }
 
-return __NAMESPACE__;

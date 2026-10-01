@@ -19,13 +19,27 @@ class CacheInterface
     {
         if (class_exists('Redis')) {
             require_once __DIR__ . '/redis.class.php';
-            return new Redis();
-        }
-        elseif (class_exists('MemcacheD')) {
-            require_once __DIR__ . '/memcached.class.php';
-            return new MemcacheD();
+            $driver = new Redis();
+
+            if ($driver->is_available()) {
+                return $driver;
+            }
         }
 
+        if (class_exists('MemcacheD')) {
+            require_once __DIR__ . '/memcached.class.php';
+            $driver = new MemcacheD();
+
+            if ($driver->is_available()) {
+                return $driver;
+            }
+        }
+
+        return false;
+    }
+
+    public function is_available(): bool
+    {
         return false;
     }
 

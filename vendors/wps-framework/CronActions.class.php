@@ -96,7 +96,7 @@ class CronActions
         }
 
         if (empty($hook) or !(is_closure($callback) or is_callable($callback))) {
-            wps_log("CronAction:: invalid callback for $hook", 'wps-cron.log');
+            wps_log("CronAction:: invalid callback for $hook", 'cron', 'error');
             return false;
         }
 
@@ -113,7 +113,7 @@ class CronActions
         }
 
         if (!$timestamp) {
-            wps_log("CronAction:: invalid timestamp for $hook", 'wps-cron.log');
+            wps_log("CronAction:: invalid timestamp for $hook", 'cron', 'error');
             return false;
         }
 

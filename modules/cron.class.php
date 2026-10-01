@@ -14,7 +14,6 @@ class Mod_Cron extends Module
 {
     public static ?string $name = 'Cron Manager';
 
-    public array $scopes = array('core-settings', 'admin-page', 'cron');
 
     protected string $context = 'wpopt';
 
@@ -2051,5 +2050,3 @@ class Mod_Cron extends Module
         add_settings_error('wpopt-cron-manager', sanitize_key(md5($message)), $message, $type);
     }
 }
-
-return __NAMESPACE__;
