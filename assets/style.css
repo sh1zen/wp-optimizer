@@ -3181,30 +3181,6 @@ body.wpopt-deactivation-dialog-open {
     background: #f8fbff !important;
 }
 
-.wpopt-hero-art {
-    position: absolute;
-    z-index: 1;
-    top: 50%;
-    right: 18px;
-    display: flex;
-    justify-content: flex-end;
-    align-items: center;
-    width: min(430px, 64%);
-    min-height: 116px;
-    overflow: visible;
-    background: transparent;
-    pointer-events: none;
-    transform: translateY(-50%);
-}
-
-.wpopt-hero-svg {
-    display: block;
-    width: 100%;
-    height: auto;
-    overflow: visible;
-    background: transparent;
-}
-
 .wpopt-panel {
     border: 1px solid #d9e5f5 !important;
     background: #ffffff !important;
@@ -4011,10 +3987,6 @@ body.wpopt-deactivation-dialog-open {
         grid-template-columns: minmax(0, 1fr);
     }
 
-    .wpopt-hero-art {
-        display: flex;
-    }
-
     .wpopt-kpi-grid {
         grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
         min-width: 0;
@@ -4163,12 +4135,6 @@ body.wpopt-deactivation-dialog-open {
         max-width: min(460px, 72%);
     }
 
-    .wpopt-hero-art {
-        right: -16px;
-        width: min(390px, 70%);
-        opacity: 0.78;
-    }
-
     .wpopt-panel-head {
         align-items: stretch;
         flex-direction: column;
@@ -4247,12 +4213,6 @@ body.wpopt-deactivation-dialog-open {
 @media (max-width: 520px) {
     .wpopt-hero-copy {
         max-width: none;
-    }
-
-    .wpopt-hero-art {
-        right: -95px;
-        width: 360px;
-        opacity: 0.28;
     }
 
     .wpopt-cron-overview-grid,
@@ -7373,6 +7333,7 @@ body.wps-admin-screen .wps-core-settings-page .wpopt-cloudflare-form {
 }
 
 .wpopt-page-test-results[hidden],
+.wpopt-page-test-result-summary[hidden],
 .wpopt-page-test-diagnostics[hidden] {
     display: none !important;
 }
@@ -7474,7 +7435,7 @@ body.wps-admin-screen .wps-core-settings-page .wpopt-cloudflare-form {
 
 .wpopt-page-test-result-row {
     display: grid;
-    grid-template-columns: minmax(180px, 1.4fr) repeat(5, minmax(92px, 1fr));
+    grid-template-columns: minmax(0, 1.4fr) repeat(6, minmax(0, 1fr));
     overflow: hidden;
     border: 1px solid #dbe7f5;
     border-radius: 10px;

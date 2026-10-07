@@ -25,7 +25,27 @@ function wps_admin_enqueue_scripts(): void
         'wps_reset_module_confirm' => __('Reset %s to factory settings? Current module settings will be overwritten and the cleanup pipeline will run.'),
         'wps_reset_module_success' => __('Module reset completed.'),
         'wps_reset_module_failed'  => __('Module reset failed.'),
+        'autosave_hint'     => __('Changes save automatically.'),
+        'autosave_pending'  => __('Unsaved changes'),
+        'autosave_saving'   => __('Saving changes…'),
+        'autosave_saved'    => __('All changes saved'),
+        'autosave_failed'   => __('Changes could not be saved. Please retry.'),
+        'autosave_retry'    => __('Retry save'),
+        'save_unconfirmed'  => __('Settings submitted. Save could not be confirmed.'),
     ]);
+}
+
+/** Load the shared admin design after the consuming plugin's styles. */
+function wps_admin_enqueue_ui(): void
+{
+    if (!wp_style_is('vendor-wps-css', 'enqueued')) {
+        return;
+    }
+
+    $asset = UtilEnv::resolve_asset(dirname(__DIR__), 'assets/css/admin-ui.css');
+    $styles = wp_styles();
+    wp_enqueue_style('vendor-wps-admin-ui', $asset['url'], array_values($styles->queue),
+        wps_core()->debug ? time() : ($asset['version'] ?: WPS_VERSION));
 }
 
 

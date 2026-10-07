@@ -8,7 +8,7 @@ namespace WPS\core;
 class Debug
 {
     /** Relative to WP_CONTENT_DIR, which is the project's cms/data directory. */
-    private const ROOT_DIRECTORY = 'flex-and-go/debug';
+    private const ROOT_DIRECTORY = 'wps-debug';
 
     private const CONTEXTS = array(
         'application',

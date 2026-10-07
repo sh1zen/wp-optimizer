@@ -15,7 +15,7 @@ class UtilEnv
 
     private static array $database_tables = [];
 
-    static $dynamic_time_limit = true;
+    static bool $dynamic_time_limit = true;
 
     public static function handle_upgrade($ver_start, $ver_to, $upgrade_path)
     {

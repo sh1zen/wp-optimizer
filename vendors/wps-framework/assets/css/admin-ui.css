@@ -1,0 +1,343 @@
+/* Shared admin UI. Loaded after consumer assets; scoped to Graphic's app shell.
+   Compatibility selectors below bring existing plugin panels into this system. */
+body.wps-admin-screen .wps-admin-app.wps-admin-ui {
+    --wps-text-primary: #1d2327;
+    --wps-text-secondary: #50575e;
+    --wps-line-color: #dcdcde;
+    --wps-panel-bg: #fff;
+    --wps-bg-primary: #f0f0f1;
+    --wps-soft-bg: #f6f7f7;
+    --wps-admin-page-line: #dcdcde;
+    --wps-admin-page-ink: #1d2327;
+    --wps-admin-page-muted: #50575e;
+    --wps-app-shell-line: #dcdcde;
+    --wps-shadow-light: none;
+    --wps-shadow-medium: none;
+    --wps-radius-sm: 3px;
+    --wps-radius-md: 4px;
+    --wps-admin-page-gutter: 24px;
+    --wps-switch-off-bg: #dcdcde;
+    --wps-switch-off-border: #8c8f94;
+    --wps-switch-off-knob: #50575e;
+    --wps-switch-on-bg: #2271b1;
+    --wps-switch-on-border: #135e96;
+    --wps-switch-on-knob: #fff;
+    --wps-btn-neutral-text: #2c3338;
+    --wps-btn-neutral-border: #8c8f94;
+    --wps-btn-neutral-bg: #f6f7f7;
+    --wps-btn-neutral-shadow: none;
+    --wps-btn-info-text: #fff;
+    --wps-btn-info-border: #2271b1;
+    --wps-btn-info-bg: #2271b1;
+    --wps-btn-info-bg-hover: #135e96;
+    --wps-btn-info-border-hover: #135e96;
+    --wps-btn-info-shadow: none;
+    --wps-btn-info-shadow-hover: none;
+    --wps-btn-success-bg: #008a20;
+    --wps-btn-success-shadow: none;
+    --wps-btn-warning-bg: #996800;
+    --wps-btn-warning-shadow: none;
+    --wps-btn-danger-bg: #b32d2e;
+    --wps-btn-danger-shadow: none;
+    background: #f0f0f1;
+    color: var(--wps-text-primary);
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+.wps-admin-ui .wps-app-main { background: #f0f0f1; }
+.wps-admin-ui .wps-app-topbar { grid-template-columns: minmax(0, 1fr) auto; gap: 4px 16px; }
+.wps-admin-ui .wps-app-breadcrumb { grid-column: 1; grid-row: 1; color: #50575e; }
+.wps-admin-ui .wps-app-page-title {
+    grid-column: 1;
+    grid-row: 2;
+    justify-self: start;
+    color: #1d2327;
+    font-size: 22px;
+    font-weight: 600;
+    line-height: 1.3;
+}
+.wps-admin-ui .wps-app-status { grid-column: 2; grid-row: 1 / 3; font-weight: 600; }
+.wps-admin-ui .wps-app-status.is-neutral { background: #f0f0f1; color: #50575e; }
+.wps-admin-ui .wps-app-brand small { color: #50575e; }
+.wps-admin-ui .wps-app-logo { border-radius: 4px; }
+.wps-admin-ui .wps-app-nav { gap: 2px; padding: 12px; }
+.wps-admin-ui .wps-app-nav-section {
+    color: #50575e;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0;
+    text-transform: none;
+}
+.wps-admin-ui .wps-app-nav-item {
+    border-left: 3px solid transparent;
+    border-radius: 2px;
+    font-size: 13px;
+    color: #2c3338;
+}
+.wps-admin-ui .wps-app-nav-item.is-active {
+    border-left-color: var(--wps-accent);
+    background: #f0f0f1;
+    color: #1d2327;
+    font-weight: 600;
+}
+.wps-admin-ui .wps-app-help { border-top: 1px solid #dcdcde; border-radius: 0; background: transparent; }
+.wps-admin-ui .wps-app-tabsbar { min-height: 50px; padding: 0 24px; }
+body.wps-admin-screen .wps-admin-ui.wps-admin-app .wps-app-tabsbar .wps-ar-tablist { gap: 4px !important; }
+body.wps-admin-screen .wps-admin-ui.wps-admin-app .wps-app-tabsbar .wps-ar-tab {
+    min-height: 50px !important;
+    border: 0 !important;
+    border-bottom: 3px solid transparent !important;
+    border-radius: 0 !important;
+    padding: 0 14px !important;
+    background: transparent !important;
+    color: #50575e !important;
+    font-weight: 600 !important;
+}
+body.wps-admin-screen .wps-admin-ui.wps-admin-app .wps-app-tabsbar .wps-ar-tab[aria-selected="true"] {
+    border-bottom-color: var(--wps-accent) !important;
+    background: transparent !important;
+    color: #1d2327 !important;
+}
+
+body.wps-admin-screen .wps-admin-ui.wps-admin-app :is(block.wps, .wps-box, .wps-settings-section, .wps-app-card, .wps-settings-setup, .wps-settings-transfer) {
+    border: 1px solid var(--wps-line-color) !important;
+    border-radius: 4px !important;
+    background: #fff !important;
+    box-shadow: none !important;
+}
+/* Structural wrappers stay open; only actual content sections get borders. */
+body.wps-admin-screen .wps-admin-ui.wps-admin-app :is(.wps-core-settings-page, .wps-wrap:not(.wps-home)) > block.wps {
+    border: 0 !important;
+    background: transparent !important;
+}
+body.wps-admin-screen .wps-admin-ui.wps-admin-app :is(h2, h3, .wps-option strong, .wps-section-title h3) {
+    font-weight: 600 !important;
+    color: #1d2327 !important;
+}
+body.wps-admin-screen .wps-admin-ui.wps-admin-app :is(.wps-option-description, .wps-section-description) {
+    color: #50575e;
+    font-size: 13px;
+    line-height: 1.5;
+}
+body.wps-admin-screen .wps-admin-ui.wps-admin-app .wps-options .wps-row {
+    display: grid;
+    grid-template-columns: 28px minmax(0, 1fr) minmax(200px, 360px);
+    gap: 16px;
+    min-height: 70px;
+    padding: 16px 0;
+    border-radius: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+}
+/* Multiline fields share the same columns; legacy flex rules let long help
+   text displace the label and impose a minimum width on the control. */
+body.wps-admin-screen .wps-admin-ui.wps-admin-app .wps-options :is(.wps-row-type-textarea, .wps-row-type-textarea-array) {
+    align-items: start;
+}
+body.wps-admin-screen .wps-admin-ui.wps-admin-app .wps-options :is(.wps-row-type-textarea, .wps-row-type-textarea-array) > .wps-option {
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+body.wps-admin-screen .wps-admin-ui.wps-admin-app .wps-options :is(.wps-row-type-textarea, .wps-row-type-textarea-array) > .wps-value {
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    margin-left: 0;
+}
+body.wps-admin-screen .wps-admin-ui.wps-admin-app .wps-options :is(.wps-row-type-textarea, .wps-row-type-textarea-array) textarea.wps {
+    box-sizing: border-box;
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    resize: vertical;
+}
+body.wps-admin-screen .wps-admin-ui.wps-admin-app :is(.wps-row-icon, .wps-section-icon) {
+    width: 24px;
+    height: 24px;
+    padding: 2px;
+    background: transparent;
+    border: 0;
+    border-radius: 0;
+    color: #646970;
+}
+body.wps-admin-screen .wps-admin-ui.wps-admin-app .wps-section-head {
+    grid-template-columns: 28px minmax(0, 1fr);
+    gap: 16px;
+    min-height: 64px;
+}
+body.wps-admin-screen .wps-admin-ui.wps-admin-app :is(.button, .wps-button, .wpopt-btn) {
+    border-radius: 3px !important;
+    font-weight: 400 !important;
+    box-shadow: none !important;
+    background: var(--wps-btn-neutral-bg) !important;
+    border-color: var(--wps-btn-neutral-border) !important;
+    color: var(--wps-btn-neutral-text) !important;
+}
+body.wps-admin-screen .wps-admin-ui.wps-admin-app :is(.button-primary, .wps-button.is-info, .wps-button.wps-btn-info) {
+    background: var(--wps-btn-info-bg) !important;
+    border-color: var(--wps-btn-info-border) !important;
+    color: #fff !important;
+}
+body.wps-admin-screen .wps-admin-ui.wps-admin-app :is(.button-primary, .wps-button.is-info, .wps-button.wps-btn-info):hover {
+    background: var(--wps-btn-info-bg-hover) !important;
+}
+body.wps-admin-screen .wps-admin-ui.wps-admin-app :is(.wps-button.is-danger, .wps-button.wps-btn-danger, .button-link-delete) {
+    color: #b32d2e !important;
+    border-color: #b32d2e !important;
+    background: #fff !important;
+}
+body.wps-admin-screen .wps-admin-ui.wps-admin-app :is(.wps-button.is-success, .wps-button.wps-btn-success) {
+    color: #fff !important;
+    background: var(--wps-btn-success-bg) !important;
+    border-color: var(--wps-btn-success-bg) !important;
+}
+body.wps-admin-screen .wps-admin-ui.wps-admin-app :is(.wps-button.is-warning, .wps-button.wps-btn-warning) {
+    color: #fff !important;
+    background: var(--wps-btn-warning-bg) !important;
+    border-color: var(--wps-btn-warning-bg) !important;
+}
+body.wps-admin-screen .wps-admin-ui.wps-admin-app :is(input.wps:not([type="checkbox"]), textarea.wps, .wps-dropdown) {
+    border-radius: 3px !important;
+    border-color: #8c8f94 !important;
+    box-shadow: none !important;
+    font-weight: 400 !important;
+}
+body.wps-admin-screen .wps-admin-ui.wps-admin-app :is(.wps-apple-switch, .wps-apple-switch::before) { box-shadow: none !important; }
+body.wps-admin-screen .wps-admin-ui.wps-admin-app :is(a, button, input, textarea, select, [role="tab"]):focus-visible {
+    outline: 2px solid #2271b1 !important;
+    outline-offset: 2px !important;
+}
+body.wps-admin-screen .wps-admin-ui.wps-admin-app [hidden] { display: none !important; }
+
+.wps-admin-ui .wps-save-feedback {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px;
+    margin: 0 0 16px;
+    padding: 10px 12px;
+    border: 1px solid #dcdcde;
+    border-left: 3px solid #8c8f94;
+    border-radius: 2px;
+    background: #fff;
+    color: #50575e;
+    font-size: 13px;
+}
+.wps-admin-ui .wps-save-feedback[data-save-state="saved"] { border-left-color: #008a20; }
+.wps-admin-ui .wps-save-feedback[data-save-state="saving"] { border-left-color: #2271b1; }
+.wps-admin-ui .wps-save-feedback[data-save-state="error"] { border-left-color: #b32d2e; color: #b32d2e; }
+body.wps-admin-screen .wps-toast .wps-toast-dismiss {
+    margin-left: 12px;
+    padding: 0 4px;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    font-size: 20px;
+    cursor: pointer;
+}
+
+/* Existing dashboard components use the shared, quiet panel treatment. */
+body.wps-admin-screen .wps-admin-ui.wps-admin-app :is(.wpopt-kpi-card, .wpopt-module-card, .wpfs-stat-card, .wpmc-stat-card) {
+    border-color: #dcdcde;
+    border-radius: 3px;
+    background: #fff;
+    box-shadow: none;
+    transform: none;
+}
+.wps-admin-ui .wpopt-hero-copy { max-width: 72ch; }
+.wps-admin-ui .wpopt-kpi-value { color: #1d2327 !important; font-size: 20px; font-weight: 600; }
+.wps-admin-ui :is(.wpopt-kpi-label, .wpopt-panel-head > span) { color: #50575e; font-weight: 400; }
+.wps-admin-ui :is(.wpopt-kpi-card small, .wpopt-module-card small) { color: #50575e; font-size: 12px; }
+body.wps-admin-screen .wps-admin-ui.wps-admin-app :is(.wpopt-kpi-icon, .wpopt-module-icon) {
+    background: #f6f7f7;
+    color: #646970;
+    border-radius: 3px;
+}
+.wps-admin-ui .wpopt-view-all { justify-content: flex-start; }
+.wps-admin-ui .wpopt-view-all a { border: 0; padding-left: 0; font-weight: 400; text-decoration: underline; }
+.wps-admin-ui .wpopt-health-meter span { background: #646970; }
+body.wps-admin-screen .wps-admin-ui.wps-admin-app .wps-app-card :is(strong, span) { color: #1d2327; font-weight: 600; }
+body.wps-admin-screen .wps-admin-ui.wps-admin-app .wps-settings-transfer .wps-settings-import {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important;
+    gap: 24px !important;
+    min-height: 110px !important;
+}
+body.wps-admin-screen .wps-admin-ui.wps-admin-app .wps-import-divider { display: none !important; }
+body.wps-admin-screen .wps-admin-ui.wps-admin-app .wps-settings-transfer .wps-import-dropzone {
+    grid-template-columns: 28px minmax(0, 1fr) !important;
+    gap: 16px !important;
+    min-height: 110px !important;
+    padding: 20px !important;
+    border-color: #8c8f94 !important;
+    border-radius: 3px !important;
+    background: #f6f7f7 !important;
+    box-shadow: none !important;
+}
+body.wps-admin-screen .wps-admin-ui.wps-admin-app .wps-import-dropzone-icon {
+    width: 28px !important;
+    height: 28px !important;
+    background: transparent !important;
+    color: #646970 !important;
+}
+body.wps-admin-screen .wps-admin-ui.wps-admin-app .wps-import-dropzone-copy strong { font-weight: 600 !important; }
+body.wps-admin-screen .wps-admin-ui.wps-admin-app .wps-donation-wrap {
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+    color: #50575e;
+}
+body.wps-admin-screen .wps-admin-ui.wps-admin-app .wps-donation-wrap :is(.wps-donation-title, .wpopt-muted) {
+    color: #50575e;
+    font-weight: 400;
+}
+.wps-admin-ui .wpopt-support-icon { display: none; }
+.wps-admin-ui .wpopt-support-card-primary { order: 3; }
+body.wps-admin-screen .wps-admin-ui.wps-admin-app .wps-field-label { display: inline; font-weight: inherit; color: inherit; }
+body.wps-admin-screen .wps-admin-ui.wps-admin-app :is(notice.wps, .wpopt-media-preflight-notice) {
+    border-color: #dcdcde !important;
+    border-radius: 3px !important;
+    background: #fff !important;
+    box-shadow: none !important;
+}
+body.wps-admin-screen .wps-admin-ui.wps-admin-app .wpopt-media-preflight-notice::before {
+    border-color: #8c8f94;
+    border-radius: 3px;
+    background: #f6f7f7;
+    box-shadow: none;
+}
+
+@media (max-width: 960px) {
+    .wps-admin-ui .wps-app-page-title { display: block; font-size: 20px; }
+    .wps-admin-ui .wps-app-menu-toggle { grid-column: 2; grid-row: 1 / 3; }
+    body.wps-admin-screen .wps-admin-ui.wps-admin-app .wps-options :is(.wps-row-type-textarea, .wps-row-type-textarea-array) {
+        grid-template-columns: 28px minmax(0, 1fr);
+    }
+    body.wps-admin-screen .wps-admin-ui.wps-admin-app .wps-options :is(.wps-row-type-textarea, .wps-row-type-textarea-array) > .wps-value {
+        grid-column: 1 / -1;
+    }
+}
+@media (max-width: 782px) {
+    body.wps-admin-screen .wps-admin-app.wps-admin-ui { --wps-admin-page-gutter: 16px; }
+    body.wps-admin-screen .wps-admin-ui.wps-admin-app .wps-options .wps-row {
+        grid-template-columns: 28px minmax(0, 1fr);
+        gap: 12px;
+    }
+    body.wps-admin-screen .wps-admin-ui.wps-admin-app .wps-options .wps-value {
+        grid-column: 1 / -1;
+        width: 100%;
+        min-width: 0;
+        max-width: 100%;
+        margin-left: 0;
+    }
+    .wps-admin-ui .wps-app-tabsbar { padding-inline: 12px; }
+    body.wps-admin-screen .wps-admin-ui.wps-admin-app .wps-settings-transfer .wps-settings-import { grid-template-columns: minmax(0, 1fr) !important; }
+}
+@container wps-options (max-width: 560px) {
+    body.wps-admin-screen .wps-admin-ui.wps-admin-app .wps-options .wps-row { grid-template-columns: 28px minmax(0, 1fr); }
+    body.wps-admin-screen .wps-admin-ui.wps-admin-app .wps-options .wps-value { grid-column: 1 / -1; min-width: 0; width: 100%; }
+}
+@media (prefers-reduced-motion: reduce) {
+    .wps-admin-ui *, .wps-admin-ui *::before, .wps-admin-ui *::after { transition: none !important; scroll-behavior: auto !important; }
+}

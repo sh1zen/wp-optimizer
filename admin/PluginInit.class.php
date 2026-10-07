@@ -57,6 +57,7 @@ class PluginInit
 
     private function register_actions(): void
     {
+        \WPS\core\FrontendAssets::watch_settings('wpopt', array('pagespeed', 'minify', 'modules_handler'));
         // Plugin Activation/Deactivation.
         register_activation_hook(WPOPT_FILE, array($this, 'plugin_activation'));
         register_deactivation_hook(WPOPT_FILE, array($this, 'plugin_deactivation'));
@@ -827,6 +828,13 @@ class PluginInit
 
     private function deactivate_site(): void
     {
+        try {
+            \WPOptimizer\modules\supporters\MediaMetadata::bootstrap()->set_enabled(false);
+        }
+        catch (\Throwable $error) {
+            wp_die(esc_html($error->getMessage()), esc_html__('Media restoration failed', 'wpopt'), ['response' => 500]);
+        }
+
         wpopt_cleanup_media_cron_hooks();
 
         wps('wpopt')->moduleHandler->cleanup_modules(null, false);

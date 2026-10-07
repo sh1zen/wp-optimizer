@@ -2274,6 +2274,10 @@ class Mod_Cache extends Module
 
     private function cache_flush_hooks(): void
     {
+        if ($this->option('static_pages.active')) {
+            add_action('wps_frontend_page_ready', array($this, 'purge_frontend_asset_page'), 10, 1);
+            add_action('wps_frontend_assets_invalidated', array($this, 'purge_frontend_asset_pages'), 10, 0);
+        }
         if ($this->option('wp_query.active') or $this->option('wp_db.active') or $this->option('static_pages.active')) {
 
             add_action('clean_site_cache', array($this, 'flush_cache_blog'), 10, 1); //blog_id
@@ -2304,6 +2308,18 @@ class Mod_Cache extends Module
             add_action('delete_term', array($this, 'purge_static_cache_for_term'), 20, 4);
             add_action('transition_comment_status', array($this, 'purge_static_cache_for_comment'), 20, 3);
         }
+    }
+
+    public function purge_frontend_asset_page(string $url): void
+    {
+        if (wp_parse_url($url, PHP_URL_HOST) === wp_parse_url(home_url('/'), PHP_URL_HOST)) {
+            $this->purge_static_cache_paths(array($url));
+        }
+    }
+
+    public function purge_frontend_asset_pages(): void
+    {
+        $this->flush_static_cache_layer();
     }
 
     private function loader(): void

@@ -150,8 +150,9 @@ class Graphic
 
         $args['classes'] = array_filter($args['classes']);
 
-        $label = $args['label'] ? "<label class='wps-option-info' for='{$args['id']}'>{$args['label']}</label>" : '';
-        $description = $args['label'] ? "<span class='wps-option-description'>{$args['label']}</span>" : '';
+        $label = $args['label'] ? "<span class='wps-option-info'>{$args['label']}</span>" : '';
+        $description_id = esc_attr($args['id'] . '-description');
+        $description = $args['label'] ? "<span class='wps-option-description' id='{$description_id}'>{$args['label']}</span>" : '';
         $label_icon = $args['label'] ? '<icon class="wps-option-info-icon"><span>i</span></icon>' : '';
 
         switch ($args['context']) {
@@ -183,7 +184,16 @@ class Graphic
 
                 $_style = $padding_left ? "style='padding-left: {$padding_left}px'" : '';
 
-                $p_open_wrapper = "<row class='wps-row $row_class $row_type_class $row_id_class $row_risk_class' $_style>{$row_icon}<div class='wps-option'><strong>{$args['name']}</strong>$description$label_icon</div><div class='wps-value'>";
+                $field_id = esc_attr((string)$args['id']);
+                $name_id = esc_attr($args['id'] . '-label');
+                $field_name = "<label class='wps-field-label' id='{$name_id}' for='{$field_id}'><strong>{$args['name']}</strong></label>";
+                if ($args['id'] !== '' && $args['name'] !== '' && !isset($args['props']['aria-labelledby'])) {
+                    $args['props']['aria-labelledby'] = $args['id'] . '-label';
+                }
+                if ($args['label'] && !isset($args['props']['aria-describedby'])) {
+                    $args['props']['aria-describedby'] = $args['id'] . '-description';
+                }
+                $p_open_wrapper = "<row class='wps-row $row_class $row_type_class $row_id_class $row_risk_class' $_style>{$row_icon}<div class='wps-option'>{$field_name}$description$label_icon</div><div class='wps-value'>";
                 $o_close_wrapper = "</div>$label</row>";
                 break;
         }
@@ -781,14 +791,14 @@ class Graphic
 
         ?>
         <section class="wps-ar-tabs" id="ar-tabs">
-            <ul class="wps-ar-tablist">
+            <ul class="wps-ar-tablist" role="tablist">
                 <?php
                 $panels = '';
                 foreach ($fields as $field) {
                     $tab_title = $field['tab-title'] ?? $field['panel-title'];
                     $tab_icon = !empty($field['tab-icon']) ? self::icon($field['tab-icon'], 'wps-tab-icon') : '';
                     ?>
-                    <li class="wps-ar-tab" aria-controls="<?php echo $field['id']; ?>"
+                    <li class="wps-ar-tab" role="tab" tabindex="-1" id="<?php echo esc_attr($field['id'] . '-tab'); ?>" aria-controls="<?php echo esc_attr($field['id']); ?>"
                         aria-selected="false"><?php echo $tab_icon; ?><span><?php echo $tab_title; ?></span></li>
                     <?php
 
@@ -817,7 +827,8 @@ class Graphic
                     $panel_id = esc_attr((string)$field['id']);
                     $panel_class_attr = esc_attr(implode(' ', array_unique($panel_classes)));
 
-                    $panels .= "<panel id='{$panel_id}' class='{$panel_class_attr}' aria-hidden='true' $aria_ajax>" . self::generatePanelContent($field) . "</panel>";
+                    $tab_id = esc_attr($field['id'] . '-tab');
+                    $panels .= "<panel id='{$panel_id}' class='{$panel_class_attr}' role='tabpanel' aria-labelledby='{$tab_id}' tabindex='0' aria-hidden='true' $aria_ajax>" . self::generatePanelContent($field) . "</panel>";
                 }
                 ?>
             </ul>
@@ -838,7 +849,7 @@ class Graphic
             'active'      => 'dashboard',
             'breadcrumb'  => '',
             'status'      => '',
-            'status_type' => 'is-healthy',
+            'status_type' => 'is-neutral',
             'nav'         => [],
             'content'     => '',
             'brand_icon'  => 'zap',
@@ -854,7 +865,7 @@ class Graphic
         $page_title = (string)($args['page_title'] ?: $breadcrumb);
         $brand_logo = esc_url((string)$args['brand_logo']);
         ?>
-        <section class="wps-app wps-admin-app <?php echo esc_attr($context ? "wps-app-$context" : ''); ?>">
+        <section class="wps-app wps-admin-app wps-admin-ui <?php echo esc_attr($context ? "wps-app-$context" : ''); ?>">
             <aside class="wps-app-sidebar">
                 <header class="wps-app-brand">
                     <span class="wps-app-logo <?php echo $brand_logo !== '' ? 'has-image' : ''; ?>">
@@ -886,7 +897,7 @@ class Graphic
                                 $classes[] = 'is-active';
                             }
                             ?>
-                            <a class="<?php echo esc_attr(implode(' ', $classes)); ?>" href="<?php echo esc_url((string)($item['url'] ?? '#')); ?>">
+                            <a class="<?php echo esc_attr(implode(' ', $classes)); ?>" <?php echo $id === $active ? 'aria-current="page"' : ''; ?> href="<?php echo esc_url((string)($item['url'] ?? '#')); ?>">
                                 <?php echo self::icon((string)($item['icon'] ?? 'settings'), 'wps-app-nav-icon'); ?>
                                 <span><?php echo esc_html((string)($item['label'] ?? $id)); ?></span>
                             </a>

@@ -8,6 +8,10 @@
 namespace WPOptimizer\modules;
 
 use WPS\core\UtilEnv;
+use WPS\core\FrontendAssets;
+use WPS\core\LcpImages;
+use WPS\core\ScriptTiming;
+use WPS\core\UsedCss;
 use WPS\modules\Module;
 use WPOptimizer\core\Compatibility;
 
@@ -46,6 +50,16 @@ class Mod_Pagespeed extends Module
 
         if (!$this->has_enabled_optimization()) {
             return;
+        }
+
+        if ($this->is_enabled('defer_js') || $this->is_enabled('delay_js')) {
+            new ScriptTiming(array(
+                'defer' => $this->is_enabled('defer_js'), 'delay' => $this->is_enabled('delay_js'),
+                'delay_handles' => $this->option('delay_handles', array()), 'delay_urls' => $this->option('delay_urls', array()),
+                'exclude_handles' => $this->option('js_exclude_handles', array()), 'exclude_urls' => $this->option('js_exclude_urls', array()),
+                'exclude_pages' => $this->option('js_exclude_pages', array()),
+            ));
+            add_filter('wps_script_timing_allowed', static function ($allowed) { return $allowed && !Compatibility::should_bypass_optimization(); });
         }
 
         wps('wps')->services->get('html_output_buffer')->register(
@@ -99,9 +113,19 @@ class Mod_Pagespeed extends Module
             return $buffer;
         }
 
-        if ($this->is_enabled('lazyload_images', true)) {
-            $buffer = $this->add_lazy_loading($buffer, 'img');
+        if ($this->is_enabled('remove_unused_css')) {
+            $buffer = UsedCss::transform($buffer, array(
+                'exclude_files' => $this->option('css_exclude_files', array()),
+                'exclude_pages' => $this->option('css_exclude_pages', array()),
+                'keep_selectors' => $this->option('css_keep_selectors', array()),
+                'static_selectors' => $this->option('css_static_selectors', array()),
+            ));
         }
+        $buffer = LcpImages::transform($buffer, $this->is_enabled('auto_preload_largest_image'), $this->is_enabled('lazyload_images', true), array(
+            'images' => FrontendAssets::rules($this->option('lcp_exclude_images', array())),
+            'classes' => FrontendAssets::rules($this->option('lcp_exclude_classes', array())),
+            'urls' => FrontendAssets::rules($this->option('lcp_exclude_urls', array())),
+        ));
 
         if ($this->is_enabled('lazyload_iframes', true)) {
             $buffer = $this->add_lazy_loading($buffer, 'iframe');
@@ -124,10 +148,6 @@ class Mod_Pagespeed extends Module
         }
 
         $head_injections = array();
-
-        if ($this->is_enabled('auto_preload_largest_image', false)) {
-            $head_injections[] = $this->largest_image_preload_script();
-        }
 
         if ($this->is_enabled('page_prefetching', false) && !function_exists('wp_get_speculation_rules_configuration')) {
             $head_injections[] = $this->page_prefetching_script();
@@ -160,7 +180,28 @@ class Mod_Pagespeed extends Module
             $this->group_setting_fields(
                 $this->setting_field(__('LCP optimizations', 'wpopt'), false, 'separator'),
                 $this->setting_field(__('Add missing images dimensions', 'wpopt'), 'add_missing_image_dimensions', 'checkbox', array('default_value' => false)),
-                $this->setting_field(__('Auto Preload Largest Image', 'wpopt'), 'auto_preload_largest_image', 'checkbox', array('default_value' => false))
+                $this->setting_field(__('Auto Preload Largest Image', 'wpopt'), 'auto_preload_largest_image', 'checkbox', array('default_value' => false)),
+                $this->list_field(__('Image IDs excluded from learning and lazy loading', 'wpopt'), 'lcp_exclude_images'),
+                $this->list_field(__('Image classes excluded from learning and lazy loading', 'wpopt'), 'lcp_exclude_classes'),
+                $this->list_field(__('Image URL fragments excluded from learning and lazy loading', 'wpopt'), 'lcp_exclude_urls')
+            ),
+            $this->group_setting_fields(
+                $this->setting_field(__('JavaScript execution', 'wpopt'), false, 'separator'),
+                $this->setting_field(__('Defer JavaScript with WordPress dependency checks', 'wpopt'), 'defer_js', 'checkbox', array('default_value' => false)),
+                $this->setting_field(__('Delay selected background scripts until idle', 'wpopt'), 'delay_js', 'checkbox', array('default_value' => false)),
+                $this->list_field(__('Handles to delay (exact names; one per line)', 'wpopt'), 'delay_handles'),
+                $this->list_field(__('Script URL fragments to delay', 'wpopt'), 'delay_urls'),
+                $this->list_field(__('Script handles excluded from execution changes', 'wpopt'), 'js_exclude_handles'),
+                $this->list_field(__('Script URL fragments excluded from execution changes', 'wpopt'), 'js_exclude_urls'),
+                $this->list_field(__('Page URL fragments excluded from execution changes', 'wpopt'), 'js_exclude_pages')
+            ),
+            $this->group_setting_fields(
+                $this->setting_field(__('Used CSS (separate from minification)', 'wpopt'), false, 'separator'),
+                $this->setting_field(__('Generate per-page Used CSS in the background', 'wpopt'), 'remove_unused_css', 'checkbox', array('default_value' => false)),
+                $this->list_field(__('Stylesheet URL fragments to preserve', 'wpopt'), 'css_exclude_files'),
+                $this->list_field(__('Page URL fragments excluded from Used CSS', 'wpopt'), 'css_exclude_pages'),
+                $this->list_field(__('Selector fragments to preserve', 'wpopt'), 'css_keep_selectors'),
+                $this->list_field(__('Static selectors safe to prune when absent (exact names)', 'wpopt'), 'css_static_selectors')
             ),
             $this->group_setting_fields(
                 $this->setting_field(__('Navigation', 'wpopt'), false, 'separator'),
@@ -175,11 +216,15 @@ class Mod_Pagespeed extends Module
         return array(
             'lazyload_images'              => __("Adds native loading=\"lazy\" to images that do not already define a loading strategy.", 'wpopt'),
             'force_font_display_swap'      => __("Adds font-display: swap to all @font-face declarations. Prevents invisible text while fonts load.", 'wpopt'),
-            'lazyload_fonts'               => __("Strips @font-face blocks from Used CSS so they don't block rendering. Fonts load after the critical CSS.", 'wpopt'),
+            'lazyload_fonts'               => __("Loads matching font stylesheets with a print-media/onload switch. This does not generate Used CSS or Critical CSS.", 'wpopt'),
             'lazyload_iframes'             => __("Adds native loading=\"lazy\" to iframes that do not already define a loading strategy.", 'wpopt'),
             'lazyload_video'               => __("Prevents videos from preloading data before the browser needs them.", 'wpopt'),
             'add_missing_image_dimensions' => __("Adds width and height attributes to WordPress attachment images when metadata is available, reducing layout shifts and improving LCP stability.", 'wpopt'),
-            'auto_preload_largest_image'   => __("Detects the Largest Contentful Paint image at runtime and preloads it with fetchpriority=\"high\".", 'wpopt'),
+            'auto_preload_largest_image'   => __("Learns the LCP image per public page and viewport. Later responses contain an early image preload; the main image stays eager. Picture sources and declared backgrounds are supported. Clear the page cache after changing exclusions.", 'wpopt'),
+            'defer_js' => __("Requests native defer on WordPress 6.3+. WordPress resolves dependency and inline-script constraints. Existing strategies are preserved.", 'wpopt'),
+            'delay_js' => __("Only explicitly selected background scripts are delayed until idle, with a five-second fallback. Menus, forms, consent and commerce infrastructure remain immediate. Head scripts, scripts needed by immediate dependents and separate localized data are preserved. No clicks are intercepted. Native script modules outside WordPress handles remain unchanged.", 'wpopt'),
+            'remove_unused_css' => __("A scheduled worker parses each page's local stylesheets. Originals remain until ready and on errors. Interactive states, complex selectors, keyframes and uncertain syntax are preserved. On pages with JavaScript, only selectors you declare static can be removed. This generates Used CSS, not Critical CSS. WordPress Cron must run.", 'wpopt'),
+            'css_static_selectors' => __("Declare only plain class, ID or tag selectors that JavaScript never adds. Examples: .old-banner or #retired-panel. Incorrect declarations can hide interactive content.", 'wpopt'),
             'page_prefetching'             => __("On WordPress 6.8 or newer, uses Core's speculation rules with moderate eagerness when Core's defaults are unchanged. Explicit site settings are preserved. On older versions, prefetches same-origin links on hover or touch. WordPress may already load pages speculatively when this option is off.", 'wpopt'),
             'disable_native_speculative_loading' => __("Stops WordPress Core from prefetching or prerendering pages. Use only if speculative requests conflict with site behavior; disabling them does not speed up navigation. Has no effect before WordPress 6.8.", 'wpopt'),
         );
@@ -196,6 +241,9 @@ class Mod_Pagespeed extends Module
             'add_missing_image_dimensions' => true,
             'auto_preload_largest_image'   => false,
             'page_prefetching'             => false,
+            'defer_js'                     => false,
+            'delay_js'                     => false,
+            'remove_unused_css'            => false,
         );
 
         foreach ($defaults as $option => $default) {
@@ -212,6 +260,21 @@ class Mod_Pagespeed extends Module
         return (bool)$this->option($option, $default);
     }
 
+    private function list_field(string $label, string $id): array
+    {
+        return $this->setting_field($label, $id, 'textarea_array', array('value' => implode("\n", FrontendAssets::rules($this->option($id, array())))));
+    }
+
+    protected function print_header(): string
+    {
+        $markup = '<details><summary>' . esc_html__('Last public-page optimization diagnostics', 'wpopt') . '</summary>';
+        foreach (array('lcp', 'scripts', 'css') as $feature) {
+            $result = get_transient('wps_frontend_diagnostic_' . $feature);
+            if ($result) { $markup .= '<h3>' . esc_html(strtoupper($feature)) . '</h3><pre style="white-space:pre-wrap;overflow-wrap:anywhere">' . esc_html(wp_json_encode($result, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES)) . '</pre>'; }
+        }
+        return $markup . '<p>' . esc_html__('Diagnostics show the last generated public request. Purge page caches to inspect a fresh response after changing settings.', 'wpopt') . '</p></details>';
+    }
+
     private function add_lazy_loading(string $buffer, string $tag): string
     {
         return preg_replace_callback(
@@ -219,7 +282,7 @@ class Mod_Pagespeed extends Module
             static function ($matches) use ($tag) {
                 $attributes = $matches[1];
 
-                if (preg_match('#\sloading\s*=#i', $attributes)) {
+                if (preg_match('#\sloading\s*=#i', $attributes) || preg_match('#\sfetchpriority=["\']high["\']#i', $attributes)) {
                     return $matches[0];
                 }
 
@@ -423,15 +486,6 @@ class Mod_Pagespeed extends Module
         }
 
         return preg_replace('#</head>#i', $markup . "\n</head>", $buffer, 1);
-    }
-
-    private function largest_image_preload_script(): string
-    {
-        return <<<'HTML'
-<script id="wpopt-pagespeed-lcp-preload">
-(function(){if(!("PerformanceObserver"in window)||window.wpoptLcpPreload){return;}window.wpoptLcpPreload=true;var done=false;function alreadyPreloaded(url){var links=document.querySelectorAll('link[rel="preload"][as="image"]');for(var i=0;i<links.length;i++){if(links[i].href===url){return true;}}return false;}function preload(url,img){if(done||!url||alreadyPreloaded(url)){return;}done=true;if(img&&!img.hasAttribute("fetchpriority")){img.setAttribute("fetchpriority","high");}var link=document.createElement("link");link.rel="preload";link.as="image";link.href=url;link.setAttribute("fetchpriority","high");document.head.appendChild(link);}try{new PerformanceObserver(function(list){var entries=list.getEntries();var entry=entries[entries.length-1];if(entry&&entry.element&&entry.element.tagName==="IMG"){preload(entry.element.currentSrc||entry.element.src,entry.element);}}).observe({type:"largest-contentful-paint",buffered:true});}catch(e){}})();
-</script>
-HTML;
     }
 
     private function page_prefetching_script(): string

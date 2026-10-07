@@ -91,6 +91,11 @@ class Mod_Minify extends Module
 
                 list($script, $original_url) = $matches;
 
+                // Used CSS is immutable, parser-generated output with its own asset version.
+                if (str_contains($script, 'data-wps-used-css')) {
+                    return $script;
+                }
+
                 if (Compatibility::is_optimization_sensitive_asset($original_url)) {
                     return $script;
                 }

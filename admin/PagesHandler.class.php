@@ -1202,84 +1202,6 @@ class PagesHandler
         );
     }
 
-    private function render_dashboard_hero_art(): void
-    {
-        ?>
-        <svg class="wpopt-hero-svg" xmlns="http://www.w3.org/2000/svg" width="362" height="117" viewBox="0 0 362 117" fill="none" role="img" aria-label="<?php esc_attr_e('Dashboard illustration with speedometer', 'wpopt'); ?>">
-            <defs>
-                <linearGradient id="outerBlue" x1="196" y1="40" x2="309" y2="96" gradientUnits="userSpaceOnUse">
-                    <stop offset="0" stop-color="#79B4FF"/>
-                    <stop offset="0.42" stop-color="#3E8DFF"/>
-                    <stop offset="1" stop-color="#075FDD"/>
-                </linearGradient>
-                <linearGradient id="outerHighlight" x1="207" y1="43" x2="274" y2="39" gradientUnits="userSpaceOnUse">
-                    <stop stop-color="#A5CEFF" stop-opacity="0.75"/>
-                    <stop offset="1" stop-color="#FFFFFF" stop-opacity="0"/>
-                </linearGradient>
-                <linearGradient id="innerBlue" x1="218" y1="89" x2="284" y2="57" gradientUnits="userSpaceOnUse">
-                    <stop offset="0" stop-color="#83BAFF"/>
-                    <stop offset="0.62" stop-color="#4C96FF"/>
-                    <stop offset="1" stop-color="#287AF1"/>
-                </linearGradient>
-                <linearGradient id="needleBlue" x1="250" y1="86" x2="272" y2="76" gradientUnits="userSpaceOnUse">
-                    <stop stop-color="#2F85FF"/>
-                    <stop offset="1" stop-color="#176FE8"/>
-                </linearGradient>
-                <linearGradient id="pieBlue" x1="142" y1="71" x2="156" y2="85" gradientUnits="userSpaceOnUse">
-                    <stop stop-color="#4D93FF"/>
-                    <stop offset="1" stop-color="#0C65E5"/>
-                </linearGradient>
-                <radialGradient id="centerGlow" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(200 58) rotate(90) scale(76 137)">
-                    <stop stop-color="#EAF3FF"/>
-                    <stop offset="1" stop-color="#EAF3FF" stop-opacity="0"/>
-                </radialGradient>
-            </defs>
-
-            <ellipse cx="91" cy="42" rx="38" ry="27" fill="#EAF3FF" opacity="0.88"/>
-            <ellipse cx="108" cy="104" rx="76" ry="61" fill="#EAF3FF" opacity="0.76"/>
-            <ellipse cx="197" cy="58" rx="72" ry="53" fill="#EAF3FF" opacity="0.80"/>
-            <ellipse cx="265" cy="61" rx="42" ry="36" fill="#EAF3FF" opacity="0.72"/>
-            <ellipse cx="264" cy="112" rx="67" ry="57" fill="#EAF3FF" opacity="0.68"/>
-            <circle cx="35" cy="73" r="3.1" fill="#B8D2FF"/>
-            <circle cx="96" cy="25" r="2" fill="#78AFFF"/>
-            <circle cx="287" cy="7" r="1.4" fill="#83B7FF"/>
-            <circle cx="295" cy="42" r="1.4" fill="#C5DAFF" opacity="0.9"/>
-            <circle cx="324" cy="68" r="3.1" fill="#AFCBFF"/>
-
-            <circle cx="194" cy="35" r="11" fill="#FFFFFF"/>
-            <path d="M194 28.5L196.25 32.8L200.5 35L196.25 37.2L194 41.5L191.75 37.2L187.5 35L191.75 32.8L194 28.5Z" fill="#3A8BFF"/>
-            <path d="M224 12.5L225.25 16.2L228.5 17.5L225.25 18.85L224 22.5L222.75 18.85L219.5 17.5L222.75 16.2L224 12.5Z" fill="#8EBBFF" opacity="0.82"/>
-            <path d="M315 18.5L316.55 22.1L320 23.5L316.55 24.9L315 28.5L313.45 24.9L310 23.5L313.45 22.1L315 18.5Z" fill="#9DC4FF" opacity="0.9"/>
-
-            <rect x="68" y="46" width="98" height="67" rx="10" fill="#D8E7FF" opacity="0.22"/>
-            <rect x="66" y="41" width="100" height="70" rx="10" fill="#FFFFFF"/>
-            <rect x="83" y="50" width="58" height="6" rx="3" fill="#E7F0FF"/>
-            <rect x="83" y="66" width="53" height="4" rx="2" fill="#E7F0FF"/>
-            <rect x="83" y="77" width="37" height="4" rx="2" fill="#E7F0FF"/>
-            <rect x="83" y="88" width="48" height="4" rx="2" fill="#E7F0FF"/>
-            <circle cx="142" cy="85" r="15" fill="#E6F0FF"/>
-            <path d="M142 85V71C149.73 71 156 77.27 156 85H142Z" fill="url(#pieBlue)"/>
-
-            <g id="tachimetro">
-                <path d="M193.5 95.5A57.5 57.5 0 0 1 308.5 95.5" stroke="#D9E9FF" stroke-width="16" stroke-linecap="round" opacity="0.82"/>
-                <path d="M193.5 95.5A57.5 57.5 0 0 1 308.5 95.5" stroke="#BFD9FF" stroke-width="10" stroke-linecap="round" opacity="0.22"/>
-                <path d="M195 95.5A56 56 0 0 1 307 95.5" stroke="url(#outerBlue)" stroke-width="7.8" stroke-linecap="round"/>
-                <path d="M202.4 72.2A56 56 0 0 1 278.7 44.6" stroke="url(#outerHighlight)" stroke-width="3.1" stroke-linecap="round" opacity="0.45"/>
-
-                <path d="M216.5 90.5A34.5 34.5 0 0 1 285.5 90.5" stroke="#D9E9FF" stroke-width="11.4" stroke-linecap="round" opacity="0.84"/>
-                <path d="M216.5 90.5A34.5 34.5 0 0 1 285.5 90.5" stroke="url(#innerBlue)" stroke-width="6.7" stroke-linecap="round"/>
-            </g>
-
-            <path d="M191 117C193.4 107 203.8 100.7 217.8 101.5C222.2 95.2 232.4 91 244.4 91C261.3 91 274.3 100.5 277.8 112.7C288.6 111.1 300.3 112.8 307.5 117H191Z" fill="#FFFFFF"/>
-
-            <path d="M251 85.4L270.8 76.2" stroke="#D6E8FF" stroke-width="7.4" stroke-linecap="round" opacity="0.45"/>
-            <path d="M251 85.4L270.8 76.2" stroke="url(#needleBlue)" stroke-width="5" stroke-linecap="round"/>
-            <circle cx="251" cy="85.4" r="7.1" fill="#E8F2FF" opacity="0.55"/>
-            <circle cx="251" cy="85.4" r="5.4" fill="#2E84FF"/>
-        </svg>
-        <?php
-    }
-
     private function render_sidebar(): void
     {
         $donation_url = $this->get_donation_url();
@@ -1335,7 +1257,6 @@ class PagesHandler
             'context'    => 'wpopt',
             'active'     => $route,
             'breadcrumb' => $route_label,
-            'status'     => __('Healthy', 'wpopt'),
             'brand_icon' => 'gauge',
             'brand_logo' => $this->get_logo_url(),
             'nav'        => $this->get_app_nav(),
@@ -1497,15 +1418,13 @@ class PagesHandler
             $object = $module_slug ? wps('wpopt')->moduleHandler->get_module_instance($module_slug) : null;
 
             if ($object && method_exists($object, 'render_configuration_page')) {
-                $this->render_app_panel(function () use ($object, $target) {
-                    $object->render_configuration_page($target);
-                });
+                $object->render_configuration_page($target);
                 return;
             }
         }
 
         if ($route === 'faq') {
-            $this->render_app_panel(array($this, 'render_faqs'));
+            $this->render_faqs();
             return;
         }
 
@@ -1523,9 +1442,7 @@ class PagesHandler
             $object = wps('wpopt')->moduleHandler->get_module_instance(substr($route, 7));
 
             if ($object) {
-                $this->render_app_panel(function () use ($object) {
-                    $object->render_admin_page(false);
-                });
+                $object->render_admin_page(false);
                 return;
             }
         }
@@ -1719,6 +1636,10 @@ class PagesHandler
                 'failedStatus'  => __('Failed', 'wpopt'),
                 'notAvailable'  => __('N/A', 'wpopt'),
                 'sameSiteError' => __('Enter a valid URL from this WordPress site.', 'wpopt'),
+                'prepareFailed' => __('Could not prepare the test. Reload this admin page and try again.', 'wpopt'),
+                'networkFailed' => __('%1$s: request failed. Check the connection and try again.', 'wpopt'),
+                'httpFailed' => __('%1$s failed (HTTP %2$s). No comparison was produced.', 'wpopt'),
+                'invalidResponse' => __('%1$s: the signed test response could not be verified. Check redirects or caching and try again.', 'wpopt'),
                 'pass'          => __('Pass', 'wpopt'),
                 'status'        => __('Status', 'wpopt'),
                 'total'         => __('Total', 'wpopt'),
@@ -1777,7 +1698,7 @@ class PagesHandler
                                 <strong><?php esc_html_e('Without WP Optimizer config', 'wpopt'); ?></strong>
                                 <small><?php esc_html_e('Measured signed request with WP Optimizer modules bypassed for this load.', 'wpopt'); ?></small>
                                 <div class="wpopt-page-test-step-metrics">
-                                    <span><b><?php esc_html_e('Speed', 'wpopt'); ?></b><em data-wpopt-page-test-speed>--</em></span>
+                                    <span><b><?php esc_html_e('Request time', 'wpopt'); ?></b><em data-wpopt-page-test-speed>--</em></span>
                                     <span><b><?php esc_html_e('Memory', 'wpopt'); ?></b><em data-wpopt-page-test-memory>--</em></span>
                                 </div>
                             </div>
@@ -1796,14 +1717,14 @@ class PagesHandler
                                 <strong><?php esc_html_e('Current config measurement', 'wpopt'); ?></strong>
                                 <small><?php esc_html_e('Measured request with the plugin active exactly as configured now.', 'wpopt'); ?></small>
                                 <div class="wpopt-page-test-step-metrics">
-                                    <span><b><?php esc_html_e('Speed', 'wpopt'); ?></b><em data-wpopt-page-test-speed>--</em></span>
+                                    <span><b><?php esc_html_e('Request time', 'wpopt'); ?></b><em data-wpopt-page-test-speed>--</em></span>
                                     <span><b><?php esc_html_e('Memory', 'wpopt'); ?></b><em data-wpopt-page-test-memory>--</em></span>
                                 </div>
                             </div>
                         </div>
 
                         <div class="wpopt-page-test-results" data-wpopt-page-test-results hidden>
-                            <div class="wpopt-page-test-result-summary" data-wpopt-page-test-summary>
+                            <div class="wpopt-page-test-result-summary" data-wpopt-page-test-summary hidden>
                                 <div class="wpopt-page-test-result-card" data-summary-card="speed">
                                     <span class="dashicons dashicons-performance"></span>
                                     <small><?php esc_html_e('Speed change', 'wpopt'); ?></small>
@@ -1875,7 +1796,7 @@ class PagesHandler
                 'icon'   => 'dashicons-admin-plugins',
                 'label'  => __('Active modules', 'wpopt'),
                 'value'  => (string)$active_modules_count,
-                'note'   => __('All systems operational', 'wpopt'),
+                'note'   => __('Enabled in module settings', 'wpopt'),
                 'detail' => sprintf(
                     _n(
                         '%s optimization module is currently enabled and available from the modules panel.',
@@ -1935,8 +1856,8 @@ class PagesHandler
             <div class="wpopt-app-dashboard-main">
                 <block class="wps wpopt-hero wpopt-dashboard-hero">
                     <div class="wpopt-hero-copy">
-                        <h2><?php esc_html_e('Optimize. Accelerate. Simplify.', 'wpopt'); ?></h2>
-                        <p class="wpopt-hero-subtitle"><?php esc_html_e('Centralize your optimization workflow with quick actions, live metrics, and direct module access to keep your site fast and healthy.', 'wpopt'); ?></p>
+                        <h2><?php esc_html_e('Site optimization', 'wpopt'); ?></h2>
+                        <p class="wpopt-hero-subtitle"><?php esc_html_e('Review enabled modules, check scheduled tasks, and open the tools you need. Each module has its own settings.', 'wpopt'); ?></p>
                         <div class="wpopt-actions">
                             <a class="wps wps-button wpopt-btn is-info" href="<?php echo esc_url(wps_admin_route_url('wpopt', 'setting-modules_handler')); ?>">
                                 <span class="dashicons dashicons-screenoptions"></span><?php esc_html_e('Manage Modules', 'wpopt'); ?>
@@ -1945,9 +1866,6 @@ class PagesHandler
                                 <span class="dashicons dashicons-admin-generic"></span><?php esc_html_e('Configure Modules', 'wpopt'); ?>
                             </a>
                         </div>
-                    </div>
-                    <div class="wpopt-hero-art" aria-hidden="true">
-                        <?php $this->render_dashboard_hero_art(); ?>
                     </div>
                 </block>
                 <block class="wps wpopt-panel wpopt-overview-panel">
@@ -2149,14 +2067,6 @@ class PagesHandler
         wps($context)->settings->render_core_setting_page($page_id, false);
     }
 
-    private function render_app_panel(callable $callback): void
-    {
-        ob_start();
-        call_user_func($callback);
-        $content = ob_get_clean();
-
-        echo $content;
-    }
 
     private function get_donation_url(): string
     {

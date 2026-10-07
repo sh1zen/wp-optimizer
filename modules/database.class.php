@@ -9,6 +9,7 @@ namespace WPOptimizer\modules;
 
 use WPOptimizer\modules\supporters\DB_List_Table;
 use WPOptimizer\modules\supporters\DBSupport;
+use WPOptimizer\modules\supporters\MediaMetadata;
 use WPS\core\Ajax;
 use WPS\core\Disk;
 use WPS\core\Graphic;
@@ -30,6 +31,14 @@ class Mod_Database extends Module
 
     public function cleanup(array $settings = array(), array $all_settings = array()): bool
     {
+        try {
+            MediaMetadata::bootstrap()->set_enabled(false);
+        }
+        catch (\Throwable $error) {
+            $this->add_notices('error', $error->getMessage());
+            return false;
+        }
+
         wps('wpopt')->options->remove_all('cache', 'get_tables_data');
 
         return true;
@@ -1399,6 +1408,18 @@ class Mod_Database extends Module
 
         $new_valid['backup']['excluded_tables'] = array_map('esc_sql', $new_valid['backup']['excluded_tables']);
 
+        $media = MediaMetadata::bootstrap();
+        try {
+            $media->set_enabled(!empty($new_valid['media_optimization']['enabled']));
+        }
+        catch (\Throwable $error) {
+            $new_valid['media_optimization']['enabled'] = $media->enabled();
+            add_settings_error('wpopt', 'media-optimization', $error->getMessage());
+            if (!$filtering && wp_doing_ajax()) {
+                Ajax::response(['text' => $error->getMessage()], 'error');
+            }
+        }
+
         return $new_valid;
     }
 
@@ -1420,9 +1441,30 @@ class Mod_Database extends Module
     {
     }
 
+    public function activate(array $settings = array(), array $all_settings = array()): bool
+    {
+        try {
+            MediaMetadata::bootstrap()->set_enabled(!empty($settings['media_optimization']['enabled']));
+            return true;
+        }
+        catch (\Throwable $error) {
+            $this->add_notices('error', $error->getMessage());
+            return false;
+        }
+    }
+
     protected function setting_fields($filter = ''): array
     {
         return $this->group_setting_fields(
+            $this->group_setting_fields(
+                $this->setting_field(__('DB Media Optimization', 'wpopt'), false, 'separator', ['icon' => 'database']),
+                $this->setting_field(__('Optimize media metadata storage?', 'wpopt'), 'media_optimization.enabled', 'checkbox', [
+                    'default_value' => false,
+                    'value' => MediaMetadata::bootstrap()->enabled(),
+                    'risk' => 'warning',
+                    'after' => '<p class="description">' . esc_html__('Warning: enabling or disabling this feature migrates media metadata and may be slow on large databases. Wait for the operation to finish. Disabling moves the data back to postmeta, including changes made while enabled.', 'wpopt') . '</p>',
+                ])
+            ),
             $this->group_setting_fields(
                 $this->setting_field(__('Sweeper', 'wpopt'), false, "separator"),
                 $this->setting_field(__('Check for duplicate postmeta?', 'wpopt'), "sweeper.duplicated_postmeta", "checkbox", ['default_value' => false])

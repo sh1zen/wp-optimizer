@@ -5,7 +5,7 @@ Donate link: https://www.paypal.com/donate/?hosted_button_id=8G8VR4APG9JRU
 Requires at least: 5.0.0
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 2.8.9
+Stable tag: 2.9.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -31,12 +31,15 @@ WP Optimizer combines the most common WordPress performance optimizations in one
 * **HTML, CSS & JavaScript Minification** – Minify page output and local assets, with optional CSS and JavaScript combination.
 * **Lazy Loading** – Lazy load images and iframes and prevent unnecessary video preloading.
 * **LCP Optimization** – Preload a detected Largest Contentful Paint image with high fetch priority.
+* **JavaScript Timing** – Optionally defer scripts with WordPress dependency checks and delay selected background scripts until idle.
+* **Used CSS** – Optionally generate per-page Used CSS in the background, retaining original stylesheets until ready and on errors.
 * **Font Optimization** – Apply `font-display: swap` and optionally defer font stylesheets.
 * **Navigation Prefetching** – Prefetch eligible same-origin links when visitors show navigation intent.
 * **Local Image Optimization** – Compress images and generated thumbnails using Imagick or GD.
 * **WebP Conversion** – Convert supported images to WebP directly on your server.
 * **Automatic Media Optimization** – Process new uploads and larger media-library jobs in background batches.
 * **Database Optimization** – Clean revisions, transients, orphaned metadata, spam and other unnecessary database data.
+* **DB Media Optimization** – Optionally move media metadata out of postmeta, with automatic restoration when disabled.
 * **Object Cache** – Optional Redis or Memcached integration when the required service and PHP extension are available.
 * **WP_Query & Database Query Cache** – Cache selected expensive WordPress and database query results.
 
@@ -213,6 +216,12 @@ The database module can also:
 * Inspect autoload status
 * Disable autoload for selected options
 * Delete selected options
+
+**DB Media Optimization** is disabled by default and appears above Sweeper in the database settings. Enabling it moves `_wp_attached_file` and `_wp_attachment_metadata` from the site's postmeta table to its media metadata table, using the configured database prefix.
+
+Existing table structures and indexes are preserved. A separate rollback journal retains metadata IDs and duplicate rows. Disabling the feature moves the data back to postmeta, including changes made while it was enabled. Migration requires InnoDB tables and stops if conflicting copies or incompatible data would prevent a safe transfer.
+
+Enabling or disabling this feature may be slow on large databases. Wait for the migration to finish.
 
 Create a database backup before changing or deleting data you are not familiar with.
 
@@ -707,12 +716,19 @@ The uninstall routine removes plugin options, scheduled media hooks and plugin d
 
 == Upgrade Notice ==
 
-= 2.8.9 =
+= 2.9.0 =
 
 Recommended update with compatibility improvements, Multisite enhancements, performance refinements and bug fixes.
 
-
 == Changelog ==
+
+= 2.9.0 =
+
+* Added DB Media Optimization.
+* Improved LCP image learning by page and viewport, early preloads and image exclusions.
+* Added optional JavaScript defer with WordPress dependency checks and idle delay for selected background scripts.
+* Improved the settings layout for multiline fields.
+* Improved the admin UI and UX.
 
 = 2.8.9 =
 

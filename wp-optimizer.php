@@ -13,12 +13,12 @@
  * Author URI: https://sh1zen.github.io/
  * Text Domain: wpopt
  * Domain Path: /languages
- * Version: 2.8.9
+ * Version: 2.9.0
  * Requires at least: 5.0.0
  * Requires PHP: 7.4
  */
 
-const WPOPT_VERSION = '2.8.9';
+const WPOPT_VERSION = '2.9.0';
 const WPOPT_FILE = __FILE__;
 
 // WordPress blocks new activations through the plugin header. This additional
@@ -39,6 +39,10 @@ require_once WPOPT_INCPATH . 'functions.php';
 require_once WPOPT_INCPATH . 'Compatibility.class.php';
 require_once WPOPT_INCPATH . 'cache-api.php';
 require_once WPOPT_INCPATH . 'Report.class.php';
+
+// Media storage must be available before the theme and in every request context.
+require_once WPOPT_SUPPORTERS . 'database/MediaMetadata.class.php';
+WPOptimizer\modules\supporters\MediaMetadata::bootstrap();
 
 // initializer class
 require_once WPOPT_ADMIN . 'PluginInit.class.php';

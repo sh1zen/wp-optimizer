@@ -124,6 +124,7 @@
         const $diagnosticsQueries = $('[data-wpopt-page-test-diagnostics-queries] .wpopt-page-test-diagnostics-content');
         const $diagnosticsDuplicates = $('[data-wpopt-page-test-diagnostics-duplicates] .wpopt-page-test-diagnostics-content');
         const defaultButtonText = $buttonText.text();
+        let testRunning = false;
 
         function label(key, fallback) {
             return labels[key] || fallback;
@@ -149,10 +150,12 @@
         }
 
         function setButtonRunning(running) {
+            testRunning = running;
             $button
                 .toggleClass('is-running', running)
                 .prop('disabled', running);
             $buttonText.text(running ? label('running', 'Running') : defaultButtonText);
+            $input.prop('readOnly', running);
         }
 
         function resetUi() {
@@ -167,6 +170,7 @@
                 .text('--');
             $('[data-summary-card] [data-summary-detail]', $summary).text(label('currentVsBase', 'Current vs baseline'));
             $results.prop('hidden', true);
+            $summary.prop('hidden', true);
             $resultBody.empty();
             resetDiagnostics();
             setProgress(0);
@@ -204,6 +208,9 @@
                 }
 
                 return response.data;
+            }, function (error) {
+                const message = error && error.responseJSON && error.responseJSON.data && error.responseJSON.data.message;
+                throw new Error(message || label('prepareFailed', 'Could not prepare the test. Reload this admin page and try again.'));
             });
         }
 
@@ -353,15 +360,16 @@
             const memoryDelta = formatMemoryDelta(baseline.memoryPeak, active.memoryPeak);
             const sizeDelta = formatLowerIsBetterDelta(baseline.size, active.size, formatBytes);
 
-            setStepMetric('disabled', 'speed', label('baselineValue', 'Baseline'), '');
+            setStepMetric('disabled', 'speed', formatMs(baseline.totalMs), '');
             setStepMetric('disabled', 'memory', baseline.memoryPeak !== null ? formatBytes(baseline.memoryPeak) : label('notAvailable', 'N/A'), '');
-            setStepMetric('active', 'speed', speedDelta.text, speedDelta.state);
-            setStepMetric('active', 'memory', memoryDelta.text, memoryDelta.state);
+            setStepMetric('active', 'speed', formatMs(active.totalMs), speedDelta.state);
+            setStepMetric('active', 'memory', active.memoryPeak !== null ? formatBytes(active.memoryPeak) : label('notAvailable', 'N/A'), memoryDelta.state);
 
             setSummaryMetric('speed', speedDelta);
             setSummaryMetric('ttfb', ttfbDelta);
             setSummaryMetric('memory', memoryDelta);
             setSummaryMetric('size', sizeDelta);
+            $summary.prop('hidden', false);
         }
 
         async function scanPage(step, title, url, counted, options) {
@@ -373,16 +381,24 @@
             }
 
             const startedAt = now();
-            const response = await fetch(url, {
-                method: 'GET',
-                credentials: options.credentials || 'omit',
-                headers: {
-                    Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
-                },
-                cache: options.cache || 'default',
-                redirect: 'follow'
-            });
-            const body = await response.text();
+            let response;
+            let body;
+            try {
+                response = await fetch(url, {
+                    method: 'GET',
+                    credentials: options.credentials || 'omit',
+                    headers: {
+                        Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
+                    },
+                    cache: options.cache || 'default',
+                    redirect: 'follow'
+                });
+                body = await response.text();
+            } catch (error) {
+                setStep(step, 'failed');
+                throw new Error(label('networkFailed', '%1$s: request failed. Check the connection and try again.')
+                    .replace('%1$s', stepTitle(step, title)));
+            }
             const elapsedMs = now() - startedAt;
             const timingUrl = response.url || url;
             const entries = window.performance && performance.getEntriesByName ? performance.getEntriesByName(timingUrl) : [];
@@ -394,7 +410,7 @@
             const directCache = response.headers.get('x-wpopt-static-direct') || '';
             const staticCache = response.headers.get('x-wpopt-static-cache') || '';
             const metrics = {
-                title: title,
+                title: stepTitle(step, title),
                 status: response.status,
                 ok: response.ok,
                 totalMs: counted ? totalMs : null,
@@ -408,7 +424,24 @@
 
             setStep(step, response.ok ? 'done' : 'failed');
 
+            if (!response.ok) {
+                appendResult(metrics);
+                throw new Error(label('httpFailed', '%1$s failed (HTTP %2$s). No comparison was produced.')
+                    .replace('%1$s', stepTitle(step, title)).replace('%2$s', response.status));
+            }
+
+            const expectedMode = step === 'disabled' ? 'disabled' : step === 'warmup' ? 'warmup' : step === 'active' ? 'active' : '';
+            if (expectedMode && response.headers.get('x-wp-optimizer-test-mode') !== expectedMode) {
+                setStep(step, 'failed');
+                throw new Error(label('invalidResponse', '%1$s: the signed test response could not be verified. Check redirects or caching and try again.')
+                    .replace('%1$s', stepTitle(step, title)));
+            }
+
             return metrics;
+        }
+
+        function stepTitle(step, title) {
+            return title || $('[data-wpopt-page-test-steps] [data-step="' + step + '"] > strong').text();
         }
 
         function formatCacheStatus(directCache, staticCache) {
@@ -582,6 +615,8 @@
 
         $form.on('submit', async function (event) {
             event.preventDefault();
+
+            if (testRunning) return;
 
             const url = normalizeUrl($input.val());
 

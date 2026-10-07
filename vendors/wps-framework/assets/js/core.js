@@ -93,7 +93,8 @@
                 },
                 complete(jqXHR) {
                     if (typeof options.callback === "function") {
-                        const res = wps.json.parse(jqXHR.responseText) || jqXHR.responseText;
+                        const parsed = wps.json.parse(jqXHR.responseText);
+                        const res = wps.isObject(parsed) ? parsed : {status: 'error', data: {}};
                         setTimeout(() => options.callback(res.data, res.status), 100);
                     }
                     if (options.use_loading) options.use_loading.removeClass("wps-loader");
@@ -412,12 +413,12 @@
         return "";
     };
 
-    function ensureWpoptToastHost() {
-        let $host = $("#wpopt-toast-host");
+    function ensureToastHost() {
+        let $host = $("#wps-toast-host");
         if ($host.length) return $host;
 
         $host = $("<div/>", {
-            id: "wpopt-toast-host",
+            id: "wps-toast-host",
             "aria-live": "polite",
             "aria-atomic": "true"
         });
@@ -426,18 +427,30 @@
         return $host;
     }
 
-    function showWpoptToast(state, text) {
-        const $host = ensureWpoptToastHost();
+    function showToast(state, text) {
+        const $host = ensureToastHost();
         const $toast = $("<div/>", {
-            "class": "wpopt-toast is-" + state,
+            "class": "wps-toast is-" + state,
             text: text
         });
 
         $host.append($toast);
 
+        if (state === "error" || state === "warning") {
+            $toast.attr('role', 'alert');
+            $('<button/>', {
+                type: 'button',
+                'class': 'wps-toast-dismiss',
+                'aria-label': wps.locale.get('popup_closeLabel', 'Close'),
+                text: '×'
+            }).on('click', function () { $toast.remove(); }).appendTo($toast);
+        }
+
         window.setTimeout(function () {
             $toast.addClass("is-visible");
         }, 10);
+
+        if (state === "error" || state === "warning") return;
 
         window.setTimeout(function () {
             $toast.removeClass("is-visible");
@@ -447,7 +460,7 @@
         }, 1800);
     }
 
-    wps.showToast = showWpoptToast;
+    wps.showToast = showToast;
 
     function saveFeedbackKey() {
         const context = wps.currentAdminContext();
@@ -520,7 +533,7 @@
         if (!pending || pending.route !== currentFeedbackRoute()) return;
         if (Date.now() - Number(pending.time || 0) > 120000) return;
 
-        showWpoptToast("success", wps.locale.get("saved", "Settings Saved"));
+        showToast("warning", wps.locale.get("save_unconfirmed", "Settings submitted. Save could not be confirmed."));
     }
 
     function showNoticeElementAsToast(element) {
@@ -531,7 +544,7 @@
         if ($notice.data("wps-toast-shown")) return false;
 
         $notice.data("wps-toast-shown", true);
-        showWpoptToast(noticeState($notice), text);
+        showToast(noticeState($notice), text);
 
         if ($notice.is("#wps-ajax-message, #message")) {
             $notice.empty();
@@ -557,7 +570,7 @@
         const params = new URLSearchParams(window.location.search);
 
         if (params.get("settings-updated") === "true" && !shown) {
-            showWpoptToast("success", wps.locale.get("saved", "Settings Saved"));
+            showToast("success", wps.locale.get("saved", "Settings Saved"));
             shown = true;
         }
 
@@ -657,6 +670,7 @@
 
             if (item.id === activeRoute) {
                 link.classList.add("is-active");
+                link.setAttribute("aria-current", "page");
             }
 
             text.textContent = item.label || item.id || "";
@@ -746,6 +760,23 @@
 
     wps.refreshDynamicNav = wpsRefreshDynamicNav;
 
+    // Consumers with their own persistence endpoint can reuse the same feedback.
+    wps.createSaveFeedback = function (form, retrySave) {
+        const $feedback = $('<div/>', {'class': 'wps-save-feedback'}).prependTo($(form));
+        const $status = $('<span/>', {role: 'status', 'aria-live': 'polite', 'aria-atomic': 'true'}).appendTo($feedback);
+        const $retry = $('<button/>', {
+            type: 'button', 'class': 'button wps-save-retry', hidden: true,
+            text: wps.locale.get('autosave_retry', 'Retry save')
+        }).on('click', retrySave).appendTo($feedback);
+        const update = function (state, text) {
+            $feedback.attr('data-save-state', state);
+            $status.text(text);
+            $retry.prop('hidden', state !== 'error');
+        };
+        update('idle', wps.locale.get('autosave_hint', 'Changes save automatically.'));
+        return update;
+    };
+
     function initWpsAutosaveForm(form) {
         const $form = $(form);
 
@@ -767,16 +798,28 @@
             $submit.hide();
         }
 
+        const setSaveState = wps.createSaveFeedback(form, function () {
+            clearTimeout(timer);
+            doSave();
+        });
+        $form.data('wps-has-unsaved-changes', function () {
+            return inFlight || $form.serialize() !== lastSaved;
+        });
+
         const doSave = function () {
             const snapshot = $form.serialize();
 
-            if (snapshot === lastSaved) return;
             if (inFlight) {
                 queued = true;
                 return;
             }
+            if (snapshot === lastSaved) {
+                setSaveState('saved', wps.locale.get('autosave_saved', 'All changes saved'));
+                return;
+            }
 
             inFlight = true;
+            setSaveState('saving', wps.locale.get('autosave_saving', 'Saving changes…'));
 
             wps.ajaxHandler({
                 mod: "settings",
@@ -791,9 +834,11 @@
                         if (data?.module === "modules_handler") {
                             wpsRefreshDynamicNav(data.nav_update);
                         }
-                        showWpoptToast("success", data?.text || wps.locale.get("autosaved", "All changes saved"));
+                        setSaveState($form.serialize() === lastSaved ? 'saved' : 'pending',
+                            wps.locale.get($form.serialize() === lastSaved ? 'autosave_saved' : 'autosave_pending',
+                                $form.serialize() === lastSaved ? 'All changes saved' : 'Unsaved changes'));
                     } else {
-                        showWpoptToast("error", data?.text || wps.locale.get("autosave_failed", "Autosave failed"));
+                        setSaveState('error', data?.text || wps.locale.get("autosave_failed", "Changes could not be saved. Please retry."));
                     }
 
                     if (queued) {
@@ -810,6 +855,7 @@
         };
 
         const scheduleSave = function (event) {
+            setSaveState('pending', wps.locale.get('autosave_pending', 'Unsaved changes'));
             if (isModulesHandlerForm && event.type === "change") {
                 clearTimeout(timer);
                 doSave();
@@ -822,6 +868,7 @@
         $form.on("change input", ":input:not([type='submit']):not([type='button']):not([type='hidden'])", scheduleSave);
         $form.on("submit", function (e) {
             e.preventDefault();
+            clearTimeout(timer);
             doSave();
         });
     }
@@ -857,7 +904,7 @@
                         $button.prop("disabled", false).removeClass("is-running");
 
                         const success = state === "success";
-                        showWpoptToast(
+                        showToast(
                             success ? "success" : "error",
                             data?.text || wps.locale.get(success ? "wps_reset_module_success" : "wps_reset_module_failed", success ? "Module reset completed." : "Module reset failed.")
                         );
@@ -1259,7 +1306,7 @@
             })
             .on('click', 'icon.wps-option-info-icon', function () {
                 const $icon = $(this);
-                const $info = $icon.closest('row').find('label.wps-option-info');
+                const $info = $icon.closest('row').find('.wps-option-info');
                 const wasVisible = $info.is(":visible");
 
                 $info.slideToggle(160, function () {
@@ -1382,7 +1429,7 @@
                 const $link = $tabLinks.filter(`[aria-controls="${id}"]`).first();
                 if (hash === id && $this.attr('aria-disabled') !== 'true' && $link.attr('aria-disabled') !== 'true') {
                     hasSelected = true;
-                    $link.attr('aria-selected', 'true');
+                    $link.attr({'aria-selected': 'true', tabindex: '0'});
                     $this.attr({'aria-hidden': 'false', 'aria-selected': 'true'});
                 } else {
                     $this.attr({'aria-hidden': 'true', 'aria-selected': 'false'});
@@ -1393,9 +1440,9 @@
                 const $first = $tabLinks.filter(':not([aria-disabled="true"])').first();
                 const firstTarget = $first.attr('aria-controls');
                 if (firstTarget) {
-                    $tabLinks.attr('aria-selected', 'false');
+                    $tabLinks.attr({'aria-selected': 'false', tabindex: '-1'});
                     $tabContents.attr({'aria-hidden': 'true', 'aria-selected': 'false'});
-                    $first.attr('aria-selected', 'true');
+                    $first.attr({'aria-selected': 'true', tabindex: '0'});
                     $tabContents.filter('#' + firstTarget).attr({'aria-hidden': 'false', 'aria-selected': 'true'});
                 }
             }
@@ -1403,12 +1450,25 @@
             $tabList.on('click', 'li[aria-controls]:not([aria-disabled="true"])', function (e) {
                 e.preventDefault();
                 const $this = $(this), targetId = $this.attr('aria-controls');
-                $tabLinks.attr('aria-selected', 'false');
+                $tabLinks.attr({'aria-selected': 'false', tabindex: '-1'});
                 $tabContents.attr({'aria-hidden': 'true', 'aria-selected': 'false'});
-                $this.attr('aria-selected', 'true');
-                $('#' + targetId).attr({'aria-hidden': 'false', 'aria-selected': 'true'});
+                $this.attr({'aria-selected': 'true', tabindex: '0'});
+                $tabContents.filter(function () { return this.id === targetId; }).attr({'aria-hidden': 'false', 'aria-selected': 'true'});
                 history.pushState(null, null, location.pathname + location.search + '#' + targetId);
                 animateTabPanel(targetId);
+            });
+            $tabList.on('keydown', '[role="tab"]', function (e) {
+                const $enabled = $tabLinks.filter(':not([aria-disabled="true"])');
+                const index = $enabled.index(this);
+                let next;
+                if (e.key === 'ArrowRight') next = (index + 1) % $enabled.length;
+                else if (e.key === 'ArrowLeft') next = (index - 1 + $enabled.length) % $enabled.length;
+                else if (e.key === 'Home') next = 0;
+                else if (e.key === 'End') next = $enabled.length - 1;
+                else if (e.key === 'Enter' || e.key === ' ') next = index;
+                else return;
+                e.preventDefault();
+                $enabled.eq(next).trigger('click').trigger('focus');
             });
         });
 
@@ -1428,7 +1488,11 @@
 
         // Beforeunload warning
         $window.on('beforeunload', function (e) {
-            if ($body?.hasClass('wps-doingAction')) {
+            const hasUnsavedChanges = $('form').toArray().some(function (form) {
+                const check = $(form).data('wps-has-unsaved-changes');
+                return typeof check === 'function' && check();
+            });
+            if ($body?.hasClass('wps-doingAction') || hasUnsavedChanges) {
                 const msg = wps.locale.get('text_close_warning');
                 (e || window.event).returnValue = msg;
                 return msg;

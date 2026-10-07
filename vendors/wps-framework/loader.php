@@ -34,6 +34,11 @@ require_once WPS_FRAMEWORK . 'Images.php';
 
 require_once WPS_FRAMEWORK . 'Services.class.php';
 require_once WPS_FRAMEWORK . 'HtmlOutputBuffer.class.php';
+require_once WPS_FRAMEWORK . 'FrontendAssets.class.php';
+require_once WPS_FRAMEWORK . 'LcpImages.class.php';
+require_once WPS_FRAMEWORK . 'ScriptTiming.class.php';
+require_once WPS_FRAMEWORK . 'UsedCss.class.php';
+\WPS\core\FrontendAssets::boot();
 require_once WPS_FRAMEWORK . 'Cache.class.php';
 require_once WPS_FRAMEWORK . 'Stack.php';
 require_once WPS_FRAMEWORK . 'Storage.class.php';
@@ -56,6 +61,7 @@ require_once WPS_FRAMEWORK . 'ModuleHandler.class.php';
 
 
 add_action('admin_enqueue_scripts', 'wps_admin_enqueue_scripts', 10, 0);
+add_action('admin_print_styles', 'wps_admin_enqueue_ui', 15, 0);
 
 // make sure to be fired after all modules are loaded to prevent serialize of incomplete php object class
 add_action('init', ['\WPS\core\CronActions', 'Initialize'], 10000);

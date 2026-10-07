@@ -292,8 +292,7 @@ aside.wps {
 }
 
 /* Admin notices and transient toast messages. */
-#wpfs-toast-host,
-#wpopt-toast-host,
+#wps-toast-host,
 .wps-admin-notice-host {
     position: fixed;
     top: calc(var(--wp-admin--admin-bar--height, 32px) + 18px);
@@ -305,8 +304,7 @@ aside.wps {
     pointer-events: none;
 }
 
-.wpfs-toast,
-.wpopt-toast,
+.wps-toast,
 .wps-admin-notice-host .notice.wps-admin-notice {
     box-sizing: border-box;
     width: 100%;
@@ -336,8 +334,7 @@ aside.wps {
     transform: translateY(0);
 }
 
-.wpfs-toast p,
-.wpopt-toast p,
+.wps-toast p,
 .wps-admin-notice-host .notice.wps-admin-notice p {
     margin: 0;
     padding: 0;
@@ -345,14 +342,12 @@ aside.wps {
     line-height: inherit;
 }
 
-.wpfs-toast.is-visible,
-.wpopt-toast.is-visible {
+.wps-toast.is-visible {
     opacity: 1;
     transform: translateY(0);
 }
 
-.wpfs-toast.is-success,
-.wpopt-toast.is-success,
+.wps-toast.is-success,
 .wps-admin-notice-host .notice-success.wps-admin-notice {
     border-color: #cfe8cf;
     border-left-color: #22a35a;
@@ -360,8 +355,7 @@ aside.wps {
     color: #1f6f43;
 }
 
-.wpfs-toast.is-error,
-.wpopt-toast.is-error,
+.wps-toast.is-error,
 .wps-admin-notice-host .notice-error.wps-admin-notice {
     border-color: #ebc6c1;
     border-left-color: #d63638;
@@ -369,8 +363,7 @@ aside.wps {
     color: #b32d2e;
 }
 
-.wpfs-toast.is-warning,
-.wpopt-toast.is-warning,
+.wps-toast.is-warning,
 .wps-admin-notice-host .notice-warning.wps-admin-notice {
     border-color: #f3d19e;
     border-left-color: #f0a020;
@@ -401,7 +394,6 @@ input.wps, textarea.wps {
 }
 
 input.wps:focus, textarea.wps:focus {
-    border-color: var(--wps-border-color);
     box-shadow: inset 0 0 4px 1px #a3a3a3;
     outline: 0;
 }
@@ -963,8 +955,7 @@ body.wps-app-nav-open {
 }
 
 @media screen and (max-width: 600px) {
-    #wpfs-toast-host,
-    #wpopt-toast-host,
+    #wps-toast-host,
     .wps-admin-notice-host {
         left: 16px;
         right: 16px;
@@ -989,7 +980,6 @@ body.wps-app-nav-open {
         min-height: 58px;
         padding: 10px 12px;
     }
-
     body.wps-admin-screen .wps-admin-app .wps-app-tabsbar .wps-ar-tab {
         min-height: 36px !important;
         padding: 0 14px !important;
@@ -2023,7 +2013,6 @@ wps-block {
         flex: 0 0 100%;
         max-width: 100%;
     }
-
     aside.wps {
         flex: 0 0 100%;
         max-width: 100%;
@@ -2115,7 +2104,6 @@ wps-block {
     padding: 8px 12px;
     border: 1px solid #b8c2cc;
     border-radius: 8px;
-    background: #ffffff;
     box-shadow: 0 1px 1px rgb(16 24 40 / 4%);
     transition: border-color 180ms ease, box-shadow 180ms ease;
 }
@@ -2126,7 +2114,6 @@ wps-block {
 }
 
 .wps-wrap.wps .wps-ar-tabcontent .wps-options input.wps:focus, .wps-wrap.wps .wps-ar-tabcontent .wps-options textarea.wps:focus, .wps-wrap.wps .wps-ar-tabcontent .wps-options select.wps:focus {
-    border-color: var(--wps-border-color);
     box-shadow: 0 0 0 3px rgb(34 113 177 / 16%);
     outline: none;
 }
@@ -3202,33 +3189,21 @@ body.wps-admin-screen .wps-wrap:not(.wps-home) .wps-ar-tabcontent > .wps-list-ta
 
 @media (max-width: 980px) {
     .wps-wrap .tablenav.top {
-        display: flex;
         flex-wrap: wrap;
-        align-items: stretch;
     }
 
     .wps-wrap .tablenav.top .wps-table-controls {
-        display: flex;
-        align-items: stretch;
         flex: 1 1 auto;
-        flex-direction: row;
-        flex-wrap: wrap;
-        gap: 8px;
-        width: 100%;
     }
 
     .wps-wrap .tablenav.top .search-box {
         flex: 1 1 auto;
-        min-width: 0;
-        width: 100%;
         max-width: none;
-        margin-left: 0;
     }
 
     .wps-wrap .tablenav.top .tablenav-pages {
         display: flex;
         align-items: center;
-        flex: 0 1 auto;
         flex-direction: row;
         flex-wrap: wrap;
         gap: 8px;
@@ -3250,12 +3225,6 @@ body.wps-admin-screen .wps-wrap:not(.wps-home) .wps-ar-tabcontent > .wps-list-ta
         flex: 0 0 auto;
         margin: 0;
         white-space: nowrap;
-    }
-
-    .wps-wrap .tablenav-pages .pagination-links {
-        display: inline-flex;
-        flex-wrap: wrap;
-        justify-content: center;
     }
 }
 
@@ -3755,7 +3724,6 @@ body.wps-admin-screen .wps-wrap:not(.wps-home) .wps-ar-tabcontent > .wps-list-ta
         justify-content: center;
         gap: 6px;
     }
-
     table.wps-table,
     table.wp-list-table,
     table.wps-table tbody,
@@ -3770,7 +3738,6 @@ body.wps-admin-screen .wps-wrap:not(.wps-home) .wps-ar-tabcontent > .wps-list-ta
         min-width: 0 !important;
         width: 100% !important;
     }
-
     table.wps-table,
     table.wp-list-table {
         display: block !important;
@@ -3782,13 +3749,11 @@ body.wps-admin-screen .wps-wrap:not(.wps-home) .wps-ar-tabcontent > .wps-list-ta
         table-layout: auto !important;
         overflow: visible !important;
     }
-
     table.wps-table thead,
     table.wp-list-table thead,
     table.wp-list-table tfoot {
         display: none !important;
     }
-
     table.wps-table tbody,
     table.wp-list-table tbody {
         display: grid !important;
@@ -3796,7 +3761,6 @@ body.wps-admin-screen .wps-wrap:not(.wps-home) .wps-ar-tabcontent > .wps-list-ta
         border: 0 !important;
         background: transparent !important;
     }
-
     table.wps-table tr:not(.inline-edit-row):not(.no-items),
     table.wp-list-table tr:not(.inline-edit-row):not(.no-items) {
         display: block !important;
@@ -3806,7 +3770,6 @@ body.wps-admin-screen .wps-wrap:not(.wps-home) .wps-ar-tabcontent > .wps-list-ta
         background: #ffffff;
         box-shadow: var(--wps-shadow-light);
     }
-
     table.wps-table tbody td,
     table.wp-list-table tr:not(.inline-edit-row):not(.no-items) th,
     table.wp-list-table tr:not(.inline-edit-row):not(.no-items) td,
@@ -3827,21 +3790,17 @@ body.wps-admin-screen .wps-wrap:not(.wps-home) .wps-ar-tabcontent > .wps-list-ta
         white-space: normal;
         overflow-wrap: anywhere;
     }
-
     table.wps-table tbody td:last-child,
     table.wp-list-table tr:not(.inline-edit-row):not(.no-items) > :last-child {
         border-bottom: 0 !important;
     }
-
     table.wps-table tbody td::before {
         content: attr(data-label);
     }
-
     table.wp-list-table tr:not(.inline-edit-row):not(.no-items) td::before,
     table.wp-list-table tr:not(.inline-edit-row):not(.no-items) th::before {
         content: attr(data-colname) !important;
     }
-
     table.wps-table tbody td::before,
     table.wp-list-table tr:not(.inline-edit-row):not(.no-items) td::before,
     table.wp-list-table tr:not(.inline-edit-row):not(.no-items) th::before {
@@ -3854,14 +3813,12 @@ body.wps-admin-screen .wps-wrap:not(.wps-home) .wps-ar-tabcontent > .wps-list-ta
         text-transform: uppercase;
         overflow-wrap: anywhere;
     }
-
     table.wps-table tbody td[data-label=""]::before,
     table.wp-list-table tr:not(.inline-edit-row):not(.no-items) td[data-colname=""]::before,
     table.wp-list-table tr:not(.inline-edit-row):not(.no-items) th[data-colname=""]::before,
     table.wp-list-table .check-column::before {
         content: none !important;
     }
-
     table.wps-table tbody td > *,
     table.wp-list-table .column-primary > :not(.toggle-row),
     table.wp-list-table tr:not(.inline-edit-row):not(.no-items) td > :not(.row-actions),
@@ -3874,7 +3831,6 @@ body.wps-admin-screen .wps-wrap:not(.wps-home) .wps-ar-tabcontent > .wps-list-ta
         text-align: left !important;
         overflow-wrap: anywhere;
     }
-
     table.wps-table tbody td[data-label=""] > *,
     table.wp-list-table tr:not(.inline-edit-row):not(.no-items) td[data-colname=""] > :not(.row-actions),
     table.wp-list-table tr:not(.inline-edit-row):not(.no-items) th[data-colname=""] > :not(.row-actions),
@@ -5802,7 +5758,7 @@ body.wps-admin-screen .wps-admin-app .wps-faq-answer {
 }
 
 body.wps-admin-screen .wps-core-settings-page .wps-submit {
-    display: none;
+    margin-top: 16px;
 }
 
 body.wps-admin-screen .wps-core-settings-page .wps-setting-footer {
@@ -5826,50 +5782,41 @@ body.wps-admin-screen .wps-admin-app .wps-wrap:not(.wps-home) > .wps-header ~ se
         --wps-admin-page-gutter: 24px;
         --wps-admin-page-bottom-space: 28px;
     }
-
     body.wps-admin-screen .wps-wrap:not(.wps-home) > block.wps > .wps-header,
     body.wps-admin-screen .wps-wrap:not(.wps-home) > .wps-header,
     body.wps-admin-screen .wps-core-settings-page > block.wps > .wps-header {
         padding: 24px var(--wps-admin-page-gutter) 42px !important;
     }
-
     body.wps-admin-screen .wps-core-settings-page .wps-ar-tabs,
     body.wps-admin-screen .wps-wrap:not(.wps-home) .wps-ar-tabs {
         padding: 0 var(--wps-admin-page-gutter) 22px !important;
     }
-
     body.wps-admin-screen .wps-core-settings-page .wps-options .wps-row,
     body.wps-admin-screen .wps-wrap:not(.wps-home) .wps-options .wps-row {
         grid-template-columns: 48px minmax(0, 1fr);
     }
-
     body.wps-admin-screen .wps-core-settings-page .wps-value,
     body.wps-admin-screen .wps-wrap:not(.wps-home) .wps-value {
         grid-column: 1 / -1;
         justify-content: stretch;
     }
-
     body.wps-admin-screen :is(.wps-core-settings-page, .wps-wrap:not(.wps-home)) .wps-options :is(.wps-row-type-textarea, .wps-row-type-textarea-array) {
         flex-wrap: wrap;
     }
-
     body.wps-admin-screen :is(.wps-core-settings-page, .wps-wrap:not(.wps-home)) :is(.wps-row-type-textarea, .wps-row-type-textarea-array) .wps-value {
         flex: 1 1 100%;
         margin-left: 0;
         max-width: none;
         min-width: 0;
     }
-
     body.wps-admin-screen .wps-inline-actions {
         justify-content: flex-start;
     }
-
     body.wps-admin-screen:not(:has(.wps-admin-app)) .wps-wrap:not(.wps-home) > block.wps > :not(.wps-header):not(.wps-ar-tabs),
     body.wps-admin-screen:not(:has(.wps-admin-app)) .wps-wrap:not(.wps-home) > .wps-header ~ block.wps,
     body.wps-admin-screen:not(:has(.wps-admin-app)) .wps-wrap:not(.wps-home) > .wps-header ~ section.wps {
         margin: 20px var(--wps-admin-page-gutter);
     }
-
     body.wps-admin-screen .wps-core-settings-page .wps-options .wps-row-type-checkbox,
     body.wps-admin-screen .wps-wrap:not(.wps-home) .wps-options .wps-row-type-checkbox,
     body.wps-admin-screen .wps-core-settings-page .wps-options .wps-row-type-range,
@@ -5878,7 +5825,6 @@ body.wps-admin-screen .wps-admin-app .wps-wrap:not(.wps-home) > .wps-header ~ se
         align-items: center;
         gap: 14px;
     }
-
     body.wps-admin-screen .wps-core-settings-page .wps-row-type-checkbox .wps-value,
     body.wps-admin-screen .wps-wrap:not(.wps-home) .wps-row-type-checkbox .wps-value,
     body.wps-admin-screen .wps-core-settings-page .wps-row-type-range .wps-value,
@@ -5889,7 +5835,6 @@ body.wps-admin-screen .wps-admin-app .wps-wrap:not(.wps-home) > .wps-header ~ se
         min-width: 0;
         max-width: 100%;
     }
-
     body.wps-admin-screen .wps-core-settings-page .wps-row-type-checkbox .wps-option,
     body.wps-admin-screen .wps-wrap:not(.wps-home) .wps-row-type-checkbox .wps-option,
     body.wps-admin-screen .wps-core-settings-page .wps-row-type-range .wps-option,
@@ -5906,7 +5851,6 @@ body.wps-admin-screen .wps-admin-app .wps-wrap:not(.wps-home) > .wps-header ~ se
         grid-template-columns: 40px minmax(0, 1fr);
         gap: 10px 12px;
     }
-
     body.wps-admin-screen .wps-core-settings-page .wps-row-type-checkbox .wps-value,
     body.wps-admin-screen .wps-wrap:not(.wps-home) .wps-row-type-checkbox .wps-value,
     body.wps-admin-screen .wps-core-settings-page .wps-row-type-range .wps-value,
@@ -5930,21 +5874,18 @@ body.wps-admin-screen .wps-admin-app .wps-wrap:not(.wps-home) > .wps-header ~ se
             --wps-admin-page-min-height: calc(100dvh - var(--wp-admin--admin-bar--height, 46px));
         }
     }
-
     body.wps-admin-screen .wps-core-settings-page .wps-ar-tablist,
     body.wps-admin-screen .wps-wrap:not(.wps-home) .wps-ar-tablist {
         display: grid;
         grid-template-columns: minmax(0, 1fr);
         width: 100%;
     }
-
     body.wps-admin-screen .wps-core-settings-page .wps-ar-tab,
     body.wps-admin-screen .wps-wrap:not(.wps-home) .wps-ar-tab {
         width: 100%;
         min-width: 0;
         justify-content: center;
     }
-
 }
 
 @container wps-options (max-width: 560px) {
@@ -5958,13 +5899,11 @@ body.wps-admin-screen .wps-admin-app .wps-wrap:not(.wps-home) > .wps-header ~ se
         gap: 10px 12px;
         padding: 14px 0;
     }
-
     body.wps-admin-screen :is(.wps-core-settings-page, .wps-wrap:not(.wps-home)) .wps-options :is(.wps-row-type-textarea, .wps-row-type-textarea-array) {
         display: grid;
         grid-template-columns: 40px minmax(0, 1fr);
         gap: 10px 12px;
     }
-
     body.wps-admin-screen .wps-core-settings-page .wps-value,
     body.wps-admin-screen .wps-wrap:not(.wps-home) .wps-value,
     body.wps-admin-screen .wps-core-settings-page .wps-row-type-checkbox .wps-value,
@@ -5980,7 +5919,6 @@ body.wps-admin-screen .wps-admin-app .wps-wrap:not(.wps-home) > .wps-header ~ se
         max-width: none;
         margin-left: 0;
     }
-
     body.wps-admin-screen .wps-core-settings-page .wps-value input.wps:not([type="checkbox"]),
     body.wps-admin-screen .wps-core-settings-page .wps-value textarea.wps,
     body.wps-admin-screen .wps-core-settings-page .wps-value .wps-dropdown,
@@ -5991,18 +5929,15 @@ body.wps-admin-screen .wps-admin-app .wps-wrap:not(.wps-home) > .wps-header ~ se
         min-width: 0;
         max-width: 100%;
     }
-
     body.wps-admin-screen :is(.wps-core-settings-page, .wps-wrap:not(.wps-home)) .wps-value :is(.wps-time-stepper, .wps-number-stepper) {
         grid-template-columns: minmax(40px, 52px) minmax(62px, 1fr) minmax(40px, 52px);
         width: min(100%, 188px);
         max-width: 100%;
     }
-
     body.wps-admin-screen :is(.wps-core-settings-page, .wps-wrap:not(.wps-home)) .wps-value :is(.wps-time-stepper-btn, .wps-number-stepper-btn) {
         width: auto;
         min-width: 40px;
     }
-
     body.wps-admin-screen :is(.wps-core-settings-page, .wps-wrap:not(.wps-home)) .wps-value :is(.wps-time-stepper-input, .wps-number-stepper-input) {
         width: 100% !important;
         max-width: none !important;
