@@ -40,7 +40,10 @@ require_once WPOPT_INCPATH . 'Compatibility.class.php';
 require_once WPOPT_INCPATH . 'cache-api.php';
 require_once WPOPT_INCPATH . 'Report.class.php';
 
-// Media storage must be available before the theme and in every request context.
+// Frontend engines also register measurement endpoints and workers on AJAX/Cron requests.
+require_once WPOPT_INCPATH . 'frontend-assets.php';
+
+// Media storage must be available in every request context.
 require_once WPOPT_SUPPORTERS . 'database/MediaMetadata.class.php';
 WPOptimizer\modules\supporters\MediaMetadata::bootstrap();
 

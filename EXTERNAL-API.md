@@ -127,6 +127,25 @@ The successful path resumes with `$flush_if_dirty = true`, so WP Optimizer perfo
 
 ## Compatibility Filters
 
+### Media metadata lifecycle
+
+`wpopt_media_metadata_state_changed(bool $enabled)` fires after a successfully saved storage mode. Both enabled and disabled modes are managed by WP Optimizer. Unchanged modes and failed migrations do not emit a transition. Integrations should release competing metadata handlers when a mode is saved and check the `wpopt_media_metadata_enabled` option at startup; `null` means no mode has been selected.
+
+`wpopt_media_metadata_invalidated(int $attachment_id)` fires after the plugin clears its metadata caches, including on migration cleanup or rollback. Consumers can invalidate their own derived caches. Treat this as invalidation, not proof that a write committed.
+
+See [media metadata](docs/media-metadata.md) for storage ownership and verification.
+
+### Server rule ordering
+
+The `wpopt_htaccess_rule_order` filter receives and returns the ordered array of rule marker strings. Integrations may insert their own markers while preserving the relative order of plugin markers. Register the filter before a rule writer is constructed. It applies to Apache-style and Nginx rule generation.
+
+```php
+add_filter('wpopt_htaccess_rule_order', static function (array $order): array {
+    array_unshift($order, '# BEGIN MyAppRoutes');
+    return $order;
+});
+```
+
 WP Optimizer automatically protects WooCommerce purchase routes and the supported visual builders. Integrations with custom endpoints or builder variants can extend that policy without replacing it.
 
 - `wpopt_woocommerce_sensitive_paths` filters the normalized route prefixes excluded from cache and runtime HTML optimization. Return paths relative to the site URL, without query strings.

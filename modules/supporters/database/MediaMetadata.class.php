@@ -80,21 +80,8 @@ class MediaMetadata
 
     public function managed(): bool
     {
-        // Existing Flex-and-Go installations keep their media readable until
-        // their first explicit optimization setting is saved.
+        // Storage routing starts after a mode has been explicitly saved.
         return get_option(self::STATE_OPTION, null) !== null;
-    }
-
-    private function detach_theme(): void
-    {
-        if (!class_exists('ScaledMeta', false)) { return; }
-        try { $legacy = \ScaledMeta::getInstance('media_meta'); }
-        catch (\Throwable $error) { return; }
-        foreach (['add_post_metadata' => 'filter_set_postmeta', 'update_post_metadata' => 'filter_set_postmeta',
-                  'delete_post_metadata' => 'filter_delete_postmeta', 'get_post_metadata' => 'filter_get_meta',
-                  'xmli_fast_add_postmeta' => 'filter_xmli_add_meta'] as $hook => $method) {
-            remove_filter($hook, [$legacy, $method], 10);
-        }
     }
 
     private function database_enabled(): bool
@@ -202,7 +189,7 @@ class MediaMetadata
                 if (!$this->managed()) {
                     throw new \RuntimeException(__('Could not save the media optimization state.', 'wpopt'));
                 }
-                $this->detach_theme();
+                do_action('wpopt_media_metadata_state_changed', $enabled);
                 return;
             }
             $this->register_table();
@@ -225,7 +212,7 @@ class MediaMetadata
                     $this->query("INSERT INTO $journal (meta_id, wpopt_media_id, meta_key, meta_value)
                         SELECT meta_id, post_id, meta_key, meta_value FROM $postmeta
                         WHERE BINARY meta_key IN ('_wp_attached_file', '_wp_attachment_metadata') ORDER BY meta_id FOR UPDATE");
-                    // Adopt data already stored by Flex-and-Go, without replacing
+                    // Merge the existing media projection without replacing
                     // postmeta values or allocating colliding metadata IDs.
                     foreach (self::KEYS as $key) {
                         $conflict = $wpdb->get_var("SELECT m.object_id FROM $media m INNER JOIN $journal j
@@ -292,7 +279,7 @@ class MediaMetadata
                 wp_cache_delete('notoptions', 'options');
                 wp_cache_delete('alloptions', 'options');
             }
-            $this->detach_theme();
+            do_action('wpopt_media_metadata_state_changed', $enabled);
         });
     }
 
@@ -300,8 +287,8 @@ class MediaMetadata
     {
         wp_cache_delete($id, self::META_TYPE . '_meta');
         wp_cache_delete($id, 'post_meta');
-        wp_cache_delete($id, 'scaledMeta:media_meta');
         wp_cache_delete($id, 'wpopt_media_row');
+        do_action('wpopt_media_metadata_invalidated', $id);
     }
 
     private function project(int $id): void
@@ -321,7 +308,7 @@ class MediaMetadata
             $fields[$key] = $values[$key][0] ?? null;
         }
         if ($fields['_wp_attached_file'] !== null && preg_match_all('/./us', $fields['_wp_attached_file']) > 255) {
-            // Never silently truncate a filename to fit the theme's schema.
+            // Preserve the media projection's filename length contract.
             throw new \RuntimeException(__('A media filename exceeds the existing table limit of 255 characters. No data was moved.', 'wpopt'));
         }
         $media = $this->table('media_metadata');

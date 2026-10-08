@@ -28,16 +28,15 @@ class WP_Htaccess
         $this->settings = $settings;
         $this->rules = RuleUtil::get_rules();
 
-        $this->order = array(
+        $this->order = apply_filters('wpopt_htaccess_rule_order', array(
             '# BEGIN O_API',
-            '# BEGIN FLEX_API',
             '# BEGIN WordPress',
             '# WPOPT_MARKER_BEGIN_SRV_MIME_TYPES',
             '# WPOPT_MARKER_BEGIN_SRV_COMPRESSION',
             '# WPOPT_MARKER_BEGIN_SRV_ENHANCEMENTS',
             '# WPOPT_MARKER_BEGIN_SRV_SECURITY',
             '# WPOPT_MARKER_BEGIN_SRV_BROWSER_CACHE',
-        );
+        ));
 
         if (!$this->has_rule('srv_mime_types')) {
             $this->add_rule('srv_mime_types');

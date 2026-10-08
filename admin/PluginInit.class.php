@@ -57,7 +57,7 @@ class PluginInit
 
     private function register_actions(): void
     {
-        \WPS\core\FrontendAssets::watch_settings('wpopt', array('pagespeed', 'minify', 'modules_handler'));
+        \WPOptimizer\modules\supporters\FrontendAssets::watch_settings('wpopt', array('pagespeed', 'minify', 'modules_handler'));
         // Plugin Activation/Deactivation.
         register_activation_hook(WPOPT_FILE, array($this, 'plugin_activation'));
         register_deactivation_hook(WPOPT_FILE, array($this, 'plugin_deactivation'));

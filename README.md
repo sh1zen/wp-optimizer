@@ -18,6 +18,8 @@ It brings together the common tools needed to keep a WordPress installation fast
 
 ### Performance and cache
 
+- **Per-page Used CSS:** the PageSpeed module builds reduced local stylesheets through WordPress Cron. WP Optimizer owns the engine and its bundled, isolated CSS parser. See [Used CSS](docs/used-css.md) for loading, safety rules and verification.
+- **Frontend engines:** WP Optimizer owns LCP learning, image priority and script defer/delay, including their browser runtimes and asset policy. See [frontend performance](docs/frontend-performance.md) for loading, configuration and verification.
 - **Layered cache storage:** the shared WPS cache uses request memory first, Redis (or Memcached) when available, and WPS `Storage` as the durable fallback under `WP_CONTENT_DIR/cache`. Positive lifetimes are applied to both remote and disk entries; a zero lifetime is request-local and is not persisted. WP Optimizer's static page, `WP_Query` and database-query caches continue to use their dedicated WPS Storage groups and independent lifetime, purge and exclusion rules.
 - **Safe compatibility defaults:** compatible with WooCommerce and with editing and preview flows from Elementor, Beaver Builder, Divi, Gutenberg, Bricks, Oxygen and Breakdance. Builder requests bypass cache and output optimization, preserving generated assets and markup.
 - **Protected and extensible behavior:** built-in exclusions cannot be removed, but filters can add project-specific routes, request signatures and assets. Invalid or missing direct-cache configuration is regenerated in a disabled fail-safe state.
@@ -25,11 +27,10 @@ It brings together the common tools needed to keep a WordPress installation fast
 ### Maintenance and diagnostics
 
 - **Database and scheduling tools:** maintain tables, create database backups, review `wp_options` autoload data and manage WordPress cron events and custom schedules. On WordPress Multisite, site administrators retain Database Manager access, while SQL script execution requires the `manage_network_options` capability.
+- **Media metadata storage:** the plugin owns reversible media storage and publishes generic lifecycle events for external integrations. See [media metadata](docs/media-metadata.md) for storage and integration contracts.
 - **Multisite lifecycle:** network-wide activation, upgrades and deactivation are applied independently to every site while preserving each site's settings, cron state and database-table prefix.
 - **Four-stage Page Test:** scans a site URL with a signed optimization/cache-bypass request, an empty current-configuration pass, a diagnostic warmup and a final measured signed request using the current configuration.
 - **Actionable diagnostics:** the warmup identifies slow or repeated queries, heavier hooks, callback samples and memory/query totals. Runtime HTML transformations use ordered handlers in the WPS `html_output_buffer` service, with PageSpeed processing before final HTML minification.
-- **Navigation prefetch:** enabling early page prefetching uses WordPress Core speculation rules with moderate eagerness on WordPress 6.8+ when Core defaults are unchanged; explicit site and hosting settings remain in control. Older versions retain the hover/touch prefetch script. Core's default speculative loading remains active even when this PageSpeed option is off. A separate switch can disable Core speculative loading when it causes unwanted requests; it does not affect the older script.
-- **AVIF conversion:** Media Optimizer can convert selected images to AVIF with the same replacement workflow used for WebP. AVIF takes priority when both conversion options are enabled. If encoding fails, the source file and attachment metadata remain unchanged. Generated server rules include the `image/avif` MIME type.
 
 ### Configuration safety
 

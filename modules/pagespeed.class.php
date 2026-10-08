@@ -8,10 +8,10 @@
 namespace WPOptimizer\modules;
 
 use WPS\core\UtilEnv;
-use WPS\core\FrontendAssets;
-use WPS\core\LcpImages;
-use WPS\core\ScriptTiming;
-use WPS\core\UsedCss;
+use WPOptimizer\modules\supporters\FrontendAssets;
+use WPOptimizer\modules\supporters\LcpImages;
+use WPOptimizer\modules\supporters\ScriptTiming;
+use WPOptimizer\modules\supporters\UsedCss;
 use WPS\modules\Module;
 use WPOptimizer\core\Compatibility;
 
