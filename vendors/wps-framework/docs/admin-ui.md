@@ -16,27 +16,41 @@ badge. Explain what a setting changes in its description; the renderer associate
 its name and description with the control. Tabs expose their selected panel and
 support arrow keys, Home, End, Enter and Space.
 
-Framework settings forms explain autosave and keep pending, saving, confirmed
-success and failure visible. Failures offer a retry; leaving with unsaved changes
+Framework settings forms use one toast per form for pending, saving, confirmed
+success and failure. Idle forms show no notification. Success disappears
+automatically; failures offer a retry. Leaving with unsaved changes
 triggers the browser warning. Consumers with their own save endpoint can use
 `wps.createSaveFeedback(form, retryCallback)` and call the returned function with
 `(state, translatedText)`. Keep the persistence endpoint and validation in the
-consumer. Flexy SEO uses this integration. Its settings module owns the
-`wpfs_autosave_core_settings` AJAX action; do not add another adapter or intercept
+consumer. Flexy SEO and Members Control level edits use this integration. The SEO
+settings module owns the `wpfs_autosave_core_settings` AJAX action; do not add
+another adapter or intercept
 the generic WPS action for these forms.
 
 Use `wps.showToast(state, translatedText)` for transient action feedback. The
-framework owns the `wps-toast-host` and `.wps-toast` markup; failures remain until
-dismissed. Flexy SEO and Cloudflare use this same implementation. Tool page
-renderers write directly into the app content; no buffering adapter is needed.
+framework owns the `wps-toast-host` and `.wps-toast` markup and the styles in
+`assets/css/toast.css`; errors and warnings remain until dismissed. Every toast
+has a close button. Server module notices and dynamic WPS action messages use
+this same host. Inline guidance stays in its panel. Flexy SEO and Cloudflare use
+this implementation. Tool page renderers write directly into the app content;
+no buffering adapter is needed.
 
-Run `cms/tools/wps-admin-ui-regression.html` through the local checkout, then repeat
-with `?context=wpfs`. Click **Run isolated save checks**. The fixture intercepts all
-AJAX: it tests successful and failed saves, persistent errors, retry, queued edits,
-reverting during an in-flight save and independent forms without saving settings.
-It expects WordPress's bundled jQuery at `../../wp-includes/js/jquery/jquery.min.js`.
-Use authenticated admin pages to check the actual plugin asset cascade, field
-labels, tab navigation and responsive layout.
+`vendor-wps-css` depends on `vendor-wps-toast-css`. Admin pages with a custom layout
+can enqueue just `vendor-wps-toast-css` and `vendor-wps-js`, and mark transient
+WordPress notice containers with `data-wps-notices`. XML Importer uses this
+integration for action and settings feedback on both admin pages.
+
+Run `node mini-test/wps-toast-regression.cjs` from the CMS directory with
+Playwright available through `NODE_PATH` and PHP on `PATH` (or set `PHP_BINARY`).
+It uses installed Chrome by default; `WPS_TEST_BROWSER` selects another Playwright
+browser channel. Run `php mini-test/wps-toast-notices.php` for the standalone PHP
+renderer check, and `php mini-test/wps-toast-importer.php` for importer asset hooks
+and settings markup. The browser check uses real framework and plugin assets,
+bundled WordPress jQuery and fake AJAX replies.
+It covers save feedback, retry, queued edits, independent forms, server and dynamic
+notices, dismiss/expiry behavior, and desktop/mobile positioning. It does not
+load WordPress or save settings. Use authenticated admin pages to check field
+labels, tab navigation and the complete page layout.
 
 For WP Optimizer Page Test, run `php cms/tools/wpopt-page-test-regression.php` from
 the site root with the site's PHP runtime. Open the generated

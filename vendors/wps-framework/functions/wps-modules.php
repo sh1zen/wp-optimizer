@@ -10,9 +10,11 @@ use WPS\core\UtilEnv;
 function wps_admin_enqueue_scripts(): void
 {
     $style_asset = UtilEnv::resolve_asset(dirname(__DIR__), 'assets/css/style.css');
+    $toast_asset = UtilEnv::resolve_asset(dirname(__DIR__), 'assets/css/toast.css');
     $script_asset = UtilEnv::resolve_asset(dirname(__DIR__), 'assets/js/core.js');
 
-    wp_register_style('vendor-wps-css', $style_asset['url'], [], wps_core()->debug ? time() : ($style_asset['version'] ?: WPS_VERSION));
+    wp_register_style('vendor-wps-toast-css', $toast_asset['url'], [], wps_core()->debug ? time() : ($toast_asset['version'] ?: WPS_VERSION));
+    wp_register_style('vendor-wps-css', $style_asset['url'], ['vendor-wps-toast-css'], wps_core()->debug ? time() : ($style_asset['version'] ?: WPS_VERSION));
     wp_register_script('vendor-wps-js', $script_asset['url'], ['jquery'], wps_core()->debug ? time() : ($script_asset['version'] ?: WPS_VERSION));
 
     wps_localize([
@@ -25,7 +27,6 @@ function wps_admin_enqueue_scripts(): void
         'wps_reset_module_confirm' => __('Reset %s to factory settings? Current module settings will be overwritten and the cleanup pipeline will run.'),
         'wps_reset_module_success' => __('Module reset completed.'),
         'wps_reset_module_failed'  => __('Module reset failed.'),
-        'autosave_hint'     => __('Changes save automatically.'),
         'autosave_pending'  => __('Unsaved changes'),
         'autosave_saving'   => __('Saving changes…'),
         'autosave_saved'    => __('All changes saved'),

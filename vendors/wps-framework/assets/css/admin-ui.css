@@ -210,33 +210,6 @@ body.wps-admin-screen .wps-admin-ui.wps-admin-app :is(a, button, input, textarea
 }
 body.wps-admin-screen .wps-admin-ui.wps-admin-app [hidden] { display: none !important; }
 
-.wps-admin-ui .wps-save-feedback {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 12px;
-    margin: 0 0 16px;
-    padding: 10px 12px;
-    border: 1px solid #dcdcde;
-    border-left: 3px solid #8c8f94;
-    border-radius: 2px;
-    background: #fff;
-    color: #50575e;
-    font-size: 13px;
-}
-.wps-admin-ui .wps-save-feedback[data-save-state="saved"] { border-left-color: #008a20; }
-.wps-admin-ui .wps-save-feedback[data-save-state="saving"] { border-left-color: #2271b1; }
-.wps-admin-ui .wps-save-feedback[data-save-state="error"] { border-left-color: #b32d2e; color: #b32d2e; }
-body.wps-admin-screen .wps-toast .wps-toast-dismiss {
-    margin-left: 12px;
-    padding: 0 4px;
-    border: 0;
-    background: transparent;
-    color: inherit;
-    font-size: 20px;
-    cursor: pointer;
-}
-
 /* Existing dashboard components use the shared, quiet panel treatment. */
 body.wps-admin-screen .wps-admin-ui.wps-admin-app :is(.wpopt-kpi-card, .wpopt-module-card, .wpfs-stat-card, .wpmc-stat-card) {
     border-color: #dcdcde;

@@ -152,6 +152,7 @@ class Module
     {
     }
 
+    /** Render escaped notice sources for the shared WPS toast controller. */
     public function admin_notices(): void
     {
         if (empty($this->notices)) {
@@ -181,15 +182,11 @@ class Module
             return;
         }
 
-        echo "<div class='wps-admin-notice-host' aria-live='polite' aria-atomic='true'>";
-
         foreach ($rendered_notices as $notice) {
             echo "<div class='notice notice-{$notice['status']} is-dismissible wps-admin-notice'>";
             echo "<p>" . esc_html($notice['message']) . "</p>";
             echo "</div>";
         }
-
-        echo "</div>";
     }
 
     public function cron_validate_settings($input, $filtering = false): array

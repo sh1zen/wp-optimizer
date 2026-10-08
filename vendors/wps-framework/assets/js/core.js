@@ -427,37 +427,50 @@
         return $host;
     }
 
-    function showToast(state, text) {
+    // All action and save feedback shares one host, appearance and lifetime.
+    function showToast(state, text, options = {}) {
         const $host = ensureToastHost();
         const $toast = $("<div/>", {
             "class": "wps-toast is-" + state,
-            text: text
+            role: state === "error" || state === "warning" ? "alert" : "status"
         });
+        const $content = $('<div/>', {'class': 'wps-toast-content'}).appendTo($toast);
+        $('<span/>', {text: text}).appendTo($content);
+        let visibleTimer, dismissTimer, removeTimer;
+        const dismiss = function () {
+            window.clearTimeout(visibleTimer);
+            window.clearTimeout(dismissTimer);
+            window.clearTimeout(removeTimer);
+            $toast.remove();
+        };
 
         $host.append($toast);
 
-        if (state === "error" || state === "warning") {
-            $toast.attr('role', 'alert');
+        if (typeof options.retry === 'function') {
             $('<button/>', {
                 type: 'button',
-                'class': 'wps-toast-dismiss',
-                'aria-label': wps.locale.get('popup_closeLabel', 'Close'),
-                text: '×'
-            }).on('click', function () { $toast.remove(); }).appendTo($toast);
+                'class': 'wps-toast-action',
+                text: wps.locale.get('autosave_retry', 'Retry save')
+            }).on('click', options.retry).appendTo($content);
         }
+        $('<button/>', {
+            type: 'button',
+            'class': 'wps-toast-dismiss',
+            'aria-label': wps.locale.get('popup_closeLabel', 'Close'),
+            text: '×'
+        }).on('click', dismiss).appendTo($toast);
 
-        window.setTimeout(function () {
+        visibleTimer = window.setTimeout(function () {
             $toast.addClass("is-visible");
         }, 10);
 
-        if (state === "error" || state === "warning") return;
-
-        window.setTimeout(function () {
-            $toast.removeClass("is-visible");
-            window.setTimeout(function () {
-                $toast.remove();
-            }, 220);
-        }, 1800);
+        if (!options.persistent && state !== "error" && state !== "warning") {
+            dismissTimer = window.setTimeout(function () {
+                $toast.removeClass("is-visible");
+                removeTimer = window.setTimeout(dismiss, 220);
+            }, 1800);
+        }
+        return {element: $toast, dismiss: dismiss};
     }
 
     wps.showToast = showToast;
@@ -478,9 +491,9 @@
     }
 
     function noticeState($notice) {
-        if ($notice.hasClass("notice-error") || $notice.hasClass("error") || $notice.find(".error").length) return "error";
-        if ($notice.hasClass("notice-warning") || $notice.hasClass("update-nag") || $notice.find(".warning").length) return "warning";
-        if ($notice.hasClass("notice-info")) return "info";
+        if ($notice.is(".notice-error, .error, .wps-notice--error") || $notice.find(".error").length) return "error";
+        if ($notice.is(".notice-warning, .warning, .update-nag, .wps-notice--warning") || $notice.find(".warning").length) return "warning";
+        if ($notice.is(".notice-info, .info") || $notice.find(".info").length) return "info";
 
         return "success";
     }
@@ -538,13 +551,20 @@
 
     function showNoticeElementAsToast(element) {
         const $notice = $(element);
-        const text = ($notice.find("p").first().text() || $notice.text()).trim();
-
-        if (!text) return false;
+        if (!element.isConnected || $notice.is('.inline, .hidden')) return false;
         if ($notice.data("wps-toast-shown")) return false;
 
+        const $messages = $notice.find('p');
+        const messages = ($messages.length ? $messages : $notice).map(function () {
+            return {
+                state: noticeState($notice.is('#wps-ajax-message, #message') ? $(this) : $notice),
+                text: $(this).clone().find('.notice-dismiss').remove().end().text().trim()
+            };
+        }).get().filter(function (message) { return message.text; });
+        if (!messages.length) return false;
+
         $notice.data("wps-toast-shown", true);
-        showToast(noticeState($notice), text);
+        messages.forEach(function (message) { showToast(message.state, message.text); });
 
         if ($notice.is("#wps-ajax-message, #message")) {
             $notice.empty();
@@ -556,12 +576,17 @@
         return true;
     }
 
-    function initServerNoticeToasts() {
-        if (!$body?.hasClass("wps-admin-screen")) return false;
+    // Only transient sources are converted; inline guidance stays in its panel.
+    function transientNoticeSelector() {
+        const sources = '.wps-admin-notice, #wps-ajax-message.wps-notice, #message.wps-notice, [data-wps-notices] .notice, [data-wps-notices] .settings-error';
+        return $body?.hasClass('wps-admin-screen')
+            ? sources + ', #wpbody-content > .notice, #wpbody-content > .updated, #wpbody-content > .error, #wpbody-content > .settings-error'
+            : sources;
+    }
 
+    function initServerNoticeToasts() {
         let shown = false;
-        const $notices = $("#wpbody-content > .notice, #wpbody-content > .updated, #wpbody-content > .error, #wpbody-content > .settings-error")
-            .not(".inline, .hidden");
+        const $notices = $(transientNoticeSelector());
 
         $notices.each(function () {
             shown = showNoticeElementAsToast(this) || shown;
@@ -569,7 +594,7 @@
 
         const params = new URLSearchParams(window.location.search);
 
-        if (params.get("settings-updated") === "true" && !shown) {
+        if ($body?.hasClass('wps-admin-screen') && params.get("settings-updated") === "true" && !shown) {
             showToast("success", wps.locale.get("saved", "Settings Saved"));
             shown = true;
         }
@@ -582,34 +607,31 @@
     }
 
     function initDynamicNoticeToasts() {
-        if (!$body?.hasClass("wps-admin-screen") || !window.MutationObserver) return;
+        if (!window.MutationObserver) return;
 
         const target = document.getElementById("wpbody-content");
         if (!target) return;
 
-        const noticeSelector = ".notice, .updated, .error, .settings-error, #wps-ajax-message.wps-notice, #message.wps-notice";
+        const noticeSelector = transientNoticeSelector();
         const observer = new MutationObserver(function (mutations) {
+            const notices = new Set();
             mutations.forEach(function (mutation) {
+                const parent = mutation.target.nodeType === 1 ? mutation.target : mutation.target.parentElement;
+                $(parent).closest(noticeSelector).each(function () { notices.add(this); });
                 $(mutation.addedNodes).each(function () {
                     if (this.nodeType !== 1) return;
 
                     const $node = $(this);
                     if ($node.is(noticeSelector)) {
-                        showNoticeElementAsToast(this);
+                        notices.add(this);
                     }
 
                     $node.find(noticeSelector).each(function () {
-                        showNoticeElementAsToast(this);
+                        notices.add(this);
                     });
                 });
-
-                if (mutation.type === "characterData" && mutation.target.parentElement) {
-                    const notice = mutation.target.parentElement.closest(noticeSelector);
-                    if (notice) {
-                        showNoticeElementAsToast(notice);
-                    }
-                }
             });
+            notices.forEach(showNoticeElementAsToast);
         });
 
         observer.observe(target, {
@@ -760,21 +782,26 @@
 
     wps.refreshDynamicNav = wpsRefreshDynamicNav;
 
-    // Consumers with their own persistence endpoint can reuse the same feedback.
+    // Consumers keep their save endpoint and update one transient toast per form.
     wps.createSaveFeedback = function (form, retrySave) {
-        const $feedback = $('<div/>', {'class': 'wps-save-feedback'}).prependTo($(form));
-        const $status = $('<span/>', {role: 'status', 'aria-live': 'polite', 'aria-atomic': 'true'}).appendTo($feedback);
-        const $retry = $('<button/>', {
-            type: 'button', 'class': 'button wps-save-retry', hidden: true,
-            text: wps.locale.get('autosave_retry', 'Retry save')
-        }).on('click', retrySave).appendTo($feedback);
-        const update = function (state, text) {
-            $feedback.attr('data-save-state', state);
-            $status.text(text);
-            $retry.prop('hidden', state !== 'error');
+        let toast = null;
+        let currentState = 'idle';
+        let currentText = '';
+        return function (state, text) {
+            if (state === currentState && text === currentText && toast?.element.get(0).isConnected) return;
+            if (toast) toast.dismiss();
+            const wasIdle = currentState === 'idle';
+            currentState = state;
+            currentText = text;
+            toast = null;
+            if (state === 'idle' || (wasIdle && state === 'saved')) return;
+
+            toast = showToast(state === 'saved' ? 'success' : state === 'error' ? 'error' : 'info', text, {
+                persistent: state !== 'saved',
+                retry: state === 'error' ? retrySave : null
+            });
+            toast.element.attr('data-save-state', state);
         };
-        update('idle', wps.locale.get('autosave_hint', 'Changes save automatically.'));
-        return update;
     };
 
     function initWpsAutosaveForm(form) {

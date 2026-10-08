@@ -1,0 +1,107 @@
+/* Shared transient feedback for WPS and its consumers. */
+#wps-toast-host {
+    position: fixed;
+    top: calc(var(--wp-admin--admin-bar--height, 32px) + 18px);
+    right: 24px;
+    display: grid;
+    gap: 8px;
+    width: min(380px, calc(100vw - 52px));
+    z-index: 100000;
+    pointer-events: none;
+}
+
+.wps-toast {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    box-sizing: border-box;
+    width: 100%;
+    min-height: 48px;
+    margin: 0;
+    padding: 12px 14px;
+    border: 1px solid #d0d7de;
+    border-left-width: 4px;
+    border-radius: 8px;
+    background: #ffffff;
+    box-shadow:
+        0 18px 44px rgb(16 24 40 / 18%),
+        0 4px 14px rgb(16 24 40 / 10%);
+    color: #1d2327;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 1.4;
+    opacity: 0;
+    transform: translateY(-6px);
+    transition: opacity 180ms ease, transform 180ms ease;
+    pointer-events: auto;
+}
+
+.wps-toast-content {
+    flex: 1;
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+
+.wps-toast-dismiss {
+    flex: 0 0 auto;
+    margin: -2px -2px 0 0;
+    padding: 0 4px;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    font-size: 20px;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.wps-toast-action {
+    display: block;
+    margin-top: 8px;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    text-decoration: underline;
+    cursor: pointer;
+}
+
+.wps-toast :is(.wps-toast-dismiss, .wps-toast-action):focus-visible {
+    outline: 2px solid #2271b1;
+    outline-offset: 2px;
+}
+
+.wps-toast.is-visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.wps-toast.is-success {
+    border-color: #cfe8cf;
+    border-left-color: #22a35a;
+}
+
+.wps-toast.is-error {
+    border-color: #ebc6c1;
+    border-left-color: #d63638;
+}
+
+.wps-toast.is-warning {
+    border-color: #f3d19e;
+    border-left-color: #f0a020;
+}
+
+.wps-toast.is-info {
+    border-color: #c8d7e1;
+    border-left-color: #2271b1;
+}
+
+@media screen and (max-width: 600px) {
+    #wps-toast-host {
+        left: 16px;
+        right: 16px;
+        top: calc(var(--wp-admin--admin-bar--height, 46px) + 10px);
+        width: calc(100vw - 32px);
+    }
+}

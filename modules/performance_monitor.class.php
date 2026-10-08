@@ -26,8 +26,7 @@ class Mod_Performance_Monitor extends Module
     private const SLOW_QUERY_PER_SIGNATURE_LIMIT = 0;
     private const SLOW_QUERY_DISPLAY_LIMIT = 25;
     private const SLOW_QUERY_SQL_MAX_LENGTH = 1600;
-    private const MAX_REQUEST_HISTORY_ROWS = 10000;
-    private const MAX_SLOW_QUERY_ROWS = 10000;
+    private const DEFAULT_MAX_ENTRIES = 10000;
     private const CACHE_METRICS_OBJ_ID = 'wpopt_perf_cache_cumulative';
     private const CACHE_METRICS_ITEM = 'cumulative_cache_metrics';
     private const CACHE_METRICS_CONTEXT = 'performance_monitor';
@@ -359,8 +358,7 @@ class Mod_Performance_Monitor extends Module
                 case 'reset_history':
                     $this->clear_performance_history();
 
-                    Rewriter::getInstance(admin_url('admin.php'))->add_query_args(array(
-                        'page'    => 'wpopt-' . $this->slug,
+                    Rewriter::getInstance(wps_module_panel_url($this->slug))->add_query_args(array(
                         'message' => 'wpopt-performance-history-reset',
                     ))->redirect();
                     break;
@@ -570,6 +568,7 @@ class Mod_Performance_Monitor extends Module
         global $wpdb;
 
         $request_log_id = 0;
+        $max_entries = $this->get_max_entries();
 
         if (!empty($persistence_plan['request_row']) && !empty($persistence_plan['request_formats'])) {
             $wpdb->insert(
@@ -580,16 +579,16 @@ class Mod_Performance_Monitor extends Module
 
             $request_log_id = (int)$wpdb->insert_id;
 
-            if ($request_log_id > self::MAX_REQUEST_HISTORY_ROWS) {
-                $this->prune_table_to_row_limit(WPOPT_TABLE_REQUEST_PERFORMANCE, self::MAX_REQUEST_HISTORY_ROWS);
+            if ($request_log_id > $max_entries) {
+                $this->prune_table_to_row_limit(WPOPT_TABLE_REQUEST_PERFORMANCE, $max_entries);
             }
         }
 
         if (!empty($persistence_plan['slow_queries'])) {
             $slow_query_insert_id = $this->store_slow_query_samples($request_log_id, $persistence_plan['slow_queries'], $persistence_plan['request_data']);
 
-            if ($slow_query_insert_id > self::MAX_SLOW_QUERY_ROWS) {
-                $this->prune_table_to_row_limit(WPOPT_TABLE_SLOW_QUERIES, self::MAX_SLOW_QUERY_ROWS);
+            if ($slow_query_insert_id > $max_entries) {
+                $this->prune_table_to_row_limit(WPOPT_TABLE_SLOW_QUERIES, $max_entries);
             }
         }
 
@@ -611,6 +610,7 @@ class Mod_Performance_Monitor extends Module
             ),
             $this->group_setting_fields(
                 $this->setting_field(__('Shared request capture', 'wpopt'), false, 'separator'),
+                $this->setting_field(__('Maximum stored entries per table', 'wpopt'), 'monitor.max_entries', 'numeric', array('default_value' => self::DEFAULT_MAX_ENTRIES, 'props' => array('min' => 1, 'step' => 1))),
                 $this->sample_rate_setting_field(),
                 $this->setting_field(__('Slow request threshold (ms)', 'wpopt'), 'monitor.slow_request_ms', 'numeric', array('default_value' => 1500)),
                 $this->setting_field(__('Fast request persistence rate (%)', 'wpopt'), 'monitor.fast_request_sample_rate', 'numeric', array('default_value' => 10)),
@@ -674,6 +674,7 @@ class Mod_Performance_Monitor extends Module
             'monitor.slow_query_store_callers' => __('Keep this disabled for lower overhead. Enable it only if you need the SQL caller backtrace for debugging.', 'wpopt'),
             'monitor.slow_query_caller_max_length' => __('Maximum stored caller backtrace length when SQL caller capture is enabled.', 'wpopt'),
             'monitor.sample_rate'     => __('Shared setting. Sampling is applied before any enabled feature stores request data. 100 means every eligible request is captured.', 'wpopt'),
+            'monitor.max_entries' => __('Maximum records kept in each request-history and Slow SQL table. The oldest entries are removed first. The 24-hour retention window still applies.', 'wpopt'),
             'monitor.slow_request_ms' => __('Shared setting. Requests at or above this threshold are treated as slow. This affects request history and Slow SQL retention.', 'wpopt'),
             'monitor.fast_request_sample_rate' => __('Shared setting. Percent of non-slow requests persisted by enabled request-based collectors. Use 0 to skip fast requests entirely.', 'wpopt'),
             'monitor.request_uri_max_length' => __('Shared storage limit for saved request URIs. Applies to request history and to inline Slow SQL request context when that option is enabled.', 'wpopt'),
@@ -691,6 +692,7 @@ class Mod_Performance_Monitor extends Module
         $monitor = is_array($valid['monitor'] ?? null) ? $valid['monitor'] : array();
         $sections = is_array($monitor['sections'] ?? null) ? $monitor['sections'] : array();
 
+        $valid['monitor']['max_entries'] = max(1, (int)($valid['monitor']['max_entries'] ?? self::DEFAULT_MAX_ENTRIES));
         $valid['monitor']['slow_request_ms'] = max(1, absint($valid['monitor']['slow_request_ms'] ?? 1500));
         $valid['monitor']['sample_rate'] = min(100, max(1, absint($valid['monitor']['sample_rate'] ?? 100)));
         $valid['monitor']['fast_request_sample_rate'] = min(100, max(0, absint($valid['monitor']['fast_request_sample_rate'] ?? 10)));
@@ -1173,7 +1175,7 @@ class Mod_Performance_Monitor extends Module
             <block class="wps wpopt-perf-table">
                 <h3><?php _e('Maintenance', 'wpopt'); ?></h3>
                 <p><?php echo esc_html(__('Only the latest 24 hours are kept. Older performance and slow-query records are removed automatically.', 'wpopt')); ?></p>
-                <form method="post" class="wpopt-perf-actions">
+                <form method="post" action="<?php echo esc_url(wps_module_panel_url($this->slug)); ?>" class="wpopt-perf-actions">
                     <?php RequestActions::nonce_field($this->action_hook); ?>
                     <?php echo RequestActions::get_action_button($this->action_hook, 'reset_history', __('Reset history', 'wpopt'), 'wps wps-button wpopt-btn is-danger'); ?>
                     <a class="wps wps-button wpopt-btn is-info" href="<?php echo esc_url(wps_module_setting_url('wpopt', $this->slug)); ?>"><?php _e('Open settings', 'wpopt'); ?></a>
@@ -1743,6 +1745,12 @@ class Mod_Performance_Monitor extends Module
         return $insert_id;
     }
 
+    /** Resolve the shared storage cap for request history and Slow SQL samples. */
+    private function get_max_entries(): int
+    {
+        return max(1, (int)$this->option('monitor.max_entries', self::DEFAULT_MAX_ENTRIES));
+    }
+
     private function prune_table_to_row_limit(string $table, int $max_rows): int
     {
         global $wpdb;
@@ -1789,8 +1797,9 @@ class Mod_Performance_Monitor extends Module
             )
         );
 
-        $deleted_rows += $this->prune_table_to_row_limit(WPOPT_TABLE_SLOW_QUERIES, self::MAX_SLOW_QUERY_ROWS);
-        $deleted_rows += $this->prune_table_to_row_limit(WPOPT_TABLE_REQUEST_PERFORMANCE, self::MAX_REQUEST_HISTORY_ROWS);
+        $max_entries = $this->get_max_entries();
+        $deleted_rows += $this->prune_table_to_row_limit(WPOPT_TABLE_SLOW_QUERIES, $max_entries);
+        $deleted_rows += $this->prune_table_to_row_limit(WPOPT_TABLE_REQUEST_PERFORMANCE, $max_entries);
         $this->mark_cleanup_history_checked();
 
         return $deleted_rows;

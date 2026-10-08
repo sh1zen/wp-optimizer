@@ -291,93 +291,6 @@ aside.wps {
     border-left-color: #dc3232;
 }
 
-/* Admin notices and transient toast messages. */
-#wps-toast-host,
-.wps-admin-notice-host {
-    position: fixed;
-    top: calc(var(--wp-admin--admin-bar--height, 32px) + 18px);
-    right: 24px;
-    display: grid;
-    gap: 8px;
-    width: min(380px, calc(100vw - 52px));
-    z-index: 100000;
-    pointer-events: none;
-}
-
-.wps-toast,
-.wps-admin-notice-host .notice.wps-admin-notice {
-    box-sizing: border-box;
-    width: 100%;
-    min-height: 48px;
-    margin: 0;
-    padding: 12px 14px;
-    border: 1px solid #d0d7de;
-    border-left-width: 4px;
-    border-radius: 8px;
-    background: #ffffff;
-    box-shadow:
-        0 18px 44px rgb(16 24 40 / 18%),
-        0 4px 14px rgb(16 24 40 / 10%);
-    color: #1d2327;
-    font-size: 13px;
-    font-weight: 600;
-    line-height: 1.4;
-    opacity: 0;
-    transform: translateY(-6px);
-    transition: opacity 180ms ease, transform 180ms ease;
-    pointer-events: auto;
-}
-
-.wps-admin-notice-host .notice.wps-admin-notice {
-    opacity: 1;
-    padding-right: 38px;
-    transform: translateY(0);
-}
-
-.wps-toast p,
-.wps-admin-notice-host .notice.wps-admin-notice p {
-    margin: 0;
-    padding: 0;
-    font-weight: inherit;
-    line-height: inherit;
-}
-
-.wps-toast.is-visible {
-    opacity: 1;
-    transform: translateY(0);
-}
-
-.wps-toast.is-success,
-.wps-admin-notice-host .notice-success.wps-admin-notice {
-    border-color: #cfe8cf;
-    border-left-color: #22a35a;
-    background: #ffffff;
-    color: #1f6f43;
-}
-
-.wps-toast.is-error,
-.wps-admin-notice-host .notice-error.wps-admin-notice {
-    border-color: #ebc6c1;
-    border-left-color: #d63638;
-    background: #ffffff;
-    color: #b32d2e;
-}
-
-.wps-toast.is-warning,
-.wps-admin-notice-host .notice-warning.wps-admin-notice {
-    border-color: #f3d19e;
-    border-left-color: #f0a020;
-    background: #ffffff;
-    color: #8a4b0f;
-}
-
-.wps-admin-notice-host .notice-info.wps-admin-notice {
-    border-color: #c8d7e1;
-    border-left-color: #2271b1;
-    background: #ffffff;
-    color: #1d4f7a;
-}
-
 /* Form controls and WPS inputs. */
 input.wps, textarea.wps, .wps-input {
     padding: 6px 12px;
@@ -955,14 +868,6 @@ body.wps-app-nav-open {
 }
 
 @media screen and (max-width: 600px) {
-    #wps-toast-host,
-    .wps-admin-notice-host {
-        left: 16px;
-        right: 16px;
-        top: calc(var(--wp-admin--admin-bar--height, 46px) + 10px);
-        width: calc(100vw - 32px);
-    }
-
     .wps-app-topbar {
         align-items: center;
         grid-template-columns: minmax(0, 1fr) auto;
@@ -4918,33 +4823,6 @@ body.wps-admin-screen #wpbody-content {
 body.wps-admin-screen #wpbody-content {
     position: relative;
     padding: 0 !important;
-}
-
-body.wps-admin-screen #wpbody-content > :is(.notice, .updated, .error, .settings-error):not(.inline) {
-    position: absolute !important;
-    top: 16px;
-    right: 24px;
-    left: auto;
-    z-index: 100000;
-    width: min(430px, calc(100% - 48px));
-    min-height: 0;
-    margin: 0 !important;
-    padding: 12px 42px 12px 14px !important;
-    border-radius: 10px;
-    background: rgb(255 255 255 / 94%);
-    box-shadow:
-        0 18px 44px rgb(15 23 42 / 24%),
-        0 4px 14px rgb(15 23 42 / 12%);
-    backdrop-filter: blur(10px);
-}
-
-body.wps-admin-screen #wpbody-content > :is(.notice, .updated, .error, .settings-error):not(.inline) p {
-    margin: 0;
-}
-
-body.wps-admin-screen #wpbody-content > :is(.notice, .updated, .error, .settings-error):not(.inline) .notice-dismiss {
-    top: 50%;
-    transform: translateY(-50%);
 }
 
 body.wps-admin-screen #wpfooter {

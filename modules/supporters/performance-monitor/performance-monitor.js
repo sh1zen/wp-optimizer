@@ -1,4 +1,11 @@
 (function () {
+    // Restore the tab after reset through the existing tab handler, without native anchor scrolling.
+    jQuery(function ($) {
+        if (new URLSearchParams(window.location.search).get('message') === 'wpopt-performance-history-reset') {
+            $('.wpopt-performance-monitor-page').closest('.wps-admin-app').find('[role="tab"][aria-controls="performance-maintenance"]').trigger('click');
+        }
+    });
+
     var applyPerformanceMonitorStyles = function (root) {
         Array.prototype.forEach.call(root.querySelectorAll('[data-wpopt-style-bg]'), function (node) {
             var value = node.getAttribute('data-wpopt-style-bg');

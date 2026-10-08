@@ -31,6 +31,7 @@ It brings together the common tools needed to keep a WordPress installation fast
 - **Multisite lifecycle:** network-wide activation, upgrades and deactivation are applied independently to every site while preserving each site's settings, cron state and database-table prefix.
 - **Four-stage Page Test:** scans a site URL with a signed optimization/cache-bypass request, an empty current-configuration pass, a diagnostic warmup and a final measured signed request using the current configuration.
 - **Actionable diagnostics:** the warmup identifies slow or repeated queries, heavier hooks, callback samples and memory/query totals. Runtime HTML transformations use ordered handlers in the WPS `html_output_buffer` service, with PageSpeed processing before final HTML minification.
+- **Performance Monitor storage:** configure **Maximum stored entries per table** under Shared request capture (default: 10,000; minimum: 1). Request history and Slow SQL each keep the newest entries within this limit and the 24-hour retention window.
 
 ### Configuration safety
 
