@@ -11,6 +11,9 @@ headings readable and actions consistent with WordPress. Reserve color for
 selected navigation, focus and meaningful state. Existing dashboard compatibility
 selectors live in the shared stylesheet.
 
+Option rows use the opaque panel surface, including standalone tool blocks that
+sit directly on the admin canvas. Structural page wrappers stay transparent.
+
 Status labels must describe measured state. Do not supply a static `Healthy`
 badge. Explain what a setting changes in its description; the renderer associates
 its name and description with the control. Tabs expose their selected panel and
@@ -51,6 +54,13 @@ It covers save feedback, retry, queued edits, independent forms, server and dyna
 notices, dismiss/expiry behavior, and desktop/mobile positioning. It does not
 load WordPress or save settings. Use authenticated admin pages to check field
 labels, tab navigation and the complete page layout.
+
+Run `node mini-test/wps-option-surfaces.cjs` from the CMS directory with
+Playwright available through `NODE_PATH`. It uses installed Chrome by default
+(`WPS_TEST_BROWSER` selects another channel) and checks the production framework
+and WP Optimizer styles at desktop and mobile widths. It covers opaque option
+rows and hover states, grouped settings, transparent structural wrappers and
+app scoping without loading WordPress or running media actions.
 
 For WP Optimizer Page Test, run `php cms/tools/wpopt-page-test-regression.php` from
 the site root with the site's PHP runtime. Open the generated

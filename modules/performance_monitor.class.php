@@ -27,6 +27,7 @@ class Mod_Performance_Monitor extends Module
     private const SLOW_QUERY_DISPLAY_LIMIT = 25;
     private const SLOW_QUERY_SQL_MAX_LENGTH = 1600;
     private const DEFAULT_MAX_ENTRIES = 10000;
+    private const RETENTION_WINDOW_SIZE = 128;
     private const CACHE_METRICS_OBJ_ID = 'wpopt_perf_cache_cumulative';
     private const CACHE_METRICS_ITEM = 'cumulative_cache_metrics';
     private const CACHE_METRICS_CONTEXT = 'performance_monitor';
@@ -54,7 +55,7 @@ class Mod_Performance_Monitor extends Module
 
     private array $component_load_checkpoint = array();
 
-    private array $instrumented_hook_signatures = array();
+    private array $instrumented_hook_callbacks = array();
 
     private array $callable_component_cache = array();
 
@@ -170,11 +171,7 @@ class Mod_Performance_Monitor extends Module
         add_action('setup_theme', array($this, 'mark_component_load_checkpoint'), PHP_INT_MAX, 0);
         add_action('after_setup_theme', array($this, 'capture_active_theme_footprint'), 1, 0);
 
-        $this->instrument_pending_hook_callbacks();
-
-        foreach (array('plugin_loaded', 'after_setup_theme', 'init', 'wp_loaded', 'admin_init', 'template_redirect', 'rest_api_init') as $hook_name) {
-            add_action($hook_name, array($this, 'instrument_pending_hook_callbacks'), PHP_INT_MAX, 0);
-        }
+        add_action('all', array($this, 'instrument_pending_hook_callbacks'), PHP_INT_MAX, 1);
     }
 
     public function mark_component_load_checkpoint(): void
@@ -212,97 +209,95 @@ class Mod_Performance_Monitor extends Module
         $this->capture_component_load_footprint($theme_keys);
     }
 
-    public function instrument_pending_hook_callbacks(): void
+    /** Instrument the dispatched hook once, rebuilding only when its callbacks change. */
+    public function instrument_pending_hook_callbacks($hook_name = ''): void
     {
         global $wp_filter, $wp_current_filter;
 
-        if (empty($wp_filter) || !is_array($wp_filter)) {
+        $hook_name = (string)$hook_name;
+        $hook = $wp_filter[$hook_name] ?? null;
+        if ($hook_name === 'all' || !is_object($hook) || !property_exists($hook, 'callbacks')) {
             return;
         }
 
-        $running_hooks = is_array($wp_current_filter ?? null) ? array_filter(array_map('strval', $wp_current_filter)) : array();
+        // The target is already on WordPress's stack during the `all` action. Do
+        // not rewrite it during recursive dispatch while an iteration is active.
+        $parent_hooks = is_array($wp_current_filter ?? null) ? array_slice($wp_current_filter, 0, -1) : array();
+        if (in_array($hook_name, $parent_hooks, true)
+            || ($this->instrumented_hook_callbacks[$hook_name] ?? null) === $hook->callbacks) {
+            return;
+        }
 
-        foreach ($wp_filter as $hook_name => $hook) {
-            if (!is_object($hook) || !property_exists($hook, 'callbacks') || empty($hook->callbacks) || in_array((string)$hook_name, $running_hooks, true)) {
+        foreach ((array)$hook->callbacks as $priority => $callbacks) {
+            if (empty($callbacks) || !is_array($callbacks)) {
                 continue;
             }
 
-            foreach ((array)$hook->callbacks as $priority => $callbacks) {
-                if (empty($callbacks) || !is_array($callbacks)) {
+            $original_callbacks = array();
+
+            foreach ($callbacks as $callback_id => $callback) {
+                if ($this->is_profiler_wrapper_id((string)$callback_id)) {
                     continue;
                 }
 
-                $original_callbacks = array();
+                $original_callbacks[$callback_id] = $callback;
+            }
 
-                foreach ($callbacks as $callback_id => $callback) {
-                    if ($this->is_profiler_wrapper_id((string)$callback_id)) {
-                        continue;
-                    }
+            if (empty($original_callbacks)) {
+                $hook->remove_all_filters($priority);
+                continue;
+            }
 
-                    $original_callbacks[$callback_id] = $callback;
-                }
+            $rewritten_callbacks = array();
+            $changed = count($original_callbacks) !== count($callbacks);
 
-                if (empty($original_callbacks)) {
-                    continue;
-                }
-
-                $signature_key = (string)$hook_name . '|' . (string)$priority;
-                $signature = $this->build_hook_callbacks_signature($original_callbacks);
-
-                if (($this->instrumented_hook_signatures[$signature_key] ?? '') === $signature) {
-                    continue;
-                }
-
-                $rewritten_callbacks = array();
-                $changed = count($original_callbacks) !== count($callbacks);
-
-                foreach ($original_callbacks as $callback_id => $callback) {
-                    if (!is_array($callback) || !isset($callback['function'])) {
-                        $rewritten_callbacks[$callback_id] = $callback;
-                        continue;
-                    }
-
-                    $component = $this->resolve_component_from_callable($callback['function']);
-
-                    if (empty($component)) {
-                        $rewritten_callbacks[$callback_id] = $callback;
-                        continue;
-                    }
-
-                    $accepted_args = max(1, absint($callback['accepted_args'] ?? 1));
-                    $before_id = $this->build_profiler_wrapper_id('before', (string)$hook_name, (string)$priority, (string)$callback_id);
-                    $after_id = $this->build_profiler_wrapper_id('after', (string)$hook_name, (string)$priority, (string)$callback_id);
-
-                    $rewritten_callbacks[$before_id] = array(
-                        'function'      => function (...$args) use ($before_id, $component, $hook_name) {
-                            $this->start_component_callback_profile($before_id, (string)$hook_name, $component);
-
-                            return $args[0] ?? null;
-                        },
-                        'accepted_args' => $accepted_args,
-                    );
-
+            foreach ($original_callbacks as $callback_id => $callback) {
+                if (!is_array($callback) || !isset($callback['function'])) {
                     $rewritten_callbacks[$callback_id] = $callback;
-
-                    $rewritten_callbacks[$after_id] = array(
-                        'function'      => function (...$args) use ($before_id, $component, $hook_name) {
-                            $this->stop_component_callback_profile($before_id, (string)$hook_name, $component);
-
-                            return $args[0] ?? null;
-                        },
-                        'accepted_args' => $accepted_args,
-                    );
-
-                    $changed = true;
+                    continue;
                 }
 
-                if ($changed) {
-                    $hook->callbacks[$priority] = $rewritten_callbacks;
+                $component = $this->resolve_component_from_callable($callback['function']);
+
+                if (empty($component)) {
+                    $rewritten_callbacks[$callback_id] = $callback;
+                    continue;
                 }
 
-                $this->instrumented_hook_signatures[$signature_key] = $signature;
+                $accepted_args = max(1, absint($callback['accepted_args'] ?? 1));
+                $before_id = $this->build_profiler_wrapper_id('before', (string)$hook_name, (string)$priority, (string)$callback_id);
+                $after_id = $this->build_profiler_wrapper_id('after', (string)$hook_name, (string)$priority, (string)$callback_id);
+
+                $rewritten_callbacks[$before_id] = array(
+                    'function'      => function (...$args) use ($before_id, $component, $hook_name) {
+                        $this->start_component_callback_profile($before_id, (string)$hook_name, $component);
+
+                        return $args[0] ?? null;
+                    },
+                    'accepted_args' => $accepted_args,
+                );
+
+                $rewritten_callbacks[$callback_id] = $callback;
+
+                $rewritten_callbacks[$after_id] = array(
+                    'function'      => function (...$args) use ($before_id, $component, $hook_name) {
+                        $this->stop_component_callback_profile($before_id, (string)$hook_name, $component);
+
+                        return $args[0] ?? null;
+                    },
+                    'accepted_args' => $accepted_args,
+                );
+
+                $changed = true;
+            }
+
+            if ($changed) {
+                $hook->callbacks[$priority] = $rewritten_callbacks;
             }
         }
+        // Copy-on-write preserves the callback snapshot without hashing every
+        // callback again on subsequent dispatches of an unchanged hook.
+        $this->instrumented_hook_callbacks[$hook_name] = $hook->callbacks;
     }
 
     public function filter_query_custom_data($query_data, $query, $query_time, $query_callstack, $query_start): array
@@ -390,6 +385,7 @@ class Mod_Performance_Monitor extends Module
             }
 
             $success = (false !== $wpdb->query('TRUNCATE TABLE ' . $table)) && $success;
+            delete_transient('wpopt_perf_row_headroom_' . md5($table));
         }
 
         $this->reset_cumulative_cache_metrics();
@@ -571,24 +567,24 @@ class Mod_Performance_Monitor extends Module
         $max_entries = $this->get_max_entries();
 
         if (!empty($persistence_plan['request_row']) && !empty($persistence_plan['request_formats'])) {
-            $wpdb->insert(
+            $inserted = $wpdb->insert(
                 WPOPT_TABLE_REQUEST_PERFORMANCE,
                 $persistence_plan['request_row'],
                 $persistence_plan['request_formats']
             );
 
-            $request_log_id = (int)$wpdb->insert_id;
+            $request_log_id = $inserted === false ? 0 : (int)$wpdb->insert_id;
 
-            if ($request_log_id > $max_entries) {
-                $this->prune_table_to_row_limit(WPOPT_TABLE_REQUEST_PERFORMANCE, $max_entries);
+            if ($request_log_id > 0) {
+                $this->maybe_prune_table_after_write(WPOPT_TABLE_REQUEST_PERFORMANCE, $max_entries, $request_log_id);
             }
         }
 
         if (!empty($persistence_plan['slow_queries'])) {
             $slow_query_insert_id = $this->store_slow_query_samples($request_log_id, $persistence_plan['slow_queries'], $persistence_plan['request_data']);
 
-            if ($slow_query_insert_id > $max_entries) {
-                $this->prune_table_to_row_limit(WPOPT_TABLE_SLOW_QUERIES, $max_entries);
+            if ($slow_query_insert_id > 0) {
+                $this->maybe_prune_table_after_write(WPOPT_TABLE_SLOW_QUERIES, $max_entries, $slow_query_insert_id, count($persistence_plan['slow_queries']) === 1);
             }
         }
 
@@ -1751,6 +1747,36 @@ class Mod_Performance_Monitor extends Module
         return max(1, (int)$this->option('monitor.max_entries', self::DEFAULT_MAX_ENTRIES));
     }
 
+    /** Use bounded primary-key windows between full retention checkpoints. */
+    private function maybe_prune_table_after_write(string $table, int $max_rows, int $insert_id, bool $single_row = true): void
+    {
+        $headroom = get_transient('wpopt_perf_row_headroom_' . md5($table));
+        if ($single_row && is_array($headroom) && ($headroom['limit'] ?? 0) === $max_rows
+            && $insert_id > ($headroom['latest_id'] ?? 0) && $insert_id <= ($headroom['through_id'] ?? 0)) {
+            if (empty($headroom['oldest_ids'])) {
+                return;
+            }
+
+            global $wpdb;
+            $recent = $wpdb->get_row($wpdb->prepare(
+                'SELECT COUNT(*) AS total, COALESCE(MAX(id), 0) AS latest_id FROM (SELECT id FROM '
+                . $table . ' WHERE id > %d ORDER BY id DESC LIMIT %d) AS recent_rows',
+                $headroom['latest_id'], count($headroom['oldest_ids']) + 1
+            ), ARRAY_A);
+            if (is_array($recent) && (int)$recent['total'] > 0
+                && (int)$recent['total'] <= count($headroom['oldest_ids'])
+                && (int)$recent['latest_id'] <= $headroom['through_id']) {
+                // A stable ID cutoff makes concurrent/late deletes idempotent.
+                $wpdb->query($wpdb->prepare('DELETE FROM ' . $table . ' WHERE id <= %d',
+                    $headroom['oldest_ids'][(int)$recent['total'] - 1]));
+                return;
+            }
+        }
+
+        $this->prune_table_to_row_limit($table, $max_rows);
+    }
+
+    /** Retain the newest rows without a descending OFFSET scan, including ID gaps. */
     private function prune_table_to_row_limit(string $table, int $max_rows): int
     {
         global $wpdb;
@@ -1759,23 +1785,50 @@ class Mod_Performance_Monitor extends Module
             return 0;
         }
 
-        $cutoff_id = (int)$wpdb->get_var(
-            $wpdb->prepare(
-                'SELECT id FROM ' . $table . ' ORDER BY id DESC LIMIT 1 OFFSET %d',
-                max(0, $max_rows - 1)
-            )
+        $state = $wpdb->get_row(
+            'SELECT COUNT(*) AS total, COALESCE(MAX(id), 0) AS latest_id FROM ' . $table,
+            ARRAY_A
         );
-
-        if ($cutoff_id <= 0) {
+        if (!is_array($state) || !isset($state['total'], $state['latest_id'])) {
             return 0;
         }
 
-        return (int)$wpdb->query(
-            $wpdb->prepare(
-                'DELETE FROM ' . $table . ' WHERE id < %d',
-                $cutoff_id
-            )
-        );
+        $total = (int)$state['total'];
+        $deleted = 0;
+        if ($total > $max_rows) {
+            $deleted = $wpdb->query($wpdb->prepare(
+                'DELETE FROM ' . $table . ' ORDER BY id ASC LIMIT %d',
+                $total - $max_rows
+            ));
+            if ($deleted === false) {
+                return 0;
+            }
+        }
+
+        $headroom_key = 'wpopt_perf_row_headroom_' . md5($table);
+        $available_rows = max(0, $max_rows - ($total - (int)$deleted));
+        if ($available_rows > 0) {
+            set_transient($headroom_key, array(
+                'limit' => $max_rows,
+                'latest_id' => (int)$state['latest_id'],
+                'through_id' => (int)$state['latest_id'] + $available_rows,
+            ), HOUR_IN_SECONDS);
+        }
+        else {
+            $oldest_ids = $wpdb->get_col($wpdb->prepare(
+                'SELECT id FROM ' . $table . ' ORDER BY id ASC LIMIT %d',
+                min(self::RETENTION_WINDOW_SIZE, $max_rows)
+            ));
+            if ($oldest_ids) {
+                set_transient($headroom_key, array(
+                    'limit' => $max_rows,
+                    'latest_id' => (int)$state['latest_id'],
+                    'through_id' => (int)$state['latest_id'] + count($oldest_ids),
+                    'oldest_ids' => array_map('intval', $oldest_ids),
+                ), HOUR_IN_SECONDS);
+            }
+        }
+        return (int)$deleted;
     }
 
     private function cleanup_history(): int
@@ -2207,7 +2260,7 @@ class Mod_Performance_Monitor extends Module
 
     private function persist_cumulative_cache_metrics(array $request_metrics): void
     {
-        if (!function_exists('update_option')) {
+        if (!function_exists('wps') || !isset(wps('wpopt')->options)) {
             return;
         }
 
@@ -2236,7 +2289,8 @@ class Mod_Performance_Monitor extends Module
         $metrics['started_at'] = $metrics['started_at'] !== '' ? $metrics['started_at'] : $now;
         $metrics['updated_at'] = $now;
 
-        $this->update_persistent_cache_metrics($metrics);
+        wps('wpopt')->options->upsert(self::CACHE_METRICS_OBJ_ID, self::CACHE_METRICS_ITEM,
+            $metrics, self::CACHE_METRICS_CONTEXT);
     }
 
     private function reset_cumulative_cache_metrics(): void
@@ -2256,21 +2310,6 @@ class Mod_Performance_Monitor extends Module
         }
 
         return $metrics;
-    }
-
-    private function update_persistent_cache_metrics(array $metrics): bool
-    {
-        if (!function_exists('wps') || !isset(wps('wpopt')->options)) {
-            return false;
-        }
-
-        $existing = wps('wpopt')->options->get(self::CACHE_METRICS_OBJ_ID, self::CACHE_METRICS_ITEM, self::CACHE_METRICS_CONTEXT, null, false);
-
-        if (maybe_serialize($existing) === maybe_serialize($metrics)) {
-            return true;
-        }
-
-        return wps('wpopt')->options->update(self::CACHE_METRICS_OBJ_ID, self::CACHE_METRICS_ITEM, $metrics, self::CACHE_METRICS_CONTEXT);
     }
 
     private function supports_component_profile_column(): bool
@@ -3076,17 +3115,6 @@ class Mod_Performance_Monitor extends Module
         }
 
         return '';
-    }
-
-    private function build_hook_callbacks_signature(array $callbacks): string
-    {
-        $parts = array();
-
-        foreach ($callbacks as $callback_id => $callback) {
-            $parts[] = (string)$callback_id . ':' . absint($callback['accepted_args'] ?? 0);
-        }
-
-        return md5(implode('|', $parts));
     }
 
     private function build_profiler_wrapper_id(string $type, string $hook_name, string $priority, string $callback_id): string

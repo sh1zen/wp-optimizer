@@ -2,18 +2,25 @@
 namespace WPOptimizer\modules\supporters;
 
 use WPS\core\UtilEnv;
+use WPS\core\StringHelper;
 
 /** Shared asset policy for WP Optimizer's frontend engines. */
 final class FrontendAssets
 {
+    private const MAX_HASH_BYTES = 1048576;
+    private static array $asset_versions = array();
+
     public static function boot(): void
     {
         foreach (array('delete_attachment', 'attachment_updated', 'switch_theme', 'upgrader_process_complete', 'edited_term', 'deleted_term', 'trashed_post', 'deleted_post') as $hook) {
             add_action($hook, array(self::class, 'invalidate'), 30, 0);
         }
-        add_action('save_post', static function ($id) {
-            if (!wp_is_post_revision($id) && !wp_is_post_autosave($id)) { self::invalidate(); }
-        }, 30, 1);
+        // Shared blocks, templates, navigation and styles affect pages beyond the saved post.
+        foreach (array('wp_block', 'wp_template', 'wp_template_part', 'wp_global_styles', 'wp_navigation', 'nav_menu_item') as $type) {
+            add_action('save_post_' . $type, static function ($id) {
+                if (!wp_is_post_revision($id) && !wp_is_post_autosave($id)) { self::invalidate(); }
+            }, 30, 1);
+        }
         add_action('wp_ajax_wps_lcp_measure', array(LcpImages::class, 'receive'));
         add_action('wp_ajax_nopriv_wps_lcp_measure', array(LcpImages::class, 'receive'));
     }
@@ -59,10 +66,7 @@ final class FrontendAssets
 
     public static function matches(string $value, $rules): bool
     {
-        foreach (self::rules($rules) as $rule) {
-            if (stripos($value, $rule) !== false) { return true; }
-        }
-        return false;
+        return StringHelper::contains_any($value, self::rules($rules));
     }
 
     public static function absolute(string $url, string $base): string
@@ -89,10 +93,31 @@ final class FrontendAssets
         return $file && is_file($file) && strpos(wp_normalize_path($file), rtrim(wp_normalize_path($root), '/') . '/') === 0 ? $file : '';
     }
 
+    /** Reuse bounded content hashes; large assets use filesystem metadata without reading bytes. */
     public static function version(string $url): string
     {
         $file = self::local($url);
-        return $url . ($file ? ':' . hash_file('sha256', $file) : ':remote');
+        if (!$file) { return $url . ':remote'; }
+
+        clearstatcache(true, $file);
+        $stat = stat($file);
+        if ($stat === false) { return $url . ':unavailable'; }
+        $signature = hash('sha256', $file . ':' . $stat['size'] . ':' . $stat['mtime'] . ':' . $stat['ctime'] . ':' . $stat['ino'] . ':' . self::revision());
+        if ((self::$asset_versions[$file]['signature'] ?? '') !== $signature) {
+            if ($stat['size'] > self::MAX_HASH_BYTES) {
+                $version = 'stat:' . $signature;
+            }
+            else {
+                $version = wp_cache_get($signature, 'wpopt_asset_versions');
+                if (!is_string($version) || !preg_match('/^[a-f0-9]{64}$/', $version)) {
+                    $version = hash_file('sha256', $file);
+                    if ($version === false) { return $url . ':'; }
+                    wp_cache_set($signature, $version, 'wpopt_asset_versions', HOUR_IN_SECONDS);
+                }
+            }
+            self::$asset_versions[$file] = array('signature' => $signature, 'version' => $version);
+        }
+        return $url . ':' . self::$asset_versions[$file]['version'];
     }
 
     public static function runtime(string $name): string
@@ -116,8 +141,13 @@ final class FrontendAssets
 
     public static function diagnostic(string $feature, array $data): void
     {
-        // An administrator can inspect the last public-page result from module settings.
-        set_transient('wps_frontend_diagnostic_' . $feature, array('page' => self::page(), 'time' => time(), 'details' => $data), DAY_IN_SECONDS);
+        // Persist a sample only when details change, at most once a minute per feature.
+        $key = 'wps_frontend_diagnostic_' . $feature;
+        $previous = get_transient($key);
+        $now = time();
+        if (!is_array($previous) || (($previous['details'] ?? null) !== $data && (int)($previous['time'] ?? 0) <= $now - MINUTE_IN_SECONDS)) {
+            set_transient($key, array('page' => self::page(), 'time' => $now, 'details' => $data), DAY_IN_SECONDS);
+        }
         do_action('wps_frontend_diagnostic', $feature, $data);
     }
 }

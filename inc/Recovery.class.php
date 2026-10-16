@@ -7,6 +7,7 @@ namespace WPOptimizer\core;
 
 use WPS\core\Disk;
 use WPS\core\Settings;
+use WPS\core\Storage;
 
 class Recovery
 {
@@ -416,7 +417,7 @@ class Recovery
     private static function reset_storage_cache(): void
     {
         if (defined('WPOPT_STORAGE')) {
-            Disk::delete(WPOPT_STORAGE . 'cache');
+            (new Storage('wpopt', true, false, false))->delete_old('cache');
             Disk::delete(WPOPT_STORAGE . 'minify');
             Disk::delete(WPOPT_STORAGE . 'direct-static');
         }

@@ -6,7 +6,7 @@ The worker uses the bundled MIT-licensed Sabberworm PHP CSS Parser 8.8.0, stored
 
 On a page with JavaScript, inline handlers or JavaScript links, every selector is preserved unless the administrator explicitly declares a plain selector static. The static list is an assertion that JavaScript never adds it. This conservative first version favors correctness over aggressive reductions. `keep_selectors` overrides the static list. Stylesheet exclusions, conditional/alternate sheets, integrity-protected sheets, remote assets and files larger than 1 MiB remain original. At most 40 local sheets and 12,000 DOM tokens are queued per result.
 
-Original links remain while queued, when assets change, when workers fail, or when output files are absent. Ready outputs replace each stylesheet in place, preserving order and media. A native inline runtime restores the original href on a generated stylesheet load error. Minify skips these immutable outputs. A worker verifies asset hashes and content revisions before publication and publishes atomically. A per-job lock prevents concurrent writes. Ready records live seven days; generated files are retained for at least 30 days and bounded cleanup happens during later successful builds.
+Original links remain while queued, when assets change, when workers fail, or when output files are absent. Ready outputs replace each stylesheet in place, preserving order and media. A native inline runtime restores the original href on a generated stylesheet load error. Minify skips these immutable outputs. A worker verifies asset hashes and content revisions before publication and publishes atomically. A per-job lock prevents concurrent writes. Ready records live seven days; generated files are retained for at least 30 days. Successful builds stream directory entries and delete at most 100 expired regular CSS files, without collecting or sorting the full directory. Recent files do not consume the deletion quota; subsequent builds continue removing the expired backlog.
 
 Used CSS selects rules needed anywhere on the page. It is not Critical CSS and does not select only the initial viewport.
 
@@ -18,6 +18,6 @@ The engine uses WP Optimizer's `FrontendAssets` for asset validation, revisions,
 
 ## Verification
 
-Run `php mini-test/used-css.php` from the CMS root. These isolated checks exercise the real plugin bootstrap, parsing, Cron build and HTML transformation with small WordPress boundary fakes, without booting the site or changing its saved settings.
+Run `php -n tests/used-css-cleanup.php` from the CMS root with PHP 7.4 or newer. These isolated checks exercise frontend-engine bootstrap, parsing, the registered Cron worker, publication and cleanup with small WordPress boundary fakes, without booting the site or changing its saved settings.
 
 Parser source: [Sabberworm PHP CSS Parser 8.8.0](https://github.com/MyIntervals/PHP-CSS-Parser/tree/v8.8.0).

@@ -151,6 +151,7 @@ class Disk
         return true;
     }
 
+    /** Delete a file or purge a directory, allowing for concurrently removed targets. */
     public static function delete($target, $lifetime = 0, $identifier = ''): int
     {
         $target = UtilEnv::realpath($target, true);
@@ -159,9 +160,16 @@ class Disk
             return 0;
         }
 
+        clearstatcache(true, $target);
+
         if (is_file($target)) {
             @unlink($target);
             return 1;
+        }
+
+        // A cache entry may disappear after realpath() resolves it.
+        if (!is_dir($target)) {
+            return 0;
         }
 
         $target = trailingslashit($target);
@@ -200,6 +208,12 @@ class Disk
      */
     private static function deleter(string $path, $lifetime = 0, $recursive = false, string $identifier = '', string $exclude = ''): int
     {
+        // Recheck each directory after locking and before recursive traversal.
+        clearstatcache(true, $path);
+        if (!is_dir($path)) {
+            return 0;
+        }
+
         if (!$handle = @opendir($path)) {
             return 0;
         }

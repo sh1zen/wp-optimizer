@@ -1,6 +1,8 @@
 <?php
 namespace WPOptimizer\modules\supporters;
 
+use WPS\core\StringHelper;
+
 /** Native WordPress defer; opt-in background-script delay with dependency guards. */
 final class ScriptTiming
 {
@@ -13,22 +15,19 @@ final class ScriptTiming
     public function __construct(array $config)
     {
         $this->config = $config;
+        foreach (array('exclude_handles', 'exclude_urls', 'exclude_pages', 'delay_handles', 'delay_urls') as $key) {
+            $this->config[$key] = FrontendAssets::rules($config[$key] ?? array());
+        }
         add_action('wp_print_scripts', array($this, 'plan'), 0);
         add_action('wp_print_footer_scripts', array($this, 'plan'), 0);
         add_filter('script_loader_tag', array($this, 'tag'), PHP_INT_MAX, 3);
         add_action('shutdown', array($this, 'report'));
     }
 
-    private function excluded(string $handle, string $url): bool
-    {
-        return in_array($handle, FrontendAssets::rules($this->config['exclude_handles'] ?? array()), true)
-            || FrontendAssets::matches($url, $this->config['exclude_urls'] ?? array());
-    }
-
     public function plan(): void
     {
         global $wp_version;
-        if (!FrontendAssets::eligible() || FrontendAssets::matches(FrontendAssets::page(), $this->config['exclude_pages'] ?? array())
+        if (!FrontendAssets::eligible() || StringHelper::contains_any(FrontendAssets::page(), $this->config['exclude_pages'])
             || !apply_filters('wps_script_timing_allowed', true)) { return; }
         $scripts = wp_scripts();
         $active = array();
@@ -39,14 +38,17 @@ final class ScriptTiming
         };
         foreach ($scripts->queue as $handle) { $visit($handle); }
         $selected = array();
+        $excluded = array();
         foreach ($active as $handle => $script) {
             $url = (string)$script->src;
             $reason = 'immediate: not selected for delay';
             // Interactive infrastructure remains available before any visitor action.
             $critical = preg_match('~jquery|consent|cookie|checkout|woocommerce|wc-|captcha|form|contact|menu|navigation|wps-~i', $handle . ' ' . $url);
-            $allow = in_array($handle, FrontendAssets::rules($this->config['delay_handles'] ?? array()), true)
-                || FrontendAssets::matches($url, $this->config['delay_urls'] ?? array());
-            if ($this->excluded($handle, $url)) { $reason = 'immediate: manual exclusion'; }
+            $allow = in_array($handle, $this->config['delay_handles'], true)
+                || StringHelper::contains_any($url, $this->config['delay_urls']);
+            $excluded[$handle] = in_array($handle, $this->config['exclude_handles'], true)
+                || StringHelper::contains_any($url, $this->config['exclude_urls']);
+            if ($excluded[$handle]) { $reason = 'immediate: manual exclusion'; }
             elseif ($critical) { $reason = 'immediate: interactive infrastructure'; }
             elseif (!empty($this->config['delay']) && $allow && $url !== '' && !in_array($handle, $scripts->done, true)) {
                 // Localized data is printed outside script_loader_tag. Never detach a potentially executable block.
@@ -83,7 +85,7 @@ final class ScriptTiming
         foreach ($selected as $handle => $_) { wp_script_add_data($handle, 'wps_delay_selected', true); }
         foreach ($active as $handle => $script) {
             if (isset($this->delayed[$handle]) || !empty($script->extra['wps_delay_selected'])) { continue; }
-            if (!empty($this->config['defer']) && !$this->excluded($handle, (string)$script->src)
+            if (!empty($this->config['defer']) && !$excluded[$handle]
                 && !preg_match('~jquery|consent|cookie|checkout|woocommerce|wc-|captcha|form|contact|menu|navigation~i', $handle . ' ' . $script->src)
                 && empty($script->extra['strategy']) && version_compare($wp_version, '6.3', '>=')) {
                 wp_script_add_data($handle, 'strategy', 'defer');

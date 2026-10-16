@@ -189,6 +189,18 @@ class Options
 
     public function add($obj_id, $option, $value = false, string $context = 'core', int $expiration = 0, $container = null): bool
     {
+        return $this->write_option($obj_id, $option, $value, $context, $expiration, $container, true);
+    }
+
+    /** Persist an already-computed value without reading it or replacing the row identity. */
+    public function upsert($obj_id, $option, $value = false, string $context = 'core', int $expiration = 0): bool
+    {
+        return $this->write_option($obj_id, $option, $value, $context, $expiration, null, false);
+    }
+
+    /** Share serialization, expiry, lock retries and cache publication for option writes. */
+    private function write_option($obj_id, $option, $value, string $context, int $expiration, $container, bool $replace): bool
+    {
         if (empty($option) or !$obj_id) {
             return false;
         }
@@ -222,15 +234,17 @@ class Options
 
         global $wpdb;
 
+        $operation = $replace ? 'REPLACE' : 'INSERT';
+        $on_duplicate = $replace ? '' : ' ON DUPLICATE KEY UPDATE value = VALUES(value), expiration = VALUES(expiration), container = VALUES(container)';
         $result = $this->execute_with_db_lock_retries(
             $wpdb->prepare(
-                "REPLACE INTO " . $this->table_name() . " (obj_id, context, item, value, container, expiration)
-                VALUES (%s, %s, %s, %s, {$container_sql}, %d)",
+                "$operation INTO " . $this->table_name() . " (obj_id, context, item, value, container, expiration)
+                VALUES (%s, %s, %s, %s, {$container_sql}, %d)" . $on_duplicate,
                 ...$query_params
             )
         );
 
-        if (!$result) {
+        if ($result === false || ($replace && !$result)) {
             return false;
         }
 

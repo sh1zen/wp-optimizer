@@ -104,6 +104,7 @@ function wps_error_handler_should_notify(string $file, int $line, string $error)
     return true;
 }
 
+/** Track reportable errors for a component, respecting PHP's active reporting mask. */
 function wps_error_handler($hook, ?callable $callback = null, $notify_dev = true, array $tracking_context = []): void
 {
     static $index = 0;
@@ -111,6 +112,11 @@ function wps_error_handler($hook, ?callable $callback = null, $notify_dev = true
     $index++;
 
     $error_handler = (function ($nro, $string, $file, $line) use ($index, $callback, $hook, $notify_dev, $tracking_context) {
+
+        // PHP invokes custom handlers even for errors excluded by error_reporting() or @.
+        if (!(error_reporting() & $nro)) {
+            return false;
+        }
 
         global $wp_version;
 

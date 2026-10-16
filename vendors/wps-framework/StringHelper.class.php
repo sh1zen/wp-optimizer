@@ -12,6 +12,21 @@ class StringHelper
     private static string $REPLACER_HASH = 'e8c6d78284cffb10afdfeea37929bd75';
 
     /**
+     * Match literal substrings case-insensitively; callers prepare the string list once.
+     * @param string[] $needles
+     */
+    public static function contains_any(string $value, array $needles): bool
+    {
+        foreach ($needles as $needle) {
+            if (stripos($value, $needle) !== false) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
      * Internal helper function to escape a string before usage
      *
      * @param string $str String to sanitize.

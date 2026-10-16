@@ -201,27 +201,29 @@ class DBSupport
         return substr($option_name, 0, 191);
     }
 
+    /** Read autoload and table totals from one aggregate snapshot. */
     public static function get_options_autoload_summary(): array
     {
         global $wpdb;
 
         $autoload_placeholders = implode(', ', array_fill(0, count(self::AUTOLOAD_ENABLED_VALUES), '%s'));
 
-        $autoload = $wpdb->get_row(
+        $summary = $wpdb->get_row(
                 $wpdb->prepare(
-                        "SELECT COUNT(*) AS autoload_count, COALESCE(SUM(LENGTH(option_value)), 0) AS autoload_size FROM {$wpdb->options} WHERE autoload IN ($autoload_placeholders)",
-                        self::AUTOLOAD_ENABLED_VALUES
+                        "SELECT COUNT(CASE WHEN autoload IN ($autoload_placeholders) THEN 1 END) AS autoload_count,
+                            COALESCE(SUM(CASE WHEN autoload IN ($autoload_placeholders) THEN LENGTH(option_value) ELSE 0 END), 0) AS autoload_size,
+                            COALESCE(SUM(LENGTH(option_value)), 0) AS total_size, COUNT(*) AS total_count
+                            FROM {$wpdb->options}",
+                        array_merge(self::AUTOLOAD_ENABLED_VALUES, self::AUTOLOAD_ENABLED_VALUES)
                 ),
                 ARRAY_A
         );
 
-        $autoload_size = (int)($autoload['autoload_size'] ?? 0);
-
         return array(
-                'autoload_count' => (int)($autoload['autoload_count'] ?? 0),
-                'autoload_size'  => $autoload_size,
-                'total_size'     => (int)$wpdb->get_var("SELECT COALESCE(SUM(LENGTH(option_value)), 0) FROM {$wpdb->options}"),
-                'total_count'    => (int)$wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->options}"),
+                'autoload_count' => (int)($summary['autoload_count'] ?? 0),
+                'autoload_size'  => (int)($summary['autoload_size'] ?? 0),
+                'total_size'     => (int)($summary['total_size'] ?? 0),
+                'total_count'    => (int)($summary['total_count'] ?? 0),
         );
     }
 

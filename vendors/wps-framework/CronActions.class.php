@@ -428,6 +428,37 @@ class CronActions
             }
         }
 
+        // Ensure persisted callbacks can be found and removed by WordPress Cron.
+        $crons = _get_cron_array();
+        $cron_array_edited = false;
+
+        foreach ($crons as $timestamp => $cron) {
+            foreach ($cron as $hook => $scheduled_events) {
+                if (!isset($events[$hook])) {
+                    continue;
+                }
+
+                foreach ($scheduled_events as $signature => $scheduled_event) {
+                    $key = md5(serialize($scheduled_event['args']));
+
+                    if ($signature === $key) {
+                        continue;
+                    }
+
+                    if (!isset($crons[$timestamp][$hook][$key])) {
+                        $crons[$timestamp][$hook][$key] = $scheduled_event;
+                    }
+
+                    unset($crons[$timestamp][$hook][$signature]);
+                    $cron_array_edited = true;
+                }
+            }
+        }
+
+        if ($cron_array_edited and !self::save_cron_array($crons)) {
+            wps_log('CronActions:: unable to save corrected cron event signatures', 'cron', 'error');
+        }
+
         update_option('wps#cron-events', array_filter($events), 'no');
     }
 

@@ -20,7 +20,10 @@ It brings together the common tools needed to keep a WordPress installation fast
 
 - **Per-page Used CSS:** the PageSpeed module builds reduced local stylesheets through WordPress Cron. WP Optimizer owns the engine and its bundled, isolated CSS parser. See [Used CSS](docs/used-css.md) for loading, safety rules and verification.
 - **Frontend engines:** WP Optimizer owns LCP learning, image priority and script defer/delay, including their browser runtimes and asset policy. See [frontend performance](docs/frontend-performance.md) for loading, configuration and verification.
-- **Layered cache storage:** the shared WPS cache uses request memory first, Redis (or Memcached) when available, and WPS `Storage` as the durable fallback under `WP_CONTENT_DIR/cache`. Positive lifetimes are applied to both remote and disk entries; a zero lifetime is request-local and is not persisted. WP Optimizer's static page, `WP_Query` and database-query caches continue to use their dedicated WPS Storage groups and independent lifetime, purge and exclusion rules.
+- **Local asset minification:** the Minify module queues cold CSS/JS assets for WordPress Cron and serves their original URLs until generated files are ready. Its worker uses a nonblocking per-asset lock and publishes complete files atomically. See [performance pipeline](PIPELINE.md) for processing and failure behavior.
+- **Layered cache storage:** the shared WPS cache uses request memory first, Redis (or Memcached) when available, and WPS `Storage` as the durable fallback under `WP_CONTENT_DIR/cache`. Durable writes use the remote backend first and write disk only if that backend is absent or its write fails. Successful remote writes remove any previous fallback copy; remote-only entries are rebuilt on cache misses during an outage. The WordPress object-cache drop-in persists its default zero-expiry entries until invalidation. Positive lifetimes apply to the selected backend. Ordinary WPS callers keep zero lifetimes request-local. WP Optimizer's static page, `WP_Query` and database-query caches use their dedicated WPS Storage groups and independent lifetime, purge and exclusion rules.
+- **Bulk object-cache reads:** WPS fetches request-memory misses in one Redis or Memcached bulk call. Redis group indexes follow member lifetimes, migrate existing indexes incrementally and flush in batches. Redis requires permission to run Lua scripts and their cache/index commands. See [performance processing](PIPELINE.md#object-cache).
+- **Static hit maintenance:** PHP-served hits retain exact rule counters and persist them during shutdown after completing the response on FastCGI/LiteSpeed. Other SAPIs flush output but may keep the connection attached. Direct index files are written only when missing or changed. See [performance processing](PIPELINE.md#static-cache-hits).
 - **Safe compatibility defaults:** compatible with WooCommerce and with editing and preview flows from Elementor, Beaver Builder, Divi, Gutenberg, Bricks, Oxygen and Breakdance. Builder requests bypass cache and output optimization, preserving generated assets and markup.
 - **Protected and extensible behavior:** built-in exclusions cannot be removed, but filters can add project-specific routes, request signatures and assets. Invalid or missing direct-cache configuration is regenerated in a disabled fail-safe state.
 
@@ -54,6 +57,139 @@ External plugins, themes, importers and maintenance scripts can use the document
 
 WP Optimizer registers modules through the explicit catalog in `inc/module-catalog.php`. The catalog declares one relative module directory and namespace; each module entry contains only its display name and scopes. The entry slug deterministically produces `<slug>.class.php` and `WPOptimizer\modules\Mod_<slug>`, so file paths and classes are never duplicated per module. The bundled WPS framework normalizes the catalog into one compact, request-shared registry and loads module files on demand. New top-level module classes must follow this convention and be registered explicitly; unregistered files are ignored and there is no discovery fallback.
 
+
+## Cache deletion regression check
+
+From the CMS root, run `php -n mini-test/disk-delete.php` with PHP 8.3 or newer.
+The isolated check exercises the shared WPS `Disk` and `Storage` classes for
+single-entry deletion, missing targets, concurrent removal or replacement,
+recursive group purges and expiry purges. It uses temporary cache fixtures and
+requires no WordPress bootstrap, database or network.
+
+## Error tracking and storage cleanup regression check
+
+From the CMS root, run `php -n mini-test/wps-error-handler.php` with PHP 8.0 or newer.
+WPS error tracking respects PHP's active `error_reporting()` mask, including `@`
+suppression, before invoking callbacks, recording notifications or chaining handlers.
+The isolated check covers native missing-file warnings after a competing removal,
+suppressed unserialize warnings for trailing bytes and malformed records, visible
+warnings, stacked handlers, expired and invalid cache entries, zero-retention cleanup,
+single-entry deletion, group and expiry purges, and public media cleanup.
+It requires no WordPress bootstrap, database or network.
+
+## Storage publication regression check
+
+From the CMS root, run `php -n tests/storage-publication.php` and
+`php -n tests/storage-publication.php --native` with PHP 7.4 or newer.
+Storage writes each serialized record to a unique temporary file beside the entry,
+checks the complete write and flush, closes it and renames it into place. Concurrent
+readers see a complete published entry or a cache miss. Write and publication
+failures return false and leave an existing entry intact. The record format and
+expiry policies are shared by immediate writes, shutdown autosave and Cache's
+disk fallback. See [storage publication](PIPELINE.md#storage-publication).
+
+The isolated tests reproduce the extra-byte corruption from overlapping direct
+writes, then interleave real Storage calls through a filesystem boundary wrapper
+backed by native temporary files. They cover competing writers, concurrent readers,
+open/short-write/flush/rename failures, temporary-file cleanup, exceptions, autosave
+and disk fallback. The native mode verifies publication directly on the local
+filesystem. No WordPress bootstrap, database, remote backend or network is required.
+
+## Storage race regression check
+
+Run `php -n tests/storage-races.php` from the CMS root with PHP 7.4 or newer and
+CLI process creation enabled. This isolated check covers stale expired snapshots,
+memory hydration after replacement, directory detachment and recreation, multisite
+invalidation, and independent PHP processes contending on publication and age purges.
+`storage-publication.php` also covers malformed snapshots, failed reads and lock
+failures. No WordPress bootstrap, database or network is required.
+
+Storage coordinates mutations with a persistent lock per namespace under
+`WP_CONTENT_DIR/.wps-storage-locks`. This directory must be writable by PHP and
+remain outside cache-group purges. Lock setup/acquisition failures raise a contextual
+exception. Ordinary disk reads are lock-free; snapshot cleanup and memory hydration
+verify the current bytes under the mutation lock. See
+[storage publication](PIPELINE.md#storage-publication) for ordering and purge behavior.
+
+## Indexed cache and Used CSS cleanup regression checks
+
+From the CMS root, run `php -n tests/cache-cleanup.php` and
+`php -n tests/used-css-cleanup.php` with PHP 7.4 or newer. The isolated checks
+cover batched rule, path and dependency purges, disk/index expiry reconciliation,
+recent writes, site isolation and SQL errors. They also exercise the registered
+Used CSS worker, its real parser and publication, the 30-day retention policy,
+the 100-deletion limit and progress past recent files. They use temporary disk
+fixtures and WordPress/SQL boundary fakes; no database or network is required.
+
+## HTML minifier regression check
+
+HTML minification uses `xxh3` for temporary placeholder identifiers when available
+and `md5` otherwise. From the CMS root, run `php -n mini-test/minify-html.php`
+with PHP 7.4 and a current PHP runtime to check both algorithm paths. The isolated
+check covers whitespace minification, protected content, placeholder restoration
+and comment options without a WordPress bootstrap, database or network.
+
+## Performance regression check
+
+From the CMS root, run `php -n tests/wp-optimizer-performance.php` with PHP 7.4
+or newer. The isolated suite exercises the database drop-in with real WPS disk
+storage, scheduled CSS/JS minification, lock contention, atomic publication,
+failure reporting and retry, scheduled-job cleanup and diagnostic sampling.
+It uses WordPress and SQL boundary fakes and requires no database or network.
+
+## Object-cache regression check
+
+From `tests`, install the development-only Lua interpreter with
+`pnpm install --frozen-lockfile --ignore-scripts --node-linker=hoisted --store-dir=.pnpm-store --config.enable-global-virtual-store=false`.
+Then, from the CMS root, run `php -n tests/object-cache.php` with PHP 7.4 or newer and Node.js on PATH.
+`WPOPT_TEST_NODE` can specify the Node executable explicitly. The suite exercises
+the actual drop-in, WPS Cache, Storage and Redis/Memcached drivers, including
+command counts, false/null values, cloning, expiry, group isolation and fallback.
+Default-expiry writes are checked across cold request instances with Redis,
+Memcached and disk-only storage, including replacement and nonpersistent groups.
+It also checks repeated memory-hit adds without persistent I/O, disk write
+counts, failed remote writes, recovery and retirement of stale fallback copies.
+Fengari executes the production Redis Lua script against an in-memory command
+fake to test index expiry, legacy migration and batched deletion. Installation
+requires registry access; the tests themselves require no network, cache server
+or credentials. The manifest and lockfile under `tests` are development-only.
+
+## Query-cache and monitoring regression check
+
+From the CMS root, run `php -n tests/cache-monitor.php` with PHP 7.4 or newer.
+The suite uses the adjacent WordPress hook dispatcher and query/post classes with
+isolated settings, term-query, storage and SQL boundaries. It checks dependency
+contents, term lookup counts, bounded index inserts, callback ordering and late
+registration, recursive dispatch, row limits, ID gaps/resets and failure handling.
+It covers 128 consecutive full-table inserts without a full recount, cumulative
+metrics through real WPS Options, and subprocess cache-hit/shutdown paths with
+response-completion, disk-write and SQL counts. Boundary fakes isolate the server
+finish API, platform writability flags and database; index files use real I/O.
+It also checks targeted post-save purges and shared frontend invalidation.
+It requires no WordPress bootstrap, database, cache server or network.
+
+## LCP fingerprint regression check
+
+From the CMS root, run `php -n tests/frontend-versions.php` with PHP 7.4 or newer.
+The suite uses real WordPress HTML parsing and WPS disk cache fixtures to check
+duplicate candidates, digest reuse across cold requests, the 1 MiB hashing limit,
+metadata/revision changes, hash failures, URL boundaries and learned preloads.
+It requires no WordPress bootstrap, database or network.
+
+## Planning and summary regression checks
+
+From the CMS root, run `php -n tests/optimizer-planning.php` with PHP 7.4 or
+newer. The offline suite checks prepared CSS/script rules, multi-file CSS jobs,
+late script dependencies, cache-rule precedence and normalization counts,
+nested/flat and dotted settings, shared layer validation, schema/field order,
+layer-specific invalidation, query-type ordering and the single-statement
+autoload summary. It uses the real CSS parser, WordPress hook/script registry and WPS
+settings with isolated configuration and SQL boundaries.
+
+Run `python tests/autoload-summary.py` to execute the generated aggregate
+against in-memory SQLite fixtures, comparing all four totals with the existing
+reference queries. Python 3.8 or newer is required; `--php /path/to/php` selects a
+PHP executable outside PATH. Both checks require no live database or network.
 
 ## Support
 This repository is not suitable for support. Please don't use our issue tracker for support requests. Support can take 

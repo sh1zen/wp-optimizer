@@ -267,12 +267,12 @@ class Mod_Pagespeed extends Module
 
     protected function print_header(): string
     {
-        $markup = '<details><summary>' . esc_html__('Last public-page optimization diagnostics', 'wpopt') . '</summary>';
+        $markup = '<details><summary>' . esc_html__('Sampled public-page optimization diagnostics', 'wpopt') . '</summary>';
         foreach (array('lcp', 'scripts', 'css') as $feature) {
             $result = get_transient('wps_frontend_diagnostic_' . $feature);
             if ($result) { $markup .= '<h3>' . esc_html(strtoupper($feature)) . '</h3><pre style="white-space:pre-wrap;overflow-wrap:anywhere">' . esc_html(wp_json_encode($result, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES)) . '</pre>'; }
         }
-        return $markup . '<p>' . esc_html__('Diagnostics show the last generated public request. Purge page caches to inspect a fresh response after changing settings.', 'wpopt') . '</p></details>';
+        return $markup . '<p>' . esc_html__('Diagnostics update when results change, at most once per minute per feature. Purge page caches to process a fresh response after changing settings.', 'wpopt') . '</p></details>';
     }
 
     private function add_lazy_loading(string $buffer, string $tag): string

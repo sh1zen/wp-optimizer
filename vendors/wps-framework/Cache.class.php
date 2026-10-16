@@ -21,6 +21,7 @@ class Cache
     private string $blog_prefix = '';
     private string $context;
     private bool $use_storage_fallback;
+    private bool $persist_zero_expiry;
     private array $global_groups = [];
     private array $non_persistent_groups = [];
 
@@ -28,11 +29,13 @@ class Cache
         $context,
         $use_persistent_cache = false,
         $use_multisite_prefix = true,
-        $use_storage_fallback = true
+        $use_storage_fallback = true,
+        $persist_zero_expiry = false
     )
     {
         $this->is_multisite = $use_multisite_prefix && is_multisite();
         $this->use_storage_fallback = (bool)$use_storage_fallback;
+        $this->persist_zero_expiry = (bool)$persist_zero_expiry;
 
         if ($this->is_multisite) {
             $this->switch_to_blog();
@@ -44,7 +47,7 @@ class Cache
 
             require_once WPS_DRIVERS_PATH . 'cache/CacheInterface.class.php';
 
-            $this->driver = Drivers\CacheInterface::initialize();
+            $this->driver = Drivers\CacheInterface::initialize($this->persist_zero_expiry);
         }
     }
 
@@ -110,13 +113,16 @@ class Cache
         }
     }
 
-    public function get($key, $group = 'default', $default = false, $clone_objects = true)
+    /** Return the value and its hit status from a single lookup through the cache layers. */
+    public function get($key, $group = 'default', $default = false, $clone_objects = true, &$found = null)
     {
+        $found = false;
         $group = $this->filter_group($group);
 
         if ($this->has_volatile($key, $group)) {
 
             $this->hits++;
+            $found = true;
 
             if ($clone_objects and is_object($this->cache[$group][$key])) {
                 return clone $this->cache[$group][$key];
@@ -125,44 +131,67 @@ class Cache
             return $this->cache[$group][$key];
         }
 
+        $not_found = new \stdClass();
+        $res = $not_found;
         if ($this->is_persistent() && !isset($this->non_persistent_groups[$group])) {
-            $not_found = new \stdClass();
             $res = $this->driver->get($key, $group, $not_found);
+        }
 
-            if ($res !== $not_found) {
+        return $this->resolve_loaded_value($key, $group, $res, $not_found, $default, $clone_objects, $found);
+    }
+
+    /** Read memory first, then fetch all remaining remote keys in one backend call. */
+    public function get_multiple(array $keys, $group = 'default', $default = false, $clone_objects = true): array
+    {
+        $group = $this->filter_group($group);
+        $pending = array();
+        $local = array();
+        foreach ($keys as $key) {
+            if ($this->has_volatile($key, $group)) { $local[$key] = $this->cache[$group][$key]; }
+            else { $pending[$key] = $key; }
+        }
+        $not_found = new \stdClass();
+        $remote = array();
+        if ($pending && $this->is_persistent() && !isset($this->non_persistent_groups[$group])) {
+            $remote = $this->driver->get_multiple(array_values($pending), $group, $not_found);
+        }
+        $values = array();
+        foreach ($keys as $key) {
+            if (array_key_exists($key, $local)) {
                 $this->hits++;
-                $this->set_volatile($key, $res, $group, true);
-
-                if ($clone_objects && is_object($this->cache[$group][$key])) {
-                    return clone $this->cache[$group][$key];
-                }
-
-                return $this->cache[$group][$key];
+                $value = $local[$key];
+                $values[$key] = $clone_objects && is_object($value) ? clone $value : $value;
+            } else {
+                $value = array_key_exists($key, $remote) ? $remote[$key] : $not_found;
+                $values[$key] = $this->resolve_loaded_value($key, $group, $value, $not_found, $default, $clone_objects);
             }
         }
+        return $values;
+    }
 
-        $storage_hit = false;
+    /** Resolve remote misses through Storage and warm memory with identical read semantics. */
+    private function resolve_loaded_value($key, string $group, $res, $not_found, $default, bool $clone_objects, &$found = null)
+    {
+        $found = false;
         $remaining_lifetime = 0;
-        $res = $this->get_from_storage($key, $group, $storage_hit, $remaining_lifetime);
-
-        if ($storage_hit) {
-            $this->hits++;
-            $this->set_volatile($key, $res, $group, true, $remaining_lifetime);
-
-            if ($this->is_persistent() && !isset($this->non_persistent_groups[$group])) {
-                $this->driver->set($key, $res, $group, true, $remaining_lifetime);
+        $storage_hit = false;
+        if ($res === $not_found) {
+            $res = $this->get_from_storage($key, $group, $storage_hit, $remaining_lifetime);
+            if (!$storage_hit) {
+                $this->miss++;
+                return $default;
             }
-
-            if ($clone_objects && is_object($this->cache[$group][$key])) {
-                return clone $this->cache[$group][$key];
-            }
-
-            return $this->cache[$group][$key];
         }
-
-        $this->miss++;
-
-        return $default;
+        $this->hits++;
+        $found = true;
+        $this->set_volatile($key, $res, $group, true, $remaining_lifetime);
+        if ($storage_hit && $this->is_persistent() && !isset($this->non_persistent_groups[$group])) {
+            if ($this->driver->set($key, $res, $group, true, $remaining_lifetime)) {
+                $this->delete_storage($key, $group);
+            }
+        }
+        return $clone_objects && is_object($this->cache[$group][$key])
+            ? clone $this->cache[$group][$key] : $this->cache[$group][$key];
     }
 
     private function has_volatile($key, $group): bool
@@ -219,12 +248,13 @@ class Cache
     {
         $group = $this->filter_group($group);
         $expire = max(0, (int)$expire);
-        $use_persistent = $expire > 0 && $this->is_persistent() && !isset($this->non_persistent_groups[$group]);
+        $persist = $expire > 0 || $this->persist_zero_expiry;
+        $use_persistent = $persist && $this->is_persistent() && !isset($this->non_persistent_groups[$group]);
         $volatile_exists = $this->has_volatile($key, $group);
         $persistent_exists = $use_persistent && $this->driver->has($key, $group);
         $storage_exists = false;
 
-        if ($expire > 0) {
+        if ($persist && !$volatile_exists && !$persistent_exists) {
             $remaining_lifetime = 0;
             $this->get_from_storage($key, $group, $storage_exists, $remaining_lifetime);
         }
@@ -235,18 +265,7 @@ class Cache
 
         $stored = $this->set_volatile($key, $value, $group, true, $expire);
 
-        if ($use_persistent && !($value instanceof \Closure)) {
-            if ($persistent_exists) {
-                $this->driver->replace($key, $value, $group, $expire);
-            }
-            else {
-                $this->driver->set($key, $value, $group, true, $expire);
-            }
-        }
-
-        if ($expire > 0 && !($value instanceof \Closure)) {
-            $this->set_storage($key, $value, $group, $expire);
-        }
+        $this->persist_value($key, $value, $group, $expire, $persistent_exists);
 
         return $stored;
     }
@@ -257,40 +276,58 @@ class Cache
     }
 
     /**
-     * Store values in request memory. A positive expiration also writes through to
-     * the remote driver and the Storage fallback; zero stays request-local only.
+     * Serve add checks from memory first; persist through the remote driver or disk fallback.
      */
     public function set($key, $value, $group = 'default', $force = false, $expire = false): bool
     {
         $group = $this->filter_group($group);
         $expire = max(0, (int)$expire);
-        $use_persistent = $expire > 0 && $this->is_persistent() && !isset($this->non_persistent_groups[$group]);
+        $persist = $expire > 0 || $this->persist_zero_expiry;
+        $use_persistent = $persist && $this->is_persistent() && !isset($this->non_persistent_groups[$group]);
         $storage_exists = false;
-
-        if (!$force && $expire > 0) {
-            $remaining_lifetime = 0;
-            $this->get_from_storage($key, $group, $storage_exists, $remaining_lifetime);
-        }
 
         if (!$force && ($this->has_volatile($key, $group)
                 || ($use_persistent && $this->driver->has($key, $group))
-                || $storage_exists
             )) {
             return false;
         }
 
+        if (!$force && $persist) {
+            $remaining_lifetime = 0;
+            $this->get_from_storage($key, $group, $storage_exists, $remaining_lifetime);
+            if ($storage_exists) {
+                return false;
+            }
+        }
+
         $stored = $this->set_volatile($key, $value, $group, true, $expire);
-
-        if ($use_persistent && !($value instanceof \Closure)) {
-            // Runtime caching remains usable if the remote backend goes away.
-            $this->driver->set($key, $value, $group, true, $expire);
-        }
-
-        if ($expire > 0 && !($value instanceof \Closure)) {
-            $this->set_storage($key, $value, $group, $expire);
-        }
+        $this->persist_value($key, $value, $group, $expire);
 
         return $stored;
+    }
+
+    /** Prefer remote persistence; retire old fallback entries after successful writes. */
+    private function persist_value($key, $value, $group, int $expire, bool $replace = false): void
+    {
+        if (($expire === 0 && !$this->persist_zero_expiry)
+            || isset($this->non_persistent_groups[$group]) || $value instanceof \Closure) {
+            return;
+        }
+
+        $remote_stored = false;
+        if ($this->is_persistent()) {
+            $remote_stored = $replace
+                ? $this->driver->replace($key, $value, $group, $expire)
+                : $this->driver->set($key, $value, $group, true, $expire);
+        }
+
+        if ($remote_stored) {
+            $this->delete_storage($key, $group);
+        }
+        else {
+            // Runtime caching remains usable if both persistent backends fail.
+            $this->set_storage($key, $value, $group, $expire);
+        }
     }
 
     public function has($key, $group = 'default'): bool
@@ -456,7 +493,7 @@ class Cache
             }
 
             // Cache owns namespacing; this Storage instance is a disk-only backend.
-            $this->storage = new Storage('cache', true, false, false);
+            $this->storage = new Storage('cache', true, false, false, $this->persist_zero_expiry);
         }
 
         return $this->storage;
@@ -499,10 +536,15 @@ class Cache
             return false;
         }
 
+        if ($expires_at === 0 && $this->persist_zero_expiry) {
+            $found = true;
+            return $value;
+        }
+
         $remaining_lifetime = (int)$expires_at - time();
 
         if ($remaining_lifetime <= 0) {
-            $storage->delete($group, $this->storage_key($key));
+            // Storage owns expiry cleanup; this read may already have been replaced.
             return false;
         }
 

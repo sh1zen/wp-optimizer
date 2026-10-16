@@ -9,9 +9,9 @@ namespace WPS\core\Drivers;
 
 class MemcacheD extends CacheInterface
 {
-    public function __construct()
+    public function __construct(bool $reset_expiry = false)
     {
-        parent::__construct();
+        parent::__construct($reset_expiry);
         $this->conn = new \Memcached();
         $this->conn->addServer('localhost', 11211, 1);
     }
@@ -37,7 +37,7 @@ class MemcacheD extends CacheInterface
             return false;
         }
 
-        if ($this->has($key, $group) and !$force) {
+        if (!$force && $this->has($key, $group)) {
             return false;
         }
 
@@ -70,6 +70,21 @@ class MemcacheD extends CacheInterface
         }
 
         return $value;
+    }
+
+    /** Preserve false/null hits while fetching all backend keys in one getMulti call. */
+    public function get_multiple(array $keys, $group, $default = false): array
+    {
+        $values = array_fill_keys($keys, $default);
+        if (!$this->conn || !$keys) { return $values; }
+        $backend_keys = array();
+        foreach ($keys as $key) { $backend_keys[$key] = $this->co_group($key, $group); }
+        $results = $this->conn->getMulti(array_values($backend_keys));
+        if (!is_array($results)) { return $values; }
+        foreach ($backend_keys as $key => $backend_key) {
+            if (array_key_exists($backend_key, $results)) { $values[$key] = $results[$backend_key]; }
+        }
+        return $values;
     }
 
     public function dump($group = ''): array

@@ -74,7 +74,12 @@ class Cache_Dispatcher
     public static function flush($lifetime = false, $blog_id = 0): void
     {
         if ($lifetime) {
-            wps('wpopt')->storage->delete_old(static::get_cache_group(), self::parse_lifetime($lifetime), $blog_id);
+            $retention = (int)self::parse_lifetime($lifetime);
+            wps('wpopt')->storage->delete_old(static::get_cache_group(), $retention, $blog_id);
+            $namespace = static::get_index_namespace();
+            if ($namespace !== '') {
+                StaticCacheRules::clear_missing_entries(static::get_cache_group(), $namespace, $retention, (int)$blog_id);
+            }
         }
         else {
             wps('wpopt')->storage->delete(static::get_cache_group(), '', $blog_id);
@@ -84,6 +89,12 @@ class Cache_Dispatcher
     public static function get_storage_cache_group(): string
     {
         return static::get_cache_group();
+    }
+
+    /** Identify cache layers that persist dependency rows in the SQL index. */
+    protected static function get_index_namespace(): string
+    {
+        return '';
     }
 
     protected static function get_cache_group(): string
@@ -123,7 +134,7 @@ class Cache_Dispatcher
     }
 
     /**
-     * Get posts from cache
+     * Restore legacy array payloads for dispatcher subclasses.
      */
     protected function restore_cached_object($cached_data)
     {

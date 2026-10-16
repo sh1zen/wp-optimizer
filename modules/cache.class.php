@@ -19,10 +19,13 @@ use WPS\modules\Module;
 use WPOptimizer\modules\supporters\DBCache;
 use WPOptimizer\modules\supporters\ObjectCache;
 use WPOptimizer\modules\supporters\QueryCache;
+use WPOptimizer\modules\supporters\QueryCacheTypes;
 use WPOptimizer\modules\supporters\StaticCache;
 use WPOptimizer\modules\supporters\StaticCacheDirectAccess;
 use WPOptimizer\modules\supporters\StaticCacheRules;
 use WPOptimizer\modules\supporters\WP_Htaccess;
+
+require_once __DIR__ . '/supporters/cache/querycache_types.class.php';
 
 class Mod_Cache extends Module
 {
@@ -53,33 +56,17 @@ class Mod_Cache extends Module
     private const CACHE_TRASH_CLEANUP_HOOK = 'WPOPT-CacheTrashCleanup';
     private const CACHE_TRASH_CLEANUP_BATCH_LIMIT = 300;
     private const CACHE_TRASH_CLEANUP_TIME_BUDGET = 2.0;
-    private const WP_QUERY_CACHE_TYPES = array(
-        'post',
-        'page',
-        'attachment',
-        'custom_post_type',
-        'taxonomy_query',
-        'meta_query',
-        'search_query',
-        'author_query',
-        'date_query',
-        'id_query',
-        'feed_query',
-    );
-    private const CACHE_LAYER_BOOLEAN_DEFAULTS = array(
+    private const COMMON_CACHE_BOOLEAN_DEFAULTS = array(
         'cache_include_rules_only'      => false,
         'cache_query_args'              => false,
         'auto_purge_content'            => true,
         'user_agent_exclusions_enabled' => false,
         'no_cache_cookies_enabled'      => true,
-        'disable_admin_cache'           => self::DEFAULT_LAYER_DISABLE_ADMIN_CACHE,
     );
-    private const STATIC_BOOLEAN_DEFAULTS = array(
-        'cache_include_rules_only'      => false,
-        'cache_query_args'              => false,
-        'auto_purge_content'            => true,
-        'user_agent_exclusions_enabled' => false,
-        'no_cache_cookies_enabled'      => true,
+    private const CACHE_LAYER_BOOLEAN_DEFAULTS = self::COMMON_CACHE_BOOLEAN_DEFAULTS + array(
+        'disable_admin_cache' => self::DEFAULT_LAYER_DISABLE_ADMIN_CACHE,
+    );
+    private const STATIC_BOOLEAN_DEFAULTS = self::COMMON_CACHE_BOOLEAN_DEFAULTS + array(
         'direct_access_enabled'         => false,
         'disable_admin_cache'           => self::DEFAULT_LAYER_DISABLE_ADMIN_CACHE,
     );
@@ -93,7 +80,8 @@ class Mod_Cache extends Module
         $this->load_dependencies();
 
         $static_options_changed = false;
-        $new_valid['static_pages'] = $this->validate_static_page_settings(
+        $new_valid['static_pages'] = $this->validate_cache_layer_settings(
+            'static_pages',
             (array)($new_valid['static_pages'] ?? array()),
             $input,
             (bool)$filtering,
@@ -168,58 +156,7 @@ class Mod_Cache extends Module
         return $new_valid;
     }
 
-    private function validate_static_page_settings(array $static_settings, $input, bool $filtering, bool &$options_changed): array
-    {
-        $input = (array)$input;
-
-        if (!$this->static_input_exists($input, $filtering, 'active')) {
-            if ($this->static_configuration_form_submitted($input, $filtering) || !array_key_exists('active', $static_settings)) {
-                $static_settings['active'] = (bool)$this->option('static_pages.active', false);
-            }
-        }
-
-        $static_settings['rules'] = StaticCacheRules::normalize_rules($this->get_static_page_rules());
-
-        $current_lifespan = $this->normalize_static_lifespan($this->option('static_pages.lifespan', self::DEFAULT_STATIC_LIFESPAN), self::DEFAULT_STATIC_LIFESPAN);
-        $new_lifespan = $this->normalize_static_lifespan($this->read_static_input($input, $filtering, 'lifespan', $current_lifespan), self::DEFAULT_STATIC_LIFESPAN);
-        $static_settings['lifespan'] = $new_lifespan;
-        $options_changed = $this->static_input_changed($input, $filtering, 'lifespan', $current_lifespan, $new_lifespan) || $options_changed;
-
-        foreach (self::STATIC_BOOLEAN_DEFAULTS as $option_key => $default_value) {
-            $current_value = (bool)$this->option("static_pages.{$option_key}", $default_value);
-            $new_value = (bool)$this->read_static_input($input, $filtering, $option_key, $current_value);
-            $static_settings[$option_key] = $new_value;
-
-            if ($option_key !== 'auto_purge_content') {
-                $options_changed = $this->static_input_changed($input, $filtering, $option_key, $current_value, $new_value) || $options_changed;
-            }
-        }
-
-        $current_user_scope = $this->normalize_static_user_scope($this->option('static_pages.user_scope', self::DEFAULT_STATIC_USER_SCOPE));
-        $new_user_scope = $this->normalize_static_user_scope($this->read_static_input($input, $filtering, 'user_scope', $current_user_scope));
-        $static_settings['user_scope'] = $new_user_scope;
-        $options_changed = $this->static_input_changed($input, $filtering, 'user_scope', $current_user_scope, $new_user_scope) || $options_changed;
-
-        $current_user_agent_exclusions = $this->option('static_pages.user_agent_exclusions', $this->default_static_user_agent_exclusions());
-        $static_settings['user_agent_exclusions'] = $this->normalize_static_user_agent_exclusions(
-            $this->read_static_input($input, $filtering, 'user_agent_exclusions', $current_user_agent_exclusions)
-        );
-
-        $current_no_cache_cookies = $this->option('static_pages.no_cache_cookies', array());
-        $new_no_cache_cookies = $this->normalize_static_no_cache_cookies(
-            $this->read_static_input($input, $filtering, 'no_cache_cookies', $current_no_cache_cookies)
-        );
-        $static_settings['no_cache_cookies'] = $new_no_cache_cookies;
-        $options_changed = $this->static_input_changed($input, $filtering, 'no_cache_cookies', $this->normalize_static_no_cache_cookies($current_no_cache_cookies), $new_no_cache_cookies) || $options_changed;
-
-        $current_status_policy = $this->normalize_static_status_cache_policy($this->option('static_pages.status_cache_policy', $this->default_static_status_cache_policy()));
-        $new_status_policy = $this->normalize_static_status_cache_policy($this->read_static_input($input, $filtering, 'status_cache_policy', $current_status_policy));
-        $static_settings['status_cache_policy'] = $new_status_policy;
-        $options_changed = $this->static_input_changed($input, $filtering, 'status_cache_policy', $current_status_policy, $new_status_policy) || $options_changed;
-
-        return $static_settings;
-    }
-
+    /** Validate shared cache settings, retaining each layer's fields and invalidation policy. */
     private function validate_cache_layer_settings(string $layer, array $layer_settings, $input, bool $filtering, bool &$options_changed): array
     {
         $input = (array)$input;
@@ -234,16 +171,17 @@ class Mod_Cache extends Module
             }
         }
 
-        if ($this->cache_layer_supports_rules($layer)) {
-            $layer_settings['rules'] = StaticCacheRules::normalize_rules($this->get_cache_layer_rules($layer));
-            $layer_settings['rules_namespace'] = $layer;
+        $static = $layer === 'static_pages';
+        if ($static) {
+            $layer_settings['rules'] = StaticCacheRules::normalize_rules($this->get_static_page_rules());
         }
         else {
             unset($layer_settings['rules'], $layer_settings['rules_namespace'], $layer_settings['cache_include_rules_only']);
         }
 
-        $current_lifespan = $this->normalize_static_lifespan($this->option("{$layer}.lifespan", self::DEFAULT_DYNAMIC_LIFESPAN), self::DEFAULT_DYNAMIC_LIFESPAN);
-        $new_lifespan = $this->normalize_static_lifespan($this->read_layer_input($layer, $input, $filtering, 'lifespan', $current_lifespan), self::DEFAULT_DYNAMIC_LIFESPAN);
+        $default_lifespan = $static ? self::DEFAULT_STATIC_LIFESPAN : self::DEFAULT_DYNAMIC_LIFESPAN;
+        $current_lifespan = $this->normalize_static_lifespan($this->option("{$layer}.lifespan", $default_lifespan), $default_lifespan);
+        $new_lifespan = $this->normalize_static_lifespan($this->read_layer_input($layer, $input, $filtering, 'lifespan', $current_lifespan), $default_lifespan);
         $layer_settings['lifespan'] = $new_lifespan;
         $options_changed = $this->layer_input_changed($layer, $input, $filtering, 'lifespan', $current_lifespan, $new_lifespan) || $options_changed;
 
@@ -257,23 +195,35 @@ class Mod_Cache extends Module
             }
         }
 
-        $current_user_agent_exclusions = $this->option("{$layer}.user_agent_exclusions", $this->default_static_user_agent_exclusions());
-        $new_user_agent_exclusions = $this->normalize_static_user_agent_exclusions(
-            $this->read_layer_input($layer, $input, $filtering, 'user_agent_exclusions', $current_user_agent_exclusions)
-        );
-        $layer_settings['user_agent_exclusions'] = $new_user_agent_exclusions;
-        $options_changed = $this->layer_input_changed($layer, $input, $filtering, 'user_agent_exclusions', $this->normalize_static_user_agent_exclusions($current_user_agent_exclusions), $new_user_agent_exclusions) || $options_changed;
+        if ($static) {
+            $current_user_scope = $this->normalize_static_user_scope($this->option('static_pages.user_scope', self::DEFAULT_STATIC_USER_SCOPE));
+            $new_user_scope = $this->normalize_static_user_scope($this->read_layer_input($layer, $input, $filtering, 'user_scope', $current_user_scope));
+            $layer_settings['user_scope'] = $new_user_scope;
+            $options_changed = $this->layer_input_changed($layer, $input, $filtering, 'user_scope', $current_user_scope, $new_user_scope) || $options_changed;
+        }
 
-        $current_no_cache_cookies = $this->option("{$layer}.no_cache_cookies", array());
-        $new_no_cache_cookies = $this->normalize_static_no_cache_cookies(
-            $this->read_layer_input($layer, $input, $filtering, 'no_cache_cookies', $current_no_cache_cookies)
-        );
-        $layer_settings['no_cache_cookies'] = $new_no_cache_cookies;
-        $options_changed = $this->layer_input_changed($layer, $input, $filtering, 'no_cache_cookies', $this->normalize_static_no_cache_cookies($current_no_cache_cookies), $new_no_cache_cookies) || $options_changed;
+        foreach (array('user_agent_exclusions' => $this->default_static_user_agent_exclusions(), 'no_cache_cookies' => array()) as $option_key => $default_value) {
+            $current_patterns = $this->option("{$layer}.{$option_key}", $default_value);
+            $new_patterns = $this->normalize_cache_patterns(
+                $this->read_layer_input($layer, $input, $filtering, $option_key, $current_patterns)
+            );
+            $layer_settings[$option_key] = $new_patterns;
+            if (!$static || $option_key !== 'user_agent_exclusions') {
+                $options_changed = $this->layer_input_changed($layer, $input, $filtering, $option_key,
+                    $this->normalize_cache_patterns($current_patterns), $new_patterns) || $options_changed;
+            }
+        }
+
+        if ($static) {
+            $current_status_policy = $this->normalize_static_status_cache_policy($this->option('static_pages.status_cache_policy', $this->default_static_status_cache_policy()));
+            $new_status_policy = $this->normalize_static_status_cache_policy($this->read_layer_input($layer, $input, $filtering, 'status_cache_policy', $current_status_policy));
+            $layer_settings['status_cache_policy'] = $new_status_policy;
+            $options_changed = $this->layer_input_changed($layer, $input, $filtering, 'status_cache_policy', $current_status_policy, $new_status_policy) || $options_changed;
+        }
 
         if ($layer === 'wp_query') {
-            $current_query_types = $this->normalize_wp_query_cache_types($this->option('wp_query.query_types', $this->default_wp_query_cache_types()));
-            $new_query_types = $this->normalize_wp_query_cache_types(
+            $current_query_types = QueryCacheTypes::normalize($this->option('wp_query.query_types', QueryCacheTypes::DEFAULT_TYPES));
+            $new_query_types = QueryCacheTypes::normalize(
                 $this->read_layer_input($layer, $input, $filtering, 'query_types', $current_query_types)
             );
             $layer_settings['query_types'] = $new_query_types;
@@ -292,21 +242,7 @@ class Mod_Cache extends Module
         return $layer_settings;
     }
 
-    private function read_static_input(array $input, bool $filtering, string $option_key, $current_value)
-    {
-        if (isset($input['static_pages']) && is_array($input['static_pages']) && array_key_exists($option_key, $input['static_pages'])) {
-            return $input['static_pages'][$option_key];
-        }
-
-        $flat_key = "static_pages.{$option_key}";
-
-        if ($filtering) {
-            return Settings::get_option($input, $flat_key, $current_value);
-        }
-
-        return array_key_exists($flat_key, $input) ? $input[$flat_key] : $current_value;
-    }
-
+    /** Read nested or flat layer input, preserving submitted-value precedence. */
     private function read_layer_input(string $layer, array $input, bool $filtering, string $option_key, $current_value)
     {
         if (isset($input[$layer]) && is_array($input[$layer]) && array_key_exists($option_key, $input[$layer])) {
@@ -322,15 +258,7 @@ class Mod_Cache extends Module
         return array_key_exists($flat_key, $input) ? $input[$flat_key] : $current_value;
     }
 
-    private function static_input_changed(array $input, bool $filtering, string $option_key, $current_value, $new_value): bool
-    {
-        if ($filtering || !$this->static_input_exists($input, $filtering, $option_key)) {
-            return false;
-        }
-
-        return $current_value !== $new_value;
-    }
-
+    /** Only submitted, non-filtered input can trigger cache invalidation. */
     private function layer_input_changed(string $layer, array $input, bool $filtering, string $option_key, $current_value, $new_value): bool
     {
         if ($filtering || !$this->layer_input_exists($layer, $input, $filtering, $option_key)) {
@@ -340,21 +268,7 @@ class Mod_Cache extends Module
         return $current_value !== $new_value;
     }
 
-    private function static_input_exists(array $input, bool $filtering, string $option_key): bool
-    {
-        if (isset($input['static_pages']) && is_array($input['static_pages']) && array_key_exists($option_key, $input['static_pages'])) {
-            return true;
-        }
-
-        $flat_key = "static_pages.{$option_key}";
-
-        if (array_key_exists($flat_key, $input)) {
-            return true;
-        }
-
-        return $filtering && Settings::get_option($input, $flat_key, null) !== null;
-    }
-
+    /** Recognize explicit null values in either supported input representation. */
     private function layer_input_exists(string $layer, array $input, bool $filtering, string $option_key): bool
     {
         if (isset($input[$layer]) && is_array($input[$layer]) && array_key_exists($option_key, $input[$layer])) {
@@ -368,36 +282,6 @@ class Mod_Cache extends Module
         }
 
         return $filtering && Settings::get_option($input, $flat_key, null) !== null;
-    }
-
-    private function static_configuration_form_submitted(array $input, bool $filtering): bool
-    {
-        if ($filtering) {
-            return false;
-        }
-
-        $configuration_keys = array(
-            'lifespan',
-            'cache_include_rules_only',
-            'cache_query_args',
-            'auto_purge_content',
-            'disable_admin_cache',
-            'direct_access_enabled',
-            'user_agent_exclusions_enabled',
-            'user_agent_exclusions',
-            'no_cache_cookies_enabled',
-            'no_cache_cookies',
-            'status_cache_policy',
-            'user_scope',
-        );
-
-        foreach ($configuration_keys as $option_key) {
-            if ($this->static_input_exists($input, false, $option_key)) {
-                return true;
-            }
-        }
-
-        return false;
     }
 
     private function cache_layer_configuration_form_submitted(string $layer, array $input, bool $filtering): bool
@@ -430,6 +314,9 @@ class Mod_Cache extends Module
 
         if ($this->cache_layer_supports_rules($layer)) {
             $keys[] = 'cache_include_rules_only';
+            $keys[] = 'direct_access_enabled';
+            $keys[] = 'status_cache_policy';
+            $keys[] = 'user_scope';
         }
 
         if ($layer === 'wp_db') {
@@ -449,11 +336,13 @@ class Mod_Cache extends Module
 
     private function cache_layer_boolean_defaults(string $layer): array
     {
+        if ($layer === 'static_pages') {
+            return self::STATIC_BOOLEAN_DEFAULTS;
+        }
+
         $defaults = self::CACHE_LAYER_BOOLEAN_DEFAULTS;
 
-        if (!$this->cache_layer_supports_rules($layer)) {
-            unset($defaults['cache_include_rules_only']);
-        }
+        unset($defaults['cache_include_rules_only']);
 
         if ($layer === 'wp_db') {
             unset($defaults['disable_admin_cache']);
@@ -1213,29 +1102,12 @@ class Mod_Cache extends Module
         }
 
         $storage = wps('wpopt')->storage;
-        if (!method_exists($storage, 'get_path')) {
+        if (!is_dir($storage->get_path($storage_group, '', $blog_id))) {
             return;
         }
-
-        $path = $storage->get_path($storage_group, '', $blog_id);
-        $this->detach_cache_storage_path($path, $storage_group, $blog_id);
-    }
-
-    private function detach_cache_storage_path(string $path, string $storage_group, int $blog_id = 0): bool
-    {
-        $source = realpath($path);
-        if (!$source || !is_dir($source)) {
-            return true;
-        }
-
-        $storage_root = realpath(WPOPT_STORAGE);
-        if (!$storage_root || !$this->path_is_inside($source, $storage_root)) {
-            return false;
-        }
-
         $trash_root = $this->cache_trash_root();
         if (!Disk::make_path($trash_root, true)) {
-            return false;
+            return;
         }
 
         $trash_name = sanitize_file_name(str_replace(array('/', '\\'), '-', trim($storage_group, '/\\')));
@@ -1245,12 +1117,9 @@ class Mod_Cache extends Module
 
         $destination = trailingslashit($trash_root) . $trash_name . '-' . gmdate('YmdHis') . '-' . wp_generate_password(8, false, false);
 
-        if (@rename($source, $destination)) {
+        if ($storage->detach($storage_group, $destination, $blog_id)) {
             $this->schedule_cache_trash_cleanup(10);
-            return true;
         }
-
-        return false;
     }
 
     private function cache_trash_root(): string
@@ -1366,17 +1235,8 @@ class Mod_Cache extends Module
         return self::DEFAULT_STATIC_USER_SCOPE;
     }
 
-    private function normalize_static_user_agent_exclusions($patterns): array
-    {
-        return $this->normalize_static_pattern_list($patterns);
-    }
-
-    private function normalize_static_no_cache_cookies($patterns): array
-    {
-        return $this->normalize_static_pattern_list($patterns);
-    }
-
-    private function normalize_static_pattern_list($patterns): array
+    /** Normalize the literal/regex lists shared by cache settings and runtime options. */
+    private function normalize_cache_patterns($patterns): array
     {
         if (is_string($patterns)) {
             $patterns = preg_split("#[\r\n]+#", $patterns);
@@ -1458,11 +1318,6 @@ class Mod_Cache extends Module
         return array_values(array_unique($normalized));
     }
 
-    private function default_wp_query_cache_types(): array
-    {
-        return self::WP_QUERY_CACHE_TYPES;
-    }
-
     private function get_wp_query_cache_type_options(): array
     {
         return array(
@@ -1478,33 +1333,6 @@ class Mod_Cache extends Module
             'id_query'         => __('Specific ID/name queries', 'wpopt'),
             'feed_query'       => __('Feed queries', 'wpopt'),
         );
-    }
-
-    private function normalize_wp_query_cache_types($types): array
-    {
-        if (is_string($types)) {
-            $types = $types === '' ? array() : preg_split("#[\s,]+#", $types);
-        }
-
-        if (!is_array($types)) {
-            return $this->default_wp_query_cache_types();
-        }
-
-        $normalized = array();
-
-        foreach ($types as $type) {
-            $type = sanitize_key((string)$type);
-
-            if (in_array($type, self::WP_QUERY_CACHE_TYPES, true)) {
-                $normalized[] = $type;
-            }
-        }
-
-        if (empty($normalized) && !empty(array_filter($types))) {
-            return $this->default_wp_query_cache_types();
-        }
-
-        return array_values(array_unique($normalized));
     }
 
     private function default_db_cache_tables(): array
@@ -1746,11 +1574,11 @@ class Mod_Cache extends Module
                 self::CACHE_LAYER_BOOLEAN_DEFAULTS,
                 $options
             );
-            $options['user_agent_exclusions'] = $this->normalize_static_user_agent_exclusions($options['user_agent_exclusions'] ?? $this->default_static_user_agent_exclusions());
-            $options['no_cache_cookies'] = $this->normalize_static_no_cache_cookies($options['no_cache_cookies'] ?? array());
+            $options['user_agent_exclusions'] = $this->normalize_cache_patterns($options['user_agent_exclusions'] ?? $this->default_static_user_agent_exclusions());
+            $options['no_cache_cookies'] = $this->normalize_cache_patterns($options['no_cache_cookies'] ?? array());
 
             if ($layer === 'wp_query') {
-                $options['query_types'] = $this->normalize_wp_query_cache_types($options['query_types'] ?? $this->default_wp_query_cache_types());
+                $options['query_types'] = QueryCacheTypes::normalize($options['query_types'] ?? QueryCacheTypes::DEFAULT_TYPES);
             }
 
             if ($layer === 'wp_db') {
@@ -1760,11 +1588,12 @@ class Mod_Cache extends Module
 
         if ($this->cache_layer_supports_rules($layer)) {
             $options['rules'] = StaticCacheRules::normalize_rules((array)($options['rules'] ?? $this->get_cache_layer_rules($layer)));
-            $options['rules_namespace'] = $this->cache_layer_rules_namespace($layer);
         }
         else {
-            unset($options['rules'], $options['rules_namespace'], $options['cache_include_rules_only']);
+            unset($options['rules'], $options['cache_include_rules_only']);
         }
+
+        unset($options['rules_namespace']);
 
         return $options;
     }
@@ -2569,12 +2398,12 @@ class Mod_Cache extends Module
         $auto_purge_content = (bool)$this->option('static_pages.auto_purge_content', true);
         $cache_admin_requests = !(bool)$this->option('static_pages.disable_admin_cache', self::DEFAULT_LAYER_DISABLE_ADMIN_CACHE);
         $user_agent_exclusions_enabled = (bool)$this->option('static_pages.user_agent_exclusions_enabled', false);
-        $user_agent_exclusions = $this->normalize_static_user_agent_exclusions($this->option('static_pages.user_agent_exclusions', $this->default_static_user_agent_exclusions()));
+        $user_agent_exclusions = $this->normalize_cache_patterns($this->option('static_pages.user_agent_exclusions', $this->default_static_user_agent_exclusions()));
         if (empty($user_agent_exclusions)) {
             $user_agent_exclusions = $this->default_static_user_agent_exclusions();
         }
         $no_cache_cookies_enabled = (bool)$this->option('static_pages.no_cache_cookies_enabled', true);
-        $no_cache_cookies = $this->normalize_static_no_cache_cookies($this->option('static_pages.no_cache_cookies', array()));
+        $no_cache_cookies = $this->normalize_cache_patterns($this->option('static_pages.no_cache_cookies', array()));
         $direct_access_enabled = (bool)$this->option('static_pages.direct_access_enabled', false);
         $direct_access_status = $this->get_static_direct_access_status((array)$this->option('static_pages', array()));
         $status_policy_options = $this->get_static_status_cache_policy_options();
@@ -2791,18 +2620,18 @@ class Mod_Cache extends Module
         $cache_admin_requests = $layer !== 'wp_db'
             && !(bool)$this->option("{$layer}.disable_admin_cache", self::DEFAULT_LAYER_DISABLE_ADMIN_CACHE);
         $user_agent_exclusions_enabled = (bool)$this->option("{$layer}.user_agent_exclusions_enabled", false);
-        $user_agent_exclusions = $this->normalize_static_user_agent_exclusions($this->option("{$layer}.user_agent_exclusions", $this->default_static_user_agent_exclusions()));
+        $user_agent_exclusions = $this->normalize_cache_patterns($this->option("{$layer}.user_agent_exclusions", $this->default_static_user_agent_exclusions()));
         if (empty($user_agent_exclusions)) {
             $user_agent_exclusions = $this->default_static_user_agent_exclusions();
         }
         $no_cache_cookies_enabled = (bool)$this->option("{$layer}.no_cache_cookies_enabled", true);
-        $no_cache_cookies = $this->normalize_static_no_cache_cookies($this->option("{$layer}.no_cache_cookies", array()));
+        $no_cache_cookies = $this->normalize_cache_patterns($this->option("{$layer}.no_cache_cookies", array()));
         $user_agent_exclusions_help = $this->cache_layer_supports_rules($layer)
             ? __('When enabled, matching user agents skip this cache engine. Add one plain text or PHP regex pattern per line.', 'wpopt')
             : __('When enabled, matching user-agent text fragments skip this cache engine. Add one text fragment per line.', 'wpopt');
         $query_type_options = $layer === 'wp_query' ? $this->get_wp_query_cache_type_options() : array();
         $query_types = $layer === 'wp_query'
-            ? $this->normalize_wp_query_cache_types($this->option('wp_query.query_types', $this->default_wp_query_cache_types()))
+            ? QueryCacheTypes::normalize($this->option('wp_query.query_types', QueryCacheTypes::DEFAULT_TYPES))
             : array();
         $query_type_labels = array_values(array_intersect_key($query_type_options, array_flip($query_types)));
         $query_type_label = empty($query_type_labels)

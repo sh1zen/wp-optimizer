@@ -12,7 +12,9 @@ The observer records the final image candidate at first interaction or page exit
 
 Later HTML contains early head hints for learned mobile (up to 767px) and desktop candidates. Mutually exclusive media conditions prevent the browser from fetching both variants. Responsive sets carry `imagesrcset` and `imagesizes`; picture sources also retain their media and MIME type. Complex picture media lists are preserved without guessing a preload. Background candidates use their declared URL. Remote CSS is not fetched to discover backgrounds.
 
-The key includes the page URL, image/source markup, local asset hashes, exclusions and a content revision. Content, attachment, term, theme, plugin upgrade and relevant settings changes invalidate results. Remote assets must change their URL/version or call `FrontendAssets::invalidate()` when replaced in place. Records and measurement tokens expire after seven days; keep page cache lifetimes below that period. Cold pages retain native/author image priorities until a candidate is learned.
+The key includes the page URL, image/source markup, local asset fingerprints, exclusions and a frontend revision. Local files up to 1 MiB use content hashes memoized per request and cached for one hour; larger files use size, modification/change times and inode without reading their contents. File metadata or revision changes refresh fingerprints. Replacements preserving metadata must call `FrontendAssets::invalidate()`. Remote assets must change their URL/version or call that method when replaced in place. Records and measurement tokens expire after seven days; keep page cache lifetimes below that period. Cold pages retain native/author image priorities until a candidate is learned.
+
+Ordinary post saves rely on rendered markup/token fingerprints and targeted content-cache purges. Shared blocks, templates, global styles and navigation saves invalidate globally, as do attachment, term, theme, plugin upgrade and relevant settings changes.
 
 ## Defer and selective Delay
 
@@ -30,10 +32,10 @@ Classic WordPress handles whose printed tag uses `type="module"` retain module s
 
 `wps_frontend_page_ready($url)` lets consumers purge an affected cached page after a measurement becomes ready. `wps_frontend_assets_invalidated` signals revision changes. WP Optimizer's static cache subscribes to both. External page/CDN caches must subscribe too or be purged through their normal integration.
 
-The PageSpeed settings show the last public-page diagnostics: learned candidates and applied script rules. `wps_frontend_diagnostic($feature, $details)` supports other consumers. Diagnostics are bounded to one expiring record per feature and contain public page/asset information.
+The PageSpeed settings show sampled public-page diagnostics: learned candidates and applied script rules. `wps_frontend_diagnostic($feature, $details)` fires for every diagnostic call so other consumers receive current details. Persistent diagnostics use one record per feature with a one-day expiry. Identical details do not refresh the record, even when the page or timestamp changes. Changed details are sampled at most once per minute per feature; the stored page and time identify that sample. Expired records are recreated on the next diagnostic call.
 
 ## Verification
 
-From the CMS root, run `php mini-test/frontend-assets.php` with PHP 7.4 or newer. It checks plugin bootstrap ownership, signed LCP measurement, image priority, invalidation, native defer, dependency guards, delayed script markup and runtime loading. It also runs the Used CSS checks. Tests use the adjacent WordPress HTML API and isolated storage, hook, scheduling and script-registration fakes; no site bootstrap, database or network is required.
+From the CMS root, run `php -n tests/frontend-versions.php` and `php -n tests/cache-monitor.php` with PHP 7.4 or newer. These checks cover LCP fingerprints, repeated candidates, the hashing limit, cross-request reuse, learned preloads and targeted content/shared frontend invalidation. They use the adjacent WordPress HTML and hook APIs with isolated storage, option and SQL boundaries; no site bootstrap, database or network is required. See [object-cache verification](../README.md#object-cache-regression-check) for default-expiry persistence checks.
 
 References: [early LCP discovery](https://web.dev/articles/optimize-lcp), [WordPress loading strategies and dependencies](https://developer.wordpress.org/reference/functions/wp_enqueue_script/).

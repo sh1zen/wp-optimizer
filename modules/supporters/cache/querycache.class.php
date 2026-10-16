@@ -7,29 +7,22 @@
 
 namespace WPOptimizer\modules\supporters;
 
+require_once __DIR__ . '/querycache_types.class.php';
+
 class QueryCache extends Cache_Dispatcher
 {
     // fix child invoking
     protected static ?Cache_Dispatcher $_Instance;
 
-    private const DEFAULT_QUERY_TYPES = array(
-        'post',
-        'page',
-        'attachment',
-        'custom_post_type',
-        'taxonomy_query',
-        'meta_query',
-        'search_query',
-        'author_query',
-        'date_query',
-        'id_query',
-        'feed_query',
-    );
-
     private array $data = [];
     private string $query_request_path = '';
     private ?CacheRequestPolicy $request_policy = null;
 
+    /** Query dependency rows share the wp_query index namespace. */
+    protected static function get_index_namespace(): string
+    {
+        return 'wp_query';
+    }
     private function extract_post_ids($posts): ?array
     {
         if (!is_array($posts)) {
@@ -134,41 +127,20 @@ class QueryCache extends Cache_Dispatcher
             $cache_key,
             $this->query_request_path,
             count($post_ids),
-            'wp_query',
+            static::get_index_namespace(),
             $this->get_query_dependencies($post_ids)
         );
     }
 
     private function query_type_is_cacheable(\WP_Query $wp_query): bool
     {
-        $allowed_types = $this->get_allowed_query_types();
+        $allowed_types = QueryCacheTypes::normalize($this->options['query_types'] ?? QueryCacheTypes::DEFAULT_TYPES, true);
 
         if (empty($allowed_types)) {
             return false;
         }
 
         return !empty(array_intersect($allowed_types, $this->get_query_types($wp_query)));
-    }
-
-    private function get_allowed_query_types(): array
-    {
-        $types = $this->options['query_types'] ?? self::DEFAULT_QUERY_TYPES;
-
-        if (is_string($types)) {
-            $types = $types === '' ? array() : preg_split("#[\s,]+#", $types);
-        }
-
-        if (!is_array($types)) {
-            return self::DEFAULT_QUERY_TYPES;
-        }
-
-        $normalized = array_values(array_intersect(self::DEFAULT_QUERY_TYPES, array_map('sanitize_key', $types)));
-
-        if (empty($normalized) && !empty(array_filter($types))) {
-            return self::DEFAULT_QUERY_TYPES;
-        }
-
-        return $normalized;
     }
 
     private function get_query_types(\WP_Query $wp_query): array
@@ -304,6 +276,7 @@ class QueryCache extends Cache_Dispatcher
         return false;
     }
 
+    /** Collect post metadata once and fetch term IDs once per applicable taxonomy. */
     private function get_query_dependencies(array $post_ids): array
     {
         $dependencies = array(
@@ -314,6 +287,7 @@ class QueryCache extends Cache_Dispatcher
             'taxonomies' => array(),
         );
 
+        $taxonomy_posts = array();
         foreach (array_unique(array_map('absint', $post_ids)) as $post_id) {
             if (!$post_id) {
                 continue;
@@ -329,17 +303,16 @@ class QueryCache extends Cache_Dispatcher
             $dependencies['authors'][] = (string)$post->post_author;
 
             foreach (get_object_taxonomies($post->post_type) as $taxonomy) {
-                $term_ids = wp_get_object_terms($post_id, $taxonomy, array('fields' => 'ids'));
+                $taxonomy_posts[$taxonomy][] = $post_id;
+            }
+        }
 
-                if (is_wp_error($term_ids) || empty($term_ids)) {
-                    continue;
-                }
-
-                $dependencies['taxonomies'][] = (string)$taxonomy;
-
-                foreach ($term_ids as $term_id) {
-                    $dependencies['terms'][] = (string)absint($term_id);
-                }
+        foreach ($taxonomy_posts as $taxonomy => $object_ids) {
+            $term_ids = wp_get_object_terms($object_ids, $taxonomy, array('fields' => 'ids'));
+            if (is_wp_error($term_ids) || empty($term_ids)) { continue; }
+            $dependencies['taxonomies'][] = (string)$taxonomy;
+            foreach ($term_ids as $term_id) {
+                $dependencies['terms'][] = (string)absint($term_id);
             }
         }
 
@@ -350,7 +323,7 @@ class QueryCache extends Cache_Dispatcher
 
     public static function clear_by_dependencies(array $criteria): int
     {
-        return StaticCacheRules::clear_by_dependencies($criteria, static::get_cache_group(), 'wp_query');
+        return StaticCacheRules::clear_by_dependencies($criteria, static::get_cache_group(), static::get_index_namespace());
     }
 
     public function action_found_posts($found_posts, \WP_Query $wp_query)

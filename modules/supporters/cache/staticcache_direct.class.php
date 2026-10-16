@@ -142,18 +142,27 @@ class StaticCacheDirectAccess
         $signature = self::signature($request_path, $query_string, self::cookie_vary_fragment($options));
         $index_file = self::index_file($signature);
 
-        if (!Disk::make_path(dirname($index_file), true)) {
-            return false;
-        }
-
         $cache_file = wps('wpopt')->storage->get_path($cache_group, $cache_key);
+        $relative_cache_file = self::relative_path(ABSPATH, $cache_file);
         $entry = array(
-            'cache_file' => self::relative_path(ABSPATH, $cache_file),
+            'cache_file' => $relative_cache_file,
             'cache_key'  => $cache_key,
             'created'    => time(),
         );
-
-        return Disk::write($index_file, "<?php\nreturn " . var_export($entry, true) . ";\n", 0);
+        $contents = "<?php\nreturn " . var_export($entry, true) . ";\n";
+        if (is_file($index_file)) {
+            // Compare generated data without executing a possibly incomplete PHP file.
+            $existing = file_get_contents($index_file);
+            $timestamp_line = '/^  \'created\' => [0-9]+,\r?\n/m';
+            if ($existing !== false && preg_replace($timestamp_line, '', $existing)
+                === preg_replace($timestamp_line, '', $contents)) {
+                return true;
+            }
+        }
+        if (!Disk::make_path(dirname($index_file), true)) {
+            return false;
+        }
+        return Disk::write($index_file, $contents, 0);
     }
 
     public static function clear_index(): void

@@ -10,6 +10,12 @@ WordPress removes the due event before invoking the callback; a callback may
 queue its next batch. `run_event()` queues an immediate single event while
 preserving the existing recurring event.
 
+During initialization, registered callback events use WordPress's
+`md5(serialize($args))` signature. Signature correction preserves timestamps,
+event payloads and unrelated hooks; an already canonical entry takes precedence
+over a duplicate. The cron option is written only when a signature changes,
+and a failed write is reported in the cron error log.
+
 ## Regression check
 
 From the CMS root, run `php -n mini-test/cron-actions.php` with PHP 7.4 or newer.

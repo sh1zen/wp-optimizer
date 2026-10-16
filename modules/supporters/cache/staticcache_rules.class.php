@@ -14,6 +14,7 @@ class StaticCacheRules
     private const CONTEXT = 'cache';
     private const STATS_OPTION = 'static_cache_rule_stats';
     private const ENTRY_BATCH_SIZE = 250;
+    private const INDEX_WRITE_BATCH_SIZE = 250;
     private const BASE_DEPENDENCY_TYPE = '__entry';
 
     public static function normalize_rules(array $rules): array
@@ -96,14 +97,17 @@ class StaticCacheRules
 
     public static function match_rule(array $rules, string $request_path): array
     {
-        $request_path = trim($request_path, '/');
-        $candidates = array_unique([$request_path, '/' . $request_path]);
+        return self::match_normalized_rules(self::get_active_rules($rules), $request_path);
+    }
 
-        foreach (self::get_active_rules($rules) as $rule) {
-            foreach ($candidates as $candidate) {
-                if (self::pattern_matches($rule['pattern'], $candidate)) {
-                    return $rule;
-                }
+    /** Match active normalized rules in their original order. */
+    private static function match_normalized_rules(array $rules, string $request_path): array
+    {
+        $request_path = trim($request_path, '/');
+
+        foreach ($rules as $rule) {
+            if (self::pattern_matches($rule['pattern'], $request_path)) {
+                return $rule;
             }
         }
 
@@ -127,6 +131,30 @@ class StaticCacheRules
         return [$include_rules, $exclude_rules];
     }
 
+    /** Normalize once, then apply exclusion precedence and the first matching include. */
+    public static function cacheability(array $rules, string $request_path, bool $include_only = false): array
+    {
+        [$include_rules, $exclude_rules] = self::split_rules_by_mode($rules);
+
+        if (!$include_rules && !$exclude_rules) {
+            return array('cacheable' => true, 'rule_id' => '', 'reason' => '');
+        }
+
+        if (self::match_normalized_rules($exclude_rules, $request_path)) {
+            return array('cacheable' => false, 'rule_id' => '', 'reason' => 'exclude_rule');
+        }
+
+        $matched_rule = self::match_normalized_rules($include_rules, $request_path);
+        if ($matched_rule) {
+            return array('cacheable' => true, 'rule_id' => (string)$matched_rule['id'], 'reason' => '');
+        }
+
+        return $include_only
+            ? array('cacheable' => false, 'rule_id' => '', 'reason' => 'include_rule_required')
+            : array('cacheable' => true, 'rule_id' => '', 'reason' => '');
+    }
+
+    /** Compile once and test the path with and without its leading slash. */
     private static function pattern_matches(string $pattern, string $subject): bool
     {
         $compiled_pattern = self::compile_pattern($pattern);
@@ -136,7 +164,8 @@ class StaticCacheRules
 
         set_error_handler(static function () {
         }, E_WARNING);
-        $matched = (bool)preg_match($compiled_pattern, $subject);
+        $matched = (bool)preg_match($compiled_pattern, $subject)
+            || (bool)preg_match($compiled_pattern, '/' . $subject);
         restore_error_handler();
 
         return $matched;
@@ -214,13 +243,7 @@ class StaticCacheRules
         $dependencies = self::normalize_dependency_map($metadata);
 
         self::delete_index_rows($cache_key, $namespace);
-        self::insert_index_row($cache_key, $namespace, $entry, self::BASE_DEPENDENCY_TYPE, '', !empty($dependencies));
-
-        foreach ($dependencies as $dependency_type => $values) {
-            foreach ($values as $value) {
-                self::insert_index_row($cache_key, $namespace, $entry, $dependency_type, $value, true);
-            }
-        }
+        self::insert_index_rows($cache_key, $namespace, $entry, $dependencies);
 
         if ($rule_id !== '') {
             self::increment_stats($rule_id, 'writes', 'last_write', $namespace);
@@ -237,7 +260,7 @@ class StaticCacheRules
         $stats[$counter] = absint($stats[$counter] ?? 0) + 1;
         $stats[$timestamp_field] = time();
 
-        wps('wpopt')->options->update($rule_id, self::stats_option($namespace), $stats, self::CONTEXT);
+        wps('wpopt')->options->upsert($rule_id, self::stats_option($namespace), $stats, self::CONTEXT);
     }
 
     public static function get_rule_stats(string $rule_id, string $namespace = 'static'): array
@@ -255,6 +278,7 @@ class StaticCacheRules
         );
     }
 
+    /** Report SQL-index totals; $cache_group is retained for named and positional callers. */
     public static function get_rules_report(array $rules, string $cache_group, string $namespace = 'static'): array
     {
         $report = [];
@@ -382,31 +406,32 @@ class StaticCacheRules
         }, $values))));
     }
 
-    private static function cache_entries_table(): string
+    private static function cache_entries_table(int $blog_id = 0): string
     {
-        return defined('WPOPT_TABLE_CACHE_ENTRIES') ? (string)WPOPT_TABLE_CACHE_ENTRIES : '';
+        $table = defined('WPOPT_TABLE_CACHE_ENTRIES') ? (string)WPOPT_TABLE_CACHE_ENTRIES : '';
+        if ($table !== '' && $blog_id && $blog_id !== get_current_blog_id()) {
+            global $wpdb;
+            $table = $wpdb->get_blog_prefix($blog_id) . substr($table, strlen($wpdb->prefix));
+        }
+        return $table;
     }
 
-    private static function cache_entries_table_is_ready(): bool
+    private static function cache_entries_table_is_ready(int $blog_id = 0): bool
     {
-        static $ready = null;
+        static $ready = array();
+        $table = self::cache_entries_table($blog_id);
 
-        if ($ready !== null) {
-            return $ready;
+        if (isset($ready[$table])) {
+            return $ready[$table];
         }
 
-        $table = self::cache_entries_table();
-
         if ($table === '') {
-            $ready = false;
             return false;
         }
 
         global $wpdb;
 
-        $ready = $wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s', $table)) === $table;
-
-        return $ready;
+        return $ready[$table] = $wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s', $table)) === $table;
     }
 
     private static function normalize_namespace(string $namespace): string
@@ -421,34 +446,38 @@ class StaticCacheRules
         return md5($value);
     }
 
-    private static function insert_index_row(string $cache_key, string $namespace, array $entry, string $dependency_type, string $dependency_value, bool $has_dependency_metadata): void
+    /** Build shared entry fields once and insert bounded batches of dependency rows. */
+    private static function insert_index_rows(string $cache_key, string $namespace, array $entry, array $dependencies): void
+    {
+        $request_path = trim((string)($entry['path'] ?? ''), '/');
+        $common = array(self::normalize_namespace($namespace), $cache_key, self::hash_lookup_value($cache_key),
+            sanitize_key((string)($entry['rule_id'] ?? '')), $request_path, self::hash_lookup_value($request_path),
+            max(0, absint($entry['bytes'] ?? 0)));
+        $timestamps = array(absint($entry['created_at'] ?? time()), absint($entry['updated_at'] ?? time()));
+        $rows = array(array_merge($common, array(self::BASE_DEPENDENCY_TYPE, '', self::hash_lookup_value(''), !empty($dependencies) ? 1 : 0), $timestamps));
+        foreach ($dependencies as $type => $values) {
+            foreach ($values as $value) {
+                $rows[] = array_merge($common, array($type, $value, self::hash_lookup_value($value), 1), $timestamps);
+                if (count($rows) === self::INDEX_WRITE_BATCH_SIZE) {
+                    self::write_index_batch($rows);
+                    $rows = array();
+                }
+            }
+        }
+        if ($rows) { self::write_index_batch($rows); }
+    }
+
+    /** Publish a parameterized multi-row INSERT without per-dependency database calls. */
+    private static function write_index_batch(array $rows): void
     {
         global $wpdb;
-
-        $cache_key = (string)$cache_key;
-        $request_path = trim((string)($entry['path'] ?? ''), '/');
-        $dependency_type = sanitize_key($dependency_type);
-        $dependency_value = sanitize_key($dependency_value);
-
-        $wpdb->insert(
-            self::cache_entries_table(),
-            [
-                'namespace'               => self::normalize_namespace($namespace),
-                'cache_key'               => $cache_key,
-                'cache_key_hash'          => self::hash_lookup_value($cache_key),
-                'rule_id'                 => sanitize_key((string)($entry['rule_id'] ?? '')),
-                'request_path'            => $request_path,
-                'request_path_hash'       => self::hash_lookup_value($request_path),
-                'bytes'                   => max(0, absint($entry['bytes'] ?? 0)),
-                'dependency_type'         => $dependency_type,
-                'dependency_value'        => $dependency_value,
-                'dependency_value_hash'   => self::hash_lookup_value($dependency_value),
-                'has_dependency_metadata' => $has_dependency_metadata ? 1 : 0,
-                'created_at'              => absint($entry['created_at'] ?? time()),
-                'updated_at'              => absint($entry['updated_at'] ?? time()),
-            ],
-            ['%s', '%s', '%s', '%s', '%s', '%s', '%d', '%s', '%s', '%s', '%d', '%d', '%d']
-        );
+        $placeholders = array_fill(0, count($rows), '(%s, %s, %s, %s, %s, %s, %d, %s, %s, %s, %d, %d, %d)');
+        $values = array();
+        foreach ($rows as $row) { array_push($values, ...$row); }
+        $sql = 'INSERT INTO ' . self::cache_entries_table()
+            . ' (namespace, cache_key, cache_key_hash, rule_id, request_path, request_path_hash, bytes, dependency_type, dependency_value, dependency_value_hash, has_dependency_metadata, created_at, updated_at) VALUES '
+            . implode(', ', $placeholders);
+        $wpdb->query(self::prepare_sql($sql, $values));
     }
 
     private static function delete_index_rows(string $cache_key, string $namespace): void
@@ -492,11 +521,61 @@ class StaticCacheRules
 
             foreach ($keys as $cache_key) {
                 $deleted += wps('wpopt')->storage->delete($cache_group, $cache_key);
-                self::delete_index_rows($cache_key, $namespace);
             }
+            self::delete_index_batch($keys, $namespace, self::cache_entries_table());
         } while (count($keys) === self::ENTRY_BATCH_SIZE);
 
         return $deleted;
+    }
+
+    /** Remove every dependency row for a bounded batch of exact cache keys. */
+    private static function delete_index_batch(array $keys, string $namespace, string $table, ?int $updated_before = null): void
+    {
+        if (!$keys) { return; }
+        global $wpdb;
+        $where = array();
+        $params = array($namespace);
+        foreach ($keys as $key) {
+            $where[] = '(cache_key_hash = %s AND cache_key = %s)';
+            $params[] = self::hash_lookup_value($key);
+            $params[] = $key;
+        }
+        $sql = 'DELETE FROM ' . $table . ' WHERE namespace = %s AND (' . implode(' OR ', $where) . ')';
+        if ($updated_before !== null) {
+            $sql .= ' AND updated_at < %d';
+            $params[] = $updated_before;
+        }
+        if ($wpdb->query(self::prepare_sql($sql, $params)) === false) {
+            throw new \RuntimeException('Cannot remove cache index rows: ' . $wpdb->last_error);
+        }
+    }
+
+    /** Reconcile the SQL index with disk after expiry cleanup, retaining files that survived. */
+    public static function clear_missing_entries(string $cache_group, string $namespace, int $lifetime, int $blog_id = 0): void
+    {
+        if (!self::cache_entries_table_is_ready($blog_id)) { return; }
+        global $wpdb;
+        $table = self::cache_entries_table($blog_id);
+        $namespace = self::normalize_namespace($namespace);
+        $storage = wps('wpopt')->storage;
+        $cursor = '';
+        // Recent writes can still be waiting for Storage's shutdown autosave.
+        $cutoff = time() - $lifetime;
+        do {
+            $sql = 'SELECT cache_key FROM ' . $table . ' WHERE namespace = %s AND dependency_type = %s AND cache_key_hash > %s AND updated_at < %d ORDER BY cache_key_hash LIMIT ' . self::ENTRY_BATCH_SIZE;
+            $keys = $wpdb->get_col(self::prepare_sql($sql, array($namespace, self::BASE_DEPENDENCY_TYPE, $cursor, $cutoff)));
+            if (!is_array($keys) || $wpdb->last_error !== '') {
+                throw new \RuntimeException('Cannot read cache index rows: ' . $wpdb->last_error);
+            }
+            $missing = array();
+            foreach ($keys as $key) {
+                $path = $storage->get_path($cache_group, $key, $blog_id);
+                clearstatcache(true, $path);
+                if (!is_file($path)) { $missing[] = $key; }
+                $cursor = self::hash_lookup_value($key);
+            }
+            self::delete_index_batch($missing, $namespace, $table, $cutoff);
+        } while (count($keys) === self::ENTRY_BATCH_SIZE);
     }
 
     private static function prepare_sql(string $sql, array $params): string

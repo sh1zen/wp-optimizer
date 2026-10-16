@@ -2,6 +2,7 @@
 namespace WPOptimizer\modules\supporters;
 
 use WPS\core\UtilEnv;
+use WPS\core\StringHelper;
 use WPOptimizerVendor\Sabberworm\CSS\Parser;
 use WPOptimizerVendor\Sabberworm\CSS\Settings;
 use WPOptimizerVendor\Sabberworm\CSS\CSSList\CSSList;
@@ -90,6 +91,8 @@ final class UsedCss
             if (!empty($uploads['error'])) { throw new \RuntimeException('Uploads directory unavailable'); }
             $dir = $uploads['basedir'] . '/wps-used-css';
             if (!wp_mkdir_p($dir)) { throw new \RuntimeException('Generated CSS directory unavailable'); }
+            $static_selectors = array_fill_keys(FrontendAssets::rules($job['config']['static_selectors'] ?? array()), true);
+            $keep_selectors = FrontendAssets::rules($job['config']['keep_selectors'] ?? array());
             foreach ($job['assets'] as $url => $asset) {
                 // Re-resolve the server URL and verify immutable input before publishing any result.
                 $file = FrontendAssets::local($url);
@@ -97,7 +100,7 @@ final class UsedCss
                     throw new \RuntimeException('Stylesheet changed while queued');
                 }
                 $css = file_get_contents($file);
-                $result = self::reduce($css, $job['tokens'], $job['dynamic'], $job['config'], $url);
+                $result = self::reduce_prepared($css, $job['tokens'], $job['dynamic'], $static_selectors, $keep_selectors, $url);
                 if ($result['removed'] === 0) { continue; }
                 $dest = $dir . '/' . $key . '-' . substr(hash('sha256', $url), 0, 16) . '.css';
                 $tmp = $dest . '.tmp';
@@ -110,8 +113,13 @@ final class UsedCss
             set_transient('wps_used_css_ready_' . $key, array('files' => $files, 'removed' => $removed), 7 * DAY_IN_SECONDS);
             do_action('wps_frontend_page_ready', $job['page']);
             // Immutable outputs outlive the ready record and normal seven-day page caches.
-            foreach (array_slice(glob($dir . '/*.css') ?: array(), 0, 100) as $old) {
-                if (filemtime($old) < time() - 30 * DAY_IN_SECONDS) { unlink($old); }
+            $deleted = 0;
+            $cutoff = time() - 30 * DAY_IN_SECONDS;
+            foreach (new \FilesystemIterator($dir, \FilesystemIterator::SKIP_DOTS) as $old) {
+                if ($old->isLink() || !$old->isFile() || $old->getExtension() !== 'css') { continue; }
+                if ($old->getMTime() < $cutoff && unlink($old->getPathname())) {
+                    if (++$deleted === 100) { break; }
+                }
             }
         } catch (\Throwable $error) {
             set_transient('wps_used_css_failed_' . $key, 'fallback: ' . $error->getMessage(), HOUR_IN_SECONDS);
@@ -122,20 +130,28 @@ final class UsedCss
     /** The parser owns CSS structure; only plain selectors are eligible for removal. */
     public static function reduce(string $css, array $tokens, bool $dynamic, array $config, string $base): array
     {
+        return self::reduce_prepared($css, $tokens, $dynamic,
+            array_fill_keys(FrontendAssets::rules($config['static_selectors'] ?? array()), true),
+            FrontendAssets::rules($config['keep_selectors'] ?? array()), $base);
+    }
+
+    /** Reduce one stylesheet using the build's prepared selector set and keep patterns. */
+    private static function reduce_prepared(string $css, array $tokens, bool $dynamic, array $static_selectors, array $keep_selectors, string $base): array
+    {
         $document = (new Parser($css, Settings::create()->withLenientParsing(false)))->parse();
         // Imports, nesting and newer syntax need complete understanding. Keep the original file.
         if (preg_match('/@import\b|@namespace\b|image-set\s*\(/i', $css)) { return array('css' => $css, 'removed' => 0); }
         $removed = 0;
-        $walk = function (CSSList $list) use (&$walk, &$removed, $tokens, $dynamic, $config) {
+        $walk = function (CSSList $list) use (&$walk, &$removed, $tokens, $dynamic, $static_selectors, $keep_selectors) {
             foreach ($list->getContents() as $item) {
                 if ($item instanceof DeclarationBlock) {
                     $keep = array();
                     foreach ($item->getSelectors() as $selector) {
                         $text = $selector->getSelector();
                         $simple = preg_match('/^(?:[a-zA-Z][a-zA-Z0-9_-]*|[.#][a-zA-Z_][a-zA-Z0-9_-]*)$/D', $text);
-                        $static = in_array($text, FrontendAssets::rules($config['static_selectors'] ?? array()), true);
+                        $static = isset($static_selectors[$text]);
                         $token = ($text[0] ?? '') === '.' || ($text[0] ?? '') === '#' ? $text : strtolower($text);
-                        if (!$simple || isset($tokens[$token]) || FrontendAssets::matches($text, $config['keep_selectors'] ?? array())
+                        if (!$simple || isset($tokens[$token]) || StringHelper::contains_any($text, $keep_selectors)
                             || ($dynamic && !$static)) { $keep[] = $selector; }
                         else { $removed++; }
                     }

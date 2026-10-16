@@ -11,12 +11,13 @@ use WPS\core\Disk;
 use WPS\core\UtilEnv;
 use WPS\modules\Module;
 use WPOptimizer\core\Compatibility;
+use WPOptimizer\modules\supporters\FrontendAssets;
 use WPOptimizer\modules\supporters\Minify_CSS;
 use WPOptimizer\modules\supporters\Minify_HTML;
 use WPOptimizer\modules\supporters\Minify_JS;
 
 /**
- * Module for updates handling
+ * Minify HTML and prepare local assets through a scheduled worker.
  */
 class Mod_Minify extends Module
 {
@@ -25,8 +26,11 @@ class Mod_Minify extends Module
 
     protected string $context = 'wpopt';
 
+    private const ASSET_BUILD_HOOK = 'wpopt_minify_asset_build';
+
     public function cleanup(array $settings = array(), array $all_settings = array()): bool
     {
+        wp_clear_scheduled_hook(self::ASSET_BUILD_HOOK);
         Disk::delete(WPOPT_STORAGE . 'minify');
 
         return true;
@@ -59,25 +63,7 @@ class Mod_Minify extends Module
 
                 if (!str_contains($original_url, 'min') and str_starts_with($original_url, wps_core()->home_url)) {
 
-                    $file_path = WPOPT_STORAGE . "minify/js/" . md5($original_url) . ".js";
-
-                    if (file_exists($file_path)) {
-
-                        $url = UtilEnv::path_to_url($file_path, true);
-                        $script = str_replace($original_url, $url, $script);
-                    }
-                    else {
-
-                        $data = Minify_JS::minify(file_get_contents(UtilEnv::url_to_path($original_url)));
-
-                        if ($data and Disk::write($file_path, $data)) {
-                            $url = UtilEnv::path_to_url($file_path, true);
-
-                            if ($url) {
-                                $script = str_replace($original_url, $url, $script);
-                            }
-                        }
-                    }
+                    $script = $this->rewrite_asset($script, $original_url, 'js');
                 }
 
                 return $script;
@@ -102,27 +88,7 @@ class Mod_Minify extends Module
 
                 if (!str_contains($original_url, 'min') and str_starts_with($original_url, wps_core()->home_url) and str_contains($script, 'stylesheet')) {
 
-                    $file_path = WPOPT_STORAGE . "minify/css/" . md5($original_url) . ".css";
-
-                    if (file_exists($file_path)) {
-
-                        $url = UtilEnv::path_to_url($file_path, true);
-                        $script = str_replace($original_url, $url, $script);
-                    }
-                    else {
-
-                        $original_path = UtilEnv::url_to_path($original_url);
-
-                        $data = Minify_CSS::minify(file_get_contents($original_path), ['file_path' => dirname($original_path) . '/']);
-
-                        if ($data and Disk::write($file_path, $data)) {
-                            $url = UtilEnv::path_to_url($file_path, true);
-
-                            if ($url) {
-                                $script = str_replace($original_url, $url, $script);
-                            }
-                        }
-                    }
+                    $script = $this->rewrite_asset($script, $original_url, 'css');
                 }
 
                 return $script;
@@ -131,6 +97,80 @@ class Mod_Minify extends Module
         }
 
         return $buffer;
+    }
+
+    /** Use ready output; cold requests only enqueue work and keep the original URL. */
+    private function rewrite_asset(string $tag, string $original_url, string $type): string
+    {
+        $file = $this->asset_path($original_url, $type);
+        if (is_file($file)) {
+            $url = UtilEnv::path_to_url($file, true);
+            return $url !== '' ? str_replace($original_url, $url, $tag) : $tag;
+        }
+
+        $args = array($original_url, $type);
+        if (!wp_next_scheduled(self::ASSET_BUILD_HOOK, $args)) {
+            $scheduled = wp_schedule_single_event(time() + 10, self::ASSET_BUILD_HOOK, $args, true);
+            if (is_wp_error($scheduled) || !$scheduled) {
+                do_action('wpopt_minify_asset_failed', $original_url, $type,
+                    is_wp_error($scheduled) ? $scheduled->get_error_message() : 'Cannot schedule asset minification');
+            }
+        }
+        return $tag;
+    }
+
+    /** Keep generated asset names compatible with existing cached markup. */
+    private function asset_path(string $url, string $type): string
+    {
+        return WPOPT_STORAGE . 'minify/' . $type . '/' . md5($url) . '.' . $type;
+    }
+
+    /** Resolve local input in Cron, lock without waiting, and publish complete output. */
+    public function build_asset(string $original_url, string $type): void
+    {
+        if (!in_array($type, array('css', 'js'), true)
+            || !apply_filters('wpopt_allow_minify_' . $type, $this->option($type . '.active'))
+            || Compatibility::is_optimization_sensitive_asset($original_url)) {
+            return;
+        }
+
+        $file = $this->asset_path($original_url, $type);
+        $lock = null;
+        $temporary = '';
+        try {
+            if (is_file($file)) { return; }
+            $source = FrontendAssets::local($original_url);
+            if ($source === '' || strtolower(pathinfo($source, PATHINFO_EXTENSION)) !== $type) {
+                throw new \RuntimeException('Minification requires a local ' . $type . ' file');
+            }
+            if (!Disk::make_path(dirname($file))) {
+                throw new \RuntimeException('Generated asset directory unavailable');
+            }
+            $lock = fopen($file . '.lock', 'c');
+            if ($lock === false) { throw new \RuntimeException('Cannot open asset generation lock'); }
+            if (!flock($lock, LOCK_EX | LOCK_NB)) { return; }
+            // Another worker may have published while this request resolved the source.
+            clearstatcache(true, $file);
+            if (is_file($file)) { return; }
+            $content = file_get_contents($source);
+            if ($content === false) { throw new \RuntimeException('Cannot read minification source'); }
+            $data = $type === 'js' ? Minify_JS::minify($content)
+                : Minify_CSS::minify($content, array('file_path' => dirname($source) . '/'));
+            $temporary = $file . '.tmp';
+            if (file_put_contents($temporary, $data, LOCK_EX) !== strlen($data) || !rename($temporary, $file)) {
+                throw new \RuntimeException('Cannot publish minified asset');
+            }
+            $temporary = '';
+        } catch (\Throwable $error) {
+            do_action('wpopt_minify_asset_failed', $original_url, $type, $error->getMessage());
+        } finally {
+            if ($temporary !== '' && is_file($temporary)) { unlink($temporary); }
+            if (is_resource($lock)) {
+                flock($lock, LOCK_UN);
+                fclose($lock);
+            }
+            // Keep the lock file: unlinking it would let workers lock different inodes.
+        }
     }
 
     /**
@@ -223,6 +263,8 @@ class Mod_Minify extends Module
         require_once WPOPT_SUPPORTERS . '/minifier/Minify_HTML.class.php';
         require_once WPOPT_SUPPORTERS . '/minifier/Minify_CSS.class.php';
         require_once WPOPT_SUPPORTERS . '/minifier/Minify_JS.class.php';
+
+        add_action(self::ASSET_BUILD_HOOK, array($this, 'build_asset'), 10, 2);
 
         wps('wps')->services->get('html_output_buffer')->register(
             'wpopt.minify',

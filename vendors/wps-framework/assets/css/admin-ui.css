@@ -127,7 +127,7 @@ body.wps-admin-screen .wps-admin-ui.wps-admin-app .wps-options .wps-row {
     min-height: 70px;
     padding: 16px 0;
     border-radius: 0 !important;
-    background: transparent !important;
+    background: var(--wps-panel-bg) !important;
     box-shadow: none !important;
 }
 /* Multiline fields share the same columns; legacy flex rules let long help

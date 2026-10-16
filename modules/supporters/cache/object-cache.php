@@ -54,7 +54,8 @@ function wpopt_ensure_cache_object(): void
     // Prefer WPS cache if available and this request is allowed to use persistent cache.
     if (wpopt_should_use_persistent_object_cache() && class_exists('\WPS\core\Cache')) {
         try {
-            $wp_object_cache = new \WPS\core\Cache('wpopt', true);
+            // WordPress's zero expiry means durable data with no expiration deadline.
+            $wp_object_cache = new \WPS\core\Cache('wpopt', true, true, true, true);
             return;
         } catch (\Throwable $e) {
             error_log('object-cache.php: failed to init \\WPS\\core\\Cache: ' . $e->getMessage());
@@ -215,8 +216,7 @@ function wp_cache_get($key, $group = '', $force = false, &$found = null)
      * - if value stored is false, $found must still be true
      */
     if (wpopt_is_wps_cache($wp_object_cache)) {
-        $found = $wp_object_cache->has($key, $group);
-        return $wp_object_cache->get($key, $group, false);
+        return $wp_object_cache->get($key, $group, false, true, $found);
     }
 
     if (method_exists($wp_object_cache, 'get')) {

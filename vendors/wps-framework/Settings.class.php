@@ -36,40 +36,20 @@ class Settings
         return $res === null ? $default : $res;
     }
 
+    /** Resolve dot-separated paths and merge collection defaults at the selected node. */
     public static function get_option($settings, $setting_path, $default = false)
     {
         $setting_path = (string)$setting_path;
 
-        if ($setting_path === '') {
-            if (is_array($settings) or is_object($settings)) {
-                $settings = wp_parse_args($settings, $default);
+        // Empty or leading-dot paths select the root; split repeated dots in one pass.
+        if ($setting_path !== '' && $setting_path[0] !== '.') {
+            foreach (preg_split('/\.+/', $setting_path, -1, PREG_SPLIT_NO_EMPTY) as $slug) {
+                if (!isset($settings[$slug])) {
+                    return $default;
+                }
+
+                $settings = $settings[$slug];
             }
-
-            return $settings;
-        }
-
-        // remove consecutive dots and add a last one for while loop
-        $setting_path = preg_replace('#\.+#', '.', $setting_path);
-
-        if ($setting_path === '' or $setting_path[0] === '.') {
-            if (is_array($settings) or is_object($settings)) {
-                $settings = wp_parse_args($settings, $default);
-            }
-
-            return $settings;
-        }
-
-        foreach (explode('.', $setting_path) as $slug) {
-
-            if ($slug === '') {
-                continue;
-            }
-
-            if (!isset($settings[$slug])) {
-                return $default;
-            }
-
-            $settings = $settings[$slug];
         }
 
         if (is_array($settings) or is_object($settings)) {

@@ -42,6 +42,12 @@ class StaticCache extends Cache_Dispatcher
         return "cache/static";
     }
 
+    /** Static page dependency rows share the static index namespace. */
+    protected static function get_index_namespace(): string
+    {
+        return 'static';
+    }
+
     public static function get_static_cache_group(): string
     {
         return static::get_cache_group();
@@ -282,14 +288,43 @@ class StaticCache extends Cache_Dispatcher
 
         if ($data = parent::cache_get($this->cache_key)) {
             $this->is_cached_content = true;
-            StaticCacheRules::record_hit($this->static_rule_id);
-            $this->record_static_direct_index();
+            // Complete delivery before WordPress shutdown and hit maintenance run.
+            register_shutdown_function([$this, 'persist_cached_hit']);
             $this->send_debug_header('HIT');
             echo $this->prepare_cached_output($data);
+            $this->finish_cached_response();
             exit();
         }
 
         StaticCacheRules::record_miss($this->static_rule_id);
+    }
+
+    /** Detach supported servers, or flush the cached body on other SAPIs. */
+    private function finish_cached_response(): void
+    {
+        ignore_user_abort(true);
+        if (function_exists('session_status') && session_status() === PHP_SESSION_ACTIVE) {
+            session_write_close();
+        }
+        if (function_exists('fastcgi_finish_request')) {
+            fastcgi_finish_request();
+        }
+        elseif (function_exists('litespeed_finish_request')) {
+            litespeed_finish_request();
+        }
+        else {
+            // Other SAPIs can flush the body but cannot guarantee detachment.
+            while (ob_get_level() > 0 && ob_end_flush()) {
+            }
+            flush();
+        }
+    }
+
+    /** Persist exact hit statistics and repair the direct index during shutdown. */
+    public function persist_cached_hit(): void
+    {
+        StaticCacheRules::record_hit($this->static_rule_id);
+        $this->record_static_direct_index();
     }
 
     public function cache_buffer($buffer)

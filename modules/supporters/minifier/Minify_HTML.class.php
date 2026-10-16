@@ -49,7 +49,11 @@ class Minify_HTML extends Minify
         $this->isXhtml = strpos($this->content, '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML') !== false;
         $this->keepComments = $options['comments'];
         $this->multiProcess = $options['multi_process'];
-        $this->_replacementHash = '%MINIFYHTML' . hash('xxh3', $this->content) . '_';
+
+        // Select once per request; this digest identifies temporary placeholders.
+        static $hashAlgorithm = null;
+        $hashAlgorithm ??= in_array('xxh3', hash_algos(), true) ? 'xxh3' : 'md5';
+        $this->_replacementHash = '%MINIFYHTML' . hash($hashAlgorithm, $this->content) . '_';
     }
 
     public function run(): void

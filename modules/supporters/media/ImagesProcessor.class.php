@@ -626,6 +626,7 @@ class ImagesProcessor
         );
     }
 
+    /** Remove a regular media file using PHP's warning-suppression contract. */
     private static function unlink_file_safely(string $file_path): bool
     {
         $file_path = UtilEnv::normalize_path($file_path);
@@ -640,14 +641,6 @@ class ImagesProcessor
             return false;
         }
 
-        set_error_handler(static function ($severity, $message, $file = null, $line = null): bool {
-            return true;
-        });
-
-        try {
-            return unlink($file_path);
-        } finally {
-            restore_error_handler();
-        }
+        return @unlink($file_path);
     }
 }

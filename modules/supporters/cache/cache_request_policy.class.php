@@ -22,27 +22,11 @@ class CacheRequestPolicy
 
     public function rule_cacheability(string $request_path): array
     {
-        $rules = StaticCacheRules::get_active_rules((array)Settings::get_option($this->options, 'rules', []));
-        if (empty($rules)) {
-            return array('cacheable' => true, 'rule_id' => '', 'reason' => '');
-        }
-
-        [$include_rules, $exclude_rules] = StaticCacheRules::split_rules_by_mode($rules);
-
-        if (StaticCacheRules::match_rule($exclude_rules, $request_path)) {
-            return array('cacheable' => false, 'rule_id' => '', 'reason' => 'exclude_rule');
-        }
-
-        $matched_rule = StaticCacheRules::match_rule($include_rules, $request_path);
-        if (!empty($matched_rule)) {
-            return array('cacheable' => true, 'rule_id' => (string)$matched_rule['id'], 'reason' => '');
-        }
-
-        if ((bool)Settings::get_option($this->options, 'cache_include_rules_only', false)) {
-            return array('cacheable' => false, 'rule_id' => '', 'reason' => 'include_rule_required');
-        }
-
-        return array('cacheable' => true, 'rule_id' => '', 'reason' => '');
+        return StaticCacheRules::cacheability(
+            (array)Settings::get_option($this->options, 'rules', []),
+            $request_path,
+            (bool)Settings::get_option($this->options, 'cache_include_rules_only', false)
+        );
     }
 
     public function has_no_cache_cookie(bool $default_enabled = false): bool
@@ -60,8 +44,9 @@ class CacheRequestPolicy
             return true;
         }
 
+        $patterns = array_filter($patterns);
         foreach (array_keys($_COOKIE) as $cookie_name) {
-            foreach (array_filter($patterns) as $pattern) {
+            foreach ($patterns as $pattern) {
                 if ($this->pattern_matches((string)$pattern, (string)$cookie_name)) {
                     return true;
                 }
