@@ -28,7 +28,7 @@ class Report
             return $report_data;
         }
 
-        $report = sprintf(__("Report %s : [ %s s : %s ]\n\n", 'wpopt'), wp_date('Y-m-d H:i:s'), round(wps_core()->meter->get_time('start', 'now'), 3), wps_core()->meter->get_memory());
+        $report = sprintf(__("Report %s : [ %s s : %s ]\n\n", 'wp-optimizer'), wp_date('Y-m-d H:i:s'), round(wps_core()->meter->get_time('start', 'now'), 3), wps_core()->meter->get_memory());
 
         foreach ($report_data as $scope => $table_report) {
 
@@ -37,12 +37,12 @@ class Report
             $errors_count = isset($table_report['errors']) ? count($table_report['errors']) : 0;
             $success_count = isset($table_report['success']) ? count($table_report['success']) : 0;
 
-            $report .= sprintf(__(' %s [ successes %s / errors %s]', 'wpopt'), $scope, $success_count, $errors_count) . PHP_EOL;
+            $report .= sprintf(__(' %s [ successes %s / errors %s]', 'wp-optimizer'), $scope, $success_count, $errors_count) . PHP_EOL;
 
             $report .= ' ------------------------------------------- ' . PHP_EOL;
 
             if (isset($table_report['success'])) {
-                $report .= '  ' . __('Success:', 'wpopt') . PHP_EOL;
+                $report .= '  ' . __('Success:', 'wp-optimizer') . PHP_EOL;
 
                 foreach ($table_report['success'] as $success) {
                     $report .= '   - ' . $success['message'];
@@ -55,7 +55,7 @@ class Report
             }
 
             if (isset($table_report['errors'])) {
-                $report .= '  ' . __('Errors:', 'wpopt') . PHP_EOL;
+                $report .= '  ' . __('Errors:', 'wp-optimizer') . PHP_EOL;
                 foreach ($table_report['errors'] as $error) {
                     $report .= '   - ' . $error['message'];
 

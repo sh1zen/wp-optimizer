@@ -19,9 +19,9 @@ class Mod_Tracking extends Module
         return $this->group_setting_fields(
 
             $this->group_setting_fields(
-                $this->setting_field(__('General', 'wpopt'), false, "separator"),
-                $this->setting_field(__('Allow tracking errors', 'wpopt'), "errors", "checkbox"),
-                $this->setting_field(__('Allow tracking usage', 'wpopt'), "usage", "checkbox"),
+                $this->setting_field(__('General', 'wp-optimizer'), false, "separator"),
+                $this->setting_field(__('Allow tracking errors', 'wp-optimizer'), "errors", "checkbox"),
+                $this->setting_field(__('Allow tracking usage', 'wp-optimizer'), "usage", "checkbox"),
             ),
         );
     }
@@ -29,8 +29,8 @@ class Mod_Tracking extends Module
     protected function infos(): array
     {
         return [
-            'errors' => __('If enabled, this feature allow sending report about THIS plugin errors, we will never collect any personal data.', 'wpopt'),
-            'usage'  => __('If enabled, this feature allow sending report about THIS plugin features used, just to know witch features are useful.', 'wpopt'),
+            'errors' => __('If enabled, this feature allow sending report about THIS plugin errors, we will never collect any personal data.', 'wp-optimizer'),
+            'usage'  => __('If enabled, this feature allow sending report about THIS plugin features used, just to know witch features are useful.', 'wp-optimizer'),
         ];
     }
 }

@@ -106,12 +106,12 @@ class Mod_Performance_Monitor extends Module
 
         if ($message === 'wpopt-performance-history-reset') {
             add_action('admin_notices', function () {
-                $this->add_notices('success', __('Performance history has been reset.', 'wpopt'));
+                $this->add_notices('success', __('Performance history has been reset.', 'wp-optimizer'));
             }, 0);
         }
         elseif ($message === 'wpopt-performance-history-cleaned') {
             add_action('admin_notices', function () {
-                $this->add_notices('success', __('Old performance history has been cleaned.', 'wpopt'));
+                $this->add_notices('success', __('Old performance history has been cleaned.', 'wp-optimizer'));
             }, 0);
         }
 
@@ -599,33 +599,33 @@ class Mod_Performance_Monitor extends Module
     {
         return $this->group_setting_fields(
             $this->group_setting_fields(
-                $this->setting_field(__('Collected data', 'wpopt'), false, 'separator'),
-                $this->setting_field(__('Collect request history and show Overview', 'wpopt'), 'monitor.sections.overview', 'checkbox', array('default_value' => true)),
-                $this->setting_field(__('Collect cache hit / miss metrics', 'wpopt'), 'monitor.sections.cache', 'checkbox', array('default_value' => true)),
-                $this->setting_field(__('Collect plugins & themes profiling', 'wpopt'), 'monitor.sections.components', 'checkbox', array('default_value' => true))
+                $this->setting_field(__('Collected data', 'wp-optimizer'), false, 'separator'),
+                $this->setting_field(__('Collect request history and show Overview', 'wp-optimizer'), 'monitor.sections.overview', 'checkbox', array('default_value' => true)),
+                $this->setting_field(__('Collect cache hit / miss metrics', 'wp-optimizer'), 'monitor.sections.cache', 'checkbox', array('default_value' => true)),
+                $this->setting_field(__('Collect plugins & themes profiling', 'wp-optimizer'), 'monitor.sections.components', 'checkbox', array('default_value' => true))
             ),
             $this->group_setting_fields(
-                $this->setting_field(__('Shared request capture', 'wpopt'), false, 'separator'),
-                $this->setting_field(__('Maximum stored entries per table', 'wpopt'), 'monitor.max_entries', 'numeric', array('default_value' => self::DEFAULT_MAX_ENTRIES, 'props' => array('min' => 1, 'step' => 1))),
+                $this->setting_field(__('Shared request capture', 'wp-optimizer'), false, 'separator'),
+                $this->setting_field(__('Maximum stored entries per table', 'wp-optimizer'), 'monitor.max_entries', 'numeric', array('default_value' => self::DEFAULT_MAX_ENTRIES, 'props' => array('min' => 1, 'step' => 1))),
                 $this->sample_rate_setting_field(),
-                $this->setting_field(__('Slow request threshold (ms)', 'wpopt'), 'monitor.slow_request_ms', 'numeric', array('default_value' => 1500)),
-                $this->setting_field(__('Fast request persistence rate (%)', 'wpopt'), 'monitor.fast_request_sample_rate', 'numeric', array('default_value' => 10)),
-                $this->setting_field(__('Stored request URI max length', 'wpopt'), 'monitor.request_uri_max_length', 'numeric', array('default_value' => 1024))
+                $this->setting_field(__('Slow request threshold (ms)', 'wp-optimizer'), 'monitor.slow_request_ms', 'numeric', array('default_value' => 1500)),
+                $this->setting_field(__('Fast request persistence rate (%)', 'wp-optimizer'), 'monitor.fast_request_sample_rate', 'numeric', array('default_value' => 10)),
+                $this->setting_field(__('Stored request URI max length', 'wp-optimizer'), 'monitor.request_uri_max_length', 'numeric', array('default_value' => 1024))
             ),
             $this->group_setting_fields(
-                $this->setting_field(__('Tracked request types', 'wpopt'), false, 'separator'),
-                $this->setting_field(__('Capture REST API requests', 'wpopt'), 'monitor.capture_rest', 'checkbox', array('default_value' => true)),
-                $this->setting_field(__('Capture admin-ajax requests', 'wpopt'), 'monitor.capture_ajax', 'checkbox', array('default_value' => false)),
-                $this->setting_field(__('Capture wp-admin requests', 'wpopt'), 'monitor.capture_admin', 'checkbox', array('default_value' => true)),
-                $this->setting_field(__('Capture wp-login requests', 'wpopt'), 'monitor.capture_login', 'checkbox', array('default_value' => false)),
-                $this->setting_field(__('Capture XML-RPC requests', 'wpopt'), 'monitor.capture_xmlrpc', 'checkbox', array('default_value' => false))
+                $this->setting_field(__('Tracked request types', 'wp-optimizer'), false, 'separator'),
+                $this->setting_field(__('Capture REST API requests', 'wp-optimizer'), 'monitor.capture_rest', 'checkbox', array('default_value' => true)),
+                $this->setting_field(__('Capture admin-ajax requests', 'wp-optimizer'), 'monitor.capture_ajax', 'checkbox', array('default_value' => false)),
+                $this->setting_field(__('Capture wp-admin requests', 'wp-optimizer'), 'monitor.capture_admin', 'checkbox', array('default_value' => true)),
+                $this->setting_field(__('Capture wp-login requests', 'wp-optimizer'), 'monitor.capture_login', 'checkbox', array('default_value' => false)),
+                $this->setting_field(__('Capture XML-RPC requests', 'wp-optimizer'), 'monitor.capture_xmlrpc', 'checkbox', array('default_value' => false))
             ),
             $this->group_setting_fields(
-                $this->setting_field(__('Slow SQL', 'wpopt'), false, 'separator'),
-                $this->setting_field(__('Collect and show Slow SQL queries', 'wpopt'), 'monitor.sections.slow_queries', 'checkbox', array('default_value' => true)),
-                $this->setting_field(__('Duplicate request context in each SQL sample', 'wpopt'), 'monitor.slow_query_store_request_context', 'checkbox', array('default_value' => false, 'parent' => 'monitor.sections.slow_queries')),
-                $this->setting_field(__('Store SQL caller backtrace', 'wpopt'), 'monitor.slow_query_store_callers', 'checkbox', array('default_value' => false, 'parent' => 'monitor.sections.slow_queries')),
-                $this->setting_field(__('Stored SQL caller backtrace max length', 'wpopt'), 'monitor.slow_query_caller_max_length', 'numeric', array('default_value' => 600, 'parent' => 'monitor.slow_query_store_callers'))
+                $this->setting_field(__('Slow SQL', 'wp-optimizer'), false, 'separator'),
+                $this->setting_field(__('Collect and show Slow SQL queries', 'wp-optimizer'), 'monitor.sections.slow_queries', 'checkbox', array('default_value' => true)),
+                $this->setting_field(__('Duplicate request context in each SQL sample', 'wp-optimizer'), 'monitor.slow_query_store_request_context', 'checkbox', array('default_value' => false, 'parent' => 'monitor.sections.slow_queries')),
+                $this->setting_field(__('Store SQL caller backtrace', 'wp-optimizer'), 'monitor.slow_query_store_callers', 'checkbox', array('default_value' => false, 'parent' => 'monitor.sections.slow_queries')),
+                $this->setting_field(__('Stored SQL caller backtrace max length', 'wp-optimizer'), 'monitor.slow_query_caller_max_length', 'numeric', array('default_value' => 600, 'parent' => 'monitor.slow_query_store_callers'))
             )
         );
     }
@@ -637,7 +637,7 @@ class Mod_Performance_Monitor extends Module
 
         return array(
             'type'    => 'range',
-            'name'    => __('Request capture sample rate (%)', 'wpopt'),
+            'name'    => __('Request capture sample rate (%)', 'wp-optimizer'),
             'id'      => 'monitor.sample_rate',
             'value'   => $value,
             'classes' => 'wpopt-sample-rate-range',
@@ -662,23 +662,23 @@ class Mod_Performance_Monitor extends Module
     protected function infos(): array
     {
         return array(
-            'monitor.sections.overview' => __('When disabled, Performance Monitor stops collecting request history and the Overview tab has no data source.', 'wpopt'),
-            'monitor.sections.cache' => __('When disabled, Performance Monitor stops collecting cache hit / miss metrics and the related tab is not populated.', 'wpopt'),
-            'monitor.sections.components' => __('When disabled, callback and component profiling stop in background and the related tab is not populated.', 'wpopt'),
-            'monitor.sections.slow_queries' => __('When disabled, slow SQL capture is fully turned off: no SQL samples are captured, stored or shown.', 'wpopt'),
-            'monitor.slow_query_store_request_context' => __('Keep this disabled for lower write overhead. Enable it only if you want request context duplicated inside every saved SQL sample.', 'wpopt'),
-            'monitor.slow_query_store_callers' => __('Keep this disabled for lower overhead. Enable it only if you need the SQL caller backtrace for debugging.', 'wpopt'),
-            'monitor.slow_query_caller_max_length' => __('Maximum stored caller backtrace length when SQL caller capture is enabled.', 'wpopt'),
-            'monitor.sample_rate'     => __('Shared setting. Sampling is applied before any enabled feature stores request data. 100 means every eligible request is captured.', 'wpopt'),
-            'monitor.max_entries' => __('Maximum records kept in each request-history and Slow SQL table. The oldest entries are removed first. The 24-hour retention window still applies.', 'wpopt'),
-            'monitor.slow_request_ms' => __('Shared setting. Requests at or above this threshold are treated as slow. This affects request history and Slow SQL retention.', 'wpopt'),
-            'monitor.fast_request_sample_rate' => __('Shared setting. Percent of non-slow requests persisted by enabled request-based collectors. Use 0 to skip fast requests entirely.', 'wpopt'),
-            'monitor.request_uri_max_length' => __('Shared storage limit for saved request URIs. Applies to request history and to inline Slow SQL request context when that option is enabled.', 'wpopt'),
-            'monitor.capture_rest'    => __('Shared capture scope. If disabled, no Performance Monitor feature collects WordPress REST API requests.', 'wpopt'),
-            'monitor.capture_ajax'    => __('Shared capture scope. If disabled, no Performance Monitor feature collects admin-ajax requests.', 'wpopt'),
-            'monitor.capture_admin'   => __('Shared capture scope. If disabled, no Performance Monitor feature collects wp-admin page requests.', 'wpopt'),
-            'monitor.capture_login'   => __('Shared capture scope. If disabled, no Performance Monitor feature collects wp-login.php requests.', 'wpopt'),
-            'monitor.capture_xmlrpc'  => __('Shared capture scope. If disabled, no Performance Monitor feature collects XML-RPC requests.', 'wpopt'),
+            'monitor.sections.overview' => __('When disabled, Performance Monitor stops collecting request history and the Overview tab has no data source.', 'wp-optimizer'),
+            'monitor.sections.cache' => __('When disabled, Performance Monitor stops collecting cache hit / miss metrics and the related tab is not populated.', 'wp-optimizer'),
+            'monitor.sections.components' => __('When disabled, callback and component profiling stop in background and the related tab is not populated.', 'wp-optimizer'),
+            'monitor.sections.slow_queries' => __('When disabled, slow SQL capture is fully turned off: no SQL samples are captured, stored or shown.', 'wp-optimizer'),
+            'monitor.slow_query_store_request_context' => __('Keep this disabled for lower write overhead. Enable it only if you want request context duplicated inside every saved SQL sample.', 'wp-optimizer'),
+            'monitor.slow_query_store_callers' => __('Keep this disabled for lower overhead. Enable it only if you need the SQL caller backtrace for debugging.', 'wp-optimizer'),
+            'monitor.slow_query_caller_max_length' => __('Maximum stored caller backtrace length when SQL caller capture is enabled.', 'wp-optimizer'),
+            'monitor.sample_rate'     => __('Shared setting. Sampling is applied before any enabled feature stores request data. 100 means every eligible request is captured.', 'wp-optimizer'),
+            'monitor.max_entries' => __('Maximum records kept in each request-history and Slow SQL table. The oldest entries are removed first. The 24-hour retention window still applies.', 'wp-optimizer'),
+            'monitor.slow_request_ms' => __('Shared setting. Requests at or above this threshold are treated as slow. This affects request history and Slow SQL retention.', 'wp-optimizer'),
+            'monitor.fast_request_sample_rate' => __('Shared setting. Percent of non-slow requests persisted by enabled request-based collectors. Use 0 to skip fast requests entirely.', 'wp-optimizer'),
+            'monitor.request_uri_max_length' => __('Shared storage limit for saved request URIs. Applies to request history and to inline Slow SQL request context when that option is enabled.', 'wp-optimizer'),
+            'monitor.capture_rest'    => __('Shared capture scope. If disabled, no Performance Monitor feature collects WordPress REST API requests.', 'wp-optimizer'),
+            'monitor.capture_ajax'    => __('Shared capture scope. If disabled, no Performance Monitor feature collects admin-ajax requests.', 'wp-optimizer'),
+            'monitor.capture_admin'   => __('Shared capture scope. If disabled, no Performance Monitor feature collects wp-admin page requests.', 'wp-optimizer'),
+            'monitor.capture_login'   => __('Shared capture scope. If disabled, no Performance Monitor feature collects wp-login.php requests.', 'wp-optimizer'),
+            'monitor.capture_xmlrpc'  => __('Shared capture scope. If disabled, no Performance Monitor feature collects XML-RPC requests.', 'wp-optimizer'),
         );
     }
 
@@ -870,7 +870,7 @@ class Mod_Performance_Monitor extends Module
         if ($this->is_overview_panel_enabled()) {
             $panels[] = array(
                 'id'          => 'performance-overview',
-                'panel-title' => __('Overview', 'wpopt'),
+                'panel-title' => __('Overview', 'wp-optimizer'),
                 'callback'    => array($this, 'render_monitor_overview_panel'),
             );
         }
@@ -878,7 +878,7 @@ class Mod_Performance_Monitor extends Module
         if ($this->is_slow_queries_panel_enabled()) {
             $panels[] = array(
                 'id'          => 'performance-slow-sql',
-                'panel-title' => __('Slow SQL queries', 'wpopt'),
+                'panel-title' => __('Slow SQL queries', 'wp-optimizer'),
                 'callback'    => array($this, 'render_monitor_slow_queries_panel'),
             );
         }
@@ -886,7 +886,7 @@ class Mod_Performance_Monitor extends Module
         if ($this->is_cache_panel_enabled()) {
             $panels[] = array(
                 'id'          => 'performance-cache-ratio',
-                'panel-title' => __('Cache hit / miss', 'wpopt'),
+                'panel-title' => __('Cache hit / miss', 'wp-optimizer'),
                 'callback'    => array($this, 'render_monitor_cache_panel'),
             );
         }
@@ -894,7 +894,7 @@ class Mod_Performance_Monitor extends Module
         if ($this->is_components_panel_enabled()) {
             $panels[] = array(
                 'id'          => 'performance-components',
-                'panel-title' => __('Plugins & themes', 'wpopt'),
+                'panel-title' => __('Plugins & themes', 'wp-optimizer'),
                 'callback'    => array($this, 'render_monitor_components_panel'),
             );
         }
@@ -902,7 +902,7 @@ class Mod_Performance_Monitor extends Module
         if ($this->is_maintenance_panel_enabled()) {
             $panels[] = array(
                 'id'          => 'performance-maintenance',
-                'panel-title' => __('Maintenance', 'wpopt'),
+                'panel-title' => __('Maintenance', 'wp-optimizer'),
                 'callback'    => array($this, 'render_monitor_maintenance_panel'),
             );
         }
@@ -915,9 +915,9 @@ class Mod_Performance_Monitor extends Module
                     ?>
                     <div class="wpopt-perf-shell">
                         <block class="wps wpopt-perf-table">
-                            <h3><?php _e('No sections enabled', 'wpopt'); ?></h3>
-                            <?php echo $this->render_empty_state(__('Enable at least one Performance Monitor section from settings to show data here.', 'wpopt')); ?>
-                            <p><a class="wps wps-button wpopt-btn is-info" href="<?php echo esc_url(wps_module_setting_url('wpopt', $this->slug)); ?>"><?php _e('Open settings', 'wpopt'); ?></a></p>
+                            <h3><?php _e('No sections enabled', 'wp-optimizer'); ?></h3>
+                            <?php echo $this->render_empty_state(__('Enable at least one Performance Monitor section from settings to show data here.', 'wp-optimizer')); ?>
+                            <p><a class="wps wps-button wpopt-btn is-info" href="<?php echo esc_url(wps_module_setting_url('wpopt', $this->slug)); ?>"><?php _e('Open settings', 'wp-optimizer'); ?></a></p>
                         </block>
                     </div>
                     <?php
@@ -935,8 +935,8 @@ class Mod_Performance_Monitor extends Module
     {
         return sprintf(
             '<div class="wpopt-perf-notice"><strong>%s</strong><span>%s</span></div>',
-            esc_html__('Monitoring overhead', 'wpopt'),
-            esc_html__('Performance Monitor collects timing, memory, query and component data while requests are running. This adds a small but real overhead, so the site can be slightly slower while monitoring is enabled and WP Optimizer itself may appear slower in these results because it is doing the measurement work.', 'wpopt')
+            esc_html__('Monitoring overhead', 'wp-optimizer'),
+            esc_html__('Performance Monitor collects timing, memory, query and component data while requests are running. This adds a small but real overhead, so the site can be slightly slower while monitoring is enabled and WP Optimizer itself may appear slower in these results because it is doing the measurement work.', 'wp-optimizer')
         );
     }
 
@@ -956,43 +956,43 @@ class Mod_Performance_Monitor extends Module
         ?>
         <div class="wpopt-perf-shell">
             <div class="wpopt-perf-kpis">
-                <div class="wpopt-perf-kpi"><span><?php _e('Requests', 'wpopt'); ?></span><strong><?php echo number_format_i18n((int)$summary['total_requests']); ?></strong></div>
-                <div class="wpopt-perf-kpi"><span><?php _e('Average time', 'wpopt'); ?></span><strong><?php echo esc_html($this->format_ms($summary['avg_ms'])); ?></strong></div>
-                <div class="wpopt-perf-kpi"><span><?php _e('Peak time', 'wpopt'); ?></span><strong><?php echo esc_html($this->format_ms($summary['max_ms'])); ?></strong></div>
-                <div class="wpopt-perf-kpi"><span><?php _e('Slow requests', 'wpopt'); ?></span><strong><?php echo number_format_i18n((int)$summary['slow_hits']); ?></strong></div>
-                <div class="wpopt-perf-kpi"><span><?php _e('Average memory peak', 'wpopt'); ?></span><strong><?php echo esc_html(size_format((int)round($summary['avg_memory_peak']))); ?></strong></div>
-                <div class="wpopt-perf-kpi"><span><?php _e('Average queries', 'wpopt'); ?></span><strong><?php echo esc_html(number_format_i18n((float)$summary['avg_queries'], 1)); ?></strong></div>
+                <div class="wpopt-perf-kpi"><span><?php _e('Requests', 'wp-optimizer'); ?></span><strong><?php echo number_format_i18n((int)$summary['total_requests']); ?></strong></div>
+                <div class="wpopt-perf-kpi"><span><?php _e('Average time', 'wp-optimizer'); ?></span><strong><?php echo esc_html($this->format_ms($summary['avg_ms'])); ?></strong></div>
+                <div class="wpopt-perf-kpi"><span><?php _e('Peak time', 'wp-optimizer'); ?></span><strong><?php echo esc_html($this->format_ms($summary['max_ms'])); ?></strong></div>
+                <div class="wpopt-perf-kpi"><span><?php _e('Slow requests', 'wp-optimizer'); ?></span><strong><?php echo number_format_i18n((int)$summary['slow_hits']); ?></strong></div>
+                <div class="wpopt-perf-kpi"><span><?php _e('Average memory peak', 'wp-optimizer'); ?></span><strong><?php echo esc_html(size_format((int)round($summary['avg_memory_peak']))); ?></strong></div>
+                <div class="wpopt-perf-kpi"><span><?php _e('Average queries', 'wp-optimizer'); ?></span><strong><?php echo esc_html(number_format_i18n((float)$summary['avg_queries'], 1)); ?></strong></div>
             </div>
 
             <div class="wpopt-perf-grid">
                 <div class="wpopt-perf-chart">
-                    <h3><?php _e('Average response time trend', 'wpopt'); ?></h3>
-                    <?php echo !empty($series['series']) ? $this->render_line_chart($series['labels'], $series['series']) : $this->render_empty_state(__('No data collected yet for this time window.', 'wpopt')); ?>
+                    <h3><?php _e('Average response time trend', 'wp-optimizer'); ?></h3>
+                    <?php echo !empty($series['series']) ? $this->render_line_chart($series['labels'], $series['series']) : $this->render_empty_state(__('No data collected yet for this time window.', 'wp-optimizer')); ?>
                 </div>
                 <div class="wpopt-perf-chart">
-                    <h3><?php _e('By request type', 'wpopt'); ?></h3>
-                    <?php echo !empty($types) ? $this->render_bar_chart($types) : $this->render_empty_state(__('Visit the site or call an API endpoint to start populating the chart.', 'wpopt')); ?>
+                    <h3><?php _e('By request type', 'wp-optimizer'); ?></h3>
+                    <?php echo !empty($types) ? $this->render_bar_chart($types) : $this->render_empty_state(__('Visit the site or call an API endpoint to start populating the chart.', 'wp-optimizer')); ?>
                 </div>
             </div>
 
             <block class="wps wpopt-perf-table">
-                <h3><?php _e('Type snapshots', 'wpopt'); ?></h3>
+                <h3><?php _e('Type snapshots', 'wp-optimizer'); ?></h3>
                 <?php echo $this->render_type_cards($snapshot_types, $type_series['labels'], $type_series['series']); ?>
             </block>
 
             <block class="wps wpopt-perf-table">
-                <h3><?php _e('Top request groups', 'wpopt'); ?></h3>
+                <h3><?php _e('Top request groups', 'wp-optimizer'); ?></h3>
                 <?php if (empty($labels)): ?>
-                    <?php echo $this->render_empty_state(__('No grouped request history available yet.', 'wpopt')); ?>
+                    <?php echo $this->render_empty_state(__('No grouped request history available yet.', 'wp-optimizer')); ?>
                 <?php else: ?>
                     <?php echo $this->render_request_groups_table($labels); ?>
                 <?php endif; ?>
             </block>
 
             <block class="wps wpopt-perf-table">
-                <h3><?php _e('Latest requests', 'wpopt'); ?></h3>
+                <h3><?php _e('Latest requests', 'wp-optimizer'); ?></h3>
                 <?php if (empty($recent)): ?>
-                    <?php echo $this->render_empty_state(__('No requests stored in the selected window.', 'wpopt')); ?>
+                    <?php echo $this->render_empty_state(__('No requests stored in the selected window.', 'wp-optimizer')); ?>
                 <?php else: ?>
                     <?php echo $this->render_recent_requests_table($recent); ?>
                 <?php endif; ?>
@@ -1019,14 +1019,14 @@ class Mod_Performance_Monitor extends Module
         return List_Table::generateHTML_table(array(
             'class' => 'wps wpopt-perf-groups-table',
             'columns' => array(
-                'type' => __('Type', 'wpopt'),
-                'group' => __('Group', 'wpopt'),
-                'hits' => __('Hits', 'wpopt'),
-                'average' => __('Average', 'wpopt'),
-                'peak' => __('Peak', 'wpopt'),
+                'type' => __('Type', 'wp-optimizer'),
+                'group' => __('Group', 'wp-optimizer'),
+                'hits' => __('Hits', 'wp-optimizer'),
+                'average' => __('Average', 'wp-optimizer'),
+                'peak' => __('Peak', 'wp-optimizer'),
             ),
             'rows' => $rows,
-            'empty' => __('No grouped request history available yet.', 'wpopt'),
+            'empty' => __('No grouped request history available yet.', 'wp-optimizer'),
         ));
     }
 
@@ -1050,17 +1050,17 @@ class Mod_Performance_Monitor extends Module
         return List_Table::generateHTML_table(array(
             'class' => 'wps wpopt-perf-recent-table',
             'columns' => array(
-                'time' => __('Time', 'wpopt'),
-                'type' => __('Type', 'wpopt'),
-                'group' => __('Group', 'wpopt'),
-                'method' => __('Method', 'wpopt'),
-                'status' => __('Status', 'wpopt'),
-                'duration' => __('Duration', 'wpopt'),
-                'memory' => __('Memory', 'wpopt'),
-                'queries' => __('Queries', 'wpopt'),
+                'time' => __('Time', 'wp-optimizer'),
+                'type' => __('Type', 'wp-optimizer'),
+                'group' => __('Group', 'wp-optimizer'),
+                'method' => __('Method', 'wp-optimizer'),
+                'status' => __('Status', 'wp-optimizer'),
+                'duration' => __('Duration', 'wp-optimizer'),
+                'memory' => __('Memory', 'wp-optimizer'),
+                'queries' => __('Queries', 'wp-optimizer'),
             ),
             'rows' => $rows,
-            'empty' => __('No requests stored in the selected window.', 'wpopt'),
+            'empty' => __('No requests stored in the selected window.', 'wp-optimizer'),
         ));
     }
 
@@ -1075,12 +1075,12 @@ class Mod_Performance_Monitor extends Module
         ?>
         <div class="wpopt-perf-shell">
             <div class="wpopt-perf-toolbar">
-                <p class="wpopt-muted"><?php echo esc_html(sprintf(__('Slow SQL samples captured in %s. Showing up to the %d slowest captured queries in the selected window.', 'wpopt'), strtolower($window['label']), $display_limit)); ?></p>
+                <p class="wpopt-muted"><?php echo esc_html(sprintf(__('Slow SQL samples captured in %s. Showing up to the %d slowest captured queries in the selected window.', 'wp-optimizer'), strtolower($window['label']), $display_limit)); ?></p>
             </div>
 
             <block class="wps wpopt-perf-table">
-                <h3><?php _e('Slow SQL queries', 'wpopt'); ?></h3>
-                <?php echo !empty($slow_queries) ? $this->render_slow_query_explorer($slow_queries) : $this->render_empty_state(__('No slow SQL queries captured yet in the selected window.', 'wpopt')); ?>
+                <h3><?php _e('Slow SQL queries', 'wp-optimizer'); ?></h3>
+                <?php echo !empty($slow_queries) ? $this->render_slow_query_explorer($slow_queries) : $this->render_empty_state(__('No slow SQL queries captured yet in the selected window.', 'wp-optimizer')); ?>
             </block>
         </div>
         <?php
@@ -1098,22 +1098,22 @@ class Mod_Performance_Monitor extends Module
         ?>
         <div class="wpopt-perf-shell">
             <div class="wpopt-perf-toolbar">
-                <p class="wpopt-muted"><?php _e('Cumulative cache counters collected since the last reset. Metrics are merged from Database cache and WP_Query cache without storing extra per-request cache rows.', 'wpopt'); ?></p>
+                <p class="wpopt-muted"><?php _e('Cumulative cache counters collected since the last reset. Metrics are merged from Database cache and WP_Query cache without storing extra per-request cache rows.', 'wp-optimizer'); ?></p>
             </div>
 
             <?php if ((int)($summary['total_operations'] ?? 0) <= 0): ?>
-                <?php echo $this->render_empty_state(__('No cache hits or misses recorded yet. Enable Database cache or WP_Query cache and browse the site to populate this tab.', 'wpopt')); ?>
+                <?php echo $this->render_empty_state(__('No cache hits or misses recorded yet. Enable Database cache or WP_Query cache and browse the site to populate this tab.', 'wp-optimizer')); ?>
             <?php else: ?>
                 <div class="wpopt-perf-cache-grid">
                     <?php echo $this->render_cache_summary_card($summary); ?>
                     <div class="wpopt-perf-chart">
-                        <h3><?php _e('Cumulative hit / miss distribution', 'wpopt'); ?></h3>
+                        <h3><?php _e('Cumulative hit / miss distribution', 'wp-optimizer'); ?></h3>
                         <?php echo $this->render_cumulative_cache_chart($summary, $layers); ?>
                     </div>
                 </div>
 
                 <block class="wps wpopt-perf-table">
-                    <h3><?php _e('Cache layers', 'wpopt'); ?></h3>
+                    <h3><?php _e('Cache layers', 'wp-optimizer'); ?></h3>
                     <?php echo $this->render_cache_layer_cards($layers); ?>
                 </block>
             <?php endif; ?>
@@ -1134,23 +1134,23 @@ class Mod_Performance_Monitor extends Module
         ?>
         <div class="wpopt-perf-shell">
             <div class="wpopt-perf-toolbar">
-                <p class="wpopt-muted"><?php echo esc_html(sprintf(__('Average plugin and theme footprint per sampled request across %s. Sort the list alphabetically, by observed time or by memory footprint.', 'wpopt'), strtolower($window['label']))); ?></p>
+                <p class="wpopt-muted"><?php echo esc_html(sprintf(__('Average plugin and theme footprint per sampled request across %s. Sort the list alphabetically, by observed time or by memory footprint.', 'wp-optimizer'), strtolower($window['label']))); ?></p>
             </div>
 
             <?php if (empty($rows)): ?>
-                <?php echo $this->render_empty_state(__('No plugin or theme footprint has been recorded yet. Generate a few requests after the upgrade to populate this tab.', 'wpopt')); ?>
+                <?php echo $this->render_empty_state(__('No plugin or theme footprint has been recorded yet. Generate a few requests after the upgrade to populate this tab.', 'wp-optimizer')); ?>
             <?php else: ?>
                 <div class="wpopt-perf-kpis">
-                    <div class="wpopt-perf-kpi"><span><?php _e('Components', 'wpopt'); ?></span><strong><?php echo number_format_i18n((int)$summary['components']); ?></strong></div>
-                    <div class="wpopt-perf-kpi"><span><?php _e('Plugins', 'wpopt'); ?></span><strong><?php echo number_format_i18n((int)$summary['plugins']); ?></strong></div>
-                    <div class="wpopt-perf-kpi"><span><?php _e('Themes', 'wpopt'); ?></span><strong><?php echo number_format_i18n((int)$summary['themes']); ?></strong></div>
-                    <div class="wpopt-perf-kpi"><span><?php _e('Avg observed time', 'wpopt'); ?></span><strong><?php echo esc_html($this->format_ms((float)$summary['observed_time_ms'])); ?></strong></div>
-                    <div class="wpopt-perf-kpi"><span><?php _e('Avg peak memory', 'wpopt'); ?></span><strong><?php echo esc_html(size_format((int)$summary['peak_memory'])); ?></strong></div>
-                    <div class="wpopt-perf-kpi"><span><?php _e('Avg queries', 'wpopt'); ?></span><strong><?php echo esc_html($this->format_avg_count((float)$summary['query_count'])); ?></strong></div>
+                    <div class="wpopt-perf-kpi"><span><?php _e('Components', 'wp-optimizer'); ?></span><strong><?php echo number_format_i18n((int)$summary['components']); ?></strong></div>
+                    <div class="wpopt-perf-kpi"><span><?php _e('Plugins', 'wp-optimizer'); ?></span><strong><?php echo number_format_i18n((int)$summary['plugins']); ?></strong></div>
+                    <div class="wpopt-perf-kpi"><span><?php _e('Themes', 'wp-optimizer'); ?></span><strong><?php echo number_format_i18n((int)$summary['themes']); ?></strong></div>
+                    <div class="wpopt-perf-kpi"><span><?php _e('Avg observed time', 'wp-optimizer'); ?></span><strong><?php echo esc_html($this->format_ms((float)$summary['observed_time_ms'])); ?></strong></div>
+                    <div class="wpopt-perf-kpi"><span><?php _e('Avg peak memory', 'wp-optimizer'); ?></span><strong><?php echo esc_html(size_format((int)$summary['peak_memory'])); ?></strong></div>
+                    <div class="wpopt-perf-kpi"><span><?php _e('Avg queries', 'wp-optimizer'); ?></span><strong><?php echo esc_html($this->format_avg_count((float)$summary['query_count'])); ?></strong></div>
                 </div>
 
                 <block class="wps wpopt-perf-table">
-                    <h3><?php _e('Component explorer', 'wpopt'); ?></h3>
+                    <h3><?php _e('Component explorer', 'wp-optimizer'); ?></h3>
                     <?php echo $this->render_component_explorer($rows); ?>
                 </block>
             <?php endif; ?>
@@ -1165,16 +1165,16 @@ class Mod_Performance_Monitor extends Module
         ?>
         <div class="wpopt-perf-shell">
             <div class="wpopt-perf-toolbar">
-                <p class="wpopt-muted"><?php _e('Cleanup and reset tools for the fixed 24-hour Performance Monitor retention window.', 'wpopt'); ?></p>
+                <p class="wpopt-muted"><?php _e('Cleanup and reset tools for the fixed 24-hour Performance Monitor retention window.', 'wp-optimizer'); ?></p>
             </div>
 
             <block class="wps wpopt-perf-table">
-                <h3><?php _e('Maintenance', 'wpopt'); ?></h3>
-                <p><?php echo esc_html(__('Only the latest 24 hours are kept. Older performance and slow-query records are removed automatically.', 'wpopt')); ?></p>
+                <h3><?php _e('Maintenance', 'wp-optimizer'); ?></h3>
+                <p><?php echo esc_html(__('Only the latest 24 hours are kept. Older performance and slow-query records are removed automatically.', 'wp-optimizer')); ?></p>
                 <form method="post" action="<?php echo esc_url(wps_module_panel_url($this->slug)); ?>" class="wpopt-perf-actions">
                     <?php RequestActions::nonce_field($this->action_hook); ?>
-                    <?php echo RequestActions::get_action_button($this->action_hook, 'reset_history', __('Reset history', 'wpopt'), 'wps wps-button wpopt-btn is-danger'); ?>
-                    <a class="wps wps-button wpopt-btn is-info" href="<?php echo esc_url(wps_module_setting_url('wpopt', $this->slug)); ?>"><?php _e('Open settings', 'wpopt'); ?></a>
+                    <?php echo RequestActions::get_action_button($this->action_hook, 'reset_history', __('Reset history', 'wp-optimizer'), 'wps wps-button wpopt-btn is-danger'); ?>
+                    <a class="wps wps-button wpopt-btn is-info" href="<?php echo esc_url(wps_module_setting_url('wpopt', $this->slug)); ?>"><?php _e('Open settings', 'wp-optimizer'); ?></a>
                 </form>
             </block>
         </div>
@@ -1879,7 +1879,7 @@ class Mod_Performance_Monitor extends Module
 
     private function get_monitor_window(): array
     {
-        return array('label' => __('Last 24 hours', 'wpopt'), 'seconds' => DAY_IN_SECONDS, 'bucket' => 'hour', 'count' => 24);
+        return array('label' => __('Last 24 hours', 'wp-optimizer'), 'seconds' => DAY_IN_SECONDS, 'bucket' => 'hour', 'count' => 24);
     }
 
     private function get_monitor_from_gmt(): string
@@ -2193,20 +2193,20 @@ class Mod_Performance_Monitor extends Module
     {
         return array(
             array(
-                'label'   => __('Database cache', 'wpopt'),
+                'label'   => __('Database cache', 'wp-optimizer'),
                 'hits'    => $summary['db_hits'],
                 'misses'  => $summary['db_misses'],
                 'total'   => $summary['db_total'],
                 'ratio'   => $summary['db_ratio'],
-                'context' => __('WP DB drop-in results reused from storage.', 'wpopt'),
+                'context' => __('WP DB drop-in results reused from storage.', 'wp-optimizer'),
             ),
             array(
-                'label'   => __('WP_Query cache', 'wpopt'),
+                'label'   => __('WP_Query cache', 'wp-optimizer'),
                 'hits'    => $summary['query_hits'],
                 'misses'  => $summary['query_misses'],
                 'total'   => $summary['query_total'],
                 'ratio'   => $summary['query_ratio'],
-                'context' => __('Cached post query results served before SQL execution.', 'wpopt'),
+                'context' => __('Cached post query results served before SQL execution.', 'wp-optimizer'),
             ),
         );
     }
@@ -2710,7 +2710,7 @@ class Mod_Performance_Monitor extends Module
             'key'       => (string)($row['key'] ?? ''),
             'type'      => (string)($row['type'] ?? 'plugin'),
             'slug'      => (string)($row['slug'] ?? ''),
-            'label'     => (string)($row['label'] ?? $row['slug'] ?? __('Unknown component', 'wpopt')),
+            'label'     => (string)($row['label'] ?? $row['slug'] ?? __('Unknown component', 'wp-optimizer')),
             'version'   => (string)($row['version'] ?? ''),
             'author'    => sanitize_text_field((string)($row['author'] ?? '')),
             'author_url'=> esc_url_raw((string)($row['author_url'] ?? '')),
@@ -3406,7 +3406,7 @@ class Mod_Performance_Monitor extends Module
 
         ob_start();
         ?>
-        <svg viewBox="0 0 <?php echo $width; ?> <?php echo $height; ?>" width="100%" height="280" role="img" aria-label="<?php esc_attr_e('Average response time by request type', 'wpopt'); ?>">
+        <svg viewBox="0 0 <?php echo $width; ?> <?php echo $height; ?>" width="100%" height="280" role="img" aria-label="<?php esc_attr_e('Average response time by request type', 'wp-optimizer'); ?>">
             <line x1="<?php echo $padding_left; ?>" y1="<?php echo $padding_top; ?>" x2="<?php echo $padding_left; ?>" y2="<?php echo $padding_top + $plot_height; ?>" stroke="#cbd5e1" stroke-width="1"/>
             <line x1="<?php echo $padding_left; ?>" y1="<?php echo $padding_top + $plot_height; ?>" x2="<?php echo $padding_left + $plot_width; ?>" y2="<?php echo $padding_top + $plot_height; ?>" stroke="#cbd5e1" stroke-width="1"/>
             <text x="10" y="<?php echo $padding_top + 10; ?>" fill="#64748b" font-size="11"><?php echo esc_html($this->format_ms($max_value)); ?></text>
@@ -3422,8 +3422,8 @@ class Mod_Performance_Monitor extends Module
                 <rect x="<?php echo round($x, 2); ?>" y="<?php echo round($y, 2); ?>" width="<?php echo round($bar_width, 2); ?>" height="<?php echo round($bar_height, 2); ?>" rx="10" fill="<?php echo esc_attr($color); ?>" opacity="0.92"></rect>
                 <text x="<?php echo round($x + ($bar_width / 2), 2); ?>" y="<?php echo max(12, round($y - 6, 2)); ?>" text-anchor="middle" fill="#0f172a" font-size="11"><?php echo esc_html($this->format_ms($value)); ?></text>
                 <text x="<?php echo round($x + ($bar_width / 2), 2); ?>" y="<?php echo $padding_top + $plot_height + 18; ?>" text-anchor="middle" fill="#334155" font-size="11"><?php echo esc_html($this->short_label($this->humanize_type($row['request_type']), 10)); ?></text>
-                <text x="<?php echo round($x + ($bar_width / 2), 2); ?>" y="<?php echo $padding_top + $plot_height + 34; ?>" text-anchor="middle" fill="#64748b" font-size="10"><?php echo esc_html(sprintf(_n('%s hit', '%s hits', (int)$row['hits'], 'wpopt'), number_format_i18n((int)$row['hits']))); ?></text>
-                <text x="<?php echo round($x + ($bar_width / 2), 2); ?>" y="<?php echo $padding_top + $plot_height + 48; ?>" text-anchor="middle" fill="#64748b" font-size="10"><?php echo esc_html(sprintf(_n('%s slow', '%s slow', (int)$row['slow_hits'], 'wpopt'), number_format_i18n((int)$row['slow_hits']))); ?></text>
+                <text x="<?php echo round($x + ($bar_width / 2), 2); ?>" y="<?php echo $padding_top + $plot_height + 34; ?>" text-anchor="middle" fill="#64748b" font-size="10"><?php echo esc_html(sprintf(_n('%s hit', '%s hits', (int)$row['hits'], 'wp-optimizer'), number_format_i18n((int)$row['hits']))); ?></text>
+                <text x="<?php echo round($x + ($bar_width / 2), 2); ?>" y="<?php echo $padding_top + $plot_height + 48; ?>" text-anchor="middle" fill="#64748b" font-size="10"><?php echo esc_html(sprintf(_n('%s slow', '%s slow', (int)$row['slow_hits'], 'wp-optimizer'), number_format_i18n((int)$row['slow_hits']))); ?></text>
             <?php endforeach; ?>
         </svg>
         <?php
@@ -3458,7 +3458,7 @@ class Mod_Performance_Monitor extends Module
                 <?php $legend_index++; ?>
             <?php endforeach; ?>
         </div>
-        <svg viewBox="0 0 <?php echo $width; ?> <?php echo $height; ?>" width="100%" height="280" role="img" aria-label="<?php esc_attr_e('Response time trend', 'wpopt'); ?>">
+        <svg viewBox="0 0 <?php echo $width; ?> <?php echo $height; ?>" width="100%" height="280" role="img" aria-label="<?php esc_attr_e('Response time trend', 'wp-optimizer'); ?>">
             <line x1="<?php echo $padding_left; ?>" y1="<?php echo $padding_top; ?>" x2="<?php echo $padding_left; ?>" y2="<?php echo $padding_top + $plot_height; ?>" stroke="#cbd5e1" stroke-width="1"/>
             <line x1="<?php echo $padding_left; ?>" y1="<?php echo $padding_top + $plot_height; ?>" x2="<?php echo $padding_left + $plot_width; ?>" y2="<?php echo $padding_top + $plot_height; ?>" stroke="#cbd5e1" stroke-width="1"/>
             <?php for ($i = 0; $i < 4; $i++): ?>
@@ -3510,49 +3510,49 @@ class Mod_Performance_Monitor extends Module
         ob_start();
         ?>
         <div class="wpopt-perf-cache-summary">
-            <span class="wpopt-perf-cache-badge"><?php _e('Cumulative cache ratio', 'wpopt'); ?></span>
+            <span class="wpopt-perf-cache-badge"><?php _e('Cumulative cache ratio', 'wp-optimizer'); ?></span>
             <div class="wpopt-perf-cache-ring-wrap">
                 <div class="wpopt-perf-cache-ring-box">
                     <div class="wpopt-perf-cache-ring" data-wpopt-style-ratio="<?php echo esc_attr(round((float)$summary['hit_ratio'], 3)); ?>"></div>
                     <div class="wpopt-perf-cache-ring-copy">
                         <div>
                             <strong><?php echo esc_html($this->format_percent((float)$summary['hit_ratio'])); ?></strong>
-                            <span><?php _e('Hit ratio', 'wpopt'); ?></span>
+                            <span><?php _e('Hit ratio', 'wp-optimizer'); ?></span>
                         </div>
                     </div>
                 </div>
 
                 <div class="wpopt-perf-cache-mini-grid">
                     <div class="wpopt-perf-cache-mini">
-                        <span><?php _e('Hits', 'wpopt'); ?></span>
+                        <span><?php _e('Hits', 'wp-optimizer'); ?></span>
                         <strong><?php echo number_format_i18n((int)$summary['total_hits']); ?></strong>
                     </div>
                     <div class="wpopt-perf-cache-mini">
-                        <span><?php _e('Misses', 'wpopt'); ?></span>
+                        <span><?php _e('Misses', 'wp-optimizer'); ?></span>
                         <strong><?php echo number_format_i18n((int)$summary['total_misses']); ?></strong>
                     </div>
                     <div class="wpopt-perf-cache-mini">
-                        <span><?php _e('Tracked requests', 'wpopt'); ?></span>
+                        <span><?php _e('Tracked requests', 'wp-optimizer'); ?></span>
                         <strong><?php echo number_format_i18n((int)$summary['tracked_requests']); ?></strong>
                     </div>
                     <div class="wpopt-perf-cache-mini">
-                        <span><?php _e('Operations', 'wpopt'); ?></span>
+                        <span><?php _e('Operations', 'wp-optimizer'); ?></span>
                         <strong><?php echo number_format_i18n((int)$summary['total_operations']); ?></strong>
                     </div>
                 </div>
             </div>
-            <p><?php _e('The ratio is computed from cumulative cache reads that returned a saved result versus reads that had to fall back to origin work.', 'wpopt'); ?></p>
+            <p><?php _e('The ratio is computed from cumulative cache reads that returned a saved result versus reads that had to fall back to origin work.', 'wp-optimizer'); ?></p>
             <?php if ($started_at !== '' || $updated_at !== ''): ?>
                 <p class="wpopt-muted wpopt-perf-meta-note">
                     <?php
                     $meta = array();
 
                     if ($started_at !== '') {
-                        $meta[] = sprintf(__('Since %s', 'wpopt'), $started_at);
+                        $meta[] = sprintf(__('Since %s', 'wp-optimizer'), $started_at);
                     }
 
                     if ($updated_at !== '') {
-                        $meta[] = sprintf(__('Last update %s', 'wpopt'), $updated_at);
+                        $meta[] = sprintf(__('Last update %s', 'wp-optimizer'), $updated_at);
                     }
 
                     echo esc_html(implode(' | ', $meta));
@@ -3568,7 +3568,7 @@ class Mod_Performance_Monitor extends Module
     {
         $rows = array_merge(array(
             array(
-                'label'  => __('Overall cache', 'wpopt'),
+                'label'  => __('Overall cache', 'wp-optimizer'),
                 'hits'   => (int)$summary['total_hits'],
                 'misses' => (int)$summary['total_misses'],
                 'total'  => (int)$summary['total_operations'],
@@ -3597,11 +3597,11 @@ class Mod_Performance_Monitor extends Module
         ob_start();
         ?>
         <div class="wpopt-perf-legend">
-            <span><i class="wpopt-perf-swatch" data-wpopt-style-bg="#0f766e"></i><?php _e('Hits', 'wpopt'); ?></span>
-            <span><i class="wpopt-perf-swatch" data-wpopt-style-bg="#ea580c"></i><?php _e('Misses', 'wpopt'); ?></span>
-            <span><i class="wpopt-perf-swatch" data-wpopt-style-bg="#cbd5e1"></i><?php _e('Relative operations volume', 'wpopt'); ?></span>
+            <span><i class="wpopt-perf-swatch" data-wpopt-style-bg="#0f766e"></i><?php _e('Hits', 'wp-optimizer'); ?></span>
+            <span><i class="wpopt-perf-swatch" data-wpopt-style-bg="#ea580c"></i><?php _e('Misses', 'wp-optimizer'); ?></span>
+            <span><i class="wpopt-perf-swatch" data-wpopt-style-bg="#cbd5e1"></i><?php _e('Relative operations volume', 'wp-optimizer'); ?></span>
         </div>
-        <svg viewBox="0 0 <?php echo $width; ?> <?php echo $height; ?>" width="100%" height="<?php echo esc_attr($height); ?>" role="img" aria-label="<?php esc_attr_e('Cumulative cache hits and misses by layer', 'wpopt'); ?>">
+        <svg viewBox="0 0 <?php echo $width; ?> <?php echo $height; ?>" width="100%" height="<?php echo esc_attr($height); ?>" role="img" aria-label="<?php esc_attr_e('Cumulative cache hits and misses by layer', 'wp-optimizer'); ?>">
             <line x1="<?php echo $padding_left; ?>" y1="<?php echo $padding_top; ?>" x2="<?php echo $padding_left; ?>" y2="<?php echo $padding_top + $plot_height; ?>" stroke="#cbd5e1" stroke-width="1"/>
             <line x1="<?php echo $padding_left; ?>" y1="<?php echo $padding_top + $plot_height; ?>" x2="<?php echo $padding_left + $plot_width; ?>" y2="<?php echo $padding_top + $plot_height; ?>" stroke="#cbd5e1" stroke-width="1"/>
             <?php for ($i = 0; $i < 4; $i++): ?>
@@ -3626,16 +3626,16 @@ class Mod_Performance_Monitor extends Module
                 $miss_width = max(0, $active_width - $hit_width);
                 ?>
                 <text x="12" y="<?php echo round($track_y + 5, 2); ?>" fill="#0f172a" font-size="13" font-weight="700"><?php echo esc_html((string)$row['label']); ?></text>
-                <text x="12" y="<?php echo round($track_y + 22, 2); ?>" fill="#64748b" font-size="11"><?php echo esc_html(sprintf(__('%1$s ops | %2$s hit ratio', 'wpopt'), number_format_i18n($total), $this->format_percent($ratio))); ?></text>
+                <text x="12" y="<?php echo round($track_y + 22, 2); ?>" fill="#64748b" font-size="11"><?php echo esc_html(sprintf(__('%1$s ops | %2$s hit ratio', 'wp-optimizer'), number_format_i18n($total), $this->format_percent($ratio))); ?></text>
                 <rect x="<?php echo $padding_left; ?>" y="<?php echo round($track_y, 2); ?>" width="<?php echo round($track_width, 2); ?>" height="<?php echo $bar_height; ?>" rx="9" fill="#e2e8f0"/>
                 <?php if ($hit_width > 0): ?>
                     <rect x="<?php echo $padding_left; ?>" y="<?php echo round($track_y, 2); ?>" width="<?php echo round($hit_width, 2); ?>" height="<?php echo $bar_height; ?>" rx="9" fill="#0f766e">
-                        <title><?php echo esc_html(sprintf(__('Hits: %s', 'wpopt'), number_format_i18n($hit))); ?></title>
+                        <title><?php echo esc_html(sprintf(__('Hits: %s', 'wp-optimizer'), number_format_i18n($hit))); ?></title>
                     </rect>
                 <?php endif; ?>
                 <?php if ($miss_width > 0): ?>
                     <rect x="<?php echo round($padding_left + $hit_width, 2); ?>" y="<?php echo round($track_y, 2); ?>" width="<?php echo round($miss_width, 2); ?>" height="<?php echo $bar_height; ?>" rx="9" fill="#ea580c">
-                        <title><?php echo esc_html(sprintf(__('Misses: %s', 'wpopt'), number_format_i18n($miss))); ?></title>
+                        <title><?php echo esc_html(sprintf(__('Misses: %s', 'wp-optimizer'), number_format_i18n($miss))); ?></title>
                     </rect>
                 <?php endif; ?>
                 <?php if ($total > 0): ?>
@@ -3671,15 +3671,15 @@ class Mod_Performance_Monitor extends Module
                     </div>
                     <div class="wpopt-perf-cache-layer-stats">
                         <div>
-                            <span><?php _e('Hits', 'wpopt'); ?></span>
+                            <span><?php _e('Hits', 'wp-optimizer'); ?></span>
                             <b><?php echo number_format_i18n((int)$layer['hits']); ?></b>
                         </div>
                         <div>
-                            <span><?php _e('Misses', 'wpopt'); ?></span>
+                            <span><?php _e('Misses', 'wp-optimizer'); ?></span>
                             <b><?php echo number_format_i18n((int)$layer['misses']); ?></b>
                         </div>
                         <div>
-                            <span><?php _e('Ops', 'wpopt'); ?></span>
+                            <span><?php _e('Ops', 'wp-optimizer'); ?></span>
                             <b><?php echo number_format_i18n((int)$layer['total']); ?></b>
                         </div>
                     </div>
@@ -3695,7 +3695,7 @@ class Mod_Performance_Monitor extends Module
         $rows = array_values($rows);
 
         if (empty($rows)) {
-            return $this->render_empty_state(__('No plugin or theme data available yet.', 'wpopt'));
+            return $this->render_empty_state(__('No plugin or theme data available yet.', 'wp-optimizer'));
         }
 
         $max_time = max(1.0, ...array_map(static fn(array $row): float => max(0.0, (float)$row['observed_time_ms']), $rows));
@@ -3714,9 +3714,9 @@ class Mod_Performance_Monitor extends Module
         ?>
         <div class="wpopt-perf-component-shell">
             <div class="wpopt-perf-component-controls">
-                <button type="button" class="wpopt-perf-component-sort is-active" data-sort-mode="time"><?php _e('Sort by time', 'wpopt'); ?></button>
-                <button type="button" class="wpopt-perf-component-sort" data-sort-mode="alpha"><?php _e('Sort A-Z', 'wpopt'); ?></button>
-                <button type="button" class="wpopt-perf-component-sort" data-sort-mode="memory"><?php _e('Sort by memory', 'wpopt'); ?></button>
+                <button type="button" class="wpopt-perf-component-sort is-active" data-sort-mode="time"><?php _e('Sort by time', 'wp-optimizer'); ?></button>
+                <button type="button" class="wpopt-perf-component-sort" data-sort-mode="alpha"><?php _e('Sort A-Z', 'wp-optimizer'); ?></button>
+                <button type="button" class="wpopt-perf-component-sort" data-sort-mode="memory"><?php _e('Sort by memory', 'wp-optimizer'); ?></button>
             </div>
             <div class="wpopt-perf-component-grid">
                 <div class="wpopt-perf-component-list" role="list">
@@ -3743,14 +3743,14 @@ class Mod_Performance_Monitor extends Module
                                     </span>
                                     <span class="wpopt-perf-component-main">
                                         <strong><?php echo esc_html($this->format_ms((float)$row['observed_time_ms'])); ?></strong>
-                                        <small><?php _e('Avg observed time', 'wpopt'); ?></small>
+                                        <small><?php _e('Avg observed time', 'wp-optimizer'); ?></small>
                                     </span>
                                 </span>
                                 <span class="wpopt-perf-component-meter"><span data-wpopt-style-width="<?php echo esc_attr($width); ?>"></span></span>
                                 <span class="wpopt-perf-component-chips">
-                                    <span class="wpopt-perf-component-chip"><b><?php echo esc_html(size_format((int)$row['peak_memory'])); ?></b><?php _e('Avg peak memory', 'wpopt'); ?></span>
-                                    <span class="wpopt-perf-component-chip"><b><?php echo esc_html($this->format_avg_count((float)$row['query_count'])); ?></b><?php _e('Avg queries', 'wpopt'); ?></span>
-                                    <span class="wpopt-perf-component-chip"><b><?php echo number_format_i18n((int)$row['file_count']); ?></b><?php _e('Files', 'wpopt'); ?></span>
+                                    <span class="wpopt-perf-component-chip"><b><?php echo esc_html(size_format((int)$row['peak_memory'])); ?></b><?php _e('Avg peak memory', 'wp-optimizer'); ?></span>
+                                    <span class="wpopt-perf-component-chip"><b><?php echo esc_html($this->format_avg_count((float)$row['query_count'])); ?></b><?php _e('Avg queries', 'wp-optimizer'); ?></span>
+                                    <span class="wpopt-perf-component-chip"><b><?php echo number_format_i18n((int)$row['file_count']); ?></b><?php _e('Files', 'wp-optimizer'); ?></span>
                                 </span>
                             </span>
                         </button>
@@ -3865,47 +3865,47 @@ class Mod_Performance_Monitor extends Module
         ?>
         <div class="wpopt-perf-component-detail-head">
             <h4><?php echo esc_html((string)$row['label']); ?></h4>
-            <p><?php echo esc_html(__('Average load time, callback time, SQL time and memory footprint per sampled request for this component within the last 24 hours. Values are delta-based for the component, not cumulative from request start.', 'wpopt')); ?></p>
+            <p><?php echo esc_html(__('Average load time, callback time, SQL time and memory footprint per sampled request for this component within the last 24 hours. Values are delta-based for the component, not cumulative from request start.', 'wp-optimizer')); ?></p>
         </div>
         <div class="wpopt-perf-component-metrics">
-            <div><span><?php _e('Avg observed time', 'wpopt'); ?></span><strong><?php echo esc_html($this->format_ms((float)$row['observed_time_ms'])); ?></strong></div>
-            <div><span><?php _e('Avg load time', 'wpopt'); ?></span><strong><?php echo esc_html($this->format_ms((float)($row['load_time_ms'] ?? 0))); ?></strong></div>
-            <div><span><?php _e('Avg callback time', 'wpopt'); ?></span><strong><?php echo esc_html($this->format_ms((float)$row['callback_time_ms'])); ?></strong></div>
-            <div><span><?php _e('Avg SQL time', 'wpopt'); ?></span><strong><?php echo esc_html($this->format_ms((float)$row['sql_time_ms'])); ?></strong></div>
-            <div><span><?php _e('Avg peak memory', 'wpopt'); ?></span><strong><?php echo esc_html(size_format((int)$row['peak_memory'])); ?></strong></div>
-            <div><span><?php _e('Avg allocated', 'wpopt'); ?></span><strong><?php echo esc_html(size_format((int)$row['memory_allocated'])); ?></strong></div>
-            <div><span><?php _e('Requests', 'wpopt'); ?></span><strong><?php echo number_format_i18n((int)$row['requests']); ?></strong></div>
+            <div><span><?php _e('Avg observed time', 'wp-optimizer'); ?></span><strong><?php echo esc_html($this->format_ms((float)$row['observed_time_ms'])); ?></strong></div>
+            <div><span><?php _e('Avg load time', 'wp-optimizer'); ?></span><strong><?php echo esc_html($this->format_ms((float)($row['load_time_ms'] ?? 0))); ?></strong></div>
+            <div><span><?php _e('Avg callback time', 'wp-optimizer'); ?></span><strong><?php echo esc_html($this->format_ms((float)$row['callback_time_ms'])); ?></strong></div>
+            <div><span><?php _e('Avg SQL time', 'wp-optimizer'); ?></span><strong><?php echo esc_html($this->format_ms((float)$row['sql_time_ms'])); ?></strong></div>
+            <div><span><?php _e('Avg peak memory', 'wp-optimizer'); ?></span><strong><?php echo esc_html(size_format((int)$row['peak_memory'])); ?></strong></div>
+            <div><span><?php _e('Avg allocated', 'wp-optimizer'); ?></span><strong><?php echo esc_html(size_format((int)$row['memory_allocated'])); ?></strong></div>
+            <div><span><?php _e('Requests', 'wp-optimizer'); ?></span><strong><?php echo number_format_i18n((int)$row['requests']); ?></strong></div>
         </div>
         <div class="wpopt-perf-component-meta">
             <div class="wpopt-perf-component-section">
                 <div class="wpopt-perf-component-section-head">
-                    <span><?php _e('Component profile', 'wpopt'); ?></span>
-                    <strong><?php _e('Details', 'wpopt'); ?></strong>
+                    <span><?php _e('Component profile', 'wp-optimizer'); ?></span>
+                    <strong><?php _e('Details', 'wp-optimizer'); ?></strong>
                 </div>
                 <div class="wpopt-perf-component-facts">
                     <div class="wpopt-perf-component-fact">
-                        <span><?php _e('Version', 'wpopt'); ?></span>
-                        <strong><?php echo esc_html((string)($row['version'] !== '' ? $row['version'] : __('Not available', 'wpopt'))); ?></strong>
+                        <span><?php _e('Version', 'wp-optimizer'); ?></span>
+                        <strong><?php echo esc_html((string)($row['version'] !== '' ? $row['version'] : __('Not available', 'wp-optimizer'))); ?></strong>
                     </div>
                     <div class="wpopt-perf-component-fact">
-                        <span><?php _e('Author', 'wpopt'); ?></span>
-                        <strong><?php echo esc_html((string)(($row['author'] ?? '') !== '' ? $row['author'] : __('Not available', 'wpopt'))); ?></strong>
+                        <span><?php _e('Author', 'wp-optimizer'); ?></span>
+                        <strong><?php echo esc_html((string)(($row['author'] ?? '') !== '' ? $row['author'] : __('Not available', 'wp-optimizer'))); ?></strong>
                     </div>
                     <?php if (!empty($row['site_url'])): ?>
                         <a class="wpopt-perf-component-link" href="<?php echo esc_url((string)$row['site_url']); ?>" target="_blank" rel="noopener noreferrer">
-                            <span><?php _e('Site', 'wpopt'); ?></span>
+                            <span><?php _e('Site', 'wp-optimizer'); ?></span>
                             <strong><?php echo esc_html($this->format_component_link_label((string)$row['site_url'])); ?></strong>
                         </a>
                     <?php endif; ?>
                     <?php if (!empty($row['author_url'])): ?>
                         <a class="wpopt-perf-component-link" href="<?php echo esc_url((string)$row['author_url']); ?>" target="_blank" rel="noopener noreferrer">
-                            <span><?php _e('Author site', 'wpopt'); ?></span>
+                            <span><?php _e('Author site', 'wp-optimizer'); ?></span>
                             <strong><?php echo esc_html($this->format_component_link_label((string)$row['author_url'])); ?></strong>
                         </a>
                     <?php endif; ?>
                     <?php if (!empty($row['description'])): ?>
                         <div class="wpopt-perf-component-description">
-                            <span><?php _e('Description', 'wpopt'); ?></span>
+                            <span><?php _e('Description', 'wp-optimizer'); ?></span>
                             <p><?php echo esc_html((string)$row['description']); ?></p>
                         </div>
                     <?php endif; ?>
@@ -3913,24 +3913,24 @@ class Mod_Performance_Monitor extends Module
             </div>
             <div class="wpopt-perf-component-section wpopt-perf-component-section-workload">
                 <div class="wpopt-perf-component-section-head">
-                    <span><?php _e('Runtime footprint', 'wpopt'); ?></span>
-                    <strong><?php _e('Observed workload', 'wpopt'); ?></strong>
+                    <span><?php _e('Runtime footprint', 'wp-optimizer'); ?></span>
+                    <strong><?php _e('Observed workload', 'wp-optimizer'); ?></strong>
                 </div>
                 <div class="wpopt-perf-component-workload">
                     <div class="wpopt-perf-component-workload-item">
-                        <span><?php _e('Avg queries', 'wpopt'); ?></span>
+                        <span><?php _e('Avg queries', 'wp-optimizer'); ?></span>
                         <strong><?php echo esc_html($this->format_avg_count((float)$row['query_count'])); ?></strong>
                     </div>
                     <div class="wpopt-perf-component-workload-item">
-                        <span><?php _e('Avg callback calls', 'wpopt'); ?></span>
+                        <span><?php _e('Avg callback calls', 'wp-optimizer'); ?></span>
                         <strong><?php echo esc_html($this->format_avg_count((float)$row['callback_calls'])); ?></strong>
                     </div>
                     <div class="wpopt-perf-component-workload-item">
-                        <span><?php _e('Loaded PHP files', 'wpopt'); ?></span>
+                        <span><?php _e('Loaded PHP files', 'wp-optimizer'); ?></span>
                         <strong><?php echo number_format_i18n((int)$row['file_count']); ?></strong>
                     </div>
                     <div class="wpopt-perf-component-workload-item">
-                        <span><?php _e('PHP size on disk', 'wpopt'); ?></span>
+                        <span><?php _e('PHP size on disk', 'wp-optimizer'); ?></span>
                         <strong><?php echo esc_html(size_format((int)$row['file_bytes'])); ?></strong>
                     </div>
                 </div>
@@ -3973,13 +3973,13 @@ class Mod_Performance_Monitor extends Module
                                 </span>
                                 <span class="wpopt-perf-slow-bar-peak">
                                     <strong><?php echo esc_html($this->format_ms($row['max_ms'])); ?></strong>
-                                    <small><?php _e('Peak', 'wpopt'); ?></small>
+                                    <small><?php _e('Peak', 'wp-optimizer'); ?></small>
                                 </span>
                             </span>
                             <span class="wpopt-perf-slow-meter"><span data-wpopt-style-width="<?php echo esc_attr($width); ?>"></span></span>
                             <span class="wpopt-perf-slow-bar-stats">
-                                <span class="wpopt-perf-slow-chip"><b><?php echo number_format_i18n((int)$row['hits']); ?></b><?php echo esc_html(_n('sample', 'samples', (int)$row['hits'], 'wpopt')); ?></span>
-                                <span class="wpopt-perf-slow-chip"><b><?php echo esc_html($this->format_ms($row['avg_ms'])); ?></b><?php _e('Avg', 'wpopt'); ?></span>
+                                <span class="wpopt-perf-slow-chip"><b><?php echo number_format_i18n((int)$row['hits']); ?></b><?php echo esc_html(_n('sample', 'samples', (int)$row['hits'], 'wp-optimizer')); ?></span>
+                                <span class="wpopt-perf-slow-chip"><b><?php echo esc_html($this->format_ms($row['avg_ms'])); ?></b><?php _e('Avg', 'wp-optimizer'); ?></span>
                                 <span class="wpopt-perf-slow-chip"><b><?php echo esc_html($this->short_label((string)$row['request_method'], 8)); ?></b><?php echo esc_html($this->short_label((string)$row['request_label'], 22)); ?></span>
                             </span>
                         </span>
@@ -4046,33 +4046,33 @@ class Mod_Performance_Monitor extends Module
         ob_start();
         ?>
         <div class="wpopt-perf-slow-detail-head">
-            <span class="wpopt-perf-slow-detail-kicker"><?php _e('Selected Query', 'wpopt'); ?></span>
+            <span class="wpopt-perf-slow-detail-kicker"><?php _e('Selected Query', 'wp-optimizer'); ?></span>
             <h4><?php echo esc_html($this->short_sql_label((string)$row['sql_fingerprint'], 140)); ?></h4>
-            <p><?php echo esc_html(__('Inspect the selected captured SQL sample and its request context.', 'wpopt')); ?></p>
+            <p><?php echo esc_html(__('Inspect the selected captured SQL sample and its request context.', 'wp-optimizer')); ?></p>
         </div>
         <div class="wpopt-perf-slow-metrics">
-            <div><span><?php _e('Duration', 'wpopt'); ?></span><strong><?php echo esc_html($this->format_ms($row['max_ms'])); ?></strong></div>
-            <div><span><?php _e('Fingerprint', 'wpopt'); ?></span><strong><?php echo esc_html($this->short_label((string)$row['sql_signature'], 12)); ?></strong></div>
-            <div><span><?php _e('Captured', 'wpopt'); ?></span><strong><?php echo number_format_i18n((int)$row['hits']); ?></strong></div>
-            <div><span><?php _e('Observed', 'wpopt'); ?></span><strong><?php echo esc_html(!empty($row['observed_at']) ? mysql2date('d M Y H:i', $row['observed_at']) : __('Unavailable', 'wpopt')); ?></strong></div>
+            <div><span><?php _e('Duration', 'wp-optimizer'); ?></span><strong><?php echo esc_html($this->format_ms($row['max_ms'])); ?></strong></div>
+            <div><span><?php _e('Fingerprint', 'wp-optimizer'); ?></span><strong><?php echo esc_html($this->short_label((string)$row['sql_signature'], 12)); ?></strong></div>
+            <div><span><?php _e('Captured', 'wp-optimizer'); ?></span><strong><?php echo number_format_i18n((int)$row['hits']); ?></strong></div>
+            <div><span><?php _e('Observed', 'wp-optimizer'); ?></span><strong><?php echo esc_html(!empty($row['observed_at']) ? mysql2date('d M Y H:i', $row['observed_at']) : __('Unavailable', 'wp-optimizer')); ?></strong></div>
         </div>
         <div class="wpopt-perf-slow-meta">
             <div class="wpopt-perf-slow-section">
-                <strong><?php _e('Example request', 'wpopt'); ?></strong>
+                <strong><?php _e('Example request', 'wp-optimizer'); ?></strong>
                 <p><b><?php echo esc_html($this->humanize_type((string)$row['request_type'])); ?></b> | <code><?php echo esc_html((string)$row['request_label']); ?></code> | <?php echo esc_html((string)$row['request_method']); ?></p>
                 <p><code><?php echo esc_html((string)$row['request_uri']); ?></code></p>
             </div>
             <div class="wpopt-perf-slow-section">
-                <strong><?php _e('Query fingerprint', 'wpopt'); ?></strong>
+                <strong><?php _e('Query fingerprint', 'wp-optimizer'); ?></strong>
                 <pre><code><?php echo esc_html((string)$row['sql_fingerprint']); ?></code></pre>
             </div>
             <div class="wpopt-perf-slow-section">
-                <strong><?php _e('Captured SQL sample', 'wpopt'); ?></strong>
+                <strong><?php _e('Captured SQL sample', 'wp-optimizer'); ?></strong>
                 <pre><code><?php echo esc_html((string)$row['sample_query']); ?></code></pre>
             </div>
             <?php if (!empty($row['query_caller'])): ?>
                 <div class="wpopt-perf-slow-section">
-                    <strong><?php _e('Caller', 'wpopt'); ?></strong>
+                    <strong><?php _e('Caller', 'wp-optimizer'); ?></strong>
                     <pre><code><?php echo esc_html((string)$row['query_caller']); ?></code></pre>
                 </div>
             <?php endif; ?>
@@ -4098,22 +4098,22 @@ class Mod_Performance_Monitor extends Module
                     <div class="wpopt-perf-type-top">
                         <div>
                             <strong><?php echo esc_html($this->humanize_type($type)); ?></strong>
-                            <span><?php echo esc_html(sprintf(_n('%s hit', '%s hits', (int)$row['hits'], 'wpopt'), number_format_i18n((int)$row['hits']))); ?></span>
+                            <span><?php echo esc_html(sprintf(_n('%s hit', '%s hits', (int)$row['hits'], 'wp-optimizer'), number_format_i18n((int)$row['hits']))); ?></span>
                         </div>
                         <span class="wpopt-perf-type-accent" data-wpopt-style-color="<?php echo esc_attr($color); ?>"><?php echo esc_html('Avg ' . $this->format_ms($row['avg_ms'])); ?></span>
                     </div>
                     <?php echo $this->render_sparkline($labels, $values, $color); ?>
                     <div class="wpopt-perf-type-stats">
                         <div>
-                            <span><?php _e('Avg', 'wpopt'); ?></span>
+                            <span><?php _e('Avg', 'wp-optimizer'); ?></span>
                             <b><?php echo esc_html($this->format_ms($row['avg_ms'])); ?></b>
                         </div>
                         <div>
-                            <span><?php _e('Peak', 'wpopt'); ?></span>
+                            <span><?php _e('Peak', 'wp-optimizer'); ?></span>
                             <b><?php echo esc_html($this->format_ms($row['max_ms'])); ?></b>
                         </div>
                         <div>
-                            <span><?php _e('Slow', 'wpopt'); ?></span>
+                            <span><?php _e('Slow', 'wp-optimizer'); ?></span>
                             <b><?php echo number_format_i18n((int)$row['slow_hits']); ?></b>
                         </div>
                     </div>
@@ -4175,7 +4175,7 @@ class Mod_Performance_Monitor extends Module
 
         ob_start();
         ?>
-        <svg viewBox="0 0 <?php echo $width; ?> <?php echo $height; ?>" width="100%" height="48" role="img" aria-label="<?php esc_attr_e('Small response time chart', 'wpopt'); ?>">
+        <svg viewBox="0 0 <?php echo $width; ?> <?php echo $height; ?>" width="100%" height="48" role="img" aria-label="<?php esc_attr_e('Small response time chart', 'wp-optimizer'); ?>">
             <line x1="<?php echo $padding; ?>" y1="<?php echo $height - $padding; ?>" x2="<?php echo $width - $padding; ?>" y2="<?php echo $height - $padding; ?>" stroke="#e2e8f0" stroke-width="1"/>
             <polyline fill="none" stroke="<?php echo esc_attr($color); ?>" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" points="<?php echo esc_attr(implode(' ', $points)); ?>"></polyline>
             <circle cx="<?php echo esc_attr(explode(',', end($points))[0]); ?>" cy="<?php echo esc_attr(explode(',', end($points))[1]); ?>" r="3" fill="<?php echo esc_attr($color); ?>"></circle>

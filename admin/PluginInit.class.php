@@ -40,13 +40,6 @@ class PluginInit
             }
         }
 
-        if (did_action('init')) {
-            $this->load_textdomain();
-        }
-        else {
-            add_action('init', array($this, 'load_textdomain'), 0);
-        }
-
         wps_maybe_upgrade('wpopt', WPOPT_VERSION, WPOPT_ADMIN . "upgrades/");
     }
 
@@ -92,22 +85,6 @@ class PluginInit
         require_once WPOPT_SUPPORTERS . 'cache/staticcache_direct.class.php';
 
         \WPOptimizer\modules\supporters\StaticCacheDirectAccess::refresh_installed_runtime();
-    }
-
-    /**
-     * Loads text domain for the plugin.
-     */
-    public function load_textdomain(): void
-    {
-        $locale = apply_filters('wpopt_plugin_locale', get_locale(), 'wpopt');
-
-        $mo_file = "wpopt-$locale.mo";
-
-        if (load_textdomain('wpopt', WP_LANG_DIR . '/plugins/wp-optimizer/' . $mo_file)) {
-            return;
-        }
-
-        load_textdomain('wpopt', UtilEnv::normalize_path(WPOPT_ABSPATH . 'languages/', true) . $mo_file);
     }
 
     public static function getInstance(): PluginInit
@@ -202,7 +179,7 @@ class PluginInit
     {
         if (!current_user_can('manage_options')) {
             wp_send_json_error(array(
-                'message' => __('You are not allowed to run this test.', 'wpopt'),
+                'message' => __('You are not allowed to run this test.', 'wp-optimizer'),
             ), 403);
         }
 
@@ -213,7 +190,7 @@ class PluginInit
 
         if (!$url) {
             wp_send_json_error(array(
-                'message' => __('Enter a valid URL from this WordPress site.', 'wpopt'),
+                'message' => __('Enter a valid URL from this WordPress site.', 'wp-optimizer'),
             ), 400);
         }
 
@@ -234,7 +211,7 @@ class PluginInit
     {
         if (!current_user_can('manage_options')) {
             wp_send_json_error(array(
-                'message' => __('You are not allowed to read this test report.', 'wpopt'),
+                'message' => __('You are not allowed to read this test report.', 'wp-optimizer'),
             ), 403);
         }
 
@@ -244,7 +221,7 @@ class PluginInit
 
         if (!self::is_valid_page_test_run_id($run_id)) {
             wp_send_json_error(array(
-                'message' => __('Invalid page test report id.', 'wpopt'),
+                'message' => __('Invalid page test report id.', 'wp-optimizer'),
             ), 400);
         }
 
@@ -544,32 +521,32 @@ class PluginInit
         if (!empty($slow_queries)) {
             $suggestions[] = array(
                 'type'  => 'query',
-                'title' => __('Review slow database queries', 'wpopt'),
-                'text'  => sprintf(__('The warmup request recorded %s slow query samples. Check the callers and add indexes, caching, or reduce repeated lookups where possible.', 'wpopt'), number_format_i18n(count($slow_queries))),
+                'title' => __('Review slow database queries', 'wp-optimizer'),
+                'text'  => sprintf(__('The warmup request recorded %s slow query samples. Check the callers and add indexes, caching, or reduce repeated lookups where possible.', 'wp-optimizer'), number_format_i18n(count($slow_queries))),
             );
         }
 
         if (!empty($duplicate_queries)) {
             $suggestions[] = array(
                 'type'  => 'duplicates',
-                'title' => __('Reduce repeated queries', 'wpopt'),
-                'text'  => __('Repeated SQL signatures were detected during warmup. Object/query caching or moving repeated lookups outside loops can reduce this cost.', 'wpopt'),
+                'title' => __('Reduce repeated queries', 'wp-optimizer'),
+                'text'  => __('Repeated SQL signatures were detected during warmup. Object/query caching or moving repeated lookups outside loops can reduce this cost.', 'wp-optimizer'),
             );
         }
 
         if ($total_queries > 100) {
             $suggestions[] = array(
                 'type'  => 'queries',
-                'title' => __('High query count', 'wpopt'),
-                'text'  => sprintf(__('The warmup request executed %s queries. Review autoloaded options, widgets, page builders and template loops.', 'wpopt'), number_format_i18n($total_queries)),
+                'title' => __('High query count', 'wp-optimizer'),
+                'text'  => sprintf(__('The warmup request executed %s queries. Review autoloaded options, widgets, page builders and template loops.', 'wp-optimizer'), number_format_i18n($total_queries)),
             );
         }
 
         if (!empty($hooks)) {
             $suggestions[] = array(
                 'type'  => 'callbacks',
-                'title' => __('Inspect heavy hooks and callbacks', 'wpopt'),
-                'text'  => __('The hooks below consumed the most warmup time. Disable unused modules/plugins or move expensive callbacks behind stricter conditions.', 'wpopt'),
+                'title' => __('Inspect heavy hooks and callbacks', 'wp-optimizer'),
+                'text'  => __('The hooks below consumed the most warmup time. Disable unused modules/plugins or move expensive callbacks behind stricter conditions.', 'wp-optimizer'),
             );
         }
 
@@ -832,7 +809,7 @@ class PluginInit
             \WPOptimizer\modules\supporters\MediaMetadata::bootstrap()->set_enabled(false);
         }
         catch (\Throwable $error) {
-            wp_die(esc_html($error->getMessage()), esc_html__('Media restoration failed', 'wpopt'), ['response' => 500]);
+            wp_die(esc_html($error->getMessage()), esc_html__('Media restoration failed', 'wp-optimizer'), ['response' => 500]);
         }
 
         wpopt_cleanup_media_cron_hooks();
@@ -933,7 +910,7 @@ class PluginInit
     public function ajax_submit_deactivation_feedback(): void
     {
         if (!current_user_can('activate_plugins')) {
-            wp_send_json_error(array('message' => __('You are not allowed to deactivate plugins.', 'wpopt')), 403);
+            wp_send_json_error(array('message' => __('You are not allowed to deactivate plugins.', 'wp-optimizer')), 403);
         }
 
         check_ajax_referer('wpopt-deactivation-feedback', 'nonce');
@@ -942,7 +919,7 @@ class PluginInit
         $reason_key = isset($_POST['reason']) ? sanitize_key(wp_unslash($_POST['reason'])) : '';
 
         if (!isset($reasons[$reason_key])) {
-            wp_send_json_error(array('message' => __('Select a reason before continuing.', 'wpopt')), 400);
+            wp_send_json_error(array('message' => __('Select a reason before continuing.', 'wp-optimizer')), 400);
         }
 
         $details = '';
@@ -973,16 +950,16 @@ class PluginInit
         ?>
         <div class="wpopt-advertise-overlay wpopt-deactivation-feedback" data-wpopt-deactivation-dialog hidden role="dialog" aria-modal="true" aria-labelledby="wpopt-deactivation-title">
             <div class="wpopt-advertise-page is-welcome is-deactivation">
-                <button type="button" class="wpopt-advertise-close" data-wpopt-deactivation-close aria-label="<?php esc_attr_e('Close', 'wpopt'); ?>">&times;</button>
+                <button type="button" class="wpopt-advertise-close" data-wpopt-deactivation-close aria-label="<?php esc_attr_e('Close', 'wp-optimizer'); ?>">&times;</button>
                 <section class="wpopt-advertise-hero">
-                    <span class="wpopt-advertise-eyebrow"><?php esc_html_e('Before you go', 'wpopt'); ?></span>
-                    <h1 id="wpopt-deactivation-title"><?php esc_html_e('Help us improve WP Optimizer', 'wpopt'); ?></h1>
-                    <p><?php esc_html_e('Your answer helps us improve the plugin. Choose the option that best describes your experience.', 'wpopt'); ?></p>
+                    <span class="wpopt-advertise-eyebrow"><?php esc_html_e('Before you go', 'wp-optimizer'); ?></span>
+                    <h1 id="wpopt-deactivation-title"><?php esc_html_e('Help us improve WP Optimizer', 'wp-optimizer'); ?></h1>
+                    <p><?php esc_html_e('Your answer helps us improve the plugin. Choose the option that best describes your experience.', 'wp-optimizer'); ?></p>
                 </section>
 
                 <form class="wpopt-deactivation-form" data-wpopt-deactivation-form>
                     <fieldset class="wpopt-deactivation-reasons">
-                        <legend class="screen-reader-text"><?php esc_html_e('Deactivation reason', 'wpopt'); ?></legend>
+                        <legend class="screen-reader-text"><?php esc_html_e('Deactivation reason', 'wp-optimizer'); ?></legend>
                         <?php foreach ($reasons as $value => $label) : ?>
                             <label class="wpopt-deactivation-reason">
                                 <input type="radio" name="reason" value="<?php echo esc_attr($value); ?>">
@@ -992,13 +969,13 @@ class PluginInit
                     </fieldset>
 
                     <div class="wpopt-deactivation-other" data-wpopt-deactivation-other hidden>
-                        <label for="wpopt-deactivation-details"><?php esc_html_e('Tell us more', 'wpopt'); ?></label>
-                        <textarea id="wpopt-deactivation-details" name="details" rows="5" maxlength="1000" placeholder="<?php esc_attr_e('Describe the reason for deactivating the plugin...', 'wpopt'); ?>"></textarea>
+                        <label for="wpopt-deactivation-details"><?php esc_html_e('Tell us more', 'wp-optimizer'); ?></label>
+                        <textarea id="wpopt-deactivation-details" name="details" rows="5" maxlength="1000" placeholder="<?php esc_attr_e('Describe the reason for deactivating the plugin...', 'wp-optimizer'); ?>"></textarea>
                     </div>
 
                     <div class="wpopt-advertise-actions">
-                        <button type="submit" class="wpopt-advertise-button is-primary" disabled><?php esc_html_e('Send feedback and deactivate', 'wpopt'); ?></button>
-                        <button type="button" class="wpopt-advertise-button is-muted" data-wpopt-deactivation-skip><?php esc_html_e('Skip and deactivate', 'wpopt'); ?></button>
+                        <button type="submit" class="wpopt-advertise-button is-primary" disabled><?php esc_html_e('Send feedback and deactivate', 'wp-optimizer'); ?></button>
+                        <button type="button" class="wpopt-advertise-button is-muted" data-wpopt-deactivation-skip><?php esc_html_e('Skip and deactivate', 'wp-optimizer'); ?></button>
                     </div>
                 </form>
             </div>
@@ -1009,13 +986,13 @@ class PluginInit
     private function get_deactivation_feedback_reasons(): array
     {
         return array(
-            'temporary'       => __('I am deactivating it temporarily', 'wpopt'),
-            'not_needed'      => __('I no longer need the plugin', 'wpopt'),
-            'too_complicated' => __('It is too complicated; I need a tutorial', 'wpopt'),
-            'missing_feature' => __('A feature I need is missing', 'wpopt'),
-            'technical_issue' => __('I encountered a technical issue', 'wpopt'),
-            'alternative'     => __('I found a better alternative', 'wpopt'),
-            'other'           => __('Other', 'wpopt'),
+            'temporary'       => __('I am deactivating it temporarily', 'wp-optimizer'),
+            'not_needed'      => __('I no longer need the plugin', 'wp-optimizer'),
+            'too_complicated' => __('It is too complicated; I need a tutorial', 'wp-optimizer'),
+            'missing_feature' => __('A feature I need is missing', 'wp-optimizer'),
+            'technical_issue' => __('I encountered a technical issue', 'wp-optimizer'),
+            'alternative'     => __('I found a better alternative', 'wp-optimizer'),
+            'other'           => __('Other', 'wp-optimizer'),
         );
     }
 
@@ -1031,7 +1008,7 @@ class PluginInit
     public function donate_link($plugin_meta, $plugin_file, $plugin_data, $status): array
     {
         if ($plugin_file == $this->plugin_basename) {
-            $plugin_meta[] = '&hearts; <a target="_blank" href="https://www.paypal.com/donate/?hosted_button_id=8G8VR4APG9JRU">' . __('Buy me a beer', 'wpopt') . ' :o)</a>';
+            $plugin_meta[] = '&hearts; <a target="_blank" href="https://www.paypal.com/donate/?hosted_button_id=8G8VR4APG9JRU">' . __('Buy me a beer', 'wp-optimizer') . ' :o)</a>';
         }
 
         return $plugin_meta;
@@ -1050,7 +1027,7 @@ class PluginInit
         $links[] = sprintf(
             '<a href="%s">%s</a>',
             wps_module_setting_url('wpopt'),
-            __('Settings', 'wpopt')
+            __('Settings', 'wp-optimizer')
         );
 
         return $links;

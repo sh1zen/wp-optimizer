@@ -11,14 +11,13 @@
  * Description: Page cache, lazy load, minify CSS/JS/HTML, image optimization & CDN, LCP preload and more — everything you need to improve Core Web Vitals, in one plugin.
  * Author: sh1zen
  * Author URI: https://sh1zen.github.io/
- * Text Domain: wpopt
- * Domain Path: /languages
- * Version: 2.9.0
+ * Text Domain: wp-optimizer
+ * Version: 2.9.2
  * Requires at least: 5.0.0
  * Requires PHP: 7.4
  */
 
-const WPOPT_VERSION = '2.9.0';
+const WPOPT_VERSION = '2.9.2';
 const WPOPT_FILE = __FILE__;
 
 // WordPress blocks new activations through the plugin header. This additional

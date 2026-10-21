@@ -57,14 +57,14 @@ class Mod_Cloudflare extends Module
 
             default:
                 Ajax::response([
-                    'text' => __('Invalid Cloudflare action.', 'wpopt'),
+                    'text' => __('Invalid Cloudflare action.', 'wp-optimizer'),
                 ], 'error');
         }
 
         Ajax::response([
             'text' => $response
-                ? __('Cloudflare action was correctly executed.', 'wpopt')
-                : __('Cloudflare action failed. Check the API token, Zone ID and account permissions.', 'wpopt'),
+                ? __('Cloudflare action was correctly executed.', 'wp-optimizer')
+                : __('Cloudflare action failed. Check the API token, Zone ID and account permissions.', 'wp-optimizer'),
         ], $response ? 'success' : 'error');
     }
 
@@ -106,10 +106,10 @@ class Mod_Cloudflare extends Module
             }
 
             if ($response) {
-                $this->add_notices('success', __('Cloudflare action was correctly executed.', 'wpopt'));
+                $this->add_notices('success', __('Cloudflare action was correctly executed.', 'wp-optimizer'));
             }
             else {
-                $this->add_notices('warning', __('Cloudflare action failed. Check the API token, Zone ID and account permissions.', 'wpopt'));
+                $this->add_notices('warning', __('Cloudflare action failed. Check the API token, Zone ID and account permissions.', 'wp-optimizer'));
             }
         });
     }
@@ -133,7 +133,7 @@ class Mod_Cloudflare extends Module
     public function render_settings($filter = ''): string
     {
         if ($this->restricted_access('settings')) {
-            return '<block><h2>' . esc_html__('This Module is disabled for you or for your settings.', 'wpopt') . '</h2></block>';
+            return '<block><h2>' . esc_html__('This Module is disabled for you or for your settings.', 'wp-optimizer') . '</h2></block>';
         }
 
         $this->enqueue_scripts();
@@ -153,35 +153,35 @@ class Mod_Cloudflare extends Module
             <section class="wpopt-cloudflare-card">
                 <div class="wpopt-cloudflare-panel">
                     <div class="wpopt-cloudflare-head">
-                        <h2><?php esc_html_e('Cloudflare', 'wpopt'); ?></h2>
-                        <p><?php esc_html_e('When page cache is cleared, also tell Cloudflare to drop its edge copy.', 'wpopt'); ?></p>
+                        <h2><?php esc_html_e('Cloudflare', 'wp-optimizer'); ?></h2>
+                        <p><?php esc_html_e('When page cache is cleared, also tell Cloudflare to drop its edge copy.', 'wp-optimizer'); ?></p>
                     </div>
 
                     <label class="wpopt-cloudflare-toggle">
                         <input class="wps-apple-switch wpopt-cloudflare-enabled" type="checkbox" name="<?php echo esc_attr("{$option_name}[enabled]"); ?>" value="1" <?php checked($settings['enabled']); ?>>
-                        <strong><?php esc_html_e('Enable Cloudflare integration', 'wpopt'); ?></strong>
+                        <strong><?php esc_html_e('Enable Cloudflare integration', 'wp-optimizer'); ?></strong>
                     </label>
 
                     <details class="wpopt-cloudflare-help">
-                        <summary><?php esc_html_e('How to get your API Token & Zone ID', 'wpopt'); ?></summary>
+                        <summary><?php esc_html_e('How to get your API Token & Zone ID', 'wp-optimizer'); ?></summary>
                         <div>
-                            <p><?php esc_html_e('Create a Cloudflare API token with Zone:Cache Purge:Edit and Zone:Zone:Read permissions for the target zone. Copy the Zone ID from the website overview page in Cloudflare.', 'wpopt'); ?></p>
+                            <p><?php esc_html_e('Create a Cloudflare API token with Zone:Cache Purge:Edit and Zone:Zone:Read permissions for the target zone. Copy the Zone ID from the website overview page in Cloudflare.', 'wp-optimizer'); ?></p>
                         </div>
                     </details>
 
                     <div class="wpopt-cloudflare-fields" <?php echo $settings['enabled'] ? '' : 'hidden'; ?>>
                         <label class="wpopt-cloudflare-field" for="wpopt-cf-api-token">
-                            <span><?php esc_html_e('API Token', 'wpopt'); ?></span>
+                            <span><?php esc_html_e('API Token', 'wp-optimizer'); ?></span>
                             <input id="wpopt-cf-api-token" class="regular-text" type="password" name="<?php echo esc_attr("{$option_name}[api_token]"); ?>" value="<?php echo esc_attr($settings['api_token']); ?>" autocomplete="new-password" spellcheck="false">
                         </label>
 
                         <label class="wpopt-cloudflare-field" for="wpopt-cf-zone-id">
-                            <span><?php esc_html_e('Zone ID', 'wpopt'); ?></span>
+                            <span><?php esc_html_e('Zone ID', 'wp-optimizer'); ?></span>
                             <input id="wpopt-cf-zone-id" class="regular-text" type="text" name="<?php echo esc_attr("{$option_name}[zone_id]"); ?>" value="<?php echo esc_attr($settings['zone_id']); ?>" spellcheck="false">
                         </label>
 
                         <label class="wpopt-cloudflare-field" for="wpopt-cf-purge-strategy">
-                            <span><?php esc_html_e('Purge Strategy', 'wpopt'); ?></span>
+                            <span><?php esc_html_e('Purge Strategy', 'wp-optimizer'); ?></span>
                             <select id="wpopt-cf-purge-strategy" name="<?php echo esc_attr("{$option_name}[purge_strategy]"); ?>">
                                 <?php foreach ($strategies as $value => $label) : ?>
                                     <option value="<?php echo esc_attr($value); ?>" <?php selected($settings['purge_strategy'], $value); ?>><?php echo esc_html($label); ?></option>
@@ -194,10 +194,10 @@ class Mod_Cloudflare extends Module
 
             <section class="wpopt-cloudflare-submit" <?php echo $settings['enabled'] ? '' : 'hidden'; ?>>
                 <button class="button button-secondary wpopt-cloudflare-action" type="button" data-action="test_connection" data-nonce="<?php echo esc_attr($nonce); ?>" <?php disabled(!$settings['enabled']); ?>>
-                    <?php esc_html_e('Test Connection', 'wpopt'); ?>
+                    <?php esc_html_e('Test Connection', 'wp-optimizer'); ?>
                 </button>
                 <button class="button button-secondary wpopt-cloudflare-action" type="button" data-action="purge_now" data-nonce="<?php echo esc_attr($nonce); ?>" <?php disabled(!$settings['enabled']); ?>>
-                    <?php esc_html_e('Purge Cloudflare Now', 'wpopt'); ?>
+                    <?php esc_html_e('Purge Cloudflare Now', 'wp-optimizer'); ?>
                 </button>
             </section>
 
@@ -327,9 +327,9 @@ class Mod_Cloudflare extends Module
     private static function purge_strategy_options(): array
     {
         return array(
-            'tags'       => __('By cache tag (Enterprise) - fall back to everything', 'wpopt'),
-            'host'       => __('By host', 'wpopt'),
-            'everything' => __('Purge everything', 'wpopt'),
+            'tags'       => __('By cache tag (Enterprise) - fall back to everything', 'wp-optimizer'),
+            'host'       => __('By host', 'wp-optimizer'),
+            'everything' => __('Purge everything', 'wp-optimizer'),
         );
     }
 }

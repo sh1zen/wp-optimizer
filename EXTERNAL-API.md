@@ -133,7 +133,7 @@ The successful path resumes with `$flush_if_dirty = true`, so WP Optimizer perfo
 
 `wpopt_media_metadata_invalidated(int $attachment_id)` fires after the plugin clears its metadata caches, including on migration cleanup or rollback. Consumers can invalidate their own derived caches. Treat this as invalidation, not proof that a write committed.
 
-See [media metadata](docs/media-metadata.md) for storage ownership and verification.
+See [media metadata](docs/media-metadata.md) for storage ownership and migration details.
 
 ### Server rule ordering
 

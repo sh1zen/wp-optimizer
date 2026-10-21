@@ -74,7 +74,7 @@ class Recovery
             'status'     => 'reset_pending',
             'tried'      => array_values(array_unique($tried)),
             'last_error' => self::format_error($error),
-            'message'    => $probe_failed ? __('The error is still present. Choose Try Recover or Reset to continue.', 'wpopt') : '',
+            'message'    => $probe_failed ? __('The error is still present. Choose Try Recover or Reset to continue.', 'wp-optimizer') : '',
             'probe_failed' => $probe_failed,
             'updated_at' => time(),
         ));
@@ -149,7 +149,7 @@ class Recovery
 
         if ($status === 'disabled') {
             $state['status'] = 'reset_pending';
-            $state['message'] = __('This page was opened from a previous recovery state. Choose Try Recover or Reset to continue.', 'wpopt');
+            $state['message'] = __('This page was opened from a previous recovery state. Choose Try Recover or Reset to continue.', 'wp-optimizer');
             $state['probe_failed'] = true;
             self::set_state($state);
             $status = 'reset_pending';
@@ -168,17 +168,17 @@ class Recovery
         $error = (array)($state['last_error'] ?? array());
         $message = sprintf(
             '<p>%s</p><p><strong>%s</strong></p><p><code>%s:%s</code></p><p>%s</p>%s',
-            esc_html__('WP Optimizer detected a fatal error caused by its own code. No options were reset automatically.', 'wpopt'),
+            esc_html__('WP Optimizer detected a fatal error caused by its own code. No options were reset automatically.', 'wp-optimizer'),
             esc_html((string)($error['message'] ?? '')),
             esc_html((string)($error['file'] ?? '')),
             esc_html((string)($error['line'] ?? '')),
             $status === 'factory_reset_done'
-                ? esc_html__('WP Optimizer was reset to factory settings. Cache drop-ins and local server rules were removed, and scheduled optimizer tasks were disabled. Review the error before re-enabling modules.', 'wpopt')
-                : esc_html__('Try Recover restores configuration backups one by one until a request completes without this fatal error. Reset restores WP Optimizer to factory settings and disables cache drop-ins, local server rules and scheduled optimizer tasks.', 'wpopt'),
+                ? esc_html__('WP Optimizer was reset to factory settings. Cache drop-ins and local server rules were removed, and scheduled optimizer tasks were disabled. Review the error before re-enabling modules.', 'wp-optimizer')
+                : esc_html__('Try Recover restores configuration backups one by one until a request completes without this fatal error. Reset restores WP Optimizer to factory settings and disables cache drop-ins, local server rules and scheduled optimizer tasks.', 'wp-optimizer'),
             $actions_available ? self::render_manual_recovery_forms($state) : ''
         );
 
-        wp_die($message, esc_html__('WP Optimizer recovery mode', 'wpopt'), array('response' => 200));
+        wp_die($message, esc_html__('WP Optimizer recovery mode', 'wp-optimizer'), array('response' => 200));
     }
 
     private static function handle_manual_recovery_action(array $state): bool
@@ -200,7 +200,7 @@ class Recovery
                     'status'     => 'reset_pending',
                     'tried'      => array_values(array_unique($tried)),
                     'last_error' => self::format_error($error),
-                    'message'    => __('No valid configuration backup is available for recovery.', 'wpopt'),
+                    'message'    => __('No valid configuration backup is available for recovery.', 'wp-optimizer'),
                     'updated_at' => time(),
                 ));
             }
@@ -239,14 +239,14 @@ class Recovery
                 <?php wp_nonce_field(self::RECOVER_ACTION); ?>
                 <input type="hidden" name="wpopt-recovery-action" value="<?php echo esc_attr(self::RECOVER_ACTION); ?>">
                 <button type="submit" class="button button-primary">
-                    <?php esc_html_e('Try Recover', 'wpopt'); ?>
+                    <?php esc_html_e('Try Recover', 'wp-optimizer'); ?>
                 </button>
             </form>
             <form method="post" style="margin:0;">
                 <?php wp_nonce_field(self::RESET_ACTION); ?>
                 <input type="hidden" name="wpopt-recovery-action" value="<?php echo esc_attr(self::RESET_ACTION); ?>">
                 <button type="submit" class="button">
-                    <?php esc_html_e('Reset', 'wpopt'); ?>
+                    <?php esc_html_e('Reset', 'wp-optimizer'); ?>
                 </button>
             </form>
         </div>

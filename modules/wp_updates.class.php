@@ -151,26 +151,26 @@ class Mod_WP_Updates extends Module
     protected function setting_fields($filter = ''): array
     {
         return $this->group_setting_fields(
-            $this->setting_field(__('Disable Wordpress Core Updates', 'wpopt'), "core-updates", "checkbox", ['risk' => 'danger']),
-            $this->setting_field(__('Disable Automatic Plugin Updates', 'wpopt'), "plugin-updates", "checkbox", ['risk' => 'danger']),
-            $this->setting_field(__('Disable Themes Updates', 'wpopt'), "theme-update", "checkbox", ['risk' => 'danger']),
-            $this->setting_field(__('Disable Updates Messages', 'wpopt'), "message-updates", "checkbox"),
-            $this->setting_field(__('Remove Updates Page', 'wpopt'), "page-updates", "checkbox"),
-            $this->setting_field(__('Disable Automatic Updates', 'wpopt'), "automatic-updates", "checkbox"),
-            $this->setting_field(__('Disable WordPress update notices mail', 'wpopt'), "mail-updates", "checkbox")
+            $this->setting_field(__('Disable Wordpress Core Updates', 'wp-optimizer'), "core-updates", "checkbox", ['risk' => 'danger']),
+            $this->setting_field(__('Disable Automatic Plugin Updates', 'wp-optimizer'), "plugin-updates", "checkbox", ['risk' => 'danger']),
+            $this->setting_field(__('Disable Themes Updates', 'wp-optimizer'), "theme-update", "checkbox", ['risk' => 'danger']),
+            $this->setting_field(__('Disable Updates Messages', 'wp-optimizer'), "message-updates", "checkbox"),
+            $this->setting_field(__('Remove Updates Page', 'wp-optimizer'), "page-updates", "checkbox"),
+            $this->setting_field(__('Disable Automatic Updates', 'wp-optimizer'), "automatic-updates", "checkbox"),
+            $this->setting_field(__('Disable WordPress update notices mail', 'wp-optimizer'), "mail-updates", "checkbox")
         );
     }
 
     protected function infos(): array
     {
         return [
-            'core-updates'      => __("Disable WordPress core update checks and background update routines.", 'wpopt'),
-            'plugin-updates'    => __("Disable automatic plugin updates while keeping plugin update checks enabled.", 'wpopt'),
-            'theme-update'      => __("Disable theme update checks and automatic theme updates.", 'wpopt'),
-            'message-updates'   => __("Hide update notifications in the WordPress admin area.", 'wpopt'),
-            'page-updates'      => __("Remove the Updates page from the WordPress admin menu.", 'wpopt'),
-            'automatic-updates' => __("Disable the automatic updater for core, plugins, themes and translations.", 'wpopt'),
-            'mail-updates'      => __("Disable automatic update notification emails sent by WordPress.", 'wpopt'),
+            'core-updates'      => __("Disable WordPress core update checks and background update routines.", 'wp-optimizer'),
+            'plugin-updates'    => __("Disable automatic plugin updates while keeping plugin update checks enabled.", 'wp-optimizer'),
+            'theme-update'      => __("Disable theme update checks and automatic theme updates.", 'wp-optimizer'),
+            'message-updates'   => __("Hide update notifications in the WordPress admin area.", 'wp-optimizer'),
+            'page-updates'      => __("Remove the Updates page from the WordPress admin menu.", 'wp-optimizer'),
+            'automatic-updates' => __("Disable the automatic updater for core, plugins, themes and translations.", 'wp-optimizer'),
+            'mail-updates'      => __("Disable automatic update notification emails sent by WordPress.", 'wp-optimizer'),
         ];
     }
 }

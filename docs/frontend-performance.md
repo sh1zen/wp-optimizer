@@ -2,7 +2,7 @@
 
 WP Optimizer exposes these engines in its PageSpeed module. The classes use the `WPOptimizer\modules\supporters` namespace and live in `modules/supporters/pagespeed`; browser runtimes live in `assets`. The execution modes default to off. The existing LCP option is reused.
 
-The plugin entry point loads `inc/frontend-assets.php` on frontend, admin, AJAX and Cron requests. It loads the engine classes, registers LCP measurement endpoints and content invalidation hooks, and registers the scoped parser autoloader and Used CSS worker. `FrontendAssets` owns asset policy, revisions and diagnostics. WPS supplies general services such as `UtilEnv` and the HTML output buffer. See [Used CSS](used-css.md) for CSS processing.
+The plugin entry point loads `inc/frontend-assets.php` on frontend, admin, AJAX and Cron requests. It loads the engine classes, registers LCP measurement endpoints and content invalidation hooks, and registers the scoped parser autoloader and Used CSS worker. `FrontendAssets` owns asset policy, revisions and diagnostics. WPS supplies general services such as `UtilEnv` and the HTML output buffer. See [Used CSS cleanup](../PIPELINE.md#used-css-cleanup) for selector preparation and generated-file retention.
 
 ## LCP and lazy loading
 
@@ -33,9 +33,3 @@ Classic WordPress handles whose printed tag uses `type="module"` retain module s
 `wps_frontend_page_ready($url)` lets consumers purge an affected cached page after a measurement becomes ready. `wps_frontend_assets_invalidated` signals revision changes. WP Optimizer's static cache subscribes to both. External page/CDN caches must subscribe too or be purged through their normal integration.
 
 The PageSpeed settings show sampled public-page diagnostics: learned candidates and applied script rules. `wps_frontend_diagnostic($feature, $details)` fires for every diagnostic call so other consumers receive current details. Persistent diagnostics use one record per feature with a one-day expiry. Identical details do not refresh the record, even when the page or timestamp changes. Changed details are sampled at most once per minute per feature; the stored page and time identify that sample. Expired records are recreated on the next diagnostic call.
-
-## Verification
-
-From the CMS root, run `php -n tests/frontend-versions.php` and `php -n tests/cache-monitor.php` with PHP 7.4 or newer. These checks cover LCP fingerprints, repeated candidates, the hashing limit, cross-request reuse, learned preloads and targeted content/shared frontend invalidation. They use the adjacent WordPress HTML and hook APIs with isolated storage, option and SQL boundaries; no site bootstrap, database or network is required. See [object-cache verification](../README.md#object-cache-regression-check) for default-expiry persistence checks.
-
-References: [early LCP discovery](https://web.dev/articles/optimize-lcp), [WordPress loading strategies and dependencies](https://developer.wordpress.org/reference/functions/wp_enqueue_script/).

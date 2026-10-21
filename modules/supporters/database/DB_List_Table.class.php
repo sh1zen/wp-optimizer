@@ -27,8 +27,8 @@ class DB_List_Table extends \WPS\core\List_Table
         $this->response_type = 'updated';
 
         parent::__construct(array(
-            'singular' => __('Table', 'wpopt'),
-            'plural'   => __('Tables', 'wpopt'),
+            'singular' => __('Table', 'wp-optimizer'),
+            'plural'   => __('Tables', 'wp-optimizer'),
             'ajax'     => false
         ));
     }
@@ -36,7 +36,7 @@ class DB_List_Table extends \WPS\core\List_Table
     /** Text displayed when no customer data is available */
     public function no_items()
     {
-        _e('No tables found.', 'wpopt');
+        _e('No tables found.', 'wp-optimizer');
     }
 
     /**
@@ -84,12 +84,12 @@ class DB_List_Table extends \WPS\core\List_Table
     public function get_bulk_actions()
     {
         return array(
-            'optimize' => __('Optimize', 'wpopt'),
-            'repair'   => __('Repair', 'wpopt'),
-            'empty'    => __('Empty rows', 'wpopt'),
-            'delete'   => __('Delete', 'wpopt'),
-            'innodb'   => __('Convert to InnoDB', 'wpopt'),
-            'myisam'   => __('Convert to MyISAM', 'wpopt')
+            'optimize' => __('Optimize', 'wp-optimizer'),
+            'repair'   => __('Repair', 'wp-optimizer'),
+            'empty'    => __('Empty rows', 'wp-optimizer'),
+            'delete'   => __('Delete', 'wp-optimizer'),
+            'innodb'   => __('Convert to InnoDB', 'wp-optimizer'),
+            'myisam'   => __('Convert to MyISAM', 'wp-optimizer')
         );
     }
 
@@ -130,12 +130,12 @@ class DB_List_Table extends \WPS\core\List_Table
     {
         return array(
             'cb'          => '<input type="checkbox" />',
-            'table_name'  => __('Table name', 'wpopt'),
-            'table_rows'  => __('Rows', 'wpopt'),
-            'data_length' => __('Size', 'wpopt'),
-            'data_free'   => __('Space lost', 'wpopt'),
-            'status'      => __('Status', 'wpopt'),
-            'engine'      => __('Table engine', 'wpopt'),
+            'table_name'  => __('Table name', 'wp-optimizer'),
+            'table_rows'  => __('Rows', 'wp-optimizer'),
+            'data_length' => __('Size', 'wp-optimizer'),
+            'data_free'   => __('Space lost', 'wp-optimizer'),
+            'status'      => __('Status', 'wp-optimizer'),
+            'engine'      => __('Table engine', 'wp-optimizer'),
         );
     }
 
@@ -170,14 +170,14 @@ class DB_List_Table extends \WPS\core\List_Table
 
         // security check!
         if (empty($_POST['_wpnonce']) || !UtilEnv::verify_nonce('bulk-' . $this->_args['plural'], $_POST['_wpnonce'])) {
-            wp_die(esc_html__('Security check failed.', 'wpopt'));
+            wp_die(esc_html__('Security check failed.', 'wp-optimizer'));
         }
 
         wps('wpopt')->options->remove_all('cache', "get_tables_data");
 
         if (empty($_POST['bulk-tables'])) {
             $this->response_type = 'notice notice-warning';
-            $this->response_message = __('Select at least one database table before applying a bulk action.', 'wpopt');
+            $this->response_message = __('Select at least one database table before applying a bulk action.', 'wp-optimizer');
 
             return;
         }
@@ -191,12 +191,12 @@ class DB_List_Table extends \WPS\core\List_Table
         $processed = DBSupport::manage_tables($this->current_action(), $tables);
 
         $action_translators = array(
-            'optimize' => __('optimized', 'wpopt'),
-            'repair'   => __('repaired', 'wpopt'),
-            'empty'    => __('emptied', 'wpopt'),
-            'delete'   => __('deleted', 'wpopt'),
-            'innodb'   => __('converted to InnoDB', 'wpopt'),
-            'myisam'   => __('converted to MyISAM', 'wpopt')
+            'optimize' => __('optimized', 'wp-optimizer'),
+            'repair'   => __('repaired', 'wp-optimizer'),
+            'empty'    => __('emptied', 'wp-optimizer'),
+            'delete'   => __('deleted', 'wp-optimizer'),
+            'innodb'   => __('converted to InnoDB', 'wp-optimizer'),
+            'myisam'   => __('converted to MyISAM', 'wp-optimizer')
         );
 
         if ($processed != count($tables)) {
@@ -204,7 +204,7 @@ class DB_List_Table extends \WPS\core\List_Table
         }
 
         $this->response_message = sprintf(
-            __('%1$s / %2$s tables were %3$s successfully!', 'wpopt'),
+            __('%1$s / %2$s tables were %3$s successfully!', 'wp-optimizer'),
             number_format_i18n($processed),
             number_format_i18n(count($tables)),
             $action_translators[$this->current_action()]
@@ -259,10 +259,10 @@ class DB_List_Table extends \WPS\core\List_Table
 
         foreach ((array)$wpdb->get_results($sql, ARRAY_A) as $table) {
 
-            $status = __('Ok', 'wpopt');
+            $status = __('Ok', 'wp-optimizer');
 
             if (($table['DATA_FREE'] ?? 0) > 0) {
-                $status = __('Optimize', 'wpopt');
+                $status = __('Optimize', 'wp-optimizer');
             }
 
             $query_result = isset($table['TABLE_NAME']) ? $wpdb->get_results("CHECK TABLE " . $table['TABLE_NAME'] . " FAST") : [];
@@ -270,19 +270,19 @@ class DB_List_Table extends \WPS\core\List_Table
             foreach ((array)$query_result as $row) {
                 if ($row->Msg_type == 'error') {
                     if (preg_match('/corrupt/i', $row->Msg_text)) {
-                        $status = __('Repair', 'wpopt');
+                        $status = __('Repair', 'wp-optimizer');
                         break;
                     }
                 }
             }
 
             $items_to_display[] = array(
-                'table_name'  => $table['TABLE_NAME'] ?? __('Table name N/A', 'wpopt'),
-                'table_rows'  => $table['TABLE_ROWS'] ?? __('Rows N/A', 'wpopt'),
-                'data_length' => $table['DATA_LENGTH'] ?? __('Length N/A', 'wpopt'),
-                'data_free'   => $table['DATA_FREE'] ?? __('N/A', 'wpopt'),
+                'table_name'  => $table['TABLE_NAME'] ?? __('Table name N/A', 'wp-optimizer'),
+                'table_rows'  => $table['TABLE_ROWS'] ?? __('Rows N/A', 'wp-optimizer'),
+                'data_length' => $table['DATA_LENGTH'] ?? __('Length N/A', 'wp-optimizer'),
+                'data_free'   => $table['DATA_FREE'] ?? __('N/A', 'wp-optimizer'),
                 'status'      => $status,
-                'engine'      => $table['ENGINE'] ?? __('Engine N/A', 'wpopt')
+                'engine'      => $table['ENGINE'] ?? __('Engine N/A', 'wp-optimizer')
             );
         }
 

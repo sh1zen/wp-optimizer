@@ -97,7 +97,7 @@ class MediaMetadata
         global $wpdb;
         $result = $wpdb->query($sql);
         if ($result === false) {
-            throw new \RuntimeException(__('Media metadata operation failed; no data was moved.', 'wpopt'));
+            throw new \RuntimeException(__('Media metadata operation failed; no data was moved.', 'wp-optimizer'));
         }
         return (int)$result;
     }
@@ -110,7 +110,7 @@ class MediaMetadata
         }
         $name = 'wpopt_media_' . md5(DB_NAME . ':' . $wpdb->prefix);
         if ((int)$wpdb->get_var($wpdb->prepare('SELECT GET_LOCK(%s, 30)', $name)) !== 1) {
-            throw new \RuntimeException(__('Another media migration is running. Please try again when it finishes.', 'wpopt'));
+            throw new \RuntimeException(__('Another media migration is running. Please try again when it finishes.', 'wp-optimizer'));
         }
         $this->lock_depth++;
         try {
@@ -154,7 +154,7 @@ class MediaMetadata
         }
         if (!isset($columns['meta_id'], $columns['object_id'], $columns[self::KEYS[0]], $columns[self::KEYS[1]]) ||
             !in_array(['object_id'], $unique, true)) {
-            throw new \RuntimeException(__('The existing media metadata table has an incompatible schema. Its structure was left unchanged.', 'wpopt'));
+            throw new \RuntimeException(__('The existing media metadata table has an incompatible schema. Its structure was left unchanged.', 'wp-optimizer'));
         }
         $journal = $this->quote($this->table('wpopt_media_postmeta'));
         // A separate journal preserves duplicate keys and original postmeta IDs;
@@ -171,7 +171,7 @@ class MediaMetadata
                 'SELECT ENGINE FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = %s', $table
             ));
             if (strcasecmp((string)$engine, 'InnoDB') !== 0) {
-                throw new \RuntimeException(__('Media optimization requires InnoDB tables for safe rollback. No existing table was changed.', 'wpopt'));
+                throw new \RuntimeException(__('Media optimization requires InnoDB tables for safe rollback. No existing table was changed.', 'wp-optimizer'));
             }
         }
     }
@@ -187,7 +187,7 @@ class MediaMetadata
             if (!$enabled && !$was_enabled && !$this->exists($this->table('media_metadata'))) {
                 update_option(self::STATE_OPTION, '0', false);
                 if (!$this->managed()) {
-                    throw new \RuntimeException(__('Could not save the media optimization state.', 'wpopt'));
+                    throw new \RuntimeException(__('Could not save the media optimization state.', 'wp-optimizer'));
                 }
                 do_action('wpopt_media_metadata_state_changed', $enabled);
                 return;
@@ -206,7 +206,7 @@ class MediaMetadata
             try {
                 if (!$was_enabled) {
                     if ((int)$wpdb->get_var("SELECT COUNT(*) FROM $journal")) {
-                        throw new \RuntimeException(__('A previous media rollback journal still contains data. Migration stopped to protect it.', 'wpopt'));
+                        throw new \RuntimeException(__('A previous media rollback journal still contains data. Migration stopped to protect it.', 'wp-optimizer'));
                     }
                     // Lock source rows against updates while making the exact copy.
                     $this->query("INSERT INTO $journal (meta_id, wpopt_media_id, meta_key, meta_value)
@@ -220,7 +220,7 @@ class MediaMetadata
                                 WHERE existing.wpopt_media_id = m.object_id AND existing.meta_key = '$key')
                             WHERE m.`$key` IS NOT NULL AND NOT (BINARY m.`$key` <=> BINARY j.meta_value) LIMIT 1");
                         if ($conflict !== null) {
-                            throw new \RuntimeException(__('Conflicting media metadata exists in both tables. Migration stopped without overwriting either copy.', 'wpopt'));
+                            throw new \RuntimeException(__('Conflicting media metadata exists in both tables. Migration stopped without overwriting either copy.', 'wp-optimizer'));
                         }
                         // Reserve IDs in bulk through postmeta's own sequence.
                         // Copy raw strings in SQL: no unserialization or unbounded
@@ -236,7 +236,7 @@ class MediaMetadata
                     }
                     $ids = $wpdb->get_col("SELECT DISTINCT wpopt_media_id FROM $journal");
                     if ($wpdb->get_var("SELECT meta_id FROM $journal WHERE meta_key = '_wp_attached_file' AND CHAR_LENGTH(meta_value) > 255 LIMIT 1")) {
-                        throw new \RuntimeException(__('A media filename exceeds the existing table limit of 255 characters. No data was moved.', 'wpopt'));
+                        throw new \RuntimeException(__('A media filename exceeds the existing table limit of 255 characters. No data was moved.', 'wp-optimizer'));
                     }
                     // Populate the unchanged wide schema in SQL instead of loading
                     // and unserializing every attachment in PHP during migration.
@@ -298,7 +298,7 @@ class MediaMetadata
         $values = get_metadata_raw(self::META_TYPE, $id) ?: [];
         if (!$values) {
             if ($wpdb->delete($this->table('media_metadata'), ['object_id' => $id]) === false) {
-                throw new \RuntimeException(__('Could not remove media metadata. The operation was rolled back.', 'wpopt'));
+                throw new \RuntimeException(__('Could not remove media metadata. The operation was rolled back.', 'wp-optimizer'));
             }
             $this->invalidate($id);
             return;
@@ -309,7 +309,7 @@ class MediaMetadata
         }
         if ($fields['_wp_attached_file'] !== null && preg_match_all('/./us', $fields['_wp_attached_file']) > 255) {
             // Preserve the media projection's filename length contract.
-            throw new \RuntimeException(__('A media filename exceeds the existing table limit of 255 characters. No data was moved.', 'wpopt'));
+            throw new \RuntimeException(__('A media filename exceeds the existing table limit of 255 characters. No data was moved.', 'wp-optimizer'));
         }
         $media = $this->table('media_metadata');
         if ($wpdb->get_var($wpdb->prepare('SELECT meta_id FROM ' . $this->quote($media) . ' WHERE object_id = %d', $id))) {
@@ -319,7 +319,7 @@ class MediaMetadata
             $result = $wpdb->insert($media, ['object_id' => $id] + $fields);
         }
         if ($result === false) {
-            throw new \RuntimeException(__('Could not store media metadata. The operation was rolled back.', 'wpopt'));
+            throw new \RuntimeException(__('Could not store media metadata. The operation was rolled back.', 'wp-optimizer'));
         }
         $this->invalidate($id);
     }
@@ -551,7 +551,7 @@ class MediaMetadata
             return [true, [$id]];
         }, static function () { return true; });
         if ($result === false) {
-            throw new \RuntimeException(__('Post deletion stopped because its media metadata could not be removed.', 'wpopt'));
+            throw new \RuntimeException(__('Post deletion stopped because its media metadata could not be removed.', 'wp-optimizer'));
         }
     }
 }

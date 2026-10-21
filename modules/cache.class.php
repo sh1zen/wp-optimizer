@@ -636,8 +636,8 @@ class Mod_Cache extends Module
             $response = $this->handle_cache_action((string)$action, $_POST);
             $notice_status = $response ? 'success' : 'warning';
             $notice_message = $response
-                ? __('Action was correctly executed', $this->context)
-                : __('Action execution failed', $this->context);
+                ? __('Action was correctly executed', 'wp-optimizer')
+                : __('Action execution failed', 'wp-optimizer');
 
             $this->add_notices($notice_status, $notice_message);
 
@@ -663,11 +663,11 @@ class Mod_Cache extends Module
     public function ajax_handler($args = array()): void
     {
         if (!current_user_can('manage_options')) {
-            Ajax::response(array('text' => __('You are not allowed to perform this action.', 'wpopt')), 'error');
+            Ajax::response(array('text' => __('You are not allowed to perform this action.', 'wp-optimizer')), 'error');
         }
 
         if (empty($args['nonce']) || !UtilEnv::verify_nonce("{$this->context}-ajax-nonce", (string)$args['nonce'])) {
-            Ajax::response(array('text' => __('Invalid request.', 'wpopt')), 'error');
+            Ajax::response(array('text' => __('Invalid request.', 'wp-optimizer')), 'error');
         }
 
         $this->load_dependencies();
@@ -681,8 +681,8 @@ class Mod_Cache extends Module
 
         Ajax::response(array(
             'text' => $response
-                ? __('Action was correctly executed', $this->context)
-                : __('Action execution failed', $this->context),
+                ? __('Action was correctly executed', 'wp-optimizer')
+                : __('Action execution failed', 'wp-optimizer'),
             'html' => $this->render_cache_rules_section($action_layer),
         ), $notice_status);
     }
@@ -803,7 +803,7 @@ class Mod_Cache extends Module
 
         $layers = [
             'wp_query' => [
-                'label' => __('WP_Query Cache', 'wpopt'),
+                'label' => __('WP_Query Cache', 'wp-optimizer'),
                 'active' => (bool)$this->option('wp_query.active'),
                 'storage_group' => QueryCache::get_storage_cache_group(),
                 'size' => static function (): int {
@@ -817,7 +817,7 @@ class Mod_Cache extends Module
                 },
             ],
             'wp_db' => [
-                'label' => __('Database Query Cache', 'wpopt'),
+                'label' => __('Database Query Cache', 'wp-optimizer'),
                 'active' => (bool)$this->option('wp_db.active'),
                 'storage_group' => DBCache::get_storage_cache_group(),
                 'size' => static function (): int {
@@ -831,7 +831,7 @@ class Mod_Cache extends Module
                 },
             ],
             'object_cache' => [
-                'label' => __('Object Cache', 'wpopt'),
+                'label' => __('Object Cache', 'wp-optimizer'),
                 'active' => (bool)$this->option('object_cache.active'),
                 'storage_group' => '',
                 'size' => null,
@@ -841,7 +841,7 @@ class Mod_Cache extends Module
                 },
             ],
             'static_pages' => [
-                'label' => __('Static Pages Cache', 'wpopt'),
+                'label' => __('Static Pages Cache', 'wp-optimizer'),
                 'active' => (bool)$this->option('static_pages.active'),
                 'storage_group' => StaticCache::get_storage_cache_group(),
                 'size' => static function (): int {
@@ -1021,14 +1021,14 @@ class Mod_Cache extends Module
     {
         switch ($layer) {
             case 'wp_query':
-                return __('WP_Query Cache', 'wpopt');
+                return __('WP_Query Cache', 'wp-optimizer');
             case 'wp_db':
-                return __('Database Query Cache', 'wpopt');
+                return __('Database Query Cache', 'wp-optimizer');
             case 'static_pages':
-                return __('Static Pages Cache', 'wpopt');
+                return __('Static Pages Cache', 'wp-optimizer');
         }
 
-        return __('Cache', 'wpopt');
+        return __('Cache', 'wp-optimizer');
     }
 
     private function cache_layer_rules_namespace(string $layer): string
@@ -1288,10 +1288,10 @@ class Mod_Cache extends Module
     private function get_static_status_cache_policy_options(): array
     {
         return array(
-            '2xx' => __('2xx Success', 'wpopt'),
-            '3xx' => __('3xx Redirects', 'wpopt'),
-            '4xx' => __('4xx Client errors', 'wpopt'),
-            '5xx' => __('5xx Server errors', 'wpopt'),
+            '2xx' => __('2xx Success', 'wp-optimizer'),
+            '3xx' => __('3xx Redirects', 'wp-optimizer'),
+            '4xx' => __('4xx Client errors', 'wp-optimizer'),
+            '5xx' => __('5xx Server errors', 'wp-optimizer'),
         );
     }
 
@@ -1321,17 +1321,17 @@ class Mod_Cache extends Module
     private function get_wp_query_cache_type_options(): array
     {
         return array(
-            'post'             => __('Post queries', 'wpopt'),
-            'page'             => __('Page queries', 'wpopt'),
-            'attachment'       => __('Attachment queries', 'wpopt'),
-            'custom_post_type' => __('Custom post type queries', 'wpopt'),
-            'taxonomy_query'   => __('Taxonomy queries', 'wpopt'),
-            'meta_query'       => __('Meta queries', 'wpopt'),
-            'search_query'     => __('Search queries', 'wpopt'),
-            'author_query'     => __('Author queries', 'wpopt'),
-            'date_query'       => __('Date queries', 'wpopt'),
-            'id_query'         => __('Specific ID/name queries', 'wpopt'),
-            'feed_query'       => __('Feed queries', 'wpopt'),
+            'post'             => __('Post queries', 'wp-optimizer'),
+            'page'             => __('Page queries', 'wp-optimizer'),
+            'attachment'       => __('Attachment queries', 'wp-optimizer'),
+            'custom_post_type' => __('Custom post type queries', 'wp-optimizer'),
+            'taxonomy_query'   => __('Taxonomy queries', 'wp-optimizer'),
+            'meta_query'       => __('Meta queries', 'wp-optimizer'),
+            'search_query'     => __('Search queries', 'wp-optimizer'),
+            'author_query'     => __('Author queries', 'wp-optimizer'),
+            'date_query'       => __('Date queries', 'wp-optimizer'),
+            'id_query'         => __('Specific ID/name queries', 'wp-optimizer'),
+            'feed_query'       => __('Feed queries', 'wp-optimizer'),
         );
     }
 
@@ -1446,7 +1446,7 @@ class Mod_Cache extends Module
         if (empty($static_options['active'])) {
             $this->deactivate_static_direct_access_fast();
             $this->toggle_static_direct_access_rules(StaticCacheDirectAccess::has_enabled_sites(), $static_options);
-            $this->add_notices('warning', __('Static cache direct access is saved but inactive until static page cache is enabled.', 'wpopt'));
+            $this->add_notices('warning', __('Static cache direct access is saved but inactive until static page cache is enabled.', 'wp-optimizer'));
 
             return true;
         }
@@ -1455,7 +1455,7 @@ class Mod_Cache extends Module
             return true;
         }
 
-        $this->add_notices('warning', __('Static cache direct access is saved, but server rules or runtime files could not be updated. Check server rules file and cache directory permissions.', 'wpopt'));
+        $this->add_notices('warning', __('Static cache direct access is saved, but server rules or runtime files could not be updated. Check server rules file and cache directory permissions.', 'wp-optimizer'));
 
         return true;
     }
@@ -1491,24 +1491,24 @@ class Mod_Cache extends Module
             && $server_rule_exists;
 
         if (empty($static_options['active'])) {
-            $message = __('Saved, but static page cache is disabled.', 'wpopt');
+            $message = __('Saved, but static page cache is disabled.', 'wp-optimizer');
         }
         elseif (empty($runtime_status['supported'])) {
-            $message = __('Saved, but the WordPress root or cache directory is not writable.', 'wpopt');
+            $message = __('Saved, but the WordPress root or cache directory is not writable.', 'wp-optimizer');
         }
         elseif (empty($runtime_status['config_enabled']) || empty($runtime_status['bootstrap_exists'])) {
-            $message = __('Saved, but the direct access runtime files are not installed yet.', 'wpopt');
+            $message = __('Saved, but the direct access runtime files are not installed yet.', 'wp-optimizer');
         }
         elseif (!$server_rule_exists) {
             $message = sprintf(
-                __('Runtime ready, but the server rule is missing in %s.', 'wpopt'),
+                __('Runtime ready, but the server rule is missing in %s.', 'wp-optimizer'),
                 $rules_path !== '' ? basename($rules_path) : WP_Htaccess::get_rules_file_name()
             );
         }
         else {
             $message = empty($static_options['disable_admin_cache']) && in_array(Settings::get_option($static_options, 'user_scope', self::DEFAULT_STATIC_USER_SCOPE), array('both', 'logged_in'), true)
-                ? __('Installed: eligible anonymous and logged-in cache hits bypass WordPress.', 'wpopt')
-                : __('Installed: eligible anonymous cache hits bypass WordPress.', 'wpopt');
+                ? __('Installed: eligible anonymous and logged-in cache hits bypass WordPress.', 'wp-optimizer')
+                : __('Installed: eligible anonymous cache hits bypass WordPress.', 'wp-optimizer');
         }
 
         return array(
@@ -2166,12 +2166,12 @@ class Mod_Cache extends Module
     {
         $fields = array(
             $this->group_setting_fields(
-                $this->setting_field(__('WP_Query Cache'), 'wp_query_cache', 'separator'),
-                $this->setting_field(__('Active', 'wpopt'), "wp_query.active", "checkbox", ['default' => true]),
-                $this->setting_field(__('Configure', 'wpopt'), "wp_query.configuration", "conf", [
+                $this->setting_field(__('WP_Query Cache', 'wp-optimizer'), 'wp_query_cache', 'separator'),
+                $this->setting_field(__('Active', 'wp-optimizer'), "wp_query.active", "checkbox", ['default' => true]),
+                $this->setting_field(__('Configure', 'wp-optimizer'), "wp_query.configuration", "conf", [
                     'parent' => 'wp_query.active',
                     'value'  => [
-                        'text' => __('Configure', 'wpopt'),
+                        'text' => __('Configure', 'wp-optimizer'),
                         'href' => wps_admin_route_url('wpopt', 'conf-cache-wp_query'),
                     ],
                 ]),
@@ -2180,29 +2180,29 @@ class Mod_Cache extends Module
 
         if ($this->can_manage_global_dropins()) {
             $fields[] = $this->group_setting_fields(
-                $this->setting_field(__('Database Query Cache'), 'db_query_cache', 'separator'),
-                $this->setting_field(__('Active', 'wpopt'), "wp_db.active", "checkbox", ['default' => true]),
-                $this->setting_field(__('Configure', 'wpopt'), "wp_db.configuration", "conf", [
+                $this->setting_field(__('Database Query Cache', 'wp-optimizer'), 'db_query_cache', 'separator'),
+                $this->setting_field(__('Active', 'wp-optimizer'), "wp_db.active", "checkbox", ['default' => true]),
+                $this->setting_field(__('Configure', 'wp-optimizer'), "wp_db.configuration", "conf", [
                     'parent' => 'wp_db.active',
                     'value'  => [
-                        'text' => __('Configure', 'wpopt'),
+                        'text' => __('Configure', 'wp-optimizer'),
                         'href' => wps_admin_route_url('wpopt', 'conf-cache-wp_db'),
                     ],
                 ]),
             );
             $fields[] = $this->group_setting_fields(
-                $this->setting_field(__('Object Cache'), 'object_cache', 'separator'),
-                $this->setting_field(__('Active', 'wpopt'), "object_cache.active", "checkbox"),
+                $this->setting_field(__('Object Cache', 'wp-optimizer'), 'object_cache', 'separator'),
+                $this->setting_field(__('Active', 'wp-optimizer'), "object_cache.active", "checkbox"),
             );
         }
 
         $fields[] = $this->group_setting_fields(
-                $this->setting_field(__('Static Pages Cache'), 'static_page_cache', 'separator'),
-                $this->setting_field(__('Active', 'wpopt'), "static_pages.active", "checkbox"),
-                $this->setting_field(__('Configure', 'wpopt'), "static_pages.configuration", "conf", [
+                $this->setting_field(__('Static Pages Cache', 'wp-optimizer'), 'static_page_cache', 'separator'),
+                $this->setting_field(__('Active', 'wp-optimizer'), "static_pages.active", "checkbox"),
+                $this->setting_field(__('Configure', 'wp-optimizer'), "static_pages.configuration", "conf", [
                     'parent' => 'static_pages.active',
                     'value'  => [
-                        'text' => __('Configure', 'wpopt'),
+                        'text' => __('Configure', 'wp-optimizer'),
                         'href' => wps_admin_route_url('wpopt', 'conf-cache-static_pages'),
                     ],
                 ]),
@@ -2214,12 +2214,12 @@ class Mod_Cache extends Module
     protected function infos(): array
     {
         return [
-            'wp_query_cache'        => __('Stores the results of WP_Query for faster retrieval on subsequent requests.', 'wpopt'),
-            'db_query_cache'        => __('Stores frequently used database queries in memory to reduce the number of queries made to the database, improving website performance.', 'wpopt') . '<br/>' .
-                __('Use Configure to set this engine lifetime, regex rules and request exclusions. WPOPT_CACHE_DB_LIFETIME can still override the generated lifetime when explicitly defined.', 'wpopt') . '<br/>' .
-                __('To enable caching also for option table paste "define(\'WPOPT_CACHE_DB_OPTIONS\', true)" in wp.config.', 'wpopt'),
-            'object_cache'          => __('Stores PHP objects in memory for fast retrieval, reducing the need to recreate objects, improving website performance. Needs Redis or Memcached to be installed.', 'wpopt'),
-            'static_page_cache'     => __('Stores static HTML pages generated from dynamic content to avoid repeated processing.', 'wpopt')
+            'wp_query_cache'        => __('Stores the results of WP_Query for faster retrieval on subsequent requests.', 'wp-optimizer'),
+            'db_query_cache'        => __('Stores frequently used database queries in memory to reduce the number of queries made to the database, improving website performance.', 'wp-optimizer') . '<br/>' .
+                __('Use Configure to set this engine lifetime, regex rules and request exclusions. WPOPT_CACHE_DB_LIFETIME can still override the generated lifetime when explicitly defined.', 'wp-optimizer') . '<br/>' .
+                __('To enable caching also for option table paste "define(\'WPOPT_CACHE_DB_OPTIONS\', true)" in wp.config.', 'wp-optimizer'),
+            'object_cache'          => __('Stores PHP objects in memory for fast retrieval, reducing the need to recreate objects, improving website performance. Needs Redis or Memcached to be installed.', 'wp-optimizer'),
+            'static_page_cache'     => __('Stores static HTML pages generated from dynamic content to avoid repeated processing.', 'wp-optimizer')
         ];
     }
 
@@ -2260,7 +2260,7 @@ class Mod_Cache extends Module
                     <div class="wpopt-cache-reset-copy">
                         <b class="wpopt-cache-reset-name"><?php echo esc_html($layer['label']); ?></b>
                         <span class="wpopt-cache-reset-size">
-                            <span><?php _e('Cache size', 'wpopt') ?></span>
+                            <span><?php _e('Cache size', 'wp-optimizer') ?></span>
                             <strong>
                                 <?php
                                 echo esc_html($this->cache_layer_size_label($layer));
@@ -2268,7 +2268,7 @@ class Mod_Cache extends Module
                             </strong>
                         </span>
                     </div>
-                    <button form="wpopt-cache-reset-action-form" class="wps wps-button wpopt-btn is-danger" type="submit" name="<?php echo esc_attr($this->action_hook); ?>" value="<?php echo esc_attr('reset_cache:' . $layer_key); ?>"><?php _e('Reset Cache', 'wpopt'); ?></button>
+                    <button form="wpopt-cache-reset-action-form" class="wps wps-button wpopt-btn is-danger" type="submit" name="<?php echo esc_attr($this->action_hook); ?>" value="<?php echo esc_attr('reset_cache:' . $layer_key); ?>"><?php _e('Reset Cache', 'wp-optimizer'); ?></button>
                 </row>
             <?php endforeach; ?>
         </div>
@@ -2279,7 +2279,7 @@ class Mod_Cache extends Module
     private function cache_layer_size_label(array $layer): string
     {
         if (!isset($layer['size']) || !is_callable($layer['size'])) {
-            return __('N/A', 'wpopt');
+            return __('N/A', 'wp-optimizer');
         }
 
         try {
@@ -2289,7 +2289,7 @@ class Mod_Cache extends Module
                 ? sprintf(
                     ' (%s %s)',
                     function_exists('number_format_i18n') ? number_format_i18n($file_count) : number_format($file_count),
-                    $file_count === 1 ? __('file', 'wpopt') : __('files', 'wpopt')
+                    $file_count === 1 ? __('file', 'wp-optimizer') : __('files', 'wp-optimizer')
                 )
                 : '';
 
@@ -2299,7 +2299,7 @@ class Mod_Cache extends Module
                 $file_count_label
             );
         } catch (\Throwable $exception) {
-            return __('N/A', 'wpopt');
+            return __('N/A', 'wp-optimizer');
         }
     }
 
@@ -2352,29 +2352,29 @@ class Mod_Cache extends Module
     public function get_configuration_page_label(string $target): string
     {
         if ($target === 'wp_query') {
-            return __('WP_Query cache configuration', 'wpopt');
+            return __('WP_Query cache configuration', 'wp-optimizer');
         }
 
         if ($target === 'wp_db') {
-            return __('Database query cache configuration', 'wpopt');
+            return __('Database query cache configuration', 'wp-optimizer');
         }
 
         if ($target === 'static_pages') {
-            return __('Static cache configuration', 'wpopt');
+            return __('Static cache configuration', 'wp-optimizer');
         }
 
-        return __('Cache configuration', 'wpopt');
+        return __('Cache configuration', 'wp-optimizer');
     }
 
     public function render_configuration_page(string $target): void
     {
         if ($this->restricted_access('settings')) {
-            echo '<block><h2>' . esc_html__('This Module is disabled for you or for your settings.', 'wpopt') . '</h2></block>';
+            echo '<block><h2>' . esc_html__('This Module is disabled for you or for your settings.', 'wp-optimizer') . '</h2></block>';
             return;
         }
 
         if (!$this->can_manage_cache_layer($target)) {
-            echo '<block><h2>' . esc_html__('Only a Multisite network administrator can manage global cache drop-ins.', 'wpopt') . '</h2></block>';
+            echo '<block><h2>' . esc_html__('Only a Multisite network administrator can manage global cache drop-ins.', 'wp-optimizer') . '</h2></block>';
             return;
         }
 
@@ -2384,7 +2384,7 @@ class Mod_Cache extends Module
         }
 
         if ($target !== 'static_pages') {
-            echo '<block><h2>' . esc_html__('Configuration not found.', 'wpopt') . '</h2></block>';
+            echo '<block><h2>' . esc_html__('Configuration not found.', 'wp-optimizer') . '</h2></block>';
             return;
         }
 
@@ -2410,12 +2410,12 @@ class Mod_Cache extends Module
         $status_cache_policy = $this->normalize_static_status_cache_policy($this->option('static_pages.status_cache_policy', $this->default_static_status_cache_policy()));
         $status_cache_policy_label = $status_cache_policy
             ? implode(', ', array_slice($status_cache_policy, 0, 4))
-            : __('No statuses selected', 'wpopt');
+            : __('No statuses selected', 'wp-optimizer');
         $ignore_query_args = !$cache_query_args;
         $user_scope_options = array(
-            'both' => __('Both', 'wpopt'),
-            'logged_in' => __('Logged in', 'wpopt'),
-            'not_logged_in' => __('Not logged in', 'wpopt'),
+            'both' => __('Both', 'wp-optimizer'),
+            'logged_in' => __('Logged in', 'wp-optimizer'),
+            'not_logged_in' => __('Not logged in', 'wp-optimizer'),
         );
         $option_name = wps($this->context)->settings->get_context();
 
@@ -2424,18 +2424,18 @@ class Mod_Cache extends Module
             <div class="wpopt-static-conf-back">
                 <a class="button button-secondary" href="<?php echo esc_url(wps_module_setting_url('wpopt', $this->slug)); ?>">
                     <span class="dashicons dashicons-arrow-left-alt2" aria-hidden="true"></span>
-                    <span class="wpopt-back-label"><?php esc_html_e('Back to Cache settings', 'wpopt'); ?></span>
+                    <span class="wpopt-back-label"><?php esc_html_e('Back to Cache settings', 'wp-optimizer'); ?></span>
                 </a>
             </div>
 
             <block class="wps-gridRow wpopt-static-rules wpopt-static-conf-section wpopt-static-toggle-section">
                 <div class="wpopt-static-rules-head">
-                    <h3><?php esc_html_e('Caching options', 'wpopt'); ?></h3>
+                    <h3><?php esc_html_e('Caching options', 'wp-optimizer'); ?></h3>
                 </div>
                 <?php if (!$static_pages_active) : ?>
                     <div class="wpopt-static-config-warning">
-                        <strong><?php esc_html_e('Static page cache is disabled.', 'wpopt'); ?></strong>
-                        <span><?php esc_html_e('These options are saved, but no pages are stored until Static pages is enabled from the main Cache settings.', 'wpopt'); ?></span>
+                        <strong><?php esc_html_e('Static page cache is disabled.', 'wp-optimizer'); ?></strong>
+                        <span><?php esc_html_e('These options are saved, but no pages are stored until Static pages is enabled from the main Cache settings.', 'wp-optimizer'); ?></span>
                     </div>
                 <?php endif; ?>
                 <form id="wps-options" action="options.php" method="post" autocapitalize="off" autocomplete="off" class="wpopt-static-toggle-form">
@@ -2444,53 +2444,53 @@ class Mod_Cache extends Module
                     <input type="hidden" name="<?php echo esc_attr("{$option_name}[change]"); ?>" value="<?php echo esc_attr($this->slug); ?>">
                     <div class="wpopt-static-toggle">
                         <span>
-                            <strong><?php esc_html_e('Lifespan', 'wpopt'); ?></strong>
-                            <small><?php esc_html_e('How long each static page cache entry remains valid. Format: hours:minutes.', 'wpopt'); ?></small>
+                            <strong><?php esc_html_e('Lifespan', 'wp-optimizer'); ?></strong>
+                            <small><?php esc_html_e('How long each static page cache entry remains valid. Format: hours:minutes.', 'wp-optimizer'); ?></small>
                         </span>
                         <div class="wpopt-static-time-control">
                             <div class="wps-time-stepper wpopt-static-time-stepper">
-                                <button class="wps-time-stepper-btn" type="button" data-wps-time-step="-1" aria-label="<?php esc_attr_e('Decrease time', 'wpopt'); ?>">-</button>
-                                <input class="wps-time-stepper-input" type="text" inputmode="numeric" pattern="[0-9]{2}:[0-9]{2}" maxlength="5" name="<?php echo esc_attr("{$option_name}[static_pages.lifespan]"); ?>" value="<?php echo esc_attr($static_lifespan); ?>" step="900" placeholder="00:00" aria-label="<?php esc_attr_e('Lifespan hours and minutes', 'wpopt'); ?>">
-                                <button class="wps-time-stepper-btn" type="button" data-wps-time-step="1" aria-label="<?php esc_attr_e('Increase time', 'wpopt'); ?>">+</button>
+                                <button class="wps-time-stepper-btn" type="button" data-wps-time-step="-1" aria-label="<?php esc_attr_e('Decrease time', 'wp-optimizer'); ?>">-</button>
+                                <input class="wps-time-stepper-input" type="text" inputmode="numeric" pattern="[0-9]{2}:[0-9]{2}" maxlength="5" name="<?php echo esc_attr("{$option_name}[static_pages.lifespan]"); ?>" value="<?php echo esc_attr($static_lifespan); ?>" step="900" placeholder="00:00" aria-label="<?php esc_attr_e('Lifespan hours and minutes', 'wp-optimizer'); ?>">
+                                <button class="wps-time-stepper-btn" type="button" data-wps-time-step="1" aria-label="<?php esc_attr_e('Increase time', 'wp-optimizer'); ?>">+</button>
                             </div>
                         </div>
                     </div>
                     <label class="wpopt-static-toggle">
                         <span>
-                            <strong><?php esc_html_e('Cache only include regex rules', 'wpopt'); ?></strong>
-                            <small><?php esc_html_e('When disabled, all eligible pages are cached and include rules only track matching pages.', 'wpopt'); ?></small>
+                            <strong><?php esc_html_e('Cache only include regex rules', 'wp-optimizer'); ?></strong>
+                            <small><?php esc_html_e('When disabled, all eligible pages are cached and include rules only track matching pages.', 'wp-optimizer'); ?></small>
                         </span>
                         <input type="hidden" name="<?php echo esc_attr("{$option_name}[static_pages.cache_include_rules_only]"); ?>" value="0">
                         <input class="wps-apple-switch" type="checkbox" name="<?php echo esc_attr("{$option_name}[static_pages.cache_include_rules_only]"); ?>" value="1" <?php checked($cache_include_rules_only); ?>>
                     </label>
                     <label class="wpopt-static-toggle">
                         <span>
-                            <strong><?php esc_html_e('Ignore query args', 'wpopt'); ?></strong>
-                            <small><?php esc_html_e('When enabled, query parameters are ignored for static cache. Search queries remain excluded.', 'wpopt'); ?></small>
+                            <strong><?php esc_html_e('Ignore query args', 'wp-optimizer'); ?></strong>
+                            <small><?php esc_html_e('When enabled, query parameters are ignored for static cache. Search queries remain excluded.', 'wp-optimizer'); ?></small>
                         </span>
                         <input type="hidden" name="<?php echo esc_attr("{$option_name}[static_pages.cache_query_args]"); ?>" value="1">
                         <input class="wps-apple-switch" type="checkbox" name="<?php echo esc_attr("{$option_name}[static_pages.cache_query_args]"); ?>" value="0" <?php checked($ignore_query_args); ?>>
                     </label>
                     <label class="wpopt-static-toggle">
                         <span>
-                            <strong><?php esc_html_e('Auto purge on content changes', 'wpopt'); ?></strong>
-                            <small><?php esc_html_e('When content changes, only related static pages are cleared instead of flushing the whole cache.', 'wpopt'); ?></small>
+                            <strong><?php esc_html_e('Auto purge on content changes', 'wp-optimizer'); ?></strong>
+                            <small><?php esc_html_e('When content changes, only related static pages are cleared instead of flushing the whole cache.', 'wp-optimizer'); ?></small>
                         </span>
                         <input type="hidden" name="<?php echo esc_attr("{$option_name}[static_pages.auto_purge_content]"); ?>" value="0">
                         <input class="wps-apple-switch" type="checkbox" name="<?php echo esc_attr("{$option_name}[static_pages.auto_purge_content]"); ?>" value="1" <?php checked($auto_purge_content); ?>>
                     </label>
                     <label class="wpopt-static-toggle">
                         <span>
-                            <strong><?php esc_html_e('Cache admin requests', 'wpopt'); ?></strong>
-                            <small><?php esc_html_e('When enabled, static PHP cache can run on WordPress admin requests. Direct access remains outside wp-admin so WordPress admin bootstraps normally.', 'wpopt'); ?></small>
+                            <strong><?php esc_html_e('Cache admin requests', 'wp-optimizer'); ?></strong>
+                            <small><?php esc_html_e('When enabled, static PHP cache can run on WordPress admin requests. Direct access remains outside wp-admin so WordPress admin bootstraps normally.', 'wp-optimizer'); ?></small>
                         </span>
                         <input type="hidden" name="<?php echo esc_attr("{$option_name}[static_pages.disable_admin_cache]"); ?>" value="1">
                         <input class="wps-apple-switch" type="checkbox" name="<?php echo esc_attr("{$option_name}[static_pages.disable_admin_cache]"); ?>" value="0" <?php checked($cache_admin_requests); ?>>
                     </label>
                     <label class="wpopt-static-toggle">
                         <span>
-                            <strong><?php esc_html_e('Direct access', 'wpopt'); ?></strong>
-                            <small><?php esc_html_e('When enabled, server rules route eligible requests to the static cache script before WordPress loads.', 'wpopt'); ?></small>
+                            <strong><?php esc_html_e('Direct access', 'wp-optimizer'); ?></strong>
+                            <small><?php esc_html_e('When enabled, server rules route eligible requests to the static cache script before WordPress loads.', 'wp-optimizer'); ?></small>
                             <?php if ($direct_access_enabled) : ?>
                                 <small class="wpopt-static-direct-status <?php echo $direct_access_status['ready'] ? 'is-ready' : 'is-warning'; ?>">
                                     <?php echo esc_html($direct_access_status['message']); ?>
@@ -2502,25 +2502,25 @@ class Mod_Cache extends Module
                     </label>
                     <label class="wpopt-static-toggle">
                         <span>
-                            <strong><?php esc_html_e('User-agent exclusions', 'wpopt'); ?></strong>
-                            <small><?php esc_html_e('When enabled, matching user agents skip static cache. Add one plain text or PHP regex pattern per line.', 'wpopt'); ?></small>
+                            <strong><?php esc_html_e('User-agent exclusions', 'wp-optimizer'); ?></strong>
+                            <small><?php esc_html_e('When enabled, matching user agents skip static cache. Add one plain text or PHP regex pattern per line.', 'wp-optimizer'); ?></small>
                         </span>
                         <input type="hidden" name="<?php echo esc_attr("{$option_name}[static_pages.user_agent_exclusions_enabled]"); ?>" value="0">
                         <input class="wps-apple-switch" type="checkbox" name="<?php echo esc_attr("{$option_name}[static_pages.user_agent_exclusions_enabled]"); ?>" value="1" <?php checked($user_agent_exclusions_enabled); ?> data-wpopt-user-agent-exclusions-toggle>
                     </label>
                     <label class="wpopt-static-toggle wpopt-static-toggle-textarea <?php echo $user_agent_exclusions_enabled ? '' : 'is-hidden'; ?>" data-wpopt-user-agent-patterns>
                         <span>
-                            <strong><?php esc_html_e('User-agent patterns', 'wpopt'); ?></strong>
-                            <small><?php esc_html_e('Examples: Googlebot, curl, /bot|crawler/i', 'wpopt'); ?></small>
+                            <strong><?php esc_html_e('User-agent patterns', 'wp-optimizer'); ?></strong>
+                            <small><?php esc_html_e('Examples: Googlebot, curl, /bot|crawler/i', 'wp-optimizer'); ?></small>
                         </span>
                         <textarea class="wps wpopt-static-textarea" name="<?php echo esc_attr("{$option_name}[static_pages.user_agent_exclusions]"); ?>" rows="4" spellcheck="false"><?php echo esc_textarea(implode(PHP_EOL, $user_agent_exclusions)); ?></textarea>
                     </label>
                     <label class="wpopt-static-toggle">
                         <span>
-                            <strong><?php esc_html_e('No caching cookies', 'wpopt'); ?></strong>
-                            <small><?php esc_html_e('When enabled, matching request cookies skip static cache. Leave the list empty to match any cookie.', 'wpopt'); ?></small>
+                            <strong><?php esc_html_e('No caching cookies', 'wp-optimizer'); ?></strong>
+                            <small><?php esc_html_e('When enabled, matching request cookies skip static cache. Leave the list empty to match any cookie.', 'wp-optimizer'); ?></small>
                             <?php if ($no_cache_cookies_enabled) : ?>
-                                <small class="wpopt-static-direct-status is-warning"><?php esc_html_e('Admin/logged-in browser visits usually carry cookies and will not populate static cache.', 'wpopt'); ?></small>
+                                <small class="wpopt-static-direct-status is-warning"><?php esc_html_e('Admin/logged-in browser visits usually carry cookies and will not populate static cache.', 'wp-optimizer'); ?></small>
                             <?php endif; ?>
                         </span>
                         <input type="hidden" name="<?php echo esc_attr("{$option_name}[static_pages.no_cache_cookies_enabled]"); ?>" value="0">
@@ -2528,17 +2528,17 @@ class Mod_Cache extends Module
                     </label>
                     <label class="wpopt-static-toggle wpopt-static-toggle-textarea <?php echo $no_cache_cookies_enabled ? '' : 'is-hidden'; ?>" data-wpopt-no-cache-cookies-patterns>
                         <span>
-                            <strong><?php esc_html_e('No caching cookie list', 'wpopt'); ?></strong>
-                            <small><?php esc_html_e('Add one cookie name or name fragment per line. Examples: wordpress_logged_in_, woocommerce_items_in_cart.', 'wpopt'); ?></small>
+                            <strong><?php esc_html_e('No caching cookie list', 'wp-optimizer'); ?></strong>
+                            <small><?php esc_html_e('Add one cookie name or name fragment per line. Examples: wordpress_logged_in_, woocommerce_items_in_cart.', 'wp-optimizer'); ?></small>
                         </span>
                         <textarea class="wps wpopt-static-textarea" name="<?php echo esc_attr("{$option_name}[static_pages.no_cache_cookies]"); ?>" rows="4" spellcheck="false"><?php echo esc_textarea(implode(PHP_EOL, $no_cache_cookies)); ?></textarea>
                     </label>
                     <label class="wpopt-static-toggle" for="wpopt-static-status-policy">
                         <span>
-                            <strong><?php esc_html_e('HTTP status cache policy', 'wpopt'); ?></strong>
-                            <small><?php esc_html_e('Choose which response status families can be stored in static cache.', 'wpopt'); ?></small>
+                            <strong><?php esc_html_e('HTTP status cache policy', 'wp-optimizer'); ?></strong>
+                            <small><?php esc_html_e('Choose which response status families can be stored in static cache.', 'wp-optimizer'); ?></small>
                         </span>
-                        <dropdown class="wps-dropdown wpopt-cache-multiselect" data-wpopt-cache-multiselect data-input-name="<?php echo esc_attr("{$option_name}[static_pages.status_cache_policy]"); ?>" data-empty-label="<?php esc_attr_e('No statuses selected', 'wpopt'); ?>">
+                        <dropdown class="wps-dropdown wpopt-cache-multiselect" data-wpopt-cache-multiselect data-input-name="<?php echo esc_attr("{$option_name}[static_pages.status_cache_policy]"); ?>" data-empty-label="<?php esc_attr_e('No statuses selected', 'wp-optimizer'); ?>">
                             <row class="wps-input__wrapper">
                                 <input id="wpopt-static-status-policy" type="hidden" value="<?php echo esc_attr(implode(',', $status_cache_policy)); ?>" autocomplete="off">
                                 <span hidden data-wpopt-cache-inputs>
@@ -2570,8 +2570,8 @@ class Mod_Cache extends Module
                     </label>
                     <label class="wpopt-static-toggle" for="wpopt-static-user-scope">
                         <span>
-                            <strong><?php esc_html_e('User cache scope', 'wpopt'); ?></strong>
-                            <small><?php esc_html_e('Choose which visitor sessions can use static page cache.', 'wpopt'); ?></small>
+                            <strong><?php esc_html_e('User cache scope', 'wp-optimizer'); ?></strong>
+                            <small><?php esc_html_e('Choose which visitor sessions can use static page cache.', 'wp-optimizer'); ?></small>
                         </span>
                         <dropdown class="wps-dropdown">
                             <row class="wps-input__wrapper">
@@ -2605,7 +2605,7 @@ class Mod_Cache extends Module
         $layer = $this->normalize_cache_layer($layer);
 
         if (!in_array($layer, self::DYNAMIC_CACHE_LAYERS, true)) {
-            echo '<block><h2>' . esc_html__('Configuration not found.', 'wpopt') . '</h2></block>';
+            echo '<block><h2>' . esc_html__('Configuration not found.', 'wp-optimizer') . '</h2></block>';
             return;
         }
 
@@ -2627,15 +2627,15 @@ class Mod_Cache extends Module
         $no_cache_cookies_enabled = (bool)$this->option("{$layer}.no_cache_cookies_enabled", true);
         $no_cache_cookies = $this->normalize_cache_patterns($this->option("{$layer}.no_cache_cookies", array()));
         $user_agent_exclusions_help = $this->cache_layer_supports_rules($layer)
-            ? __('When enabled, matching user agents skip this cache engine. Add one plain text or PHP regex pattern per line.', 'wpopt')
-            : __('When enabled, matching user-agent text fragments skip this cache engine. Add one text fragment per line.', 'wpopt');
+            ? __('When enabled, matching user agents skip this cache engine. Add one plain text or PHP regex pattern per line.', 'wp-optimizer')
+            : __('When enabled, matching user-agent text fragments skip this cache engine. Add one text fragment per line.', 'wp-optimizer');
         $query_type_options = $layer === 'wp_query' ? $this->get_wp_query_cache_type_options() : array();
         $query_types = $layer === 'wp_query'
             ? QueryCacheTypes::normalize($this->option('wp_query.query_types', QueryCacheTypes::DEFAULT_TYPES))
             : array();
         $query_type_labels = array_values(array_intersect_key($query_type_options, array_flip($query_types)));
         $query_type_label = empty($query_type_labels)
-            ? __('No query types selected', 'wpopt')
+            ? __('No query types selected', 'wp-optimizer')
             : implode(', ', array_slice($query_type_labels, 0, 4)) . (count($query_type_labels) > 4 ? ', ...' : '');
         $db_table_options = $layer === 'wp_db' ? $this->get_db_cache_table_options() : array();
         $db_tables = $layer === 'wp_db'
@@ -2643,7 +2643,7 @@ class Mod_Cache extends Module
             : array();
         $db_table_labels = array_values(array_intersect_key($db_table_options, array_flip($db_tables)));
         $db_table_label = empty($db_table_labels)
-            ? __('No tables selected', 'wpopt')
+            ? __('No tables selected', 'wp-optimizer')
             : implode(', ', array_slice($db_table_labels, 0, 4)) . (count($db_table_labels) > 4 ? ', ...' : '');
         $ignore_query_args = !$cache_query_args;
         $option_name = wps($this->context)->settings->get_context();
@@ -2652,18 +2652,18 @@ class Mod_Cache extends Module
             <div class="wpopt-static-conf-back">
                 <a class="button button-secondary" href="<?php echo esc_url(wps_module_setting_url('wpopt', $this->slug)); ?>">
                     <span class="dashicons dashicons-arrow-left-alt2" aria-hidden="true"></span>
-                    <span class="wpopt-back-label"><?php esc_html_e('Back to Cache settings', 'wpopt'); ?></span>
+                    <span class="wpopt-back-label"><?php esc_html_e('Back to Cache settings', 'wp-optimizer'); ?></span>
                 </a>
             </div>
 
             <block class="wps-gridRow wpopt-static-rules wpopt-static-conf-section wpopt-static-toggle-section">
                 <div class="wpopt-static-rules-head">
-                    <h3><?php echo esc_html(sprintf(__('%s options', 'wpopt'), $layer_label)); ?></h3>
+                    <h3><?php echo esc_html(sprintf(__('%s options', 'wp-optimizer'), $layer_label)); ?></h3>
                 </div>
                 <?php if (!$layer_active) : ?>
                     <div class="wpopt-static-config-warning">
-                        <strong><?php echo esc_html(sprintf(__('%s is disabled.', 'wpopt'), $layer_label)); ?></strong>
-                        <span><?php esc_html_e('These options are saved, but no entries are stored until this cache engine is enabled from the main Cache settings.', 'wpopt'); ?></span>
+                        <strong><?php echo esc_html(sprintf(__('%s is disabled.', 'wp-optimizer'), $layer_label)); ?></strong>
+                        <span><?php esc_html_e('These options are saved, but no entries are stored until this cache engine is enabled from the main Cache settings.', 'wp-optimizer'); ?></span>
                     </div>
                 <?php endif; ?>
                 <form id="wps-options" action="options.php" method="post" autocapitalize="off" autocomplete="off" class="wpopt-static-toggle-form">
@@ -2672,24 +2672,24 @@ class Mod_Cache extends Module
                     <input type="hidden" name="<?php echo esc_attr("{$option_name}[change]"); ?>" value="<?php echo esc_attr($this->slug); ?>">
                     <div class="wpopt-static-toggle">
                         <span>
-                            <strong><?php esc_html_e('Lifespan', 'wpopt'); ?></strong>
-                            <small><?php esc_html_e('How long each cache entry remains valid. Format: hours:minutes.', 'wpopt'); ?></small>
+                            <strong><?php esc_html_e('Lifespan', 'wp-optimizer'); ?></strong>
+                            <small><?php esc_html_e('How long each cache entry remains valid. Format: hours:minutes.', 'wp-optimizer'); ?></small>
                         </span>
                         <div class="wpopt-static-time-control">
                             <div class="wps-time-stepper wpopt-static-time-stepper">
-                                <button class="wps-time-stepper-btn" type="button" data-wps-time-step="-1" aria-label="<?php esc_attr_e('Decrease time', 'wpopt'); ?>">-</button>
-                                <input class="wps-time-stepper-input" type="text" inputmode="numeric" pattern="[0-9]{2}:[0-9]{2}" maxlength="5" name="<?php echo esc_attr("{$option_name}[{$layer}.lifespan]"); ?>" value="<?php echo esc_attr($lifespan); ?>" step="900" placeholder="00:00" aria-label="<?php esc_attr_e('Lifespan hours and minutes', 'wpopt'); ?>">
-                                <button class="wps-time-stepper-btn" type="button" data-wps-time-step="1" aria-label="<?php esc_attr_e('Increase time', 'wpopt'); ?>">+</button>
+                                <button class="wps-time-stepper-btn" type="button" data-wps-time-step="-1" aria-label="<?php esc_attr_e('Decrease time', 'wp-optimizer'); ?>">-</button>
+                                <input class="wps-time-stepper-input" type="text" inputmode="numeric" pattern="[0-9]{2}:[0-9]{2}" maxlength="5" name="<?php echo esc_attr("{$option_name}[{$layer}.lifespan]"); ?>" value="<?php echo esc_attr($lifespan); ?>" step="900" placeholder="00:00" aria-label="<?php esc_attr_e('Lifespan hours and minutes', 'wp-optimizer'); ?>">
+                                <button class="wps-time-stepper-btn" type="button" data-wps-time-step="1" aria-label="<?php esc_attr_e('Increase time', 'wp-optimizer'); ?>">+</button>
                             </div>
                         </div>
                     </div>
                     <?php if ($layer === 'wp_query') : ?>
                         <label class="wpopt-static-toggle" for="wpopt-query-cache-types">
                             <span>
-                                <strong><?php esc_html_e('Cached query types', 'wpopt'); ?></strong>
-                                <small><?php esc_html_e('Choose which WP_Query types can be stored by this cache engine.', 'wpopt'); ?></small>
+                                <strong><?php esc_html_e('Cached query types', 'wp-optimizer'); ?></strong>
+                                <small><?php esc_html_e('Choose which WP_Query types can be stored by this cache engine.', 'wp-optimizer'); ?></small>
                             </span>
-                            <dropdown class="wps-dropdown wpopt-cache-multiselect" data-wpopt-cache-multiselect data-input-name="<?php echo esc_attr("{$option_name}[wp_query.query_types]"); ?>" data-empty-label="<?php esc_attr_e('No query types selected', 'wpopt'); ?>">
+                            <dropdown class="wps-dropdown wpopt-cache-multiselect" data-wpopt-cache-multiselect data-input-name="<?php echo esc_attr("{$option_name}[wp_query.query_types]"); ?>" data-empty-label="<?php esc_attr_e('No query types selected', 'wp-optimizer'); ?>">
                                 <row class="wps-input__wrapper">
                                     <input id="wpopt-query-cache-types" type="hidden" value="<?php echo esc_attr(implode(',', $query_types)); ?>" autocomplete="off">
                                     <span hidden data-wpopt-cache-inputs>
@@ -2723,10 +2723,10 @@ class Mod_Cache extends Module
                     <?php if ($layer === 'wp_db') : ?>
                         <label class="wpopt-static-toggle" for="wpopt-db-cache-tables">
                             <span>
-                                <strong><?php esc_html_e('Cached database tables', 'wpopt'); ?></strong>
-                                <small><?php esc_html_e('Choose which database tables can be stored by this cache engine.', 'wpopt'); ?></small>
+                                <strong><?php esc_html_e('Cached database tables', 'wp-optimizer'); ?></strong>
+                                <small><?php esc_html_e('Choose which database tables can be stored by this cache engine.', 'wp-optimizer'); ?></small>
                             </span>
-                            <dropdown class="wps-dropdown wpopt-cache-multiselect" data-wpopt-cache-multiselect data-input-name="<?php echo esc_attr("{$option_name}[wp_db.tables]"); ?>" data-empty-label="<?php esc_attr_e('No tables selected', 'wpopt'); ?>">
+                            <dropdown class="wps-dropdown wpopt-cache-multiselect" data-wpopt-cache-multiselect data-input-name="<?php echo esc_attr("{$option_name}[wp_db.tables]"); ?>" data-empty-label="<?php esc_attr_e('No tables selected', 'wp-optimizer'); ?>">
                                 <row class="wps-input__wrapper">
                                     <input id="wpopt-db-cache-tables" type="hidden" value="<?php echo esc_attr(implode(',', $db_tables)); ?>" autocomplete="off">
                                     <span hidden data-wpopt-cache-inputs>
@@ -2760,8 +2760,8 @@ class Mod_Cache extends Module
                     <?php if ($this->cache_layer_supports_rules($layer)) : ?>
                         <label class="wpopt-static-toggle">
                             <span>
-                                <strong><?php esc_html_e('Cache only include regex rules', 'wpopt'); ?></strong>
-                                <small><?php esc_html_e('When enabled, this engine stores entries only for requests matching active include rules. Exclude rules always skip caching.', 'wpopt'); ?></small>
+                                <strong><?php esc_html_e('Cache only include regex rules', 'wp-optimizer'); ?></strong>
+                                <small><?php esc_html_e('When enabled, this engine stores entries only for requests matching active include rules. Exclude rules always skip caching.', 'wp-optimizer'); ?></small>
                             </span>
                             <input type="hidden" name="<?php echo esc_attr("{$option_name}[{$layer}.cache_include_rules_only]"); ?>" value="0">
                             <input class="wps-apple-switch" type="checkbox" name="<?php echo esc_attr("{$option_name}[{$layer}.cache_include_rules_only]"); ?>" value="1" <?php checked($cache_include_rules_only); ?>>
@@ -2769,16 +2769,16 @@ class Mod_Cache extends Module
                     <?php endif; ?>
                     <label class="wpopt-static-toggle">
                         <span>
-                            <strong><?php esc_html_e('Ignore query args', 'wpopt'); ?></strong>
-                            <small><?php esc_html_e('When enabled, request query parameters are not added to this engine cache key.', 'wpopt'); ?></small>
+                            <strong><?php esc_html_e('Ignore query args', 'wp-optimizer'); ?></strong>
+                            <small><?php esc_html_e('When enabled, request query parameters are not added to this engine cache key.', 'wp-optimizer'); ?></small>
                         </span>
                         <input type="hidden" name="<?php echo esc_attr("{$option_name}[{$layer}.cache_query_args]"); ?>" value="1">
                         <input class="wps-apple-switch" type="checkbox" name="<?php echo esc_attr("{$option_name}[{$layer}.cache_query_args]"); ?>" value="0" <?php checked($ignore_query_args); ?>>
                     </label>
                     <label class="wpopt-static-toggle">
                         <span>
-                            <strong><?php esc_html_e('Auto purge on content changes', 'wpopt'); ?></strong>
-                            <small><?php esc_html_e('When content, terms, comments or users change, this cache layer is flushed automatically.', 'wpopt'); ?></small>
+                            <strong><?php esc_html_e('Auto purge on content changes', 'wp-optimizer'); ?></strong>
+                            <small><?php esc_html_e('When content, terms, comments or users change, this cache layer is flushed automatically.', 'wp-optimizer'); ?></small>
                         </span>
                         <input type="hidden" name="<?php echo esc_attr("{$option_name}[{$layer}.auto_purge_content]"); ?>" value="0">
                         <input class="wps-apple-switch" type="checkbox" name="<?php echo esc_attr("{$option_name}[{$layer}.auto_purge_content]"); ?>" value="1" <?php checked($auto_purge_content); ?>>
@@ -2786,8 +2786,8 @@ class Mod_Cache extends Module
                     <?php if ($layer !== 'wp_db') : ?>
                         <label class="wpopt-static-toggle">
                             <span>
-                                <strong><?php esc_html_e('Cache admin requests', 'wpopt'); ?></strong>
-                                <small><?php esc_html_e('When enabled, this cache engine can run during WordPress admin requests.', 'wpopt'); ?></small>
+                                <strong><?php esc_html_e('Cache admin requests', 'wp-optimizer'); ?></strong>
+                                <small><?php esc_html_e('When enabled, this cache engine can run during WordPress admin requests.', 'wp-optimizer'); ?></small>
                             </span>
                             <input type="hidden" name="<?php echo esc_attr("{$option_name}[{$layer}.disable_admin_cache]"); ?>" value="1">
                             <input class="wps-apple-switch" type="checkbox" name="<?php echo esc_attr("{$option_name}[{$layer}.disable_admin_cache]"); ?>" value="0" <?php checked($cache_admin_requests); ?>>
@@ -2795,7 +2795,7 @@ class Mod_Cache extends Module
                     <?php endif; ?>
                     <label class="wpopt-static-toggle">
                         <span>
-                            <strong><?php esc_html_e('User-agent exclusions', 'wpopt'); ?></strong>
+                            <strong><?php esc_html_e('User-agent exclusions', 'wp-optimizer'); ?></strong>
                             <small><?php echo esc_html($user_agent_exclusions_help); ?></small>
                         </span>
                         <input type="hidden" name="<?php echo esc_attr("{$option_name}[{$layer}.user_agent_exclusions_enabled]"); ?>" value="0">
@@ -2803,23 +2803,23 @@ class Mod_Cache extends Module
                     </label>
                     <label class="wpopt-static-toggle wpopt-static-toggle-textarea <?php echo $user_agent_exclusions_enabled ? '' : 'is-hidden'; ?>" data-wpopt-user-agent-patterns>
                         <span>
-                            <strong><?php esc_html_e('User-agent patterns', 'wpopt'); ?></strong>
-                            <small><?php esc_html_e('Examples: Googlebot, curl, /bot|crawler/i', 'wpopt'); ?></small>
+                            <strong><?php esc_html_e('User-agent patterns', 'wp-optimizer'); ?></strong>
+                            <small><?php esc_html_e('Examples: Googlebot, curl, /bot|crawler/i', 'wp-optimizer'); ?></small>
                         </span>
                         <textarea class="wps wpopt-static-textarea" name="<?php echo esc_attr("{$option_name}[{$layer}.user_agent_exclusions]"); ?>" rows="4" spellcheck="false"><?php echo esc_textarea(implode(PHP_EOL, $user_agent_exclusions)); ?></textarea>
                     </label>
                     <label class="wpopt-static-toggle">
                         <span>
-                            <strong><?php esc_html_e('No caching cookies', 'wpopt'); ?></strong>
-                            <small><?php esc_html_e('When enabled, matching request cookies skip this cache engine. Leave the list empty to match any cookie.', 'wpopt'); ?></small>
+                            <strong><?php esc_html_e('No caching cookies', 'wp-optimizer'); ?></strong>
+                            <small><?php esc_html_e('When enabled, matching request cookies skip this cache engine. Leave the list empty to match any cookie.', 'wp-optimizer'); ?></small>
                         </span>
                         <input type="hidden" name="<?php echo esc_attr("{$option_name}[{$layer}.no_cache_cookies_enabled]"); ?>" value="0">
                         <input class="wps-apple-switch" type="checkbox" name="<?php echo esc_attr("{$option_name}[{$layer}.no_cache_cookies_enabled]"); ?>" value="1" <?php checked($no_cache_cookies_enabled); ?> data-wpopt-no-cache-cookies-toggle>
                     </label>
                     <label class="wpopt-static-toggle wpopt-static-toggle-textarea <?php echo $no_cache_cookies_enabled ? '' : 'is-hidden'; ?>" data-wpopt-no-cache-cookies-patterns>
                         <span>
-                            <strong><?php esc_html_e('No caching cookie list', 'wpopt'); ?></strong>
-                            <small><?php esc_html_e('Add one cookie name or name fragment per line. Examples: wordpress_logged_in_, woocommerce_items_in_cart.', 'wpopt'); ?></small>
+                            <strong><?php esc_html_e('No caching cookie list', 'wp-optimizer'); ?></strong>
+                            <small><?php esc_html_e('Add one cookie name or name fragment per line. Examples: wordpress_logged_in_, woocommerce_items_in_cart.', 'wp-optimizer'); ?></small>
                         </span>
                         <textarea class="wps wpopt-static-textarea" name="<?php echo esc_attr("{$option_name}[{$layer}.no_cache_cookies]"); ?>" rows="4" spellcheck="false"><?php echo esc_textarea(implode(PHP_EOL, $no_cache_cookies)); ?></textarea>
                     </label>
@@ -2861,40 +2861,40 @@ class Mod_Cache extends Module
         <block class="wps-gridRow wpopt-static-rules wpopt-static-conf-section" data-wpopt-static-rules-section>
             <div class="wpopt-static-rules-head">
                 <div>
-                    <h3><?php echo esc_html(sprintf(__('%s regex rules', 'wpopt'), $layer_label)); ?></h3>
-                    <p class="wpopt-muted"><?php esc_html_e('Create targeted rules for this cache engine and monitor their disk usage and cache activity.', 'wpopt'); ?></p>
+                    <h3><?php echo esc_html(sprintf(__('%s regex rules', 'wp-optimizer'), $layer_label)); ?></h3>
+                    <p class="wpopt-muted"><?php esc_html_e('Create targeted rules for this cache engine and monitor their disk usage and cache activity.', 'wp-optimizer'); ?></p>
                 </div>
-                <span class="wpopt-static-rules-mode"><?php esc_html_e('Regex mode', 'wpopt'); ?></span>
+                <span class="wpopt-static-rules-mode"><?php esc_html_e('Regex mode', 'wp-optimizer'); ?></span>
             </div>
 
             <form id="wpopt-static-conf-action-form" class="wpopt-static-rule-form" method="POST" autocapitalize="off" autocomplete="off" data-wpopt-static-rule-form>
                 <?php RequestActions::nonce_field($this->action_hook); ?>
                 <div class="wpopt-static-rule-fields">
                     <label class="wpopt-static-rule-field" for="wpopt-static-rule-name">
-                        <span><?php esc_html_e('Rule name', 'wpopt'); ?></span>
-                        <input id="wpopt-static-rule-name" class="regular-text" type="text" name="static_rule_name" value="" placeholder="<?php esc_attr_e('Listings pages', 'wpopt'); ?>">
+                        <span><?php esc_html_e('Rule name', 'wp-optimizer'); ?></span>
+                        <input id="wpopt-static-rule-name" class="regular-text" type="text" name="static_rule_name" value="" placeholder="<?php esc_attr_e('Listings pages', 'wp-optimizer'); ?>">
                     </label>
                     <label class="wpopt-static-rule-field" for="wpopt-static-rule-pattern">
-                        <span><?php esc_html_e('Regex rule', 'wpopt'); ?></span>
-                        <input id="wpopt-static-rule-pattern" class="regular-text" type="text" name="static_rule_pattern" value="" placeholder="<?php esc_attr_e('^vendita-', 'wpopt'); ?>">
+                        <span><?php esc_html_e('Regex rule', 'wp-optimizer'); ?></span>
+                        <input id="wpopt-static-rule-pattern" class="regular-text" type="text" name="static_rule_pattern" value="" placeholder="<?php esc_attr_e('^vendita-', 'wp-optimizer'); ?>">
                     </label>
                     <fieldset class="wpopt-static-mode-field">
-                        <legend><?php esc_html_e('Mode', 'wpopt'); ?></legend>
+                        <legend><?php esc_html_e('Mode', 'wp-optimizer'); ?></legend>
                         <span class="wpopt-static-mode-toggle">
                             <label>
                                 <input type="radio" name="static_rule_mode" value="include" checked>
-                                <span><?php esc_html_e('Include', 'wpopt'); ?></span>
+                                <span><?php esc_html_e('Include', 'wp-optimizer'); ?></span>
                             </label>
                             <label>
                                 <input type="radio" name="static_rule_mode" value="exclude">
-                                <span><?php esc_html_e('Exclude', 'wpopt'); ?></span>
+                                <span><?php esc_html_e('Exclude', 'wp-optimizer'); ?></span>
                             </label>
                         </span>
                     </fieldset>
                 </div>
                 <div class="wpopt-static-rule-actions">
-                    <p class="description"><?php esc_html_e('Matched against request paths such as "categoria/prodotto". Full PHP regex delimiters are supported.', 'wpopt'); ?></p>
-                    <button class="wps wps-button wpopt-btn is-info" type="submit" name="<?php echo esc_attr($this->action_hook); ?>" value="<?php echo esc_attr($add_action); ?>" data-wpopt-static-action="<?php echo esc_attr($add_action); ?>"><?php esc_html_e('Add', 'wpopt'); ?></button>
+                    <p class="description"><?php esc_html_e('Matched against request paths such as "categoria/prodotto". Full PHP regex delimiters are supported.', 'wp-optimizer'); ?></p>
+                    <button class="wps wps-button wpopt-btn is-info" type="submit" name="<?php echo esc_attr($this->action_hook); ?>" value="<?php echo esc_attr($add_action); ?>" data-wpopt-static-action="<?php echo esc_attr($add_action); ?>"><?php esc_html_e('Add', 'wp-optimizer'); ?></button>
                 </div>
             </form>
 
@@ -2904,8 +2904,8 @@ class Mod_Cache extends Module
                 </div>
             <?php else : ?>
                 <div class="wpopt-static-empty">
-                    <strong><?php _e('No regex rules configured', 'wpopt'); ?></strong>
-                    <span><?php _e('Add a rule above to start tracking disk usage, hits and misses for this cache engine.', 'wpopt'); ?></span>
+                    <strong><?php _e('No regex rules configured', 'wp-optimizer'); ?></strong>
+                    <span><?php _e('Add a rule above to start tracking disk usage, hits and misses for this cache engine.', 'wp-optimizer'); ?></span>
                 </div>
             <?php endif; ?>
         </block>
@@ -2925,7 +2925,7 @@ class Mod_Cache extends Module
             $rule_name = '<strong>' . esc_html($rule['name']) . '</strong>';
 
             if (empty($rule['active'])) {
-                $rule_name .= '<br><span class="description">' . esc_html__('Inactive', 'wpopt') . '</span>';
+                $rule_name .= '<br><span class="description">' . esc_html__('Inactive', 'wp-optimizer') . '</span>';
             }
 
             if ($layer === 'static_pages') {
@@ -2941,22 +2941,22 @@ class Mod_Cache extends Module
                 $delete_action = 'remove_cache_rule:' . $layer . ':' . $rule['id'];
             }
 
-            $actions = '<a class="button button-secondary" href="' . esc_url(RequestActions::get_url($this->action_hook, $clear_action)) . '" data-wpopt-static-action="' . esc_attr($clear_action) . '">' . esc_html__('Clear cache', 'wpopt') . '</a>';
-            $actions .= '<a class="button button-secondary" href="' . esc_url(RequestActions::get_url($this->action_hook, $reset_action)) . '" data-wpopt-static-action="' . esc_attr($reset_action) . '">' . esc_html__('Reset stats', 'wpopt') . '</a>';
-            $actions .= '<a class="button button-secondary" href="' . esc_url(RequestActions::get_url($this->action_hook, $toggle_action)) . '" data-wpopt-static-action="' . esc_attr($toggle_action) . '">' . esc_html($rule['mode'] === 'exclude' ? __('Set include', 'wpopt') : __('Set exclude', 'wpopt')) . '</a>';
-            $actions .= '<a class="button button-link-delete" href="' . esc_url(RequestActions::get_url($this->action_hook, $delete_action)) . '" data-wpopt-static-action="' . esc_attr($delete_action) . '" data-confirm="' . esc_attr__('Delete this rule and its stats?', 'wpopt') . '">' . esc_html__('Delete rule', 'wpopt') . '</a>';
+            $actions = '<a class="button button-secondary" href="' . esc_url(RequestActions::get_url($this->action_hook, $clear_action)) . '" data-wpopt-static-action="' . esc_attr($clear_action) . '">' . esc_html__('Clear cache', 'wp-optimizer') . '</a>';
+            $actions .= '<a class="button button-secondary" href="' . esc_url(RequestActions::get_url($this->action_hook, $reset_action)) . '" data-wpopt-static-action="' . esc_attr($reset_action) . '">' . esc_html__('Reset stats', 'wp-optimizer') . '</a>';
+            $actions .= '<a class="button button-secondary" href="' . esc_url(RequestActions::get_url($this->action_hook, $toggle_action)) . '" data-wpopt-static-action="' . esc_attr($toggle_action) . '">' . esc_html($rule['mode'] === 'exclude' ? __('Set include', 'wp-optimizer') : __('Set exclude', 'wp-optimizer')) . '</a>';
+            $actions .= '<a class="button button-link-delete" href="' . esc_url(RequestActions::get_url($this->action_hook, $delete_action)) . '" data-wpopt-static-action="' . esc_attr($delete_action) . '" data-confirm="' . esc_attr__('Delete this rule and its stats?', 'wp-optimizer') . '">' . esc_html__('Delete rule', 'wp-optimizer') . '</a>';
 
             $rows[] = array(
                 'rule' => $rule_name,
                 'regex' => '<code>' . esc_html($rule['pattern']) . '</code>',
-                'mode' => '<span class="wpopt-static-mode-pill is-' . esc_attr($rule['mode']) . '">' . esc_html($rule['mode'] === 'exclude' ? __('Exclude', 'wpopt') : __('Include', 'wpopt')) . '</span>',
+                'mode' => '<span class="wpopt-static-mode-pill is-' . esc_attr($rule['mode']) . '">' . esc_html($rule['mode'] === 'exclude' ? __('Exclude', 'wp-optimizer') : __('Include', 'wp-optimizer')) . '</span>',
                 'disk_space' => esc_html(size_format((int)$stats['bytes'])),
                 'files' => esc_html(number_format_i18n((int)$stats['entries'])),
                 'hits' => esc_html(number_format_i18n((int)$stats['hits'])),
                 'misses' => esc_html(number_format_i18n((int)$stats['misses'])),
                 'writes' => esc_html(number_format_i18n((int)$stats['writes'])),
                 'hit_ratio' => '<span class="wpopt-static-ratio">' . esc_html($this->format_static_rule_hit_ratio((int)$stats['hits'], (int)$stats['misses'])) . '</span>',
-                'last_activity' => $last_activity ? esc_html(wp_date(get_option('date_format') . ' ' . get_option('time_format'), $last_activity)) : esc_html__('Never', 'wpopt'),
+                'last_activity' => $last_activity ? esc_html(wp_date(get_option('date_format') . ' ' . get_option('time_format'), $last_activity)) : esc_html__('Never', 'wp-optimizer'),
                 'actions' => array(
                     'content' => $actions,
                     'class' => 'wpopt-static-row-actions',
@@ -2967,20 +2967,20 @@ class Mod_Cache extends Module
         return List_Table::generateHTML_table(array(
             'class' => 'striped wpopt-static-rules-table',
             'columns' => array(
-                'rule' => __('Rule', 'wpopt'),
-                'regex' => __('Regex', 'wpopt'),
-                'mode' => __('Mode', 'wpopt'),
-                'disk_space' => __('Disk space', 'wpopt'),
-                'files' => __('Files', 'wpopt'),
-                'hits' => __('Hits', 'wpopt'),
-                'misses' => __('Misses', 'wpopt'),
-                'writes' => __('Writes', 'wpopt'),
-                'hit_ratio' => __('Hit ratio', 'wpopt'),
-                'last_activity' => __('Last activity', 'wpopt'),
-                'actions' => __('Actions', 'wpopt'),
+                'rule' => __('Rule', 'wp-optimizer'),
+                'regex' => __('Regex', 'wp-optimizer'),
+                'mode' => __('Mode', 'wp-optimizer'),
+                'disk_space' => __('Disk space', 'wp-optimizer'),
+                'files' => __('Files', 'wp-optimizer'),
+                'hits' => __('Hits', 'wp-optimizer'),
+                'misses' => __('Misses', 'wp-optimizer'),
+                'writes' => __('Writes', 'wp-optimizer'),
+                'hit_ratio' => __('Hit ratio', 'wp-optimizer'),
+                'last_activity' => __('Last activity', 'wp-optimizer'),
+                'actions' => __('Actions', 'wp-optimizer'),
             ),
             'rows' => $rows,
-            'empty' => __('No static cache rules configured', 'wpopt'),
+            'empty' => __('No static cache rules configured', 'wp-optimizer'),
         ));
     }
 

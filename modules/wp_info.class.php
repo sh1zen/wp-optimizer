@@ -44,7 +44,7 @@ class Mod_WP_Info extends Module
         $table = is_array($table) ? $table : array();
 
         if (!$table) {
-            return '<div class="wpopt-system-info-empty">' . esc_html__('No system information available.', 'wpopt') . '</div>';
+            return '<div class="wpopt-system-info-empty">' . esc_html__('No system information available.', 'wp-optimizer') . '</div>';
         }
 
         foreach ($table as $_name => $value) {
@@ -57,11 +57,11 @@ class Mod_WP_Info extends Module
         return List_Table::generateHTML_table(array(
             'class' => 'wps wpopt-system-info-table',
             'columns' => array(
-                'name' => __('Name', 'wpopt'),
-                'value' => __('Value', 'wpopt'),
+                'name' => __('Name', 'wp-optimizer'),
+                'value' => __('Value', 'wp-optimizer'),
             ),
             'rows' => $rows,
-            'empty' => __('No system information available.', 'wpopt'),
+            'empty' => __('No system information available.', 'wp-optimizer'),
         ));
     }
 
@@ -120,71 +120,71 @@ class Mod_WP_Info extends Module
 
         $settings = array(
             "Server" => array(
-                __('SITE URL', 'wpopt')             => site_url(),
-                __('HOME URL', 'wpopt')             => home_url(),
-                __('Server IP : port', 'wpopt')     => wps_server_addr() . ' : ' . $_SERVER['SERVER_PORT'],
-                __("OS", 'wpopt')                   => PHP_OS,
-                __("Server", 'wpopt')               => $_SERVER["SERVER_SOFTWARE"],
-                __('Server Document Root', 'wpopt') => $_SERVER['DOCUMENT_ROOT'],
-                __('Server Date/Time', 'wpopt')     => mysql2date(sprintf(__('%s @ %s', 'wpopt'), get_option('date_format'), get_option('time_format')), current_time('mysql')),
-                __('Server Load', 'wpopt')          => $this->server_load(),
-                __('Web Server Info', 'wpopt')      => $_SERVER['SERVER_SOFTWARE'],
-                __('User Agent', 'wpopt')           => $_SERVER['HTTP_USER_AGENT'],
-                __('Filesystem Method', 'wpopt')    => get_filesystem_method(),
-                __('SSL SUPPORT', 'wpopt')          => extension_loaded('openssl') ? __('SSL extension loaded', 'wpopt') : __('SSL extension NOT loaded', 'wpopt'),
-                __('MB String', 'wpopt')            => extension_loaded('mbstring') ? __('MB String extensions loaded', 'wpopt') : __('MB String extensions NOT loaded', 'wpopt'),
-                __("GD Version", 'wpopt')           => $this->get_gd_version(),
+                __('SITE URL', 'wp-optimizer')             => site_url(),
+                __('HOME URL', 'wp-optimizer')             => home_url(),
+                __('Server IP : port', 'wp-optimizer')     => wps_server_addr() . ' : ' . $_SERVER['SERVER_PORT'],
+                __("OS", 'wp-optimizer')                   => PHP_OS,
+                __("Server", 'wp-optimizer')               => $_SERVER["SERVER_SOFTWARE"],
+                __('Server Document Root', 'wp-optimizer') => $_SERVER['DOCUMENT_ROOT'],
+                __('Server Date/Time', 'wp-optimizer')     => mysql2date(sprintf(__('%s @ %s', 'wp-optimizer'), get_option('date_format'), get_option('time_format')), current_time('mysql')),
+                __('Server Load', 'wp-optimizer')          => $this->server_load(),
+                __('Web Server Info', 'wp-optimizer')      => $_SERVER['SERVER_SOFTWARE'],
+                __('User Agent', 'wp-optimizer')           => $_SERVER['HTTP_USER_AGENT'],
+                __('Filesystem Method', 'wp-optimizer')    => get_filesystem_method(),
+                __('SSL SUPPORT', 'wp-optimizer')          => extension_loaded('openssl') ? __('SSL extension loaded', 'wp-optimizer') : __('SSL extension NOT loaded', 'wp-optimizer'),
+                __('MB String', 'wp-optimizer')            => extension_loaded('mbstring') ? __('MB String extensions loaded', 'wp-optimizer') : __('MB String extensions NOT loaded', 'wp-optimizer'),
+                __("GD Version", 'wp-optimizer')           => $this->get_gd_version(),
             ),
 
             "PHP" => array(
-                __("Version", 'wpopt')                => PHP_VERSION,
-                __('Memory Limit', 'wpopt')           => ini_get('memory_limit'),
-                __('Post Max Size', 'wpopt')          => ini_get('post_max_size'),
-                __('Upload Max File size', 'wpopt')   => ini_get('upload_max_filesize'),
-                __('Upload Max Files', 'wpopt')       => ini_get('max_file_uploads'),
-                __('Script execution limit', 'wpopt') => ini_get('max_execution_time') . ' s',
-                __('FPM', 'wpopt')                    => str_starts_with(php_sapi_name(), 'fpm') ? __('On', 'wpopt') : __('Off', 'wpopt'),
-                __('Short Tag', 'wpopt')              => ini_get('short_open_tag') ? __('On', 'wpopt') : __('Off', 'wpopt'),
+                __("Version", 'wp-optimizer')                => PHP_VERSION,
+                __('Memory Limit', 'wp-optimizer')           => ini_get('memory_limit'),
+                __('Post Max Size', 'wp-optimizer')          => ini_get('post_max_size'),
+                __('Upload Max File size', 'wp-optimizer')   => ini_get('upload_max_filesize'),
+                __('Upload Max Files', 'wp-optimizer')       => ini_get('max_file_uploads'),
+                __('Script execution limit', 'wp-optimizer') => ini_get('max_execution_time') . ' s',
+                __('FPM', 'wp-optimizer')                    => str_starts_with(php_sapi_name(), 'fpm') ? __('On', 'wp-optimizer') : __('Off', 'wp-optimizer'),
+                __('Short Tag', 'wp-optimizer')              => ini_get('short_open_tag') ? __('On', 'wp-optimizer') : __('Off', 'wp-optimizer'),
             ),
 
             "MySQL" => array(
-                __("Database User", "wpopt")             => DB_USER,
-                __("Database Name", "wpopt")             => DB_NAME,
-                __("Database Host", "wpopt")             => DB_HOST,
-                __("Database Password", "wpopt")         => (current_user_can('manage_options') ? DB_PASSWORD : '**********'),
-                __("Version", 'wpopt')                   => $wpdb->db_version(),
-                __('Database Data Disk Usage', 'wpopt')  => size_format($this->get_mysql_usages('data')),
-                __('Database Index Disk Usage', 'wpopt') => size_format($this->get_mysql_usages('index')),
-                __('Maximum Packet Size', 'wpopt')       => size_format($this->get_mysql_variable('max_allowed_packet')),
-                __('Maximum No. Connection', 'wpopt')    => number_format_i18n($this->get_mysql_variable('max_connections')),
-                __('Query Cache Size', 'wpopt')          => size_format($this->get_mysql_variable('query_cache_size')),
+                __("Database User", 'wp-optimizer')             => DB_USER,
+                __("Database Name", 'wp-optimizer')             => DB_NAME,
+                __("Database Host", 'wp-optimizer')             => DB_HOST,
+                __("Database Password", 'wp-optimizer')         => (current_user_can('manage_options') ? DB_PASSWORD : '**********'),
+                __("Version", 'wp-optimizer')                   => $wpdb->db_version(),
+                __('Database Data Disk Usage', 'wp-optimizer')  => size_format($this->get_mysql_usages('data')),
+                __('Database Index Disk Usage', 'wp-optimizer') => size_format($this->get_mysql_usages('index')),
+                __('Maximum Packet Size', 'wp-optimizer')       => size_format($this->get_mysql_variable('max_allowed_packet')),
+                __('Maximum No. Connection', 'wp-optimizer')    => number_format_i18n($this->get_mysql_variable('max_connections')),
+                __('Query Cache Size', 'wp-optimizer')          => size_format($this->get_mysql_variable('query_cache_size')),
             ),
 
             "WordPress" => array(
-                __('Multi-site', 'wpopt')             => is_multisite() ? __('Yes', 'wpopt') : __('No', 'wpopt'),
-                __('Blog id', 'wpopt')                => get_current_blog_id(),
-                __('WordPress Version', 'wpopt')      => get_bloginfo('version'),
-                __('Permalink Structure', 'wpopt')    => get_option('permalink_structure'),
-                __('WP_DEBUG', 'wpopt')               => defined('WP_DEBUG') ? (WP_DEBUG ? __('Enabled', 'wpopt') : __('Disabled', 'wpopt')) : __('Not set', 'wpopt'),
-                __('DISPLAY ERRORS', 'wpopt')         => ini_get('display_errors') ? sprintf(__('On ( %s )', 'wpopt'), ini_get('display_errors')) : __('N/A', 'wpopt'),
-                __('WP Table Prefix', 'wpopt')        => sprintf(__('Length: %s Status: %s', 'wpopt'), strlen($wpdb->prefix), (strlen($wpdb->prefix) > 16 ? __('ERROR: Too Long', 'wpopt') : __('Acceptable', 'wpopt'))),
-                __('WP DB Charset/Collate', 'wpopt')  => $wpdb->get_charset_collate(),
-                __('WordPress Memory Limit', 'wpopt') => size_format((int)WP_MEMORY_LIMIT * 1048576),
-                __('WordPress Upload Size', 'wpopt')  => size_format(wp_max_upload_size()),
+                __('Multi-site', 'wp-optimizer')             => is_multisite() ? __('Yes', 'wp-optimizer') : __('No', 'wp-optimizer'),
+                __('Blog id', 'wp-optimizer')                => get_current_blog_id(),
+                __('WordPress Version', 'wp-optimizer')      => get_bloginfo('version'),
+                __('Permalink Structure', 'wp-optimizer')    => get_option('permalink_structure'),
+                __('WP_DEBUG', 'wp-optimizer')               => defined('WP_DEBUG') ? (WP_DEBUG ? __('Enabled', 'wp-optimizer') : __('Disabled', 'wp-optimizer')) : __('Not set', 'wp-optimizer'),
+                __('DISPLAY ERRORS', 'wp-optimizer')         => ini_get('display_errors') ? sprintf(__('On ( %s )', 'wp-optimizer'), ini_get('display_errors')) : __('N/A', 'wp-optimizer'),
+                __('WP Table Prefix', 'wp-optimizer')        => sprintf(__('Length: %s Status: %s', 'wp-optimizer'), strlen($wpdb->prefix), (strlen($wpdb->prefix) > 16 ? __('ERROR: Too Long', 'wp-optimizer') : __('Acceptable', 'wp-optimizer'))),
+                __('WP DB Charset/Collate', 'wp-optimizer')  => $wpdb->get_charset_collate(),
+                __('WordPress Memory Limit', 'wp-optimizer') => size_format((int)WP_MEMORY_LIMIT * 1048576),
+                __('WordPress Upload Size', 'wp-optimizer')  => size_format(wp_max_upload_size()),
             ),
 
             "Session & Cookies" => array(
-                __('Session', 'wpopt')          => isset($_SESSION) ? __('Enabled', 'wpopt') : __('Disabled', 'wpopt'),
-                __('Session Name', 'wpopt')     => esc_html(ini_get('session.name')),
-                __('Cookie Path', 'wpopt')      => esc_html(ini_get('session.cookie_path')),
-                __('Save Path', 'wpopt')        => esc_html(ini_get('session.save_path')),
-                __('Use Cookies', 'wpopt')      => ini_get('session.use_cookies') ? __('On', 'wpopt') : __('Off', 'wpopt'),
-                __('Use Only Cookies', 'wpopt') => ini_get('session.use_only_cookies') ? __('On', 'wpopt') : __('Off', 'wpopt'),
+                __('Session', 'wp-optimizer')          => isset($_SESSION) ? __('Enabled', 'wp-optimizer') : __('Disabled', 'wp-optimizer'),
+                __('Session Name', 'wp-optimizer')     => esc_html(ini_get('session.name')),
+                __('Cookie Path', 'wp-optimizer')      => esc_html(ini_get('session.cookie_path')),
+                __('Save Path', 'wp-optimizer')        => esc_html(ini_get('session.save_path')),
+                __('Use Cookies', 'wp-optimizer')      => ini_get('session.use_cookies') ? __('On', 'wp-optimizer') : __('Off', 'wp-optimizer'),
+                __('Use Only Cookies', 'wp-optimizer') => ini_get('session.use_only_cookies') ? __('On', 'wp-optimizer') : __('Off', 'wp-optimizer'),
             ),
 
-            __('Active plugins', 'wpopt')   => $plugins['active'] ?? array(),
-            __('Inactive plugins', 'wpopt') => $plugins['inactive'] ?? array(),
-            __('Current theme', 'wpopt')    => $this->get_current_theme(),
+            __('Active plugins', 'wp-optimizer')   => $plugins['active'] ?? array(),
+            __('Inactive plugins', 'wp-optimizer') => $plugins['inactive'] ?? array(),
+            __('Current theme', 'wp-optimizer')    => $this->get_current_theme(),
         );
 
         return apply_filters('wpopt_system_info', $settings);
@@ -232,7 +232,7 @@ class Mod_WP_Info extends Module
             $gd = substr($phpinfo, 0, strpos($phpinfo, "\n"));
         }
         if (empty($gd)) {
-            $gd = __('N/A', 'wpopt');
+            $gd = __('N/A', 'wp-optimizer');
         }
         return $gd;
     }
@@ -274,10 +274,10 @@ class Mod_WP_Info extends Module
         $theme_data = wp_get_theme();
 
         return array(
-            __('name', 'wpopt')      => $theme_data->get('Name'),
-            __('Version', 'wpopt')   => $theme_data->get('Version'),
-            __('Author', 'wpopt')    => $theme_data->get('Author'),
-            __('AuthorURI', 'wpopt') => $theme_data->get('AuthorURI')
+            __('name', 'wp-optimizer')      => $theme_data->get('Name'),
+            __('Version', 'wp-optimizer')   => $theme_data->get('Version'),
+            __('Author', 'wp-optimizer')    => $theme_data->get('Author'),
+            __('AuthorURI', 'wp-optimizer') => $theme_data->get('AuthorURI')
         );
     }
 

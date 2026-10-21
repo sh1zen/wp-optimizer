@@ -101,21 +101,21 @@ class Mod_Widget extends Module
         global $wpdb;
 
         $serverInfo = [
-            __('OS', 'wpopt')                      => PHP_OS,
-            __('Server', 'wpopt')                  => $_SERVER["SERVER_SOFTWARE"],
-            __('Hostname', 'wpopt')                => $_SERVER['SERVER_NAME'],
-            __('IP:Port', 'wpopt')                 => wps_server_addr() . ':' . $_SERVER['SERVER_PORT'],
-            __('Document Root', 'wpopt')           => $_SERVER['DOCUMENT_ROOT'],
+            __('OS', 'wp-optimizer')                      => PHP_OS,
+            __('Server', 'wp-optimizer')                  => $_SERVER["SERVER_SOFTWARE"],
+            __('Hostname', 'wp-optimizer')                => $_SERVER['SERVER_NAME'],
+            __('IP:Port', 'wp-optimizer')                 => wps_server_addr() . ':' . $_SERVER['SERVER_PORT'],
+            __('Document Root', 'wp-optimizer')           => $_SERVER['DOCUMENT_ROOT'],
             "PHP"                                  => '',
-            __('version', 'wpopt')                 => PHP_VERSION,
-            __('Memory Limit', 'wpopt')            => ini_get('memory_limit'),
-            __('Max Script Execute Time', 'wpopt') => ini_get('max_execution_time'),
-            __('Max Post Size', 'wpopt')           => ini_get('post_max_size'),
-            __('Max Upload Size', 'wpopt')         => ini_get('upload_max_filesize'),
+            __('version', 'wp-optimizer')                 => PHP_VERSION,
+            __('Memory Limit', 'wp-optimizer')            => ini_get('memory_limit'),
+            __('Max Script Execute Time', 'wp-optimizer') => ini_get('max_execution_time'),
+            __('Max Post Size', 'wp-optimizer')           => ini_get('post_max_size'),
+            __('Max Upload Size', 'wp-optimizer')         => ini_get('upload_max_filesize'),
             "MYSQL"                                => '',
-            __('version', 'wpopt')                 => $wpdb->db_version(),
-            __('Data Disk Usage', 'wpopt')         => size_format($this->get_mysql_usages('data')),
-            __('Index Disk Usage', 'wpopt')        => size_format($this->get_mysql_usages('index')),
+            __('version', 'wp-optimizer')                 => $wpdb->db_version(),
+            __('Data Disk Usage', 'wp-optimizer')         => size_format($this->get_mysql_usages('data')),
+            __('Index Disk Usage', 'wp-optimizer')        => size_format($this->get_mysql_usages('index')),
         ];
 
         echo $this->render_dashboard_info_table($serverInfo);
@@ -123,7 +123,7 @@ class Mod_Widget extends Module
         <br>
         <div class="wps-row">
             <a class="wps wps-button wpopt-btn is-info"
-               href="<?php echo admin_url('admin.php?page=sysinfo') ?>"><?php _e('View all', 'wpopt') ?></a>
+               href="<?php echo admin_url('admin.php?page=sysinfo') ?>"><?php _e('View all', 'wp-optimizer') ?></a>
         </div>
         <?php
     }
@@ -175,11 +175,11 @@ class Mod_Widget extends Module
         return List_Table::generateHTML_table(array(
             'class' => 'wps wpopt-dash-widget',
             'columns' => array(
-                'label' => __('Info', 'wpopt'),
-                'value' => __('Value', 'wpopt'),
+                'label' => __('Info', 'wp-optimizer'),
+                'value' => __('Value', 'wp-optimizer'),
             ),
             'rows' => $rows,
-            'empty' => __('No server information available.', 'wpopt'),
+            'empty' => __('No server information available.', 'wp-optimizer'),
         ));
     }
 
@@ -187,18 +187,18 @@ class Mod_Widget extends Module
     {
         $rows = $this->get_directory_rows($directories);
         $rows[] = array(
-            'files' => '<strong>' . esc_html__('Total', 'wpopt') . '</strong>',
+            'files' => '<strong>' . esc_html__('Total', 'wp-optimizer') . '</strong>',
             'size' => '<strong>' . esc_html($this->cache['root_folder']) . '</strong>',
         );
 
         return List_Table::generateHTML_table(array(
             'class' => 'wpopt-dash-widget',
             'columns' => array(
-                'files' => __('Files', 'wpopt'),
-                'size' => __('size', 'wpopt'),
+                'files' => __('Files', 'wp-optimizer'),
+                'size' => __('size', 'wp-optimizer'),
             ),
             'rows' => $rows,
-            'empty' => __('No folder information available.', 'wpopt'),
+            'empty' => __('No folder information available.', 'wp-optimizer'),
         ));
     }
 
@@ -241,16 +241,16 @@ class Mod_Widget extends Module
             }
         }
         $name = 'wpopt_folder_sizes';
-        $cache_msg = __('Removes saved folder-size snapshots from older versions. Current sizes are calculated from disk each time.', 'wpopt');
-        echo "<p><label><input name='$name' id='$name' type='checkbox' value='1' />" . __('Check to empty the saved snapshots', 'wpopt') . "</label><br /><em style='margin-left: 23px'>$cache_msg</em></p>";
+        $cache_msg = __('Removes saved folder-size snapshots from older versions. Current sizes are calculated from disk each time.', 'wp-optimizer');
+        echo "<p><label><input name='$name' id='$name' type='checkbox' value='1' />" . __('Check to empty the saved snapshots', 'wp-optimizer') . "</label><br /><em style='margin-left: 23px'>$cache_msg</em></p>";
     }
 
     protected function setting_fields($filter = ''): array
     {
         return $this->group_setting_fields(
-            $this->setting_field(__('Installation size', 'wpopt'), "folder-size.active", "checkbox"),
-            $this->setting_field(__('Paths (one per line)', 'wpopt'), "folder-size.paths", "textarea_array", ['parent' => "folder-size.active", 'value' => implode(PHP_EOL, $this->option('folder-size.paths', []))]),
-            $this->setting_field(__('Server info', 'wpopt'), "server-info.active", "checkbox"),
+            $this->setting_field(__('Installation size', 'wp-optimizer'), "folder-size.active", "checkbox"),
+            $this->setting_field(__('Paths (one per line)', 'wp-optimizer'), "folder-size.paths", "textarea_array", ['parent' => "folder-size.active", 'value' => implode(PHP_EOL, $this->option('folder-size.paths', []))]),
+            $this->setting_field(__('Server info', 'wp-optimizer'), "server-info.active", "checkbox"),
         );
     }
 }

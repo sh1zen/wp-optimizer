@@ -164,49 +164,49 @@ class Mod_Pagespeed extends Module
     {
         return $this->group_setting_fields(
             $this->group_setting_fields(
-                $this->setting_field(__('Lazy loading', 'wpopt'), false, 'separator'),
-                $this->setting_field(__('Lazyload images', 'wpopt'), 'lazyload_images', 'checkbox', array(
+                $this->setting_field(__('Lazy loading', 'wp-optimizer'), false, 'separator'),
+                $this->setting_field(__('Lazyload images', 'wp-optimizer'), 'lazyload_images', 'checkbox', array(
                     'default_value' => true,
                     'value'         => $this->option('lazyload_images', true),
                 )),
-                $this->setting_field(__('Lazy load iframes', 'wpopt'), 'lazyload_iframes', 'checkbox', array('default_value' => true)),
-                $this->setting_field(__('Lazy load video', 'wpopt'), 'lazyload_video', 'checkbox', array('default_value' => true))
+                $this->setting_field(__('Lazy load iframes', 'wp-optimizer'), 'lazyload_iframes', 'checkbox', array('default_value' => true)),
+                $this->setting_field(__('Lazy load video', 'wp-optimizer'), 'lazyload_video', 'checkbox', array('default_value' => true))
             ),
             $this->group_setting_fields(
-                $this->setting_field(__('Font Optimization', 'wpopt'), false, 'separator'),
-                $this->setting_field(__('Force Font Display Swap', 'wpopt'), 'force_font_display_swap', 'checkbox', array('default_value' => false)),
-                $this->setting_field(__('Lazyload Fonts', 'wpopt'), 'lazyload_fonts', 'checkbox', array('default_value' => false))
+                $this->setting_field(__('Font Optimization', 'wp-optimizer'), false, 'separator'),
+                $this->setting_field(__('Force Font Display Swap', 'wp-optimizer'), 'force_font_display_swap', 'checkbox', array('default_value' => false)),
+                $this->setting_field(__('Lazyload Fonts', 'wp-optimizer'), 'lazyload_fonts', 'checkbox', array('default_value' => false))
             ),
             $this->group_setting_fields(
-                $this->setting_field(__('LCP optimizations', 'wpopt'), false, 'separator'),
-                $this->setting_field(__('Add missing images dimensions', 'wpopt'), 'add_missing_image_dimensions', 'checkbox', array('default_value' => false)),
-                $this->setting_field(__('Auto Preload Largest Image', 'wpopt'), 'auto_preload_largest_image', 'checkbox', array('default_value' => false)),
-                $this->list_field(__('Image IDs excluded from learning and lazy loading', 'wpopt'), 'lcp_exclude_images'),
-                $this->list_field(__('Image classes excluded from learning and lazy loading', 'wpopt'), 'lcp_exclude_classes'),
-                $this->list_field(__('Image URL fragments excluded from learning and lazy loading', 'wpopt'), 'lcp_exclude_urls')
+                $this->setting_field(__('LCP optimizations', 'wp-optimizer'), false, 'separator'),
+                $this->setting_field(__('Add missing images dimensions', 'wp-optimizer'), 'add_missing_image_dimensions', 'checkbox', array('default_value' => false)),
+                $this->setting_field(__('Auto Preload Largest Image', 'wp-optimizer'), 'auto_preload_largest_image', 'checkbox', array('default_value' => false)),
+                $this->list_field(__('Image IDs excluded from learning and lazy loading', 'wp-optimizer'), 'lcp_exclude_images'),
+                $this->list_field(__('Image classes excluded from learning and lazy loading', 'wp-optimizer'), 'lcp_exclude_classes'),
+                $this->list_field(__('Image URL fragments excluded from learning and lazy loading', 'wp-optimizer'), 'lcp_exclude_urls')
             ),
             $this->group_setting_fields(
-                $this->setting_field(__('JavaScript execution', 'wpopt'), false, 'separator'),
-                $this->setting_field(__('Defer JavaScript with WordPress dependency checks', 'wpopt'), 'defer_js', 'checkbox', array('default_value' => false)),
-                $this->setting_field(__('Delay selected background scripts until idle', 'wpopt'), 'delay_js', 'checkbox', array('default_value' => false)),
-                $this->list_field(__('Handles to delay (exact names; one per line)', 'wpopt'), 'delay_handles'),
-                $this->list_field(__('Script URL fragments to delay', 'wpopt'), 'delay_urls'),
-                $this->list_field(__('Script handles excluded from execution changes', 'wpopt'), 'js_exclude_handles'),
-                $this->list_field(__('Script URL fragments excluded from execution changes', 'wpopt'), 'js_exclude_urls'),
-                $this->list_field(__('Page URL fragments excluded from execution changes', 'wpopt'), 'js_exclude_pages')
+                $this->setting_field(__('JavaScript execution', 'wp-optimizer'), false, 'separator'),
+                $this->setting_field(__('Defer JavaScript with WordPress dependency checks', 'wp-optimizer'), 'defer_js', 'checkbox', array('default_value' => false)),
+                $this->setting_field(__('Delay selected background scripts until idle', 'wp-optimizer'), 'delay_js', 'checkbox', array('default_value' => false)),
+                $this->list_field(__('Handles to delay (exact names; one per line)', 'wp-optimizer'), 'delay_handles'),
+                $this->list_field(__('Script URL fragments to delay', 'wp-optimizer'), 'delay_urls'),
+                $this->list_field(__('Script handles excluded from execution changes', 'wp-optimizer'), 'js_exclude_handles'),
+                $this->list_field(__('Script URL fragments excluded from execution changes', 'wp-optimizer'), 'js_exclude_urls'),
+                $this->list_field(__('Page URL fragments excluded from execution changes', 'wp-optimizer'), 'js_exclude_pages')
             ),
             $this->group_setting_fields(
-                $this->setting_field(__('Used CSS (separate from minification)', 'wpopt'), false, 'separator'),
-                $this->setting_field(__('Generate per-page Used CSS in the background', 'wpopt'), 'remove_unused_css', 'checkbox', array('default_value' => false)),
-                $this->list_field(__('Stylesheet URL fragments to preserve', 'wpopt'), 'css_exclude_files'),
-                $this->list_field(__('Page URL fragments excluded from Used CSS', 'wpopt'), 'css_exclude_pages'),
-                $this->list_field(__('Selector fragments to preserve', 'wpopt'), 'css_keep_selectors'),
-                $this->list_field(__('Static selectors safe to prune when absent (exact names)', 'wpopt'), 'css_static_selectors')
+                $this->setting_field(__('Used CSS (separate from minification)', 'wp-optimizer'), false, 'separator'),
+                $this->setting_field(__('Generate per-page Used CSS in the background', 'wp-optimizer'), 'remove_unused_css', 'checkbox', array('default_value' => false)),
+                $this->list_field(__('Stylesheet URL fragments to preserve', 'wp-optimizer'), 'css_exclude_files'),
+                $this->list_field(__('Page URL fragments excluded from Used CSS', 'wp-optimizer'), 'css_exclude_pages'),
+                $this->list_field(__('Selector fragments to preserve', 'wp-optimizer'), 'css_keep_selectors'),
+                $this->list_field(__('Static selectors safe to prune when absent (exact names)', 'wp-optimizer'), 'css_static_selectors')
             ),
             $this->group_setting_fields(
-                $this->setting_field(__('Navigation', 'wpopt'), false, 'separator'),
-                $this->setting_field(__('Enable early page prefetching', 'wpopt'), 'page_prefetching', 'checkbox', array('default_value' => false)),
-                $this->setting_field(__('Disable WordPress speculative loading', 'wpopt'), 'disable_native_speculative_loading', 'checkbox', array('default_value' => false))
+                $this->setting_field(__('Navigation', 'wp-optimizer'), false, 'separator'),
+                $this->setting_field(__('Enable early page prefetching', 'wp-optimizer'), 'page_prefetching', 'checkbox', array('default_value' => false)),
+                $this->setting_field(__('Disable WordPress speculative loading', 'wp-optimizer'), 'disable_native_speculative_loading', 'checkbox', array('default_value' => false))
             )
         );
     }
@@ -214,19 +214,19 @@ class Mod_Pagespeed extends Module
     protected function infos(): array
     {
         return array(
-            'lazyload_images'              => __("Adds native loading=\"lazy\" to images that do not already define a loading strategy.", 'wpopt'),
-            'force_font_display_swap'      => __("Adds font-display: swap to all @font-face declarations. Prevents invisible text while fonts load.", 'wpopt'),
-            'lazyload_fonts'               => __("Loads matching font stylesheets with a print-media/onload switch. This does not generate Used CSS or Critical CSS.", 'wpopt'),
-            'lazyload_iframes'             => __("Adds native loading=\"lazy\" to iframes that do not already define a loading strategy.", 'wpopt'),
-            'lazyload_video'               => __("Prevents videos from preloading data before the browser needs them.", 'wpopt'),
-            'add_missing_image_dimensions' => __("Adds width and height attributes to WordPress attachment images when metadata is available, reducing layout shifts and improving LCP stability.", 'wpopt'),
-            'auto_preload_largest_image'   => __("Learns the LCP image per public page and viewport. Later responses contain an early image preload; the main image stays eager. Picture sources and declared backgrounds are supported. Clear the page cache after changing exclusions.", 'wpopt'),
-            'defer_js' => __("Requests native defer on WordPress 6.3+. WordPress resolves dependency and inline-script constraints. Existing strategies are preserved.", 'wpopt'),
-            'delay_js' => __("Only explicitly selected background scripts are delayed until idle, with a five-second fallback. Menus, forms, consent and commerce infrastructure remain immediate. Head scripts, scripts needed by immediate dependents and separate localized data are preserved. No clicks are intercepted. Native script modules outside WordPress handles remain unchanged.", 'wpopt'),
-            'remove_unused_css' => __("A scheduled worker parses each page's local stylesheets. Originals remain until ready and on errors. Interactive states, complex selectors, keyframes and uncertain syntax are preserved. On pages with JavaScript, only selectors you declare static can be removed. This generates Used CSS, not Critical CSS. WordPress Cron must run.", 'wpopt'),
-            'css_static_selectors' => __("Declare only plain class, ID or tag selectors that JavaScript never adds. Examples: .old-banner or #retired-panel. Incorrect declarations can hide interactive content.", 'wpopt'),
-            'page_prefetching'             => __("On WordPress 6.8 or newer, uses Core's speculation rules with moderate eagerness when Core's defaults are unchanged. Explicit site settings are preserved. On older versions, prefetches same-origin links on hover or touch. WordPress may already load pages speculatively when this option is off.", 'wpopt'),
-            'disable_native_speculative_loading' => __("Stops WordPress Core from prefetching or prerendering pages. Use only if speculative requests conflict with site behavior; disabling them does not speed up navigation. Has no effect before WordPress 6.8.", 'wpopt'),
+            'lazyload_images'              => __("Adds native loading=\"lazy\" to images that do not already define a loading strategy.", 'wp-optimizer'),
+            'force_font_display_swap'      => __("Adds font-display: swap to all @font-face declarations. Prevents invisible text while fonts load.", 'wp-optimizer'),
+            'lazyload_fonts'               => __("Loads matching font stylesheets with a print-media/onload switch. This does not generate Used CSS or Critical CSS.", 'wp-optimizer'),
+            'lazyload_iframes'             => __("Adds native loading=\"lazy\" to iframes that do not already define a loading strategy.", 'wp-optimizer'),
+            'lazyload_video'               => __("Prevents videos from preloading data before the browser needs them.", 'wp-optimizer'),
+            'add_missing_image_dimensions' => __("Adds width and height attributes to WordPress attachment images when metadata is available, reducing layout shifts and improving LCP stability.", 'wp-optimizer'),
+            'auto_preload_largest_image'   => __("Learns the LCP image per public page and viewport. Later responses contain an early image preload; the main image stays eager. Picture sources and declared backgrounds are supported. Clear the page cache after changing exclusions.", 'wp-optimizer'),
+            'defer_js' => __("Requests native defer on WordPress 6.3+. WordPress resolves dependency and inline-script constraints. Existing strategies are preserved.", 'wp-optimizer'),
+            'delay_js' => __("Only explicitly selected background scripts are delayed until idle, with a five-second fallback. Menus, forms, consent and commerce infrastructure remain immediate. Head scripts, scripts needed by immediate dependents and separate localized data are preserved. No clicks are intercepted. Native script modules outside WordPress handles remain unchanged.", 'wp-optimizer'),
+            'remove_unused_css' => __("A scheduled worker parses each page's local stylesheets. Originals remain until ready and on errors. Interactive states, complex selectors, keyframes and uncertain syntax are preserved. On pages with JavaScript, only selectors you declare static can be removed. This generates Used CSS, not Critical CSS. WordPress Cron must run.", 'wp-optimizer'),
+            'css_static_selectors' => __("Declare only plain class, ID or tag selectors that JavaScript never adds. Examples: .old-banner or #retired-panel. Incorrect declarations can hide interactive content.", 'wp-optimizer'),
+            'page_prefetching'             => __("On WordPress 6.8 or newer, uses Core's speculation rules with moderate eagerness when Core's defaults are unchanged. Explicit site settings are preserved. On older versions, prefetches same-origin links on hover or touch. WordPress may already load pages speculatively when this option is off.", 'wp-optimizer'),
+            'disable_native_speculative_loading' => __("Stops WordPress Core from prefetching or prerendering pages. Use only if speculative requests conflict with site behavior; disabling them does not speed up navigation. Has no effect before WordPress 6.8.", 'wp-optimizer'),
         );
     }
 
@@ -267,12 +267,12 @@ class Mod_Pagespeed extends Module
 
     protected function print_header(): string
     {
-        $markup = '<details><summary>' . esc_html__('Sampled public-page optimization diagnostics', 'wpopt') . '</summary>';
+        $markup = '<details><summary>' . esc_html__('Sampled public-page optimization diagnostics', 'wp-optimizer') . '</summary>';
         foreach (array('lcp', 'scripts', 'css') as $feature) {
             $result = get_transient('wps_frontend_diagnostic_' . $feature);
             if ($result) { $markup .= '<h3>' . esc_html(strtoupper($feature)) . '</h3><pre style="white-space:pre-wrap;overflow-wrap:anywhere">' . esc_html(wp_json_encode($result, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES)) . '</pre>'; }
         }
-        return $markup . '<p>' . esc_html__('Diagnostics update when results change, at most once per minute per feature. Purge page caches to process a fresh response after changing settings.', 'wpopt') . '</p></details>';
+        return $markup . '<p>' . esc_html__('Diagnostics update when results change, at most once per minute per feature. Purge page caches to process a fresh response after changing settings.', 'wp-optimizer') . '</p></details>';
     }
 
     private function add_lazy_loading(string $buffer, string $tag): string

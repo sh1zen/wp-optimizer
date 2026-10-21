@@ -30,7 +30,7 @@ class ActivityLog extends \WPS\core\List_Table
     public function __construct($args = array())
     {
         $this->modes = array(
-            'list' => __('List view', 'wpopt'),
+            'list' => __('List view', 'wp-optimizer'),
         );
 
         $this->settings = $args['settings'];
@@ -38,8 +38,8 @@ class ActivityLog extends \WPS\core\List_Table
 
         parent::__construct(
             array(
-                'singular' => __('activity', 'wpopt'),
-                'plural'   => __('activities', 'wpopt'),
+                'singular' => __('activity', 'wp-optimizer'),
+                'plural'   => __('activities', 'wp-optimizer'),
                 'ajax'     => false,
                 'screen'   => get_current_screen(),
             )
@@ -49,7 +49,7 @@ class ActivityLog extends \WPS\core\List_Table
             'per_page',
             array(
                 'default' => 50,
-                'label'   => __('Activities', 'wpopt'),
+                'label'   => __('Activities', 'wp-optimizer'),
                 'option'  => 'edit_wpopt_logs_per_page',
             )
         );
@@ -73,7 +73,7 @@ class ActivityLog extends \WPS\core\List_Table
         ?>
         <p class="search-box">
             <label class="screen-reader-text" for="<?php echo esc_attr($input_id); ?>"><?php echo esc_html($text); ?>:</label>
-            <input type="search" id="<?php echo esc_attr($input_id); ?>" name="s" value="<?php echo esc_attr($search_data); ?>" placeholder="<?php esc_attr_e('Search logs...', 'wpopt'); ?>"/>
+            <input type="search" id="<?php echo esc_attr($input_id); ?>" name="s" value="<?php echo esc_attr($search_data); ?>" placeholder="<?php esc_attr_e('Search logs...', 'wp-optimizer'); ?>"/>
             <?php submit_button($text, 'button', false, false, array('id' => 'search-submit')); ?>
         </p>
         <?php
@@ -96,11 +96,11 @@ class ActivityLog extends \WPS\core\List_Table
         }
 
         $date_options = array(
-            ''          => __('All Time', 'wpopt'),
-            'today'     => __('Today', 'wpopt'),
-            'yesterday' => __('Yesterday', 'wpopt'),
-            'week'      => __('This Week', 'wpopt'),
-            'month'     => __('This Month', 'wpopt'),
+            ''          => __('All Time', 'wp-optimizer'),
+            'today'     => __('Today', 'wp-optimizer'),
+            'yesterday' => __('Yesterday', 'wp-optimizer'),
+            'week'      => __('This Week', 'wp-optimizer'),
+            'month'     => __('This Month', 'wp-optimizer'),
         );
 
         echo '<select name="filter_date" id="hs-filter-date">';
@@ -118,14 +118,14 @@ class ActivityLog extends \WPS\core\List_Table
             }
 
             echo '<select name="filter_action" id="hs-filter-filter_action">';
-            printf('<option value="">%s</option>', esc_html__('All Actions', 'wpopt'));
+            printf('<option value="">%s</option>', esc_html__('All Actions', 'wp-optimizer'));
             foreach ($actions as $action) {
                 printf('<option value="%s"%s>%s</option>', esc_attr((string)$action), selected($_REQUEST['filter_action'], $action, false), esc_html($this->get_action_label($action)));
             }
             echo '</select>';
         }
 
-        submit_button(__('Filter', 'wpopt'), 'button', 'aal-filter', false, array('id' => 'activity-query-submit'));
+        submit_button(__('Filter', 'wp-optimizer'), 'button', 'aal-filter', false, array('id' => 'activity-query-submit'));
 
         $filters = array(
             'filter_date',
@@ -135,7 +135,7 @@ class ActivityLog extends \WPS\core\List_Table
 
         foreach ($filters as $filter) {
             if (!empty($_REQUEST[$filter])) {
-                echo '<a href="' . esc_url($this->get_filtered_link()) . '"><span class="dashicons dashicons-dismiss"></span>' . esc_html__('Reset Filters', 'wpopt') . '</a>';
+                echo '<a href="' . esc_url($this->get_filtered_link()) . '"><span class="dashicons dashicons-dismiss"></span>' . esc_html__('Reset Filters', 'wp-optimizer') . '</a>';
                 break;
             }
         }
@@ -156,19 +156,19 @@ class ActivityLog extends \WPS\core\List_Table
         ?>
         <div class="alignleft actions recordactions">
             <select name="export-format">
-                <option value=""><?php echo esc_attr__('Export File Format', 'wpopt'); ?></option>
+                <option value=""><?php echo esc_attr__('Export File Format', 'wp-optimizer'); ?></option>
                 <?php foreach ($actions as $action_key => $action_title) : ?>
                     <option value="<?php echo esc_attr($action_key); ?>"><?php echo esc_html($action_title); ?></option>
                 <?php endforeach; ?>
             </select>
         </div>
-        <?php echo RequestActions::get_action_button($this->action_hook, 'export', __('Export Data', 'wpopt'), 'wps wps-button wpopt-btn is-info'); ?>
+        <?php echo RequestActions::get_action_button($this->action_hook, 'export', __('Export Data', 'wp-optimizer'), 'wps wps-button wpopt-btn is-info'); ?>
         <?php
     }
 
     public function get_action_label($action): string
     {
-        return ucwords(str_replace('-', ' ', __($action, 'wpopt')));
+        return ucwords(str_replace('-', ' ', __($action, 'wp-optimizer')));
     }
 
     private function get_filtered_link($name = '', $value = ''): string
@@ -343,7 +343,7 @@ class ActivityLog extends \WPS\core\List_Table
                 break;
 
             case 'time':
-                $return = sprintf('<strong>' . __('%s ago', 'wpopt') . '</strong>', human_time_diff($item->time, time()));
+                $return = sprintf('<strong>' . __('%s ago', 'wp-optimizer') . '</strong>', human_time_diff($item->time, time()));
 
                 $return .= '<br/><a href="' . esc_url($this->get_filtered_link('filter_date', wp_date('d/m/Y', $item->time))) . '">' . esc_html(date_i18n(get_option('date_format'), $item->time)) . '</a>';
 
@@ -486,13 +486,13 @@ class ActivityLog extends \WPS\core\List_Table
     public function get_columns()
     {
         return array(
-            'time'       => __('Time', 'wpopt'),
-            'user_id'    => __('User', 'wpopt'),
-            'ip'         => __('IP', 'wpopt'),
-            'meta'       => __('Meta', 'wpopt'),
-            'action'     => __('Action', 'wpopt'),
-            'user_agent' => __('User-Agent', 'wpopt'),
-            'request'    => __('Request', 'wpopt'),
+            'time'       => __('Time', 'wp-optimizer'),
+            'user_id'    => __('User', 'wp-optimizer'),
+            'ip'         => __('IP', 'wp-optimizer'),
+            'meta'       => __('Meta', 'wp-optimizer'),
+            'action'     => __('Action', 'wp-optimizer'),
+            'user_agent' => __('User-Agent', 'wp-optimizer'),
+            'request'    => __('Request', 'wp-optimizer'),
         );
     }
 
@@ -509,7 +509,7 @@ class ActivityLog extends \WPS\core\List_Table
 
     public function no_items()
     {
-        _e('No Logs found.', 'wpopt');
+        _e('No Logs found.', 'wp-optimizer');
     }
 
     private function get_hidden_columns(): array

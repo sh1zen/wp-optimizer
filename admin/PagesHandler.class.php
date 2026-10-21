@@ -108,8 +108,8 @@ class PagesHandler
         $dashboard = $this->get_dashboard_view_model();
         $days_active = max(30, (int)floor((time() - $activated_at) / DAY_IN_SECONDS));
         $usage_period_label = $days_active < 60
-            ? __('Your first month with WP Optimizer', 'wpopt')
-            : sprintf(__('Your WP Optimizer report after %s days', 'wpopt'), number_format_i18n($days_active));
+            ? __('Your first month with WP Optimizer', 'wp-optimizer')
+            : sprintf(__('Your WP Optimizer report after %s days', 'wp-optimizer'), number_format_i18n($days_active));
         $module_handler = wps('wpopt')->moduleHandler;
         $excluded_modules = array('cron', 'cloudflare', 'modules_handler', 'settings', 'tracking');
         $all_modules = $module_handler->get_modules(array('excepts' => $excluded_modules), false);
@@ -220,77 +220,77 @@ class PagesHandler
 
         if ($performance_summary['total_requests'] > 0) {
             $add_card($dynamic_cards, array(
-                'label' => __('Requests monitored', 'wpopt'),
+                'label' => __('Requests monitored', 'wp-optimizer'),
                 'value' => number_format_i18n($performance_summary['total_requests']),
-                'note'  => sprintf(__('Average response: %1$s ms, slow requests: %2$s.', 'wpopt'), number_format_i18n($performance_summary['avg_ms'], 0), number_format_i18n($performance_summary['slow_hits'])),
+                'note'  => sprintf(__('Average response: %1$s ms, slow requests: %2$s.', 'wp-optimizer'), number_format_i18n($performance_summary['avg_ms'], 0), number_format_i18n($performance_summary['slow_hits'])),
             ));
         }
 
         if ($cache_operations > 0) {
             $add_card($dynamic_cards, array(
-                'label' => __('Cache hits', 'wpopt'),
+                'label' => __('Cache hits', 'wp-optimizer'),
                 'value' => number_format_i18n($cache_hits),
-                'note'  => sprintf(__('Hit ratio: %1$s, tracked operations: %2$s.', 'wpopt'), $format_percent((float)$cache_hit_ratio), number_format_i18n($cache_operations)),
+                'note'  => sprintf(__('Hit ratio: %1$s, tracked operations: %2$s.', 'wp-optimizer'), $format_percent((float)$cache_hit_ratio), number_format_i18n($cache_operations)),
             ));
         }
 
         if (($static_cache_stats['hits'] + $static_cache_stats['misses'] + $static_cache_stats['writes'] + $static_cache_stats['entries']) > 0) {
             $add_card($dynamic_cards, array(
-                'label' => __('Static cache', 'wpopt'),
+                'label' => __('Static cache', 'wp-optimizer'),
                 'value' => number_format_i18n($static_cache_stats['hits']),
-                'note'  => sprintf(__('Entries: %1$s, writes: %2$s, storage: %3$s.', 'wpopt'), number_format_i18n($static_cache_stats['entries']), number_format_i18n($static_cache_stats['writes']), size_format($static_cache_stats['bytes'], 2)),
+                'note'  => sprintf(__('Entries: %1$s, writes: %2$s, storage: %3$s.', 'wp-optimizer'), number_format_i18n($static_cache_stats['entries']), number_format_i18n($static_cache_stats['writes']), size_format($static_cache_stats['bytes'], 2)),
             ));
         }
 
         if ($optimized_images_count > 0) {
             $add_card($dynamic_cards, array(
-                'label' => __('Images optimized', 'wpopt'),
+                'label' => __('Images optimized', 'wp-optimizer'),
                 'value' => number_format_i18n($optimized_images_count),
-                'note'  => sprintf(__('%1$s processed, %2$s images left.', 'wpopt'), $format_percent((float)$processed_percent), number_format_i18n($media_left_count)),
+                'note'  => sprintf(__('%1$s processed, %2$s images left.', 'wp-optimizer'), $format_percent((float)$processed_percent), number_format_i18n($media_left_count)),
             ));
         }
 
         if ($saved_bytes > 0) {
             $add_card($dynamic_cards, array(
-                'label' => __('Media speedup', 'wpopt'),
+                'label' => __('Media speedup', 'wp-optimizer'),
                 'value' => $format_percent((float)$saved_space_percent),
-                'note'  => sprintf(__('Estimated space saved: %s.', 'wpopt'), size_format($saved_bytes, 2)),
+                'note'  => sprintf(__('Estimated space saved: %s.', 'wp-optimizer'), size_format($saved_bytes, 2)),
             ));
         }
 
         if ($dashboard['persistent_cache']) {
             $add_card($dynamic_cards, array(
-                'label' => __('Persistent cache', 'wpopt'),
-                'value' => __('Enabled', 'wpopt'),
-                'note'  => __('Persistent cache layer detected.', 'wpopt'),
+                'label' => __('Persistent cache', 'wp-optimizer'),
+                'value' => __('Enabled', 'wp-optimizer'),
+                'note'  => __('Persistent cache layer detected.', 'wp-optimizer'),
             ));
         }
 
         if ($dashboard['tracking_enabled']) {
             $add_card($fallback_cards, array(
-                'label' => __('Diagnostics', 'wpopt'),
-                'value' => __('Enabled', 'wpopt'),
-                'note'  => __('Diagnostics and tracking controls are configured.', 'wpopt'),
+                'label' => __('Diagnostics', 'wp-optimizer'),
+                'value' => __('Enabled', 'wp-optimizer'),
+                'note'  => __('Diagnostics and tracking controls are configured.', 'wp-optimizer'),
             ));
         }
 
         $add_card($fallback_cards, array(
-            'label' => __('Scheduler', 'wpopt'),
-            'value' => $dashboard['is_cron_running'] ? __('Running', 'wpopt') : __('Ready', 'wpopt'),
-            'note'  => $dashboard['is_cron_running'] ? __('A scheduled optimization task is currently running.', 'wpopt') : __('Scheduled optimization tasks are ready.', 'wpopt'),
+            'label' => __('Scheduler', 'wp-optimizer'),
+            'value' => $dashboard['is_cron_running'] ? __('Running', 'wp-optimizer') : __('Ready', 'wp-optimizer'),
+            'note'  => $dashboard['is_cron_running'] ? __('A scheduled optimization task is currently running.', 'wp-optimizer') : __('Scheduled optimization tasks are ready.', 'wp-optimizer'),
         ));
 
         if ($all_media_count > 0) {
             $add_card($fallback_cards, array(
-                'label' => __('Media library', 'wpopt'),
+                'label' => __('Media library', 'wp-optimizer'),
                 'value' => number_format_i18n($all_media_count),
-                'note'  => __('Images detected and available for optimization.', 'wpopt'),
+                'note'  => __('Images detected and available for optimization.', 'wp-optimizer'),
             ));
         }
 
         if (!empty($active_modules)) {
             $add_card($fallback_cards, array(
-                'label' => __('Enabled tools', 'wpopt'),
+                'label' => __('Enabled tools', 'wp-optimizer'),
                 'value' => number_format_i18n($active_modules_count),
                 'note'  => implode(', ', array_slice($active_modules, 0, 4)),
             ));
@@ -312,30 +312,30 @@ class PagesHandler
 
         $summary_cards = array_merge(array(
             array(
-                'label' => __('Days active', 'wpopt'),
-                'value' => sprintf(_n('%s day', '%s days', $days_active, 'wpopt'), number_format_i18n($days_active)),
-                'note'  => __('First month threshold reached.', 'wpopt'),
+                'label' => __('Days active', 'wp-optimizer'),
+                'value' => sprintf(_n('%s day', '%s days', $days_active, 'wp-optimizer'), number_format_i18n($days_active)),
+                'note'  => __('First month threshold reached.', 'wp-optimizer'),
             ),
             array(
-                'label' => __('Active modules', 'wpopt'),
+                'label' => __('Active modules', 'wp-optimizer'),
                 'value' => number_format_i18n($active_modules_count),
-                'note'  => __('Optimization tools currently enabled.', 'wpopt'),
+                'note'  => __('Optimization tools currently enabled.', 'wp-optimizer'),
             ),
             array(
-                'label' => __('Optimization health', 'wpopt'),
+                'label' => __('Optimization health', 'wp-optimizer'),
                 'value' => sprintf('%s%%', number_format_i18n($dashboard['health_score'])),
-                'note'  => $dashboard['health_score'] >= 80 ? __('Current setup looks healthy.', 'wpopt') : __('Some settings may need review.', 'wpopt'),
+                'note'  => $dashboard['health_score'] >= 80 ? __('Current setup looks healthy.', 'wp-optimizer') : __('Some settings may need review.', 'wp-optimizer'),
             ),
         ), $dynamic_cards);
 
         $completed_items = array(
-            $dashboard['tracking_enabled'] ? __('Diagnostics and tracking controls are configured.', 'wpopt') : __('Diagnostics are available but currently disabled.', 'wpopt'),
-            $dashboard['is_cron_running'] ? __('A scheduled optimization task is currently running.', 'wpopt') : __('Scheduled optimization tasks are ready.', 'wpopt'),
-            $dashboard['persistent_cache'] ? __('Persistent cache support is active.', 'wpopt') : __('Persistent cache support is ready to be configured.', 'wpopt'),
+            $dashboard['tracking_enabled'] ? __('Diagnostics and tracking controls are configured.', 'wp-optimizer') : __('Diagnostics are available but currently disabled.', 'wp-optimizer'),
+            $dashboard['is_cron_running'] ? __('A scheduled optimization task is currently running.', 'wp-optimizer') : __('Scheduled optimization tasks are ready.', 'wp-optimizer'),
+            $dashboard['persistent_cache'] ? __('Persistent cache support is active.', 'wp-optimizer') : __('Persistent cache support is ready to be configured.', 'wp-optimizer'),
         );
 
         if (!empty($active_modules)) {
-            $completed_items[] = sprintf(__('Enabled tools: %s.', 'wpopt'), implode(', ', array_slice($active_modules, 0, 6)));
+            $completed_items[] = sprintf(__('Enabled tools: %s.', 'wp-optimizer'), implode(', ', array_slice($active_modules, 0, 6)));
         }
 
         if (!wp_style_is('wpopt_css', 'done')) {
@@ -345,14 +345,14 @@ class PagesHandler
         ?>
         <div class="wpopt-advertise-overlay" role="dialog" aria-modal="true" aria-labelledby="wpopt-advertise-title">
             <div class="wpopt-advertise-page" data-wpopt-advertise-report>
-                <button class="wpopt-advertise-close" type="button" data-wpopt-advertise-close aria-label="<?php esc_attr_e('Close', 'wpopt'); ?>">&times;</button>
+                <button class="wpopt-advertise-close" type="button" data-wpopt-advertise-close aria-label="<?php esc_attr_e('Close', 'wp-optimizer'); ?>">&times;</button>
 
                 <section class="wpopt-advertise-hero">
                     <span class="wpopt-advertise-eyebrow"><?php echo esc_html($usage_period_label); ?></span>
-                    <h1 id="wpopt-advertise-title"><?php esc_html_e('Here is what WP Optimizer has prepared for your site.', 'wpopt'); ?></h1>
+                    <h1 id="wpopt-advertise-title"><?php esc_html_e('Here is what WP Optimizer has prepared for your site.', 'wp-optimizer'); ?></h1>
                 </section>
 
-                <section class="wpopt-advertise-grid" aria-label="<?php esc_attr_e('Monthly optimization summary', 'wpopt'); ?>">
+                <section class="wpopt-advertise-grid" aria-label="<?php esc_attr_e('Monthly optimization summary', 'wp-optimizer'); ?>">
                     <?php foreach ($summary_cards as $card) : ?>
                         <article class="wpopt-advertise-card">
                             <span><?php echo esc_html($card['label']); ?></span>
@@ -364,15 +364,15 @@ class PagesHandler
 
                 <section class="wpopt-advertise-recap">
                     <div>
-                        <h2><?php esc_html_e('Summary of what is active', 'wpopt'); ?></h2>
+                        <h2><?php esc_html_e('Summary of what is active', 'wp-optimizer'); ?></h2>
                         <ul>
                             <?php foreach ($completed_items as $item) : ?>
                                 <li><?php echo esc_html($item); ?></li>
                             <?php endforeach; ?>
                         </ul>
                     </div>
-                    <div class="wpopt-advertise-meter" aria-label="<?php esc_attr_e('Optimization health', 'wpopt'); ?>">
-                        <span><?php esc_html_e('Optimization health', 'wpopt'); ?></span>
+                    <div class="wpopt-advertise-meter" aria-label="<?php esc_attr_e('Optimization health', 'wp-optimizer'); ?>">
+                        <span><?php esc_html_e('Optimization health', 'wp-optimizer'); ?></span>
                         <strong><?php echo esc_html(sprintf('%s%%', number_format_i18n($dashboard['health_score']))); ?></strong>
                         <em><b style="--wpopt-meter-width: <?php echo esc_attr($dashboard['health_score']); ?>%; width: <?php echo esc_attr($dashboard['health_score']); ?>%"></b></em>
                     </div>
@@ -381,14 +381,14 @@ class PagesHandler
             <div class="wpopt-advertise-support-screen" data-wpopt-advertise-support-screen>
                 <section class="wpopt-advertise-support">
                     <div class="wpopt-advertise-support-copy">
-                        <h2><?php esc_html_e('Enjoying WP Optimizer?', 'wpopt'); ?></h2>
-                        <p><strong><?php esc_html_e('If WP Optimizer is helping you save time and keep your site faster, buying me a coffee is the simplest way to support updates, fixes, and new features.', 'wpopt'); ?></strong></p>
+                        <h2><?php esc_html_e('Enjoying WP Optimizer?', 'wp-optimizer'); ?></h2>
+                        <p><strong><?php esc_html_e('If WP Optimizer is helping you save time and keep your site faster, buying me a coffee is the simplest way to support updates, fixes, and new features.', 'wp-optimizer'); ?></strong></p>
                     </div>
                     <div class="wpopt-advertise-actions">
-                        <a class="wpopt-advertise-button is-primary" target="_blank" rel="noopener noreferrer" href="<?php echo esc_url($donation_url); ?>"><?php esc_html_e('Buy me a coffe', 'wpopt'); ?></a>
-                        <a class="wpopt-advertise-button" target="_blank" rel="noopener noreferrer" href="<?php echo esc_url($review_url); ?>"><?php esc_html_e('Leave a review', 'wpopt'); ?></a>
-                        <a class="wpopt-advertise-button" href="<?php echo esc_url($already_did_url); ?>"><?php esc_html_e('Already did', 'wpopt'); ?></a>
-                        <a class="wpopt-advertise-button is-muted" href="<?php echo esc_url($dismiss_url); ?>"><?php esc_html_e('No Thanks', 'wpopt'); ?></a>
+                        <a class="wpopt-advertise-button is-primary" target="_blank" rel="noopener noreferrer" href="<?php echo esc_url($donation_url); ?>"><?php esc_html_e('Buy me a coffe', 'wp-optimizer'); ?></a>
+                        <a class="wpopt-advertise-button" target="_blank" rel="noopener noreferrer" href="<?php echo esc_url($review_url); ?>"><?php esc_html_e('Leave a review', 'wp-optimizer'); ?></a>
+                        <a class="wpopt-advertise-button" href="<?php echo esc_url($already_did_url); ?>"><?php esc_html_e('Already did', 'wp-optimizer'); ?></a>
+                        <a class="wpopt-advertise-button is-muted" href="<?php echo esc_url($dismiss_url); ?>"><?php esc_html_e('No Thanks', 'wp-optimizer'); ?></a>
                     </div>
                 </section>
             </div>
@@ -435,14 +435,14 @@ class PagesHandler
             'dashicons-admin-site'
         );
 
-        $this->add_plugin_submenu_pages('wp-optimizer', 'wpopt', 'wpopt');
+        $this->add_plugin_submenu_pages('wp-optimizer', 'wpopt');
 
         foreach (wps('wpopt')->moduleHandler->get_modules(array('scopes' => 'admin-page'), true) as $module) {
             wps('wpopt')->moduleHandler->get_module_instance($module)->register_panel(null);
         }
 
-        add_submenu_page(null, __('WPOPT Settings', 'wpopt'), __('Settings', 'wpopt'), 'manage_options', 'wpopt-settings', array($this, 'render_core_settings'));
-        add_submenu_page(null, __('WPOPT FAQ', 'wpopt'), __('FAQ', 'wpopt'), 'edit_posts', 'wpopt-faqs', array($this, 'render_faqs'));
+        add_submenu_page(null, __('WPOPT Settings', 'wp-optimizer'), __('Settings', 'wp-optimizer'), 'manage_options', 'wpopt-settings', array($this, 'render_core_settings'));
+        add_submenu_page(null, __('WPOPT FAQ', 'wp-optimizer'), __('FAQ', 'wp-optimizer'), 'edit_posts', 'wpopt-faqs', array($this, 'render_faqs'));
 
         add_action('wpopt_enqueue_panel_scripts', [$this, 'enqueue_scripts']);
     }
@@ -458,12 +458,12 @@ class PagesHandler
         return $logo_asset['url'];
     }
 
-    private function add_plugin_submenu_pages(string $parent_slug, string $context, string $text_domain): void
+    private function add_plugin_submenu_pages(string $parent_slug, string $context): void
     {
         add_submenu_page(
             $parent_slug,
-            __('Dashboard', $text_domain),
-            __('Dashboard', $text_domain),
+            __('Dashboard', 'wp-optimizer'),
+            __('Dashboard', 'wp-optimizer'),
             'customize',
             $parent_slug,
             array($this, 'render_main')
@@ -471,23 +471,23 @@ class PagesHandler
 
         $submenu_pages = array(
             array(
-                'label' => __('Modules', $text_domain),
+                'label' => __('Modules', 'wp-optimizer'),
                 'route' => 'setting-modules_handler',
             ),
             array(
-                'label' => __('Schedule', $text_domain),
+                'label' => __('Schedule', 'wp-optimizer'),
                 'route' => 'setting-cron',
             ),
             array(
-                'label' => __('Speed Test', $text_domain),
+                'label' => __('Speed Test', 'wp-optimizer'),
                 'route' => 'page-test',
             ),
             array(
-                'label' => __('Settings', $text_domain),
+                'label' => __('Settings', 'wp-optimizer'),
                 'route' => 'setting-settings',
             ),
             array(
-                'label' => __('FAQ', $text_domain),
+                'label' => __('FAQ', 'wp-optimizer'),
                 'route' => 'faq',
             ),
         );
@@ -511,8 +511,8 @@ class PagesHandler
 
         add_submenu_page(
             $parent_slug,
-            __('Tools', $text_domain),
-            '<span class="wpopt-admin-tools-heading">' . esc_html__('Tools', $text_domain) . '</span>',
+            __('Tools', 'wp-optimizer'),
+            '<span class="wpopt-admin-tools-heading">' . esc_html__('Tools', 'wp-optimizer') . '</span>',
             'manage_options',
             $parent_slug . '&wps-page=tools',
             array($this, 'render_main')
@@ -534,29 +534,29 @@ class PagesHandler
     {
         $definitions = array(
             'modules_handler' => array(
-                'label'       => __('Modules', 'wpopt'),
+                'label'       => __('Modules', 'wp-optimizer'),
                 'icon'        => 'grid',
-                'description' => __('Choose which WP Optimizer tools are available in the workspace.', 'wpopt'),
+                'description' => __('Choose which WP Optimizer tools are available in the workspace.', 'wp-optimizer'),
             ),
             'cron'            => array(
-                'label'       => __('Schedule', 'wpopt'),
+                'label'       => __('Schedule', 'wp-optimizer'),
                 'icon'        => 'calendar',
-                'description' => __('Configure automatic optimization tasks and scheduled maintenance.', 'wpopt'),
+                'description' => __('Configure automatic optimization tasks and scheduled maintenance.', 'wp-optimizer'),
             ),
             'cloudflare'      => array(
-                'label'       => __('Cloudflare', 'wpopt'),
+                'label'       => __('Cloudflare', 'wp-optimizer'),
                 'icon'        => 'server',
-                'description' => __('Manage Cloudflare integration settings for this WordPress installation.', 'wpopt'),
+                'description' => __('Manage Cloudflare integration settings for this WordPress installation.', 'wp-optimizer'),
             ),
             'settings'        => array(
-                'label'       => __('Settings', 'wpopt'),
+                'label'       => __('Settings', 'wp-optimizer'),
                 'icon'        => 'settings',
-                'description' => __('Manage import, export, reset and shared plugin options.', 'wpopt'),
+                'description' => __('Manage import, export, reset and shared plugin options.', 'wp-optimizer'),
             ),
             'tracking'        => array(
-                'label'       => __('Tracking', 'wpopt'),
+                'label'       => __('Tracking', 'wp-optimizer'),
                 'icon'        => 'chart',
-                'description' => __('Control diagnostics and anonymous usage tracking.', 'wpopt'),
+                'description' => __('Control diagnostics and anonymous usage tracking.', 'wp-optimizer'),
             ),
         );
 
@@ -625,16 +625,16 @@ class PagesHandler
         }
 
         wps_localize([
-            'text_na'            => __('N/A', 'wpopt'),
-            'saved'              => __('Settings Saved', 'wpopt'),
-            'error'              => __('Request fail', 'wpopt'),
-            'success'            => __('Request succeed', 'wpopt'),
-            'running'            => __('Running', 'wpopt'),
-            'autosaving'         => __('Autosaving...', 'wpopt'),
-            'autosaved'          => __('All changes saved', 'wpopt'),
-            'autosave_failed'    => __('Autosave failed', 'wpopt'),
+            'text_na'            => __('N/A', 'wp-optimizer'),
+            'saved'              => __('Settings Saved', 'wp-optimizer'),
+            'error'              => __('Request fail', 'wp-optimizer'),
+            'success'            => __('Request succeed', 'wp-optimizer'),
+            'running'            => __('Running', 'wp-optimizer'),
+            'autosaving'         => __('Autosaving...', 'wp-optimizer'),
+            'autosaved'          => __('All changes saved', 'wp-optimizer'),
+            'autosave_failed'    => __('Autosave failed', 'wp-optimizer'),
             'wpopt_ajax_nonce'   => wp_create_nonce('wpopt-ajax-nonce'),
-            'text_close_warning' => __('WP Optimizer is running an action. If you leave now, it may not be completed.', 'wpopt'),
+            'text_close_warning' => __('WP Optimizer is running an action. If you leave now, it may not be completed.', 'wp-optimizer'),
         ]);
     }
 
@@ -671,68 +671,40 @@ class PagesHandler
                     <div class="wps-faq-item">
                         <div class="wps-faq-question-wrapper ">
                             <div
-                                    class="wps-faq-question wpopt-faq-toggle"><?php echo $this->faq_icon('tools'); ?><span class="wpopt-faq-question-text"><?php echo __('What can this plugin do and how does it work?', 'wpopt') ?></span>
+                                    class="wps-faq-question wpopt-faq-toggle"><?php echo $this->faq_icon('tools'); ?><span class="wpopt-faq-question-text"><?php echo __('What can this plugin do and how does it work?', 'wp-optimizer') ?></span>
                                 <icon class="wps-collapse-icon">+</icon>
                             </div>
                             <div class="wps-faq-answer wps-collapse">
                                 <p>
-                                    <b><?php echo __('This plugin is privacy-oriented: optimization runs on your server and does not require sending your site data to third-party services.', 'wpopt'); ?></b>
+                                    <b><?php echo __('This plugin is privacy-oriented: optimization runs on your server and does not require sending your site data to third-party services.', 'wp-optimizer'); ?></b>
                                 </p>
-                                <span><?php echo __('WP Optimizer is modular, so you can enable only the features you need to keep the plugin overhead low.', 'wpopt'); ?></span>
+                                <span><?php echo __('WP Optimizer is modular, so you can enable only the features you need to keep the plugin overhead low.', 'wp-optimizer'); ?></span>
                                 <ul class="wps-list">
-                                    <li><?php _e('Server enhancements such as compression, browser caching, and server rules.', 'wpopt'); ?></li>
-                                    <li><?php _e('Caching layers for queries, database results, objects, and static pages.', 'wpopt'); ?></li>
-                                    <li><?php _e('Minification for HTML, CSS, and JavaScript.', 'wpopt'); ?></li>
-                                    <li><?php _e('Local image optimization and conversion workflows.', 'wpopt'); ?></li>
-                                    <li><?php _e('Database cleanup, optimization, and backups.', 'wpopt'); ?></li>
-                                    <li><?php _e('Security hardening and WordPress behavior toggles.', 'wpopt'); ?></li>
-                                    <li><?php _e('Update controls, diagnostics, logs, and admin utilities.', 'wpopt'); ?></li>
+                                    <li><?php _e('Server enhancements such as compression, browser caching, and server rules.', 'wp-optimizer'); ?></li>
+                                    <li><?php _e('Caching layers for queries, database results, objects, and static pages.', 'wp-optimizer'); ?></li>
+                                    <li><?php _e('Minification for HTML, CSS, and JavaScript.', 'wp-optimizer'); ?></li>
+                                    <li><?php _e('Local image optimization and conversion workflows.', 'wp-optimizer'); ?></li>
+                                    <li><?php _e('Database cleanup, optimization, and backups.', 'wp-optimizer'); ?></li>
+                                    <li><?php _e('Security hardening and WordPress behavior toggles.', 'wp-optimizer'); ?></li>
+                                    <li><?php _e('Update controls, diagnostics, logs, and admin utilities.', 'wp-optimizer'); ?></li>
                                 </ul>
-                                <p><?php echo __('Because modules can affect different parts of WordPress, the safest approach is to enable one feature at a time and test the front end after each change.', 'wpopt'); ?></p>
+                                <p><?php echo __('Because modules can affect different parts of WordPress, the safest approach is to enable one feature at a time and test the front end after each change.', 'wp-optimizer'); ?></p>
                             </div>
                         </div>
                     </div>
                     <div class="wps-faq-item">
                         <div class="wps-faq-question-wrapper ">
                             <div
-                                    class="wps-faq-question wpopt-faq-toggle"><?php echo $this->faq_icon('external'); ?><span class="wpopt-faq-question-text"><?php echo __('What should I enable first on a live site?', 'wpopt') ?></span>
+                                    class="wps-faq-question wpopt-faq-toggle"><?php echo $this->faq_icon('external'); ?><span class="wpopt-faq-question-text"><?php echo __('What should I enable first on a live site?', 'wp-optimizer') ?></span>
                                 <icon class="wps-collapse-icon">+</icon>
                             </div>
                             <div class="wps-faq-answer wps-collapse">
-                                <p><?php echo __('Start with lower-risk optimizations, then move to the more aggressive ones only after testing.', 'wpopt'); ?></p>
+                                <p><?php echo __('Start with lower-risk optimizations, then move to the more aggressive ones only after testing.', 'wp-optimizer'); ?></p>
                                 <ul class="wps-list">
-                                    <li><?php echo sprintf(__('Begin with <a href="%s">browser cache and compression settings</a> because they usually improve delivery without changing page logic.', 'wpopt'), wps_module_setting_url('wpopt', 'wp_optimizer')); ?></li>
-                                    <li><?php echo sprintf(__('Configure <a href="%s">media optimization</a> for new uploads before launching large bulk jobs.', 'wpopt'), wps_module_setting_url('wpopt', 'media')); ?></li>
-                                    <li><?php echo sprintf(__('Create a <a href="%s">database backup</a> before cleanup tasks or bigger tuning sessions.', 'wpopt'), wps_module_panel_url('database', 'db-backup')); ?></li>
-                                    <li><?php echo sprintf(__('Add <a href="%s">cache</a> and <a href="%s">minify</a> last, enabling one option at a time and verifying the front end after each step.', 'wpopt'), wps_module_setting_url('wpopt', 'cache'), wps_module_setting_url('wpopt', 'minify')); ?></li>
-                                </ul>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="wps-faq-item">
-                        <div class="wps-faq-question-wrapper ">
-                            <div
-                                    class="wps-faq-question wpopt-faq-toggle"><?php echo $this->faq_icon('sliders'); ?><span class="wpopt-faq-question-text"><?php echo __('Where can I configure optimization parameters?', 'wpopt') ?></span>
-                                <icon class="wps-collapse-icon">+</icon>
-                            </div>
-                            <div class="wps-faq-answer wps-collapse">
-                                <p><?php echo sprintf(__('Most optimization options are configurable in the <a href="%s">Modules Options panel</a>.', 'wpopt'), wps_module_setting_url('wpopt')); ?></p>
-                                <p><?php echo sprintf(__('Global tasks such as cron, module activation, telemetry, reset, export, and restore are available from the <a href="%s">Settings page</a>.', 'wpopt'), wps_admin_route_url('wpopt', 'setting-settings')); ?></p>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="wps-faq-item">
-                        <div class="wps-faq-question-wrapper ">
-                            <div
-                                    class="wps-faq-question wpopt-faq-toggle"><?php echo $this->faq_icon('box'); ?><span class="wpopt-faq-question-text"><?php echo __('Can cache or minify break my layout?', 'wpopt') ?></span>
-                                <icon class="wps-collapse-icon">+</icon>
-                            </div>
-                            <div class="wps-faq-answer wps-collapse">
-                                <p><?php echo __('Yes. Aggressive caching and front-end minification can expose conflicts in themes or plugins that rely on specific asset order, inline scripts, or dynamic output.', 'wpopt'); ?></p>
-                                <ul class="wps-list">
-                                    <li><?php echo sprintf(__('Enable <a href="%s">minify</a> gradually: HTML, CSS, and JavaScript do not need to be turned on all at once.', 'wpopt'), wps_module_setting_url('wpopt', 'minify')); ?></li>
-                                    <li><?php echo sprintf(__('After each change, clear or reset <a href="%s">cache</a> and test important pages while logged out as well.', 'wpopt'), wps_module_setting_url('wpopt', 'cache')); ?></li>
-                                    <li><?php _e('If something breaks, disable the last option you enabled first. That is usually the fastest way to isolate the conflict.', 'wpopt'); ?></li>
+                                    <li><?php echo sprintf(__('Begin with <a href="%s">browser cache and compression settings</a> because they usually improve delivery without changing page logic.', 'wp-optimizer'), wps_module_setting_url('wpopt', 'wp_optimizer')); ?></li>
+                                    <li><?php echo sprintf(__('Configure <a href="%s">media optimization</a> for new uploads before launching large bulk jobs.', 'wp-optimizer'), wps_module_setting_url('wpopt', 'media')); ?></li>
+                                    <li><?php echo sprintf(__('Create a <a href="%s">database backup</a> before cleanup tasks or bigger tuning sessions.', 'wp-optimizer'), wps_module_panel_url('database', 'db-backup')); ?></li>
+                                    <li><?php echo sprintf(__('Add <a href="%s">cache</a> and <a href="%s">minify</a> last, enabling one option at a time and verifying the front end after each step.', 'wp-optimizer'), wps_module_setting_url('wpopt', 'cache'), wps_module_setting_url('wpopt', 'minify')); ?></li>
                                 </ul>
                             </div>
                         </div>
@@ -740,32 +712,27 @@ class PagesHandler
                     <div class="wps-faq-item">
                         <div class="wps-faq-question-wrapper ">
                             <div
-                                    class="wps-faq-question wpopt-faq-toggle"><?php echo $this->faq_icon('image'); ?><span class="wpopt-faq-question-text"><?php echo __('How does the media optimizer work?', 'wpopt') ?></span>
+                                    class="wps-faq-question wpopt-faq-toggle"><?php echo $this->faq_icon('sliders'); ?><span class="wpopt-faq-question-text"><?php echo __('Where can I configure optimization parameters?', 'wp-optimizer') ?></span>
                                 <icon class="wps-collapse-icon">+</icon>
                             </div>
                             <div class="wps-faq-answer wps-collapse">
-                                <p><?php echo __('Media optimizer works in three different ways:', 'wpopt'); ?></p>
-                                <ul class="wps-list">
-                                    <li><?php echo sprintf(__("By a scheduled event it's able to collect and optimize any media uploaded daily. <a href='%s'>Here</a> you can configure all schedule related settings.", 'wpopt'), wps_admin_route_url('wpopt', 'setting-cron')); ?></li>
-                                    <li><?php _e('By a specific path scanner, Media optimizer will run a background activity to optimize all images present in the input path.', 'wpopt'); ?></li>
-                                    <li><?php _e('By a whole database scanner, Media optimizer will run a background activity to check all images saved in your WordPress library optimizing each image and every thumbnail associated.', 'wpopt'); ?></li>
-                                </ul>
-                                <p><?php echo sprintf(__('Any image optimization will be run following your settings set <a href="%s">Here</a>.', 'wpopt'), wps_module_setting_url('wpopt', 'media')); ?></p>
+                                <p><?php echo sprintf(__('Most optimization options are configurable in the <a href="%s">Modules Options panel</a>.', 'wp-optimizer'), wps_module_setting_url('wpopt')); ?></p>
+                                <p><?php echo sprintf(__('Global tasks such as cron, module activation, telemetry, reset, export, and restore are available from the <a href="%s">Settings page</a>.', 'wp-optimizer'), wps_admin_route_url('wpopt', 'setting-settings')); ?></p>
                             </div>
                         </div>
                     </div>
                     <div class="wps-faq-item">
                         <div class="wps-faq-question-wrapper ">
                             <div
-                                    class="wps-faq-question wpopt-faq-toggle"><?php echo $this->faq_icon('clock'); ?><span class="wpopt-faq-question-text"><?php echo __('Why are image optimization jobs not starting?', 'wpopt') ?></span>
+                                    class="wps-faq-question wpopt-faq-toggle"><?php echo $this->faq_icon('box'); ?><span class="wpopt-faq-question-text"><?php echo __('Can cache or minify break my layout?', 'wp-optimizer') ?></span>
                                 <icon class="wps-collapse-icon">+</icon>
                             </div>
                             <div class="wps-faq-answer wps-collapse">
-                                <p><?php echo __('Bulk image optimization runs in background, so it depends on the plugin scheduler and on image libraries available on the server.', 'wpopt'); ?></p>
+                                <p><?php echo __('Yes. Aggressive caching and front-end minification can expose conflicts in themes or plugins that rely on specific asset order, inline scripts, or dynamic output.', 'wp-optimizer'); ?></p>
                                 <ul class="wps-list">
-                                    <li><?php echo sprintf(__('Verify that <a href="%s">cron is active</a>; background jobs will not progress if scheduled tasks are not running.', 'wpopt'), wps_admin_route_url('wpopt', 'setting-cron')); ?></li>
-                                    <li><?php _e('Check that Imagick or GD is available in PHP. Imagick gives the best coverage, but GD can still handle basic processing.', 'wpopt'); ?></li>
-                                    <li><?php echo sprintf(__('Review your <a href="%s">media settings</a> before starting a full-library scan so the job uses the correct quality and format options.', 'wpopt'), wps_module_setting_url('wpopt', 'media')); ?></li>
+                                    <li><?php echo sprintf(__('Enable <a href="%s">minify</a> gradually: HTML, CSS, and JavaScript do not need to be turned on all at once.', 'wp-optimizer'), wps_module_setting_url('wpopt', 'minify')); ?></li>
+                                    <li><?php echo sprintf(__('After each change, clear or reset <a href="%s">cache</a> and test important pages while logged out as well.', 'wp-optimizer'), wps_module_setting_url('wpopt', 'cache')); ?></li>
+                                    <li><?php _e('If something breaks, disable the last option you enabled first. That is usually the fastest way to isolate the conflict.', 'wp-optimizer'); ?></li>
                                 </ul>
                             </div>
                         </div>
@@ -773,14 +740,32 @@ class PagesHandler
                     <div class="wps-faq-item">
                         <div class="wps-faq-question-wrapper ">
                             <div
-                                    class="wps-faq-question wpopt-faq-toggle"><?php echo $this->faq_icon('database'); ?><span class="wpopt-faq-question-text"><?php echo __('Do I need Redis or Memcached for object cache?', 'wpopt') ?></span>
+                                    class="wps-faq-question wpopt-faq-toggle"><?php echo $this->faq_icon('image'); ?><span class="wpopt-faq-question-text"><?php echo __('How does the media optimizer work?', 'wp-optimizer') ?></span>
                                 <icon class="wps-collapse-icon">+</icon>
                             </div>
                             <div class="wps-faq-answer wps-collapse">
-                                <p><?php echo __('Only the object cache feature requires Redis or Memcached. The other optimization modules can still be used without them.', 'wpopt'); ?></p>
+                                <p><?php echo __('Media optimizer works in three different ways:', 'wp-optimizer'); ?></p>
                                 <ul class="wps-list">
-                                    <li><?php echo sprintf(__('If your server does not provide Redis or Memcached, leave <a href="%s">object cache</a> disabled.', 'wpopt'), wps_module_setting_url('wpopt', 'cache')); ?></li>
-                                    <li><?php _e('Static page cache, database/query cache, browser cache, compression, and minify do not depend on an external object cache server.', 'wpopt'); ?></li>
+                                    <li><?php echo sprintf(__("By a scheduled event it's able to collect and optimize any media uploaded daily. <a href='%s'>Here</a> you can configure all schedule related settings.", 'wp-optimizer'), wps_admin_route_url('wpopt', 'setting-cron')); ?></li>
+                                    <li><?php _e('By a specific path scanner, Media optimizer will run a background activity to optimize all images present in the input path.', 'wp-optimizer'); ?></li>
+                                    <li><?php _e('By a whole database scanner, Media optimizer will run a background activity to check all images saved in your WordPress library optimizing each image and every thumbnail associated.', 'wp-optimizer'); ?></li>
+                                </ul>
+                                <p><?php echo sprintf(__('Any image optimization will be run following your settings set <a href="%s">Here</a>.', 'wp-optimizer'), wps_module_setting_url('wpopt', 'media')); ?></p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="wps-faq-item">
+                        <div class="wps-faq-question-wrapper ">
+                            <div
+                                    class="wps-faq-question wpopt-faq-toggle"><?php echo $this->faq_icon('clock'); ?><span class="wpopt-faq-question-text"><?php echo __('Why are image optimization jobs not starting?', 'wp-optimizer') ?></span>
+                                <icon class="wps-collapse-icon">+</icon>
+                            </div>
+                            <div class="wps-faq-answer wps-collapse">
+                                <p><?php echo __('Bulk image optimization runs in background, so it depends on the plugin scheduler and on image libraries available on the server.', 'wp-optimizer'); ?></p>
+                                <ul class="wps-list">
+                                    <li><?php echo sprintf(__('Verify that <a href="%s">cron is active</a>; background jobs will not progress if scheduled tasks are not running.', 'wp-optimizer'), wps_admin_route_url('wpopt', 'setting-cron')); ?></li>
+                                    <li><?php _e('Check that Imagick or GD is available in PHP. Imagick gives the best coverage, but GD can still handle basic processing.', 'wp-optimizer'); ?></li>
+                                    <li><?php echo sprintf(__('Review your <a href="%s">media settings</a> before starting a full-library scan so the job uses the correct quality and format options.', 'wp-optimizer'), wps_module_setting_url('wpopt', 'media')); ?></li>
                                 </ul>
                             </div>
                         </div>
@@ -788,15 +773,14 @@ class PagesHandler
                     <div class="wps-faq-item">
                         <div class="wps-faq-question-wrapper ">
                             <div
-                                    class="wps-faq-question wpopt-faq-toggle"><?php echo $this->faq_icon('database'); ?><span class="wpopt-faq-question-text"><?php echo __('How can I clean the database safely?', 'wpopt') ?></span>
+                                    class="wps-faq-question wpopt-faq-toggle"><?php echo $this->faq_icon('database'); ?><span class="wpopt-faq-question-text"><?php echo __('Do I need Redis or Memcached for object cache?', 'wp-optimizer') ?></span>
                                 <icon class="wps-collapse-icon">+</icon>
                             </div>
                             <div class="wps-faq-answer wps-collapse">
-                                <p><?php echo __('Database cleanup is most useful when you do it conservatively and with a rollback path ready.', 'wpopt'); ?></p>
+                                <p><?php echo __('Only the object cache feature requires Redis or Memcached. The other optimization modules can still be used without them.', 'wp-optimizer'); ?></p>
                                 <ul class="wps-list">
-                                    <li><?php echo sprintf(__('Create a fresh <a href="%s">database backup</a> before deleting revisions, transients, orphaned data, or other leftovers.', 'wpopt'), wps_module_panel_url('database', 'db-backup')); ?></li>
-                                    <li><?php echo sprintf(__('Run cleanup tasks from the <a href="%s">Database module</a> when the site is stable and no import, migration, or major update is running.', 'wpopt'), wps_module_setting_url('wpopt', 'database')); ?></li>
-                                    <li><?php _e('If the result is not what you expected, restore the backup first instead of guessing which rows changed.', 'wpopt'); ?></li>
+                                    <li><?php echo sprintf(__('If your server does not provide Redis or Memcached, leave <a href="%s">object cache</a> disabled.', 'wp-optimizer'), wps_module_setting_url('wpopt', 'cache')); ?></li>
+                                    <li><?php _e('Static page cache, database/query cache, browser cache, compression, and minify do not depend on an external object cache server.', 'wp-optimizer'); ?></li>
                                 </ul>
                             </div>
                         </div>
@@ -804,24 +788,40 @@ class PagesHandler
                     <div class="wps-faq-item">
                         <div class="wps-faq-question-wrapper ">
                             <div
-                                    class="wps-faq-question wpopt-faq-toggle"><?php echo $this->faq_icon('external'); ?><span class="wpopt-faq-question-text"><?php echo __('Can I export settings before major changes?', 'wpopt') ?></span>
+                                    class="wps-faq-question wpopt-faq-toggle"><?php echo $this->faq_icon('database'); ?><span class="wpopt-faq-question-text"><?php echo __('How can I clean the database safely?', 'wp-optimizer') ?></span>
                                 <icon class="wps-collapse-icon">+</icon>
                             </div>
                             <div class="wps-faq-answer wps-collapse">
-                                <p><?php echo sprintf(__('Yes. The <a href="%s">Settings page</a> lets you export, import, reset, or restore plugin options.', 'wpopt'), wps_admin_route_url('wpopt', 'setting-settings')); ?></p>
-                                <p><?php _e('Use an export before testing aggressive cache, minify, or security changes so you can quickly return to a known-good configuration.', 'wpopt'); ?></p>
+                                <p><?php echo __('Database cleanup is most useful when you do it conservatively and with a rollback path ready.', 'wp-optimizer'); ?></p>
+                                <ul class="wps-list">
+                                    <li><?php echo sprintf(__('Create a fresh <a href="%s">database backup</a> before deleting revisions, transients, orphaned data, or other leftovers.', 'wp-optimizer'), wps_module_panel_url('database', 'db-backup')); ?></li>
+                                    <li><?php echo sprintf(__('Run cleanup tasks from the <a href="%s">Database module</a> when the site is stable and no import, migration, or major update is running.', 'wp-optimizer'), wps_module_setting_url('wpopt', 'database')); ?></li>
+                                    <li><?php _e('If the result is not what you expected, restore the backup first instead of guessing which rows changed.', 'wp-optimizer'); ?></li>
+                                </ul>
                             </div>
                         </div>
                     </div>
                     <div class="wps-faq-item">
                         <div class="wps-faq-question-wrapper ">
                             <div
-                                    class="wps-faq-question wpopt-faq-toggle"><?php echo $this->faq_icon('settings'); ?><span class="wpopt-faq-question-text"><?php echo __('Does WP Optimizer work on multisite?', 'wpopt') ?></span>
+                                    class="wps-faq-question wpopt-faq-toggle"><?php echo $this->faq_icon('external'); ?><span class="wpopt-faq-question-text"><?php echo __('Can I export settings before major changes?', 'wp-optimizer') ?></span>
                                 <icon class="wps-collapse-icon">+</icon>
                             </div>
                             <div class="wps-faq-answer wps-collapse">
-                                <p><?php _e('Yes. The plugin supports multisite and can be network-activated.', 'wpopt'); ?></p>
-                                <p><?php echo sprintf(__('Even on multisite, test optimization changes gradually from the <a href="%s">module settings</a> because each subsite may use different themes, plugins, and traffic patterns.', 'wpopt'), wps_module_setting_url('wpopt')); ?></p>
+                                <p><?php echo sprintf(__('Yes. The <a href="%s">Settings page</a> lets you export, import, reset, or restore plugin options.', 'wp-optimizer'), wps_admin_route_url('wpopt', 'setting-settings')); ?></p>
+                                <p><?php _e('Use an export before testing aggressive cache, minify, or security changes so you can quickly return to a known-good configuration.', 'wp-optimizer'); ?></p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="wps-faq-item">
+                        <div class="wps-faq-question-wrapper ">
+                            <div
+                                    class="wps-faq-question wpopt-faq-toggle"><?php echo $this->faq_icon('settings'); ?><span class="wpopt-faq-question-text"><?php echo __('Does WP Optimizer work on multisite?', 'wp-optimizer') ?></span>
+                                <icon class="wps-collapse-icon">+</icon>
+                            </div>
+                            <div class="wps-faq-answer wps-collapse">
+                                <p><?php _e('Yes. The plugin supports multisite and can be network-activated.', 'wp-optimizer'); ?></p>
+                                <p><?php echo sprintf(__('Even on multisite, test optimization changes gradually from the <a href="%s">module settings</a> because each subsite may use different themes, plugins, and traffic patterns.', 'wp-optimizer'), wps_module_setting_url('wpopt')); ?></p>
                             </div>
                         </div>
                     </div>
@@ -858,81 +858,81 @@ class PagesHandler
         return array(
             array(
                 'icon'     => 'external',
-                'question' => __('Is WP Optimizer compatible with WP Rocket, FlyingPress, Perfmatters, LiteSpeed Cache and other optimization plugins?', 'wpopt'),
+                'question' => __('Is WP Optimizer compatible with WP Rocket, FlyingPress, Perfmatters, LiteSpeed Cache and other optimization plugins?', 'wp-optimizer'),
                 'answers'  => array(
-                    __('WP Optimizer can coexist with other optimization plugins, but the same optimization layer should not be enabled in more than one plugin.', 'wpopt'),
-                    __('Choose a single owner for page cache, minification, asset combination, and server rules. Then clear every cache and test the site after changing the configuration.', 'wpopt'),
+                    __('WP Optimizer can coexist with other optimization plugins, but the same optimization layer should not be enabled in more than one plugin.', 'wp-optimizer'),
+                    __('Choose a single owner for page cache, minification, asset combination, and server rules. Then clear every cache and test the site after changing the configuration.', 'wp-optimizer'),
                 ),
             ),
             array(
                 'icon'     => 'box',
-                'question' => __('Will WP Optimizer speed up my WooCommerce store?', 'wpopt'),
+                'question' => __('Will WP Optimizer speed up my WooCommerce store?', 'wp-optimizer'),
                 'answers'  => array(
-                    __('It can improve cacheable storefront pages, assets, images, and database work, but the result depends on the store, hosting, theme, extensions, and traffic.', 'wpopt'),
-                    __('Cart, checkout, and account routes are excluded from page caching and runtime HTML optimization automatically. Test product, cart, checkout, account, payment, and multilingual flows before using aggressive settings.', 'wpopt'),
+                    __('It can improve cacheable storefront pages, assets, images, and database work, but the result depends on the store, hosting, theme, extensions, and traffic.', 'wp-optimizer'),
+                    __('Cart, checkout, and account routes are excluded from page caching and runtime HTML optimization automatically. Test product, cart, checkout, account, payment, and multilingual flows before using aggressive settings.', 'wp-optimizer'),
                 ),
             ),
             array(
                 'icon'     => 'sliders',
-                'question' => __('How do I exclude a page from caching?', 'wpopt'),
+                'question' => __('How do I exclude a page from caching?', 'wp-optimizer'),
                 'answers'  => array(
-                    sprintf(__('Open the <a href="%s">Static Pages Cache configuration</a> and add an exclude rule for the required path or URL pattern. WooCommerce cart, checkout, and account routes are excluded automatically.', 'wpopt'), wps_admin_route_url('wpopt', 'conf-cache-static_pages')),
+                    sprintf(__('Open the <a href="%s">Static Pages Cache configuration</a> and add an exclude rule for the required path or URL pattern. WooCommerce cart, checkout, and account routes are excluded automatically.', 'wp-optimizer'), wps_admin_route_url('wpopt', 'conf-cache-static_pages')),
                 ),
             ),
             array(
                 'icon'     => 'tools',
-                'question' => __('Does WP Optimizer minify and combine CSS and JavaScript?', 'wpopt'),
+                'question' => __('Does WP Optimizer minify and combine CSS and JavaScript?', 'wp-optimizer'),
                 'answers'  => array(
-                    sprintf(__('Yes. The <a href="%s">Minify module</a> can minify HTML, CSS, and JavaScript and can optionally try to combine CSS or JavaScript files.', 'wpopt'), wps_module_setting_url('wpopt', 'minify')),
-                    __('Enable each option separately, clear cache, and verify important pages after every change because themes and plugins may depend on asset order.', 'wpopt'),
+                    sprintf(__('Yes. The <a href="%s">Minify module</a> can minify HTML, CSS, and JavaScript and can optionally try to combine CSS or JavaScript files.', 'wp-optimizer'), wps_module_setting_url('wpopt', 'minify')),
+                    __('Enable each option separately, clear cache, and verify important pages after every change because themes and plugins may depend on asset order.', 'wp-optimizer'),
                 ),
             ),
             array(
                 'icon'     => 'external',
-                'question' => __('Do I need a CDN to use WP Optimizer?', 'wpopt'),
+                'question' => __('Do I need a CDN to use WP Optimizer?', 'wp-optimizer'),
                 'answers'  => array(
-                    __('No. Caching, minification, media optimization, and server features run without a CDN.', 'wpopt'),
-                    __('You can still use a CDN independently. If it caches HTML, coordinate its purge behavior with WP Optimizer so visitors do not receive stale pages.', 'wpopt'),
+                    __('No. Caching, minification, media optimization, and server features run without a CDN.', 'wp-optimizer'),
+                    __('You can still use a CDN independently. If it caches HTML, coordinate its purge behavior with WP Optimizer so visitors do not receive stale pages.', 'wp-optimizer'),
                 ),
             ),
             array(
                 'icon'     => 'settings',
-                'question' => __('Will WP Optimizer slow down my wp-admin dashboard?', 'wpopt'),
+                'question' => __('Will WP Optimizer slow down my wp-admin dashboard?', 'wp-optimizer'),
                 'answers'  => array(
-                    __('Front-end transformations do not normally run on wp-admin pages, and cache layers can be configured to skip administrative requests.', 'wpopt'),
-                    __('Monitoring, backups, and bulk media or database jobs still use server resources. Schedule heavy work outside busy periods and disable modules you do not need.', 'wpopt'),
+                    __('Front-end transformations do not normally run on wp-admin pages, and cache layers can be configured to skip administrative requests.', 'wp-optimizer'),
+                    __('Monitoring, backups, and bulk media or database jobs still use server resources. Schedule heavy work outside busy periods and disable modules you do not need.', 'wp-optimizer'),
                 ),
             ),
             array(
                 'icon'     => 'external',
-                'question' => __('Can I use WP Optimizer with Cloudflare?', 'wpopt'),
+                'question' => __('Can I use WP Optimizer with Cloudflare?', 'wp-optimizer'),
                 'answers'  => array(
-                    sprintf(__('Yes. The <a href="%s">Cloudflare module</a> can purge the Cloudflare edge cache when WP Optimizer cache is cleared, using a scoped API token and Zone ID.', 'wpopt'), wps_module_setting_url('wpopt', 'cloudflare')),
-                    __('Avoid duplicating HTML caching or optimization features without testing, and verify that both cache layers are purged after content changes.', 'wpopt'),
+                    sprintf(__('Yes. The <a href="%s">Cloudflare module</a> can purge the Cloudflare edge cache when WP Optimizer cache is cleared, using a scoped API token and Zone ID.', 'wp-optimizer'), wps_module_setting_url('wpopt', 'cloudflare')),
+                    __('Avoid duplicating HTML caching or optimization features without testing, and verify that both cache layers are purged after content changes.', 'wp-optimizer'),
                 ),
             ),
             array(
                 'icon'     => 'database',
-                'question' => __('What happens to my cache when I edit a post or product?', 'wpopt'),
+                'question' => __('What happens to my cache when I edit a post or product?', 'wp-optimizer'),
                 'answers'  => array(
-                    __('When automatic purge is enabled, WordPress content-change hooks invalidate affected static-page and query cache entries after posts, products, terms, or comments change.', 'wpopt'),
-                    __('WooCommerce-sensitive routes remain excluded. If the Cloudflare integration is enabled, WP Optimizer also requests the configured edge-cache purge.', 'wpopt'),
+                    __('When automatic purge is enabled, WordPress content-change hooks invalidate affected static-page and query cache entries after posts, products, terms, or comments change.', 'wp-optimizer'),
+                    __('WooCommerce-sensitive routes remain excluded. If the Cloudflare integration is enabled, WP Optimizer also requests the configured edge-cache purge.', 'wp-optimizer'),
                 ),
             ),
             array(
                 'icon'     => 'settings',
-                'question' => __('How do I completely uninstall WP Optimizer and remove its data?', 'wpopt'),
+                'question' => __('How do I completely uninstall WP Optimizer and remove its data?', 'wp-optimizer'),
                 'answers'  => array(
-                    sprintf(__('For the cleanest removal, first use the <a href="%s">module reset tools</a> so active modules can remove managed drop-ins, generated storage, and local server rules. Then deactivate and delete WP Optimizer from the WordPress Plugins screen.', 'wpopt'), wps_module_setting_url('wpopt')),
-                    __('The uninstall routine removes plugin options, scheduled media hooks, and plugin database tables from every site in a Multisite network. Shared WPS framework data is removed only when no other installed component uses it.', 'wpopt'),
+                    sprintf(__('For the cleanest removal, first use the <a href="%s">module reset tools</a> so active modules can remove managed drop-ins, generated storage, and local server rules. Then deactivate and delete WP Optimizer from the WordPress Plugins screen.', 'wp-optimizer'), wps_module_setting_url('wpopt')),
+                    __('The uninstall routine removes plugin options, scheduled media hooks, and plugin database tables from every site in a Multisite network. Shared WPS framework data is removed only when no other installed component uses it.', 'wp-optimizer'),
                 ),
             ),
             array(
                 'icon'     => 'tools',
-                'question' => __('Is there a developer API for clearing the cache?', 'wpopt'),
+                'question' => __('Is there a developer API for clearing the cache?', 'wp-optimizer'),
                 'answers'  => array(
-                    __('Yes. Integration code can guard with function_exists() and call wpopt_flush_cache() to flush active WP Optimizer cache layers.', 'wpopt'),
-                    __('Bulk processes can use wpopt_suspend_cache_auto_purge() and wpopt_resume_cache_auto_purge() to avoid repeated purges. The supported functions and examples are documented in EXTERNAL-API.md.', 'wpopt'),
+                    __('Yes. Integration code can guard with function_exists() and call wpopt_flush_cache() to flush active WP Optimizer cache layers.', 'wp-optimizer'),
+                    __('Bulk processes can use wpopt_suspend_cache_auto_purge() and wpopt_resume_cache_auto_purge() to avoid repeated purges. The supported functions and examples are documented in EXTERNAL-API.md.', 'wp-optimizer'),
                 ),
             ),
         );
@@ -1111,8 +1111,8 @@ class PagesHandler
             'recurrence_name' => isset($schedules[$recurrence]['display']) ? (string)$schedules[$recurrence]['display'] : $recurrence,
             'next_run'        => $next_run ? date_i18n(get_option('date_format') . ' ' . get_option('time_format'), (int)$next_run) : '',
             'tasks'           => array_filter(array(
-                !empty($cron_settings['database']['active']) ? __('Database optimization', 'wpopt') : '',
-                !empty($cron_settings['media']['active']) ? __('Image optimization', 'wpopt') : '',
+                !empty($cron_settings['database']['active']) ? __('Database optimization', 'wp-optimizer') : '',
+                !empty($cron_settings['media']['active']) ? __('Image optimization', 'wp-optimizer') : '',
             )),
         );
     }
@@ -1211,19 +1211,19 @@ class PagesHandler
             <section class="wps-box wpopt-support-card-primary">
                 <div class="wps-donation-wrap">
                     <span class="wpopt-support-icon"><?php echo Graphic::icon('star', 'wpopt-support-icon-svg'); ?></span>
-                    <div class="wps-donation-title"><?php _e('WP Optimizer saves you time', 'wpopt'); ?></div>
-                    <p class="wpopt-muted"><?php _e('Support maintenance, fixes, and new features with a donation.', 'wpopt'); ?></p>
+                    <div class="wps-donation-title"><?php _e('WP Optimizer saves you time', 'wp-optimizer'); ?></div>
+                    <p class="wpopt-muted"><?php _e('Support maintenance, fixes, and new features with a donation.', 'wp-optimizer'); ?></p>
                     <div class="wpopt-inline-actions wpopt-support-cta">
-                        <a class="wps wps-button wpopt-btn is-success" href="<?php echo esc_url($donation_url); ?>" target="_blank" rel="noopener noreferrer"><?php echo Graphic::icon('heart-fill', 'wpopt-btn-icon'); ?><?php _e('Buy me a coffe', 'wpopt'); ?></a>
-                        <a class="wps wps-button wpopt-btn is-neutral" href="<?php echo esc_url($review_url); ?>" target="_blank" rel="noopener noreferrer"><?php echo Graphic::icon('star-outline', 'wpopt-btn-icon'); ?><?php _e('Leave a review', 'wpopt'); ?></a>
+                        <a class="wps wps-button wpopt-btn is-success" href="<?php echo esc_url($donation_url); ?>" target="_blank" rel="noopener noreferrer"><?php echo Graphic::icon('heart-fill', 'wpopt-btn-icon'); ?><?php _e('Buy me a coffe', 'wp-optimizer'); ?></a>
+                        <a class="wps wps-button wpopt-btn is-neutral" href="<?php echo esc_url($review_url); ?>" target="_blank" rel="noopener noreferrer"><?php echo Graphic::icon('star-outline', 'wpopt-btn-icon'); ?><?php _e('Leave a review', 'wp-optimizer'); ?></a>
                     </div>
                 </div>
             </section>
             <section class="wps-box">
-                <h3><?php echo Graphic::icon('headphones', 'wpopt-sidebar-title-icon'); ?><?php _e('Need help?', 'wpopt'); ?></h3>
+                <h3><?php echo Graphic::icon('headphones', 'wpopt-sidebar-title-icon'); ?><?php _e('Need help?', 'wp-optimizer'); ?></h3>
                 <ul class="wps wpopt-link-list">
                     <li>
-                        <a href="https://translate.wordpress.org/projects/wp-plugins/wp-optimizer/"><?php echo Graphic::icon('translate', 'wpopt-link-icon'); ?><?php _e('Help me translating', 'wpopt'); ?></a>
+                        <a href="https://translate.wordpress.org/projects/wp-plugins/wp-optimizer/"><?php echo Graphic::icon('translate', 'wpopt-link-icon'); ?><?php _e('Help me translating', 'wp-optimizer'); ?></a>
                     </li>
                 </ul>
             </section>
@@ -1231,13 +1231,13 @@ class PagesHandler
                 <h3><?php echo Graphic::icon('box', 'wpopt-sidebar-title-icon'); ?>WP Optimizer</h3>
                 <ul class="wps wpopt-link-list">
                     <li>
-                        <a href="<?php echo esc_url(wps_admin_route_url('wpopt', 'welcome', array('do_welcome' => 'true'))); ?>"><?php echo Graphic::icon('pagespeed', 'wpopt-link-icon'); ?><?php _e('Launch wizard', 'wpopt'); ?></a>
+                        <a href="<?php echo esc_url(wps_admin_route_url('wpopt', 'welcome', array('do_welcome' => 'true'))); ?>"><?php echo Graphic::icon('pagespeed', 'wpopt-link-icon'); ?><?php _e('Launch wizard', 'wp-optimizer'); ?></a>
                     </li>
                     <li>
-                        <a href="https://github.com/sh1zen/wp-optimizer/"><?php echo Graphic::icon('code', 'wpopt-link-icon'); ?><?php _e('Source code', 'wpopt'); ?></a>
+                        <a href="https://github.com/sh1zen/wp-optimizer/"><?php echo Graphic::icon('code', 'wpopt-link-icon'); ?><?php _e('Source code', 'wp-optimizer'); ?></a>
                     </li>
                     <li>
-                        <a href="https://sh1zen.github.io/"><?php echo Graphic::icon('user', 'wpopt-link-icon'); ?><?php _e('About me', 'wpopt'); ?></a>
+                        <a href="https://sh1zen.github.io/"><?php echo Graphic::icon('user', 'wpopt-link-icon'); ?><?php _e('About me', 'wp-optimizer'); ?></a>
                     </li>
                 </ul>
             </section>
@@ -1252,7 +1252,7 @@ class PagesHandler
 
         Graphic::render_admin_app([
             'title'      => 'WP Optimizer',
-            'page_title' => $route === 'dashboard' ? __('WP Optimizer Dashboard', 'wpopt') : $route_label,
+            'page_title' => $route === 'dashboard' ? __('WP Optimizer Dashboard', 'wp-optimizer') : $route_label,
             'version'    => 'v' . WPOPT_VERSION,
             'context'    => 'wpopt',
             'active'     => $route,
@@ -1260,7 +1260,7 @@ class PagesHandler
             'brand_icon' => 'gauge',
             'brand_logo' => $this->get_logo_url(),
             'nav'        => $this->get_app_nav(),
-            'help'       => '<strong>' . esc_html__('Need help?', 'wpopt') . '</strong><p><a href="https://wordpress.org/support/plugin/wp-optimizer/" target="_blank" rel="noopener noreferrer">' . esc_html__('Open support', 'wpopt') . '</a></p>',
+            'help'       => '<strong>' . esc_html__('Need help?', 'wp-optimizer') . '</strong><p><a href="https://wordpress.org/support/plugin/wp-optimizer/" target="_blank" rel="noopener noreferrer">' . esc_html__('Open support', 'wp-optimizer') . '</a></p>',
             'content'    => function () use ($route) {
                 $this->render_app_content($route);
             },
@@ -1304,25 +1304,25 @@ class PagesHandler
         $settings_items = $this->get_settings_nav_items('wpopt');
         $nav = array(
             array(
-                'label' => __('Overview', 'wpopt'),
+                'label' => __('Overview', 'wp-optimizer'),
                 'items' => array_merge(
-                    array(array('id' => 'dashboard', 'label' => __('Dashboard', 'wpopt'), 'icon' => 'gauge', 'url' => wps_admin_route_url('wpopt'))),
+                    array(array('id' => 'dashboard', 'label' => __('Dashboard', 'wp-optimizer'), 'icon' => 'gauge', 'url' => wps_admin_route_url('wpopt'))),
                     $this->get_core_settings_nav_items('wpopt'),
-                    array(array('id' => 'page-test', 'label' => __('Page test', 'wpopt'), 'icon' => 'chart', 'url' => wps_admin_route_url('wpopt', 'page-test'))),
-                    array(array('id' => 'faq', 'label' => __('FAQ', 'wpopt'), 'icon' => 'info', 'url' => wps_admin_route_url('wpopt', 'faq')))
+                    array(array('id' => 'page-test', 'label' => __('Page test', 'wp-optimizer'), 'icon' => 'chart', 'url' => wps_admin_route_url('wpopt', 'page-test'))),
+                    array(array('id' => 'faq', 'label' => __('FAQ', 'wp-optimizer'), 'icon' => 'info', 'url' => wps_admin_route_url('wpopt', 'faq')))
                 ),
             ),
         );
 
         if (!empty($settings_items)) {
             $nav[] = array(
-                'label' => __('Settings', 'wpopt'),
+                'label' => __('Settings', 'wp-optimizer'),
                 'items' => $settings_items,
             );
         }
 
         $nav[] = array(
-            'label' => __('Tools', 'wpopt'),
+            'label' => __('Tools', 'wp-optimizer'),
             'items' => $tools,
         );
 
@@ -1332,11 +1332,11 @@ class PagesHandler
     private function get_app_route_label(string $route): string
     {
         $labels = array(
-            'dashboard' => __('Dashboard', 'wpopt'),
-            'welcome'   => __('Welcome', 'wpopt'),
-            'page-test' => __('Page test', 'wpopt'),
-            'faq'       => __('FAQ', 'wpopt'),
-            'tools'     => __('Tools', 'wpopt'),
+            'dashboard' => __('Dashboard', 'wp-optimizer'),
+            'welcome'   => __('Welcome', 'wp-optimizer'),
+            'page-test' => __('Page test', 'wp-optimizer'),
+            'faq'       => __('FAQ', 'wp-optimizer'),
+            'tools'     => __('Tools', 'wp-optimizer'),
         );
 
         if (isset($labels[$route])) {
@@ -1373,7 +1373,7 @@ class PagesHandler
                 return (string)$object->get_configuration_page_label($target);
             }
 
-            return __('Configuration', 'wpopt');
+            return __('Configuration', 'wp-optimizer');
         }
 
         if (str_starts_with($route, 'setting-')) {
@@ -1386,7 +1386,7 @@ class PagesHandler
             }
         }
 
-        return __('Dashboard', 'wpopt');
+        return __('Dashboard', 'wp-optimizer');
     }
 
     private function render_app_content(string $route): void
@@ -1455,36 +1455,36 @@ class PagesHandler
         $modules = $this->get_welcome_modules();
         $value_cards = array(
             array(
-                'title'       => __('Fewer plugins', 'wpopt'),
-                'description' => __('Group cache, media, database, security and diagnostics in one workspace.', 'wpopt'),
+                'title'       => __('Fewer plugins', 'wp-optimizer'),
+                'description' => __('Group cache, media, database, security and diagnostics in one workspace.', 'wp-optimizer'),
             ),
             array(
-                'title'       => __('Focused modules', 'wpopt'),
-                'description' => __('Each module has a precise purpose and can be configured independently.', 'wpopt'),
+                'title'       => __('Focused modules', 'wp-optimizer'),
+                'description' => __('Each module has a precise purpose and can be configured independently.', 'wp-optimizer'),
             ),
             array(
-                'title'       => __('Lower overhead', 'wpopt'),
-                'description' => __('Disable what this site does not need and keep the optimization flow lean.', 'wpopt'),
+                'title'       => __('Lower overhead', 'wp-optimizer'),
+                'description' => __('Disable what this site does not need and keep the optimization flow lean.', 'wp-optimizer'),
             ),
             array(
-                'title'       => __('On/off control', 'wpopt'),
-                'description' => __('Activate only the modules that match the needs of this site.', 'wpopt'),
+                'title'       => __('On/off control', 'wp-optimizer'),
+                'description' => __('Activate only the modules that match the needs of this site.', 'wp-optimizer'),
             ),
             array(
-                'title'       => __('One workflow', 'wpopt'),
-                'description' => __('Manage optimization tools from one coordinated admin area.', 'wpopt'),
+                'title'       => __('One workflow', 'wp-optimizer'),
+                'description' => __('Manage optimization tools from one coordinated admin area.', 'wp-optimizer'),
             ),
         );
         ?>
         <div class="wpopt-advertise-overlay" role="dialog" aria-modal="true" aria-labelledby="wpopt-advertise-welcome-title">
             <div class="wpopt-advertise-page is-welcome">
-                <a class="wpopt-advertise-close" href="<?php echo esc_url(wps_admin_route_url('wpopt')); ?>" aria-label="<?php esc_attr_e('Close', 'wpopt'); ?>">&times;</a>
+                <a class="wpopt-advertise-close" href="<?php echo esc_url(wps_admin_route_url('wpopt')); ?>" aria-label="<?php esc_attr_e('Close', 'wp-optimizer'); ?>">&times;</a>
                 <section class="wpopt-advertise-hero">
-                    <span class="wpopt-advertise-eyebrow"><?php esc_html_e('Welcome to WP Optimizer', 'wpopt'); ?></span>
-                    <h1 id="wpopt-advertise-welcome-title"><?php esc_html_e('One modular workspace for a faster, cleaner WordPress site.', 'wpopt'); ?></h1>
+                    <span class="wpopt-advertise-eyebrow"><?php esc_html_e('Welcome to WP Optimizer', 'wp-optimizer'); ?></span>
+                    <h1 id="wpopt-advertise-welcome-title"><?php esc_html_e('One modular workspace for a faster, cleaner WordPress site.', 'wp-optimizer'); ?></h1>
                 </section>
 
-                <section class="wpopt-advertise-value-grid" aria-label="<?php esc_attr_e('WP Optimizer strengths', 'wpopt'); ?>">
+                <section class="wpopt-advertise-value-grid" aria-label="<?php esc_attr_e('WP Optimizer strengths', 'wp-optimizer'); ?>">
                     <?php foreach ($value_cards as $value_card) : ?>
                         <article class="wpopt-advertise-value-card">
                             <strong><?php echo esc_html($value_card['title']); ?></strong>
@@ -1495,8 +1495,8 @@ class PagesHandler
 
                 <section>
                     <div class="wpopt-panel-head">
-                        <h2><span class="dashicons dashicons-screenoptions" aria-hidden="true"></span><?php esc_html_e('What each module does', 'wpopt'); ?></h2>
-                        <span><?php esc_html_e('Quick overview', 'wpopt'); ?></span>
+                        <h2><span class="dashicons dashicons-screenoptions" aria-hidden="true"></span><?php esc_html_e('What each module does', 'wp-optimizer'); ?></h2>
+                        <span><?php esc_html_e('Quick overview', 'wp-optimizer'); ?></span>
                     </div>
                     <div class="wpopt-advertise-grid">
                         <?php foreach ($modules as $module) : ?>
@@ -1505,7 +1505,7 @@ class PagesHandler
                                 <strong><?php echo esc_html($module['short']); ?></strong>
                                 <small><?php echo esc_html($module['description']); ?></small>
                                 <em class="<?php echo $module['active'] ? 'is-active' : 'is-inactive'; ?>">
-                                    <?php echo $module['active'] ? esc_html__('Active', 'wpopt') : esc_html__('Inactive', 'wpopt'); ?>
+                                    <?php echo $module['active'] ? esc_html__('Active', 'wp-optimizer') : esc_html__('Inactive', 'wp-optimizer'); ?>
                                 </em>
                             </a>
                         <?php endforeach; ?>
@@ -1514,12 +1514,12 @@ class PagesHandler
 
                 <section class="wpopt-advertise-support">
                     <div class="wpopt-advertise-support-copy">
-                        <h2><?php esc_html_e('Start with the modules manager.', 'wpopt'); ?></h2>
-                        <p><?php esc_html_e('Review the active modules, keep only what is useful, then configure each module from its dedicated settings page.', 'wpopt'); ?></p>
+                        <h2><?php esc_html_e('Start with the modules manager.', 'wp-optimizer'); ?></h2>
+                        <p><?php esc_html_e('Review the active modules, keep only what is useful, then configure each module from its dedicated settings page.', 'wp-optimizer'); ?></p>
                     </div>
                     <div class="wpopt-advertise-actions">
-                        <a class="wpopt-advertise-button is-primary" href="<?php echo esc_url(wps_admin_route_url('wpopt', 'setting-modules_handler')); ?>"><?php esc_html_e('Manage modules', 'wpopt'); ?></a>
-                        <a class="wpopt-advertise-button is-muted" href="<?php echo esc_url(wps_admin_route_url('wpopt')); ?>"><?php esc_html_e('Open dashboard', 'wpopt'); ?></a>
+                        <a class="wpopt-advertise-button is-primary" href="<?php echo esc_url(wps_admin_route_url('wpopt', 'setting-modules_handler')); ?>"><?php esc_html_e('Manage modules', 'wp-optimizer'); ?></a>
+                        <a class="wpopt-advertise-button is-muted" href="<?php echo esc_url(wps_admin_route_url('wpopt')); ?>"><?php esc_html_e('Open dashboard', 'wp-optimizer'); ?></a>
                     </div>
                 </section>
             </div>
@@ -1564,8 +1564,8 @@ class PagesHandler
             $welcome_modules[] = array(
                 'slug'        => $slug,
                 'name'        => (string)($module['name'] ?? $slug),
-                'short'       => $short_labels[$slug] ?? __('Focused tool', 'wpopt'),
-                'description' => $descriptions[$slug] ?? sprintf(__('Manages the features of the %s module while keeping its configuration separate.', 'wpopt'), (string)($module['name'] ?? $slug)),
+                'short'       => $short_labels[$slug] ?? __('Focused tool', 'wp-optimizer'),
+                'description' => $descriptions[$slug] ?? sprintf(__('Manages the features of the %s module while keeping its configuration separate.', 'wp-optimizer'), (string)($module['name'] ?? $slug)),
                 'active'      => $active,
                 'url'         => $url,
             );
@@ -1577,42 +1577,42 @@ class PagesHandler
     private function get_welcome_module_short_labels(): array
     {
         return array(
-            'activitylog'         => __('Activity visibility', 'wpopt'),
-            'cache'               => __('Cache layers', 'wpopt'),
-            'cloudflare'          => __('Cloudflare tools', 'wpopt'),
-            'cron'                => __('Scheduled tasks', 'wpopt'),
-            'database'            => __('Database care', 'wpopt'),
-            'media'               => __('Media weight', 'wpopt'),
-            'minify'              => __('Asset cleanup', 'wpopt'),
-            'pagespeed'           => __('PageSpeed checks', 'wpopt'),
-            'performance_monitor' => __('Request metrics', 'wpopt'),
-            'wp_customizer'       => __('WordPress toggles', 'wpopt'),
-            'wp_info'             => __('System details', 'wpopt'),
-            'wp_mail'             => __('Mail logging', 'wpopt'),
-            'wp_optimizer'        => __('Server tuning', 'wpopt'),
-            'wp_security'         => __('Hardening', 'wpopt'),
-            'wp_updates'          => __('Update control', 'wpopt'),
+            'activitylog'         => __('Activity visibility', 'wp-optimizer'),
+            'cache'               => __('Cache layers', 'wp-optimizer'),
+            'cloudflare'          => __('Cloudflare tools', 'wp-optimizer'),
+            'cron'                => __('Scheduled tasks', 'wp-optimizer'),
+            'database'            => __('Database care', 'wp-optimizer'),
+            'media'               => __('Media weight', 'wp-optimizer'),
+            'minify'              => __('Asset cleanup', 'wp-optimizer'),
+            'pagespeed'           => __('PageSpeed checks', 'wp-optimizer'),
+            'performance_monitor' => __('Request metrics', 'wp-optimizer'),
+            'wp_customizer'       => __('WordPress toggles', 'wp-optimizer'),
+            'wp_info'             => __('System details', 'wp-optimizer'),
+            'wp_mail'             => __('Mail logging', 'wp-optimizer'),
+            'wp_optimizer'        => __('Server tuning', 'wp-optimizer'),
+            'wp_security'         => __('Hardening', 'wp-optimizer'),
+            'wp_updates'          => __('Update control', 'wp-optimizer'),
         );
     }
 
     private function get_welcome_module_descriptions(): array
     {
         return array(
-            'activitylog'         => __('Logs relevant user, content, and taxonomy activity to support monitoring and diagnostics.', 'wpopt'),
-            'cache'               => __('Manages static, object, WP_Query, and database query caches with dedicated rules, expiration, and cleanup.', 'wpopt'),
-            'cloudflare'          => __('Manages Cloudflare configurations and actions connected to this WordPress installation.', 'wpopt'),
-            'cron'                => __('Schedules automatic optimizations and centralizes recurring plugin tasks.', 'wpopt'),
-            'database'            => __('Cleans, optimizes, and backs up the database, including a review of autoloaded options.', 'wpopt'),
-            'media'               => __('Optimizes images, conversions, and media cleanup to reduce upload size and bandwidth usage.', 'wpopt'),
-            'minify'              => __('Minifies HTML, CSS, and JavaScript to reduce page weight and limit unnecessary assets.', 'wpopt'),
-            'pagespeed'           => __('Helps configure and verify PageSpeed optimizations when they are available on the server.', 'wpopt'),
-            'performance_monitor' => __('Monitors slow requests, response times, and useful metrics to identify where improvements are needed.', 'wpopt'),
-            'wp_customizer'       => __('Lets you disable or adjust WordPress and admin features that the project does not need.', 'wpopt'),
-            'wp_info'             => __('Displays technical information about WordPress, the server, and the environment to support debugging.', 'wpopt'),
-            'wp_mail'             => __('Logs emails sent by WordPress so you can review their content, status, and traceability.', 'wpopt'),
-            'wp_optimizer'        => __('Applies server and WordPress optimizations such as compression, browser caching, and local rules.', 'wpopt'),
-            'wp_security'         => __('Hardens WordPress and server settings to reduce common attack surfaces.', 'wpopt'),
-            'wp_updates'          => __('Controls core, plugin, and theme update behavior according to your rules.', 'wpopt'),
+            'activitylog'         => __('Logs relevant user, content, and taxonomy activity to support monitoring and diagnostics.', 'wp-optimizer'),
+            'cache'               => __('Manages static, object, WP_Query, and database query caches with dedicated rules, expiration, and cleanup.', 'wp-optimizer'),
+            'cloudflare'          => __('Manages Cloudflare configurations and actions connected to this WordPress installation.', 'wp-optimizer'),
+            'cron'                => __('Schedules automatic optimizations and centralizes recurring plugin tasks.', 'wp-optimizer'),
+            'database'            => __('Cleans, optimizes, and backs up the database, including a review of autoloaded options.', 'wp-optimizer'),
+            'media'               => __('Optimizes images, conversions, and media cleanup to reduce upload size and bandwidth usage.', 'wp-optimizer'),
+            'minify'              => __('Minifies HTML, CSS, and JavaScript to reduce page weight and limit unnecessary assets.', 'wp-optimizer'),
+            'pagespeed'           => __('Helps configure and verify PageSpeed optimizations when they are available on the server.', 'wp-optimizer'),
+            'performance_monitor' => __('Monitors slow requests, response times, and useful metrics to identify where improvements are needed.', 'wp-optimizer'),
+            'wp_customizer'       => __('Lets you disable or adjust WordPress and admin features that the project does not need.', 'wp-optimizer'),
+            'wp_info'             => __('Displays technical information about WordPress, the server, and the environment to support debugging.', 'wp-optimizer'),
+            'wp_mail'             => __('Logs emails sent by WordPress so you can review their content, status, and traceability.', 'wp-optimizer'),
+            'wp_optimizer'        => __('Applies server and WordPress optimizations such as compression, browser caching, and local rules.', 'wp-optimizer'),
+            'wp_security'         => __('Hardens WordPress and server settings to reduce common attack surfaces.', 'wp-optimizer'),
+            'wp_updates'          => __('Controls core, plugin, and theme update behavior according to your rules.', 'wp-optimizer'),
         );
     }
 
@@ -1624,45 +1624,45 @@ class PagesHandler
             'homeUrl' => home_url('/'),
             'scanPauseMs' => 250,
             'labels'  => array(
-                'preparing'     => __('Preparing signed test URL...', 'wpopt'),
-                'baseline'      => __('Measuring without WP Optimizer configuration...', 'wpopt'),
-                'activeEmpty'   => __('Scanning current WP Optimizer configuration without diagnostics...', 'wpopt'),
-                'warmup'        => __('Warming up current WP Optimizer configuration...', 'wpopt'),
-                'active'        => __('Measuring with current WP Optimizer configuration...', 'wpopt'),
-                'complete'      => __('Test complete.', 'wpopt'),
-                'failed'        => __('The test could not be completed.', 'wpopt'),
-                'running'       => __('Running', 'wpopt'),
-                'done'          => __('Done', 'wpopt'),
-                'failedStatus'  => __('Failed', 'wpopt'),
-                'notAvailable'  => __('N/A', 'wpopt'),
-                'sameSiteError' => __('Enter a valid URL from this WordPress site.', 'wpopt'),
-                'prepareFailed' => __('Could not prepare the test. Reload this admin page and try again.', 'wpopt'),
-                'networkFailed' => __('%1$s: request failed. Check the connection and try again.', 'wpopt'),
-                'httpFailed' => __('%1$s failed (HTTP %2$s). No comparison was produced.', 'wpopt'),
-                'invalidResponse' => __('%1$s: the signed test response could not be verified. Check redirects or caching and try again.', 'wpopt'),
-                'pass'          => __('Pass', 'wpopt'),
-                'status'        => __('Status', 'wpopt'),
-                'total'         => __('Total', 'wpopt'),
-                'ttfb'          => __('TTFB', 'wpopt'),
-                'cache'         => __('Cache', 'wpopt'),
-                'memory'        => __('Memory', 'wpopt'),
-                'size'          => __('Size', 'wpopt'),
-                'baselineValue' => __('Baseline', 'wpopt'),
-                'speedChange'   => __('Speed change', 'wpopt'),
-                'ttfbChange'    => __('TTFB change', 'wpopt'),
-                'memoryChange'  => __('Memory change', 'wpopt'),
-                'sizeChange'    => __('Size change', 'wpopt'),
-                'currentVsBase' => __('Current vs baseline', 'wpopt'),
-                'diagnosticsEmpty'      => __('No actionable warmup diagnostics were captured for this run.', 'wpopt'),
-                'heavyHooks'            => __('Heavy hooks and callbacks', 'wpopt'),
-                'slowQueries'           => __('Slow queries', 'wpopt'),
-                'repeatedQueries'       => __('Repeated queries', 'wpopt'),
-                'callbacks'             => __('Callbacks', 'wpopt'),
-                'callbackSamples'       => __('Callback samples', 'wpopt'),
-                'time'                  => __('Time', 'wpopt'),
-                'count'                 => __('Count', 'wpopt'),
-                'caller'                => __('Caller', 'wpopt'),
-                'query'                 => __('Query', 'wpopt'),
+                'preparing'     => __('Preparing signed test URL...', 'wp-optimizer'),
+                'baseline'      => __('Measuring without WP Optimizer configuration...', 'wp-optimizer'),
+                'activeEmpty'   => __('Scanning current WP Optimizer configuration without diagnostics...', 'wp-optimizer'),
+                'warmup'        => __('Warming up current WP Optimizer configuration...', 'wp-optimizer'),
+                'active'        => __('Measuring with current WP Optimizer configuration...', 'wp-optimizer'),
+                'complete'      => __('Test complete.', 'wp-optimizer'),
+                'failed'        => __('The test could not be completed.', 'wp-optimizer'),
+                'running'       => __('Running', 'wp-optimizer'),
+                'done'          => __('Done', 'wp-optimizer'),
+                'failedStatus'  => __('Failed', 'wp-optimizer'),
+                'notAvailable'  => __('N/A', 'wp-optimizer'),
+                'sameSiteError' => __('Enter a valid URL from this WordPress site.', 'wp-optimizer'),
+                'prepareFailed' => __('Could not prepare the test. Reload this admin page and try again.', 'wp-optimizer'),
+                'networkFailed' => __('%1$s: request failed. Check the connection and try again.', 'wp-optimizer'),
+                'httpFailed' => __('%1$s failed (HTTP %2$s). No comparison was produced.', 'wp-optimizer'),
+                'invalidResponse' => __('%1$s: the signed test response could not be verified. Check redirects or caching and try again.', 'wp-optimizer'),
+                'pass'          => __('Pass', 'wp-optimizer'),
+                'status'        => __('Status', 'wp-optimizer'),
+                'total'         => __('Total', 'wp-optimizer'),
+                'ttfb'          => __('TTFB', 'wp-optimizer'),
+                'cache'         => __('Cache', 'wp-optimizer'),
+                'memory'        => __('Memory', 'wp-optimizer'),
+                'size'          => __('Size', 'wp-optimizer'),
+                'baselineValue' => __('Baseline', 'wp-optimizer'),
+                'speedChange'   => __('Speed change', 'wp-optimizer'),
+                'ttfbChange'    => __('TTFB change', 'wp-optimizer'),
+                'memoryChange'  => __('Memory change', 'wp-optimizer'),
+                'sizeChange'    => __('Size change', 'wp-optimizer'),
+                'currentVsBase' => __('Current vs baseline', 'wp-optimizer'),
+                'diagnosticsEmpty'      => __('No actionable warmup diagnostics were captured for this run.', 'wp-optimizer'),
+                'heavyHooks'            => __('Heavy hooks and callbacks', 'wp-optimizer'),
+                'slowQueries'           => __('Slow queries', 'wp-optimizer'),
+                'repeatedQueries'       => __('Repeated queries', 'wp-optimizer'),
+                'callbacks'             => __('Callbacks', 'wp-optimizer'),
+                'callbackSamples'       => __('Callback samples', 'wp-optimizer'),
+                'time'                  => __('Time', 'wp-optimizer'),
+                'count'                 => __('Count', 'wp-optimizer'),
+                'caller'                => __('Caller', 'wp-optimizer'),
+                'query'                 => __('Query', 'wp-optimizer'),
             ),
         ));
         ?>
@@ -1672,53 +1672,53 @@ class PagesHandler
                     <div class="wpopt-page-test-stack">
                         <div class="wpopt-page-test-head">
                             <div>
-                                <h2><?php esc_html_e('Test a page', 'wpopt'); ?></h2>
-                                <p><?php esc_html_e('Compare a measured request without WP Optimizer configuration against a warmed measured request using the current configuration. The first current-configuration scan is empty, then the diagnostic warmup collects slow queries and hooks before the final measurement.', 'wpopt'); ?></p>
+                                <h2><?php esc_html_e('Test a page', 'wp-optimizer'); ?></h2>
+                                <p><?php esc_html_e('Compare a measured request without WP Optimizer configuration against a warmed measured request using the current configuration. The first current-configuration scan is empty, then the diagnostic warmup collects slow queries and hooks before the final measurement.', 'wp-optimizer'); ?></p>
                             </div>
-                            <span class="wpopt-page-test-badge"><?php esc_html_e('Live test', 'wpopt'); ?></span>
+                            <span class="wpopt-page-test-badge"><?php esc_html_e('Live test', 'wp-optimizer'); ?></span>
                         </div>
 
                         <form class="wpopt-page-test-form" data-wpopt-page-test-form>
-                            <label class="screen-reader-text" for="wpopt-page-test-url"><?php esc_html_e('Page URL', 'wpopt'); ?></label>
+                            <label class="screen-reader-text" for="wpopt-page-test-url"><?php esc_html_e('Page URL', 'wp-optimizer'); ?></label>
                             <input id="wpopt-page-test-url" type="url" inputmode="url" placeholder="<?php echo esc_attr(home_url('/')); ?>" value="<?php echo esc_attr(home_url('/')); ?>" data-wpopt-page-test-url>
                             <button type="submit" class="wps wps-button wpopt-btn is-info" data-wpopt-page-test-submit>
                                 <span class="wpopt-page-test-button-progress" aria-hidden="true"></span>
                                 <span class="dashicons dashicons-performance"></span>
-                                <span data-wpopt-page-test-button-text><?php esc_html_e('Test now', 'wpopt'); ?></span>
+                                <span data-wpopt-page-test-button-text><?php esc_html_e('Test now', 'wp-optimizer'); ?></span>
                             </button>
                         </form>
 
                         <div class="wpopt-page-test-status" data-wpopt-page-test-status aria-live="polite">
-                            <?php esc_html_e('Ready to test.', 'wpopt'); ?>
+                            <?php esc_html_e('Ready to test.', 'wp-optimizer'); ?>
                         </div>
 
                         <div class="wpopt-page-test-steps" data-wpopt-page-test-steps>
                             <div class="wpopt-page-test-step" data-step="disabled">
                                 <span class="dashicons dashicons-hidden"></span>
-                                <strong><?php esc_html_e('Without WP Optimizer config', 'wpopt'); ?></strong>
-                                <small><?php esc_html_e('Measured signed request with WP Optimizer modules bypassed for this load.', 'wpopt'); ?></small>
+                                <strong><?php esc_html_e('Without WP Optimizer config', 'wp-optimizer'); ?></strong>
+                                <small><?php esc_html_e('Measured signed request with WP Optimizer modules bypassed for this load.', 'wp-optimizer'); ?></small>
                                 <div class="wpopt-page-test-step-metrics">
-                                    <span><b><?php esc_html_e('Request time', 'wpopt'); ?></b><em data-wpopt-page-test-speed>--</em></span>
-                                    <span><b><?php esc_html_e('Memory', 'wpopt'); ?></b><em data-wpopt-page-test-memory>--</em></span>
+                                    <span><b><?php esc_html_e('Request time', 'wp-optimizer'); ?></b><em data-wpopt-page-test-speed>--</em></span>
+                                    <span><b><?php esc_html_e('Memory', 'wp-optimizer'); ?></b><em data-wpopt-page-test-memory>--</em></span>
                                 </div>
                             </div>
                             <div class="wpopt-page-test-step" data-step="active_empty">
                                 <span class="dashicons dashicons-update"></span>
-                                <strong><?php esc_html_e('Current config empty scan', 'wpopt'); ?></strong>
-                                <small><?php esc_html_e('Unmeasured request with the current configuration before diagnostic warmup.', 'wpopt'); ?></small>
+                                <strong><?php esc_html_e('Current config empty scan', 'wp-optimizer'); ?></strong>
+                                <small><?php esc_html_e('Unmeasured request with the current configuration before diagnostic warmup.', 'wp-optimizer'); ?></small>
                             </div>
                             <div class="wpopt-page-test-step" data-step="warmup">
                                 <span class="dashicons dashicons-search"></span>
-                                <strong><?php esc_html_e('Current config diagnostic warmup', 'wpopt'); ?></strong>
-                                <small><?php esc_html_e('Unmeasured request that scans slow queries, repeated queries, hooks and callbacks.', 'wpopt'); ?></small>
+                                <strong><?php esc_html_e('Current config diagnostic warmup', 'wp-optimizer'); ?></strong>
+                                <small><?php esc_html_e('Unmeasured request that scans slow queries, repeated queries, hooks and callbacks.', 'wp-optimizer'); ?></small>
                             </div>
                             <div class="wpopt-page-test-step" data-step="active">
                                 <span class="dashicons dashicons-chart-line"></span>
-                                <strong><?php esc_html_e('Current config measurement', 'wpopt'); ?></strong>
-                                <small><?php esc_html_e('Measured request with the plugin active exactly as configured now.', 'wpopt'); ?></small>
+                                <strong><?php esc_html_e('Current config measurement', 'wp-optimizer'); ?></strong>
+                                <small><?php esc_html_e('Measured request with the plugin active exactly as configured now.', 'wp-optimizer'); ?></small>
                                 <div class="wpopt-page-test-step-metrics">
-                                    <span><b><?php esc_html_e('Request time', 'wpopt'); ?></b><em data-wpopt-page-test-speed>--</em></span>
-                                    <span><b><?php esc_html_e('Memory', 'wpopt'); ?></b><em data-wpopt-page-test-memory>--</em></span>
+                                    <span><b><?php esc_html_e('Request time', 'wp-optimizer'); ?></b><em data-wpopt-page-test-speed>--</em></span>
+                                    <span><b><?php esc_html_e('Memory', 'wp-optimizer'); ?></b><em data-wpopt-page-test-memory>--</em></span>
                                 </div>
                             </div>
                         </div>
@@ -1727,46 +1727,46 @@ class PagesHandler
                             <div class="wpopt-page-test-result-summary" data-wpopt-page-test-summary hidden>
                                 <div class="wpopt-page-test-result-card" data-summary-card="speed">
                                     <span class="dashicons dashicons-performance"></span>
-                                    <small><?php esc_html_e('Speed change', 'wpopt'); ?></small>
+                                    <small><?php esc_html_e('Speed change', 'wp-optimizer'); ?></small>
                                     <strong data-summary-value>--</strong>
-                                    <em data-summary-detail><?php esc_html_e('Current vs baseline', 'wpopt'); ?></em>
+                                    <em data-summary-detail><?php esc_html_e('Current vs baseline', 'wp-optimizer'); ?></em>
                                 </div>
                                 <div class="wpopt-page-test-result-card" data-summary-card="ttfb">
                                     <span class="dashicons dashicons-clock"></span>
-                                    <small><?php esc_html_e('TTFB change', 'wpopt'); ?></small>
+                                    <small><?php esc_html_e('TTFB change', 'wp-optimizer'); ?></small>
                                     <strong data-summary-value>--</strong>
-                                    <em data-summary-detail><?php esc_html_e('Current vs baseline', 'wpopt'); ?></em>
+                                    <em data-summary-detail><?php esc_html_e('Current vs baseline', 'wp-optimizer'); ?></em>
                                 </div>
                                 <div class="wpopt-page-test-result-card" data-summary-card="memory">
                                     <span class="dashicons dashicons-database"></span>
-                                    <small><?php esc_html_e('Memory change', 'wpopt'); ?></small>
+                                    <small><?php esc_html_e('Memory change', 'wp-optimizer'); ?></small>
                                     <strong data-summary-value>--</strong>
-                                    <em data-summary-detail><?php esc_html_e('Current vs baseline', 'wpopt'); ?></em>
+                                    <em data-summary-detail><?php esc_html_e('Current vs baseline', 'wp-optimizer'); ?></em>
                                 </div>
                                 <div class="wpopt-page-test-result-card" data-summary-card="size">
                                     <span class="dashicons dashicons-media-code"></span>
-                                    <small><?php esc_html_e('Size change', 'wpopt'); ?></small>
+                                    <small><?php esc_html_e('Size change', 'wp-optimizer'); ?></small>
                                     <strong data-summary-value>--</strong>
-                                    <em data-summary-detail><?php esc_html_e('Current vs baseline', 'wpopt'); ?></em>
+                                    <em data-summary-detail><?php esc_html_e('Current vs baseline', 'wp-optimizer'); ?></em>
                                 </div>
                             </div>
                             <div class="wpopt-page-test-results-list" data-wpopt-page-test-result-body></div>
                         </div>
 
                         <div class="wpopt-page-test-diagnostics" data-wpopt-page-test-diagnostics hidden>
-                            <h3 class="wpopt-page-test-diagnostics-title"><?php esc_html_e('Optimization opportunities found during warmup', 'wpopt'); ?></h3>
+                            <h3 class="wpopt-page-test-diagnostics-title"><?php esc_html_e('Optimization opportunities found during warmup', 'wp-optimizer'); ?></h3>
 
                             <div class="wpopt-page-test-diagnostics-grid">
                                 <section class="wpopt-page-test-diagnostics-card" data-wpopt-page-test-diagnostics-hooks>
-                                    <h4><?php esc_html_e('Heavy hooks and callbacks', 'wpopt'); ?></h4>
+                                    <h4><?php esc_html_e('Heavy hooks and callbacks', 'wp-optimizer'); ?></h4>
                                     <div class="wpopt-page-test-diagnostics-content"></div>
                                 </section>
                                 <section class="wpopt-page-test-diagnostics-card" data-wpopt-page-test-diagnostics-queries>
-                                    <h4><?php esc_html_e('Slow queries', 'wpopt'); ?></h4>
+                                    <h4><?php esc_html_e('Slow queries', 'wp-optimizer'); ?></h4>
                                     <div class="wpopt-page-test-diagnostics-content"></div>
                                 </section>
                                 <section class="wpopt-page-test-diagnostics-card" data-wpopt-page-test-diagnostics-duplicates>
-                                    <h4><?php esc_html_e('Repeated queries', 'wpopt'); ?></h4>
+                                    <h4><?php esc_html_e('Repeated queries', 'wp-optimizer'); ?></h4>
                                     <div class="wpopt-page-test-diagnostics-content"></div>
                                 </section>
                             </div>
@@ -1794,15 +1794,15 @@ class PagesHandler
             array(
                 'class'  => 'is-blue',
                 'icon'   => 'dashicons-admin-plugins',
-                'label'  => __('Active modules', 'wpopt'),
+                'label'  => __('Active modules', 'wp-optimizer'),
                 'value'  => (string)$active_modules_count,
-                'note'   => __('Enabled in module settings', 'wpopt'),
+                'note'   => __('Enabled in module settings', 'wp-optimizer'),
                 'detail' => sprintf(
                     _n(
                         '%s optimization module is currently enabled and available from the modules panel.',
                         '%s optimization modules are currently enabled and available from the modules panel.',
                         $active_modules_count,
-                        'wpopt'
+                        'wp-optimizer'
                     ),
                     number_format_i18n($active_modules_count)
                 ),
@@ -1810,41 +1810,41 @@ class PagesHandler
             array(
                 'class'  => 'is-green',
                 'icon'   => 'dashicons-clock',
-                'label'  => __('Cron status', 'wpopt'),
-                'value'  => $is_cron_running ? __('Running', 'wpopt') : __('Idle', 'wpopt'),
-                'note'   => $is_cron_running ? __('Optimization job in progress', 'wpopt') : __('Background scheduler ready', 'wpopt'),
+                'label'  => __('Cron status', 'wp-optimizer'),
+                'value'  => $is_cron_running ? __('Running', 'wp-optimizer') : __('Idle', 'wp-optimizer'),
+                'note'   => $is_cron_running ? __('Optimization job in progress', 'wp-optimizer') : __('Background scheduler ready', 'wp-optimizer'),
                 'detail' => $is_cron_running
-                    ? __('A background optimization job is currently running. Avoid launching overlapping tasks until it finishes.', 'wpopt')
-                    : __('The background scheduler is ready and no optimization job is currently running.', 'wpopt'),
+                    ? __('A background optimization job is currently running. Avoid launching overlapping tasks until it finishes.', 'wp-optimizer')
+                    : __('The background scheduler is ready and no optimization job is currently running.', 'wp-optimizer'),
             ),
             array(
                 'class'  => 'is-purple',
                 'icon'   => 'dashicons-chart-area',
-                'label'  => __('Tracking', 'wpopt'),
-                'value'  => $tracking_enabled ? __('Enabled', 'wpopt') : __('Disabled', 'wpopt'),
-                'note'   => $tracking_enabled ? __('Monitoring is active', 'wpopt') : __('Monitoring is disabled', 'wpopt'),
+                'label'  => __('Tracking', 'wp-optimizer'),
+                'value'  => $tracking_enabled ? __('Enabled', 'wp-optimizer') : __('Disabled', 'wp-optimizer'),
+                'note'   => $tracking_enabled ? __('Monitoring is active', 'wp-optimizer') : __('Monitoring is disabled', 'wp-optimizer'),
                 'detail' => $tracking_enabled
-                    ? __('Tracking sends small pieces of information when errors occur to help improve the plugin.', 'wpopt')
-                    : __('Tracking sends small pieces of information when errors occur to help improve the plugin.', 'wpopt'),
+                    ? __('Tracking sends small pieces of information when errors occur to help improve the plugin.', 'wp-optimizer')
+                    : __('Tracking sends small pieces of information when errors occur to help improve the plugin.', 'wp-optimizer'),
             ),
             array(
                 'class'  => 'is-orange',
                 'icon'   => 'dashicons-database',
-                'label'  => __('Persistent cache', 'wpopt'),
-                'value'  => $persistent_cache ? __('Enabled', 'wpopt') : __('Not configured', 'wpopt'),
-                'note'   => $persistent_cache ? __('Persistent layer detected', 'wpopt') : __('Setup recommended', 'wpopt'),
+                'label'  => __('Persistent cache', 'wp-optimizer'),
+                'value'  => $persistent_cache ? __('Enabled', 'wp-optimizer') : __('Not configured', 'wp-optimizer'),
+                'note'   => $persistent_cache ? __('Persistent layer detected', 'wp-optimizer') : __('Setup recommended', 'wp-optimizer'),
                 'detail' => $persistent_cache
-                    ? __('A persistent object cache layer is detected for this WordPress installation.', 'wpopt')
-                    : __('No persistent object cache layer is detected. Configure Redis or Memcached support to reduce repeated database work. To activate persistent cache for your site copy this define(\'WP_PERSISTENT_CACHE\', true); in wp-config.php', 'wpopt'),
+                    ? __('A persistent object cache layer is detected for this WordPress installation.', 'wp-optimizer')
+                    : __('No persistent object cache layer is detected. Configure Redis or Memcached support to reduce repeated database work. To activate persistent cache for your site copy this define(\'WP_PERSISTENT_CACHE\', true); in wp-config.php', 'wp-optimizer'),
             ),
             array(
                 'class'        => 'is-mint',
                 'icon'         => 'dashicons-shield-alt',
-                'label'        => __('Optimization health', 'wpopt'),
-                'value'        => $health_score >= 80 ? __('Good', 'wpopt') : __('Needs review', 'wpopt'),
+                'label'        => __('Optimization health', 'wp-optimizer'),
+                'value'        => $health_score >= 80 ? __('Good', 'wp-optimizer') : __('Needs review', 'wp-optimizer'),
                 'note'         => sprintf('%s%%', number_format_i18n($health_score)),
                 'detail'       => sprintf(
-                    __('Current health score is %s%%. It is calculated from recommended module coverage, scheduler readiness, tracking status, persistent cache availability, and current server load.', 'wpopt'),
+                    __('Current health score is %s%%. It is calculated from recommended module coverage, scheduler readiness, tracking status, persistent cache availability, and current server load.', 'wp-optimizer'),
                     number_format_i18n($health_score)
                 ),
                 'health_meter' => true,
@@ -1856,24 +1856,24 @@ class PagesHandler
             <div class="wpopt-app-dashboard-main">
                 <block class="wps wpopt-hero wpopt-dashboard-hero">
                     <div class="wpopt-hero-copy">
-                        <h2><?php esc_html_e('Site optimization', 'wpopt'); ?></h2>
-                        <p class="wpopt-hero-subtitle"><?php esc_html_e('Review enabled modules, check scheduled tasks, and open the tools you need. Each module has its own settings.', 'wpopt'); ?></p>
+                        <h2><?php esc_html_e('Site optimization', 'wp-optimizer'); ?></h2>
+                        <p class="wpopt-hero-subtitle"><?php esc_html_e('Review enabled modules, check scheduled tasks, and open the tools you need. Each module has its own settings.', 'wp-optimizer'); ?></p>
                         <div class="wpopt-actions">
                             <a class="wps wps-button wpopt-btn is-info" href="<?php echo esc_url(wps_admin_route_url('wpopt', 'setting-modules_handler')); ?>">
-                                <span class="dashicons dashicons-screenoptions"></span><?php esc_html_e('Manage Modules', 'wpopt'); ?>
+                                <span class="dashicons dashicons-screenoptions"></span><?php esc_html_e('Manage Modules', 'wp-optimizer'); ?>
                             </a>
                             <a class="wps wps-button wpopt-btn is-neutral" href="<?php echo esc_url(wps_module_setting_url('wpopt')); ?>">
-                                <span class="dashicons dashicons-admin-generic"></span><?php esc_html_e('Configure Modules', 'wpopt'); ?>
+                                <span class="dashicons dashicons-admin-generic"></span><?php esc_html_e('Configure Modules', 'wp-optimizer'); ?>
                             </a>
                         </div>
                     </div>
                 </block>
                 <block class="wps wpopt-panel wpopt-overview-panel">
                     <div class="wpopt-panel-head">
-                        <h2><span class="dashicons dashicons-chart-line"></span><?php esc_html_e('System Overview', 'wpopt'); ?></h2>
-                        <span><?php echo esc_html(sprintf(__('Last updated: %s', 'wpopt'), $dashboard['last_updated'])); ?></span>
+                        <h2><span class="dashicons dashicons-chart-line"></span><?php esc_html_e('System Overview', 'wp-optimizer'); ?></h2>
+                        <span><?php echo esc_html(sprintf(__('Last updated: %s', 'wp-optimizer'), $dashboard['last_updated'])); ?></span>
                     </div>
-                    <div class="wpopt-scroll-x" role="region" aria-label="<?php esc_attr_e('System overview cards', 'wpopt'); ?>">
+                    <div class="wpopt-scroll-x" role="region" aria-label="<?php esc_attr_e('System overview cards', 'wp-optimizer'); ?>">
                         <div class="wpopt-kpi-grid">
                             <?php foreach ($overview_cards as $overview_card) : ?>
                                 <button
@@ -1899,17 +1899,17 @@ class PagesHandler
                 </block>
                 <block class="wps wpopt-panel wpopt-modules-panel">
                     <div class="wpopt-panel-head">
-                        <h2><span class="dashicons dashicons-admin-plugins"></span><?php esc_html_e('Modules', 'wpopt'); ?></h2>
-                        <span><?php esc_html_e('Manage and access your optimization tools', 'wpopt'); ?></span>
+                        <h2><span class="dashicons dashicons-admin-plugins"></span><?php esc_html_e('Modules', 'wp-optimizer'); ?></h2>
+                        <span><?php esc_html_e('Manage and access your optimization tools', 'wp-optimizer'); ?></span>
                     </div>
                     <div class="wpopt-module-grid">
                         <?php foreach ($dashboard['module_cards'] as $module_card) : ?>
                             <a class="wpopt-module-card" href="<?php echo esc_url($module_card['url']); ?>">
                                 <span class="wpopt-module-icon dashicons <?php echo esc_attr($module_card['icon']); ?>"></span>
                                 <strong><?php echo esc_html($module_card['name']); ?></strong>
-                                <small><?php echo $module_card['active'] ? esc_html__('Ready for optimization tasks.', 'wpopt') : esc_html__('Module currently disabled.', 'wpopt'); ?></small>
+                                <small><?php echo $module_card['active'] ? esc_html__('Ready for optimization tasks.', 'wp-optimizer') : esc_html__('Module currently disabled.', 'wp-optimizer'); ?></small>
                                 <span class="wpopt-module-foot">
-                                    <em class="<?php echo $module_card['active'] ? 'is-active' : 'is-inactive'; ?>"><?php echo $module_card['active'] ? esc_html__('Active', 'wpopt') : esc_html__('Inactive', 'wpopt'); ?></em>
+                                    <em class="<?php echo $module_card['active'] ? 'is-active' : 'is-inactive'; ?>"><?php echo $module_card['active'] ? esc_html__('Active', 'wp-optimizer') : esc_html__('Inactive', 'wp-optimizer'); ?></em>
                                     <span class="dashicons dashicons-arrow-right-alt2"></span>
                                 </span>
                             </a>
@@ -1917,24 +1917,24 @@ class PagesHandler
                     </div>
                     <div class="wpopt-view-all">
                         <a href="<?php echo esc_url(wps_admin_route_url('wpopt', 'setting-modules_handler')); ?>">
-                            <span class="dashicons dashicons-screenoptions"></span><?php esc_html_e('View all modules', 'wpopt'); ?>
+                            <span class="dashicons dashicons-screenoptions"></span><?php esc_html_e('View all modules', 'wp-optimizer'); ?>
                         </a>
                     </div>
                 </block>
                 <?php if (!empty($cron_overview['active'])) : ?>
                     <block class="wps wpopt-panel wpopt-cron-overview-panel">
                         <div class="wpopt-panel-head">
-                            <h2><span class="dashicons dashicons-clock"></span><?php esc_html_e('WP Optimizer cron', 'wpopt'); ?></h2>
+                            <h2><span class="dashicons dashicons-clock"></span><?php esc_html_e('WP Optimizer cron', 'wp-optimizer'); ?></h2>
                             <div class="wpopt-cron-overview-head-actions">
                                 <form method="POST" class="wpopt-cron-action-form">
                                     <?php wp_nonce_field('wpopt-nonce'); ?>
                                     <?php if (!empty($cron_overview['running'])) : ?>
                                         <button name="wpopt-cron-reset" type="submit" class="wps wps-button wpopt-btn is-danger">
-                                            <span class="dashicons dashicons-controls-pause"></span><?php esc_html_e('Pause cron', 'wpopt'); ?>
+                                            <span class="dashicons dashicons-controls-pause"></span><?php esc_html_e('Pause cron', 'wp-optimizer'); ?>
                                         </button>
                                     <?php else : ?>
                                         <button name="wpopt-cron-run" type="submit" class="wps wps-button wpopt-btn is-neutral">
-                                            <span class="dashicons dashicons-controls-play"></span><?php esc_html_e('Run now', 'wpopt'); ?>
+                                            <span class="dashicons dashicons-controls-play"></span><?php esc_html_e('Run now', 'wp-optimizer'); ?>
                                         </button>
                                     <?php endif; ?>
                                 </form>
@@ -1944,59 +1944,59 @@ class PagesHandler
                             <div class="wpopt-cron-overview-summary">
                                 <span class="wpopt-cron-overview-icon dashicons dashicons-update"></span>
                                 <div>
-                                    <strong><?php esc_html_e('Automatic optimizations', 'wpopt'); ?></strong>
-                                    <small><?php esc_html_e('WP Optimizer will run enabled optimization tasks using the configured schedule.', 'wpopt'); ?></small>
+                                    <strong><?php esc_html_e('Automatic optimizations', 'wp-optimizer'); ?></strong>
+                                    <small><?php esc_html_e('WP Optimizer will run enabled optimization tasks using the configured schedule.', 'wp-optimizer'); ?></small>
                                 </div>
                             </div>
                             <div class="wpopt-cron-overview-stat">
-                                <span><?php esc_html_e('Execution time', 'wpopt'); ?></span>
+                                <span><?php esc_html_e('Execution time', 'wp-optimizer'); ?></span>
                                 <strong><?php echo esc_html($cron_overview['execution_time']); ?></strong>
                             </div>
                             <div class="wpopt-cron-overview-stat">
-                                <span><?php esc_html_e('Schedule', 'wpopt'); ?></span>
+                                <span><?php esc_html_e('Schedule', 'wp-optimizer'); ?></span>
                                 <strong><?php echo esc_html($cron_overview['recurrence_name']); ?></strong>
                             </div>
                             <div class="wpopt-cron-overview-stat">
-                                <span><?php esc_html_e('Next run', 'wpopt'); ?></span>
-                                <strong><?php echo esc_html($cron_overview['next_run'] ?: __('Pending schedule', 'wpopt')); ?></strong>
+                                <span><?php esc_html_e('Next run', 'wp-optimizer'); ?></span>
+                                <strong><?php echo esc_html($cron_overview['next_run'] ?: __('Pending schedule', 'wp-optimizer')); ?></strong>
                             </div>
                         </div>
                         <div class="wpopt-cron-task-list">
-                            <span><?php esc_html_e('Enabled tasks', 'wpopt'); ?></span>
+                            <span><?php esc_html_e('Enabled tasks', 'wp-optimizer'); ?></span>
                             <?php if (!empty($cron_overview['tasks'])) : ?>
                                 <?php foreach ($cron_overview['tasks'] as $cron_task) : ?>
                                     <b><?php echo esc_html($cron_task); ?></b>
                                 <?php endforeach; ?>
                             <?php else : ?>
-                                <em><?php esc_html_e('No optimization tasks enabled.', 'wpopt'); ?></em>
+                                <em><?php esc_html_e('No optimization tasks enabled.', 'wp-optimizer'); ?></em>
                             <?php endif; ?>
                         </div>
                     </block>
                 <?php endif; ?>
                 <block class="wps wpopt-panel wpopt-tracking-panel">
                     <div class="wpopt-panel-head">
-                        <h2><span class="dashicons dashicons-chart-area"></span><?php esc_html_e('Status', 'wpopt'); ?></h2>
+                        <h2><span class="dashicons dashicons-chart-area"></span><?php esc_html_e('Status', 'wp-optimizer'); ?></h2>
                     </div>
                     <div class="wpopt-tracking-grid">
                         <div class="wpopt-tracking-stat">
-                            <span><?php esc_html_e('Active modules', 'wpopt'); ?></span>
+                            <span><?php esc_html_e('Active modules', 'wp-optimizer'); ?></span>
                             <strong><?php echo esc_html($active_modules_count); ?></strong>
                             <small><?php echo esc_html(sprintf('%s%%', $health_score)); ?></small>
                         </div>
                         <div class="wpopt-tracking-stat">
-                            <span><?php esc_html_e('Memory peak', 'wpopt'); ?></span>
+                            <span><?php esc_html_e('Memory peak', 'wp-optimizer'); ?></span>
                             <strong><?php echo esc_html($memory_load); ?></strong>
-                            <small><?php esc_html_e('live', 'wpopt'); ?></small>
+                            <small><?php esc_html_e('live', 'wp-optimizer'); ?></small>
                         </div>
                         <div class="wpopt-tracking-stat">
-                            <span><?php esc_html_e('Server load', 'wpopt'); ?></span>
+                            <span><?php esc_html_e('Server load', 'wp-optimizer'); ?></span>
                             <strong><?php echo esc_html($server_load); ?></strong>
-                            <small><?php esc_html_e('live', 'wpopt'); ?></small>
+                            <small><?php esc_html_e('live', 'wp-optimizer'); ?></small>
                         </div>
                         <div class="wpopt-tracking-stat">
-                            <span><?php esc_html_e('Execution time', 'wpopt'); ?></span>
+                            <span><?php esc_html_e('Execution time', 'wp-optimizer'); ?></span>
                             <strong><?php echo esc_html(sprintf('%s s', $execution_time)); ?></strong>
-                            <small><?php esc_html_e('live', 'wpopt'); ?></small>
+                            <small><?php esc_html_e('live', 'wp-optimizer'); ?></small>
                         </div>
                     </div>
                 </block>

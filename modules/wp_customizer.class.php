@@ -153,7 +153,7 @@ class Mod_WP_Customizer extends Module
                     $script_asset = UtilEnv::resolve_asset(__DIR__, 'supporters/filter-categories.js', wps_core()->online);
                     wp_enqueue_script('wpopt-admin-script', $script_asset['url'], array('jquery'), $script_asset['version'] ?: WPOPT_VERSION, true);
                     wp_localize_script('wpopt-admin-script', 'fc_plugin', array(
-                        'placeholder' => esc_html__('Filter %s', 'wpopt'),
+                        'placeholder' => esc_html__('Filter %s', 'wp-optimizer'),
                         'screenName'  => $screen_base
                     ));
                 });
@@ -380,7 +380,7 @@ class Mod_WP_Customizer extends Module
         if ($this->option('disable.oembed_and_rest')) {
 
             add_filter('rest_authentication_errors', function () {
-                return new \WP_Error('rest_disabled', __('The REST API has been disabled on this site.', 'wpopt'), array('status' => 403));
+                return new \WP_Error('rest_disabled', __('The REST API has been disabled on this site.', 'wp-optimizer'), array('status' => 403));
             });
 
             // Remove the REST API lines from the HTML Header
@@ -422,56 +422,56 @@ class Mod_WP_Customizer extends Module
         return $this->group_setting_fields(
 
             $this->group_setting_fields(
-                $this->setting_field(__('Dashboard', 'wpopt'), false, 'separator'),
-                $this->setting_field(__('Disable Dashboard Welcome Panel', 'wpopt'), "welcome-panel", "checkbox", ['default_value' => true]),
-                $this->setting_field(__('Disable Dashboard WordPress Blog', 'wpopt'), "dashboard.wpblog", "checkbox", ['default_value' => true]),
-                $this->setting_field(__('Disable Dashboard WordPress Quick Press', 'wpopt'), "dashboard.quickpress", "checkbox", ['default_value' => true]),
+                $this->setting_field(__('Dashboard', 'wp-optimizer'), false, 'separator'),
+                $this->setting_field(__('Disable Dashboard Welcome Panel', 'wp-optimizer'), "welcome-panel", "checkbox", ['default_value' => true]),
+                $this->setting_field(__('Disable Dashboard WordPress Blog', 'wp-optimizer'), "dashboard.wpblog", "checkbox", ['default_value' => true]),
+                $this->setting_field(__('Disable Dashboard WordPress Quick Press', 'wp-optimizer'), "dashboard.quickpress", "checkbox", ['default_value' => true]),
             ),
             $this->group_setting_fields(
-                $this->setting_field(__('Admin', 'wpopt'), false, 'separator'),
-                $this->setting_field(__('Hide Admin Bar', 'wpopt'), "admin-bar.hide", "checkbox"),
-                $this->setting_field(__('Hide Admin Bar for non admins', 'wpopt'), "admin-bar.hide-non-admin", "checkbox", ['default_value' => true]),
-                $this->setting_field(__('Prevent access to admin dashboard for non admins', 'wpopt'), "admin-panel.block-non-admin", "checkbox"),
-                $this->setting_field(__('Redirect to', 'wpopt'), "non-admin-redirect_to", "text", ['parent' => 'admin-panel.block-non-admin', 'default_value' => '/']),
-                $this->setting_field(__('Remove WP logo', 'wpopt'), "admin-bar-items.wp-logo", "checkbox", ['default_value' => true]),
-                $this->setting_field(__('Remove updates shortcut', 'wpopt'), "admin-bar-items.updates", "checkbox", ['default_value' => true]),
+                $this->setting_field(__('Admin', 'wp-optimizer'), false, 'separator'),
+                $this->setting_field(__('Hide Admin Bar', 'wp-optimizer'), "admin-bar.hide", "checkbox"),
+                $this->setting_field(__('Hide Admin Bar for non admins', 'wp-optimizer'), "admin-bar.hide-non-admin", "checkbox", ['default_value' => true]),
+                $this->setting_field(__('Prevent access to admin dashboard for non admins', 'wp-optimizer'), "admin-panel.block-non-admin", "checkbox"),
+                $this->setting_field(__('Redirect to', 'wp-optimizer'), "non-admin-redirect_to", "text", ['parent' => 'admin-panel.block-non-admin', 'default_value' => '/']),
+                $this->setting_field(__('Remove WP logo', 'wp-optimizer'), "admin-bar-items.wp-logo", "checkbox", ['default_value' => true]),
+                $this->setting_field(__('Remove updates shortcut', 'wp-optimizer'), "admin-bar-items.updates", "checkbox", ['default_value' => true]),
             ),
             $this->group_setting_fields(
-                $this->setting_field(__('Page Editor', 'wpopt'), false, 'separator'),
-                $this->setting_field(__('Add a selection filter in category list', 'wpopt'), 'category-filter', 'checkbox'),
-                $this->setting_field(__('Disable Block Editor (Gutenberg)', 'wpopt'), "blocks-editor", "checkbox"),
-                $this->setting_field(__('Disable Core Blocks', 'wpopt'), "core-blocks", "checkbox", ['parent' => 'blocks-editor']),
-                $this->setting_field(__('Disable Fonts Management', 'wpopt'), "fonts-management", "checkbox"),
-                $this->setting_field(__('Disable Auto Paragraph', 'wpopt'), "wpautop", "checkbox"),
+                $this->setting_field(__('Page Editor', 'wp-optimizer'), false, 'separator'),
+                $this->setting_field(__('Add a selection filter in category list', 'wp-optimizer'), 'category-filter', 'checkbox'),
+                $this->setting_field(__('Disable Block Editor (Gutenberg)', 'wp-optimizer'), "blocks-editor", "checkbox"),
+                $this->setting_field(__('Disable Core Blocks', 'wp-optimizer'), "core-blocks", "checkbox", ['parent' => 'blocks-editor']),
+                $this->setting_field(__('Disable Fonts Management', 'wp-optimizer'), "fonts-management", "checkbox"),
+                $this->setting_field(__('Disable Auto Paragraph', 'wp-optimizer'), "wpautop", "checkbox"),
             ),
             $this->group_setting_fields(
-                $this->setting_field(__('Theme', 'wpopt'), false, 'separator'),
-                $this->setting_field(__('Disable Global-Style', 'wpopt'), "global-style-disable", "checkbox"),
-                $this->setting_field(__('Disable theme widgets', 'wpopt'), "widgets-disable", "checkbox"),
-                $this->setting_field(__('Disable custom css', 'wpopt'), "disable.custom_css_cb", "checkbox"),
-                $this->setting_field(__('Disable Dashicons on front-end', 'wpopt'), "disable.dashicons", "checkbox"),
+                $this->setting_field(__('Theme', 'wp-optimizer'), false, 'separator'),
+                $this->setting_field(__('Disable Global-Style', 'wp-optimizer'), "global-style-disable", "checkbox"),
+                $this->setting_field(__('Disable theme widgets', 'wp-optimizer'), "widgets-disable", "checkbox"),
+                $this->setting_field(__('Disable custom css', 'wp-optimizer'), "disable.custom_css_cb", "checkbox"),
+                $this->setting_field(__('Disable Dashicons on front-end', 'wp-optimizer'), "disable.dashicons", "checkbox"),
             ),
             $this->group_setting_fields(
-                $this->setting_field(__('Comments', 'wpopt'), false, 'separator'),
-                $this->setting_field(__("Disable comments", 'wpopt'), "disable-comments", "checkbox"),
-                $this->setting_field(__("Hide comments shortcuts from admin pages", 'wpopt'), "admin-hide-comments", "checkbox"),
+                $this->setting_field(__('Comments', 'wp-optimizer'), false, 'separator'),
+                $this->setting_field(__("Disable comments", 'wp-optimizer'), "disable-comments", "checkbox"),
+                $this->setting_field(__("Hide comments shortcuts from admin pages", 'wp-optimizer'), "admin-hide-comments", "checkbox"),
             ),
             $this->group_setting_fields(
-                $this->setting_field(__('Link Tags Feed WP-JSON', 'wpopt'), false, 'separator'),
-                $this->setting_field(__('Disable DNS prefetch', 'wpopt'), "disable.dns-prefetch", "checkbox"),
-                $this->setting_field(__('Disable short-link generator', 'wpopt'), "disable.shortlink", "checkbox", ['default_value' => true]),
-                $this->setting_field(__('Disable Feed links', 'wpopt'), "disable.feed-links", "checkbox"),
-                $this->setting_field(__('Disable WP-JSON API and oembed', 'wpopt'), "disable.oembed_and_rest", "checkbox"),
-                $this->setting_field(__('Disable Post Relational Links', 'wpopt'), "disable.post_relational_links", "checkbox"),
-                $this->setting_field(__('Disable XML-RPC', 'wpopt'), "disable.xmlrpc", "checkbox"),
+                $this->setting_field(__('Link Tags Feed WP-JSON', 'wp-optimizer'), false, 'separator'),
+                $this->setting_field(__('Disable DNS prefetch', 'wp-optimizer'), "disable.dns-prefetch", "checkbox"),
+                $this->setting_field(__('Disable short-link generator', 'wp-optimizer'), "disable.shortlink", "checkbox", ['default_value' => true]),
+                $this->setting_field(__('Disable Feed links', 'wp-optimizer'), "disable.feed-links", "checkbox"),
+                $this->setting_field(__('Disable WP-JSON API and oembed', 'wp-optimizer'), "disable.oembed_and_rest", "checkbox"),
+                $this->setting_field(__('Disable Post Relational Links', 'wp-optimizer'), "disable.post_relational_links", "checkbox"),
+                $this->setting_field(__('Disable XML-RPC', 'wp-optimizer'), "disable.xmlrpc", "checkbox"),
             ),
             $this->group_setting_fields(
-                $this->setting_field(__('Miscellanea', 'wpopt'), false, 'separator'),
-                $this->setting_field(__('Disable WordPress sitemap', 'wpopt'), "core-sitemap", "checkbox"),
-                $this->setting_field(__('Disable pings', 'wpopt'), "ping", "checkbox"),
-                $this->setting_field(__('Disable Self ping', 'wpopt'), "selfping", "checkbox", ['default_value' => true]),
-                $this->setting_field(__('Disable WordPress Emoji support', 'wpopt'), "emoji", "checkbox"),
-                $this->setting_field(__('Disable jQuery Migrate', 'wpopt'), "jquery-migrate", "checkbox"),
+                $this->setting_field(__('Miscellanea', 'wp-optimizer'), false, 'separator'),
+                $this->setting_field(__('Disable WordPress sitemap', 'wp-optimizer'), "core-sitemap", "checkbox"),
+                $this->setting_field(__('Disable pings', 'wp-optimizer'), "ping", "checkbox"),
+                $this->setting_field(__('Disable Self ping', 'wp-optimizer'), "selfping", "checkbox", ['default_value' => true]),
+                $this->setting_field(__('Disable WordPress Emoji support', 'wp-optimizer'), "emoji", "checkbox"),
+                $this->setting_field(__('Disable jQuery Migrate', 'wp-optimizer'), "jquery-migrate", "checkbox"),
             )
         );
     }
@@ -479,37 +479,37 @@ class Mod_WP_Customizer extends Module
     protected function infos(): array
     {
         return [
-            'welcome-panel'        => __('Hide the welcome panel shown on the WordPress dashboard home screen.', 'wpopt'),
-            'dashboard.wpblog'     => __('Remove the default WordPress news/blog dashboard widgets.', 'wpopt'),
-            'dashboard.quickpress' => __('Remove the Quick Draft widget from dashboard.', 'wpopt'),
-            'admin-bar.hide'       => __('Hide the admin toolbar on the front-end for all users.', 'wpopt'),
-            'admin-bar.hide-non-admin' => __('Hide the admin toolbar only for users who are not administrators.', 'wpopt'),
-            'admin-panel.block-non-admin' => __('Block non-admin users from accessing wp-admin pages.', 'wpopt'),
-            'non-admin-redirect_to' => __('Path used to redirect non-admin users when dashboard access is blocked.', 'wpopt'),
-            'admin-bar-items.wp-logo' => __('Remove the WordPress logo item from the admin toolbar.', 'wpopt'),
-            'admin-bar-items.updates' => __('Remove the updates shortcut from the admin toolbar.', 'wpopt'),
-            'category-filter'      => __('Add a category filter selector in post and page admin lists.', 'wpopt'),
-            'blocks-editor'        => __('Disable the block editor (Gutenberg) and related frontend assets.', 'wpopt'),
-            'core-blocks'          => __('Disable registration of WordPress core blocks.', 'wpopt'),
-            'fonts-management'     => __('Disable WordPress built-in font management features.', 'wpopt'),
-            'wpautop'              => __('Disable automatic paragraph formatting applied to post content and excerpts.', 'wpopt'),
-            'global-style-disable'  => __('Stop WordPress from outputting Global Styles. Even classic themes can use theme.json and depend on these styles; check the site appearance after enabling this option.', 'wpopt'),
-            'widgets-disable'      => __('Disable WordPress widgets initialization and related widget editor hooks.', 'wpopt'),
-            'disable-comments'     => __('Disable comments and trackbacks on the front-end and post types.', 'wpopt'),
-            'admin-hide-comments'  => __('Hide comments shortcuts and related dashboard items in admin.', 'wpopt'),
-            'disable.dns-prefetch'  => __("WordPress DNS prefetch, preloads domain name system (DNS) information for external resources, reducing the time it takes to connect to them. If no external resources is used it's possible to disable it.", 'wpopt'),
-            'disable.shortlink'     => __("WordPress short-link generator creates shortened URLs for posts, pages or custom post types. In most cases not necessary.", 'wpopt'),
-            'disable.feed-links'   => __('Remove RSS and feed discovery links from page head output and return 404 for feed requests.', 'wpopt'),
-            'disable.oembed_and_rest' => __('Disable public REST API access and oEmbed discovery/output hooks.', 'wpopt'),
-            'disable.post_relational_links' => __('Remove adjacent, parent and index relational link tags from page head.', 'wpopt'),
-            'disable.xmlrpc'       => __('Disable XML-RPC endpoint usage and remove related RSD/WLW discovery tags.', 'wpopt'),
-            'core-sitemap'         => __('Disable the native WordPress XML sitemap feature.', 'wpopt'),
-            'ping'                 => __('Disable outgoing pingbacks/trackbacks handling.', 'wpopt'),
-            'selfping'             => __('Prevent self-pingbacks for internal links on the same site.', 'wpopt'),
-            'emoji'                => __('Disable WordPress emoji scripts, styles and related filters.', 'wpopt'),
-            'disable.custom_css_cb' => __("WordPress Custom CSS is a feature that allows users to add their own custom styles to a WordPress website, without modifying the theme files.", 'wpopt'),
-            'disable.dashicons'     => __('Stop loading Dashicons on the front-end for logged-out visitors.', 'wpopt'),
-            'jquery-migrate'        => __("WordPress jQuery Migrate is a plugin that restores deprecated jQuery features removed in newer versions, ensuring compatibility with older themes and plugins.", 'wpopt')
+            'welcome-panel'        => __('Hide the welcome panel shown on the WordPress dashboard home screen.', 'wp-optimizer'),
+            'dashboard.wpblog'     => __('Remove the default WordPress news/blog dashboard widgets.', 'wp-optimizer'),
+            'dashboard.quickpress' => __('Remove the Quick Draft widget from dashboard.', 'wp-optimizer'),
+            'admin-bar.hide'       => __('Hide the admin toolbar on the front-end for all users.', 'wp-optimizer'),
+            'admin-bar.hide-non-admin' => __('Hide the admin toolbar only for users who are not administrators.', 'wp-optimizer'),
+            'admin-panel.block-non-admin' => __('Block non-admin users from accessing wp-admin pages.', 'wp-optimizer'),
+            'non-admin-redirect_to' => __('Path used to redirect non-admin users when dashboard access is blocked.', 'wp-optimizer'),
+            'admin-bar-items.wp-logo' => __('Remove the WordPress logo item from the admin toolbar.', 'wp-optimizer'),
+            'admin-bar-items.updates' => __('Remove the updates shortcut from the admin toolbar.', 'wp-optimizer'),
+            'category-filter'      => __('Add a category filter selector in post and page admin lists.', 'wp-optimizer'),
+            'blocks-editor'        => __('Disable the block editor (Gutenberg) and related frontend assets.', 'wp-optimizer'),
+            'core-blocks'          => __('Disable registration of WordPress core blocks.', 'wp-optimizer'),
+            'fonts-management'     => __('Disable WordPress built-in font management features.', 'wp-optimizer'),
+            'wpautop'              => __('Disable automatic paragraph formatting applied to post content and excerpts.', 'wp-optimizer'),
+            'global-style-disable'  => __('Stop WordPress from outputting Global Styles. Even classic themes can use theme.json and depend on these styles; check the site appearance after enabling this option.', 'wp-optimizer'),
+            'widgets-disable'      => __('Disable WordPress widgets initialization and related widget editor hooks.', 'wp-optimizer'),
+            'disable-comments'     => __('Disable comments and trackbacks on the front-end and post types.', 'wp-optimizer'),
+            'admin-hide-comments'  => __('Hide comments shortcuts and related dashboard items in admin.', 'wp-optimizer'),
+            'disable.dns-prefetch'  => __("WordPress DNS prefetch, preloads domain name system (DNS) information for external resources, reducing the time it takes to connect to them. If no external resources is used it's possible to disable it.", 'wp-optimizer'),
+            'disable.shortlink'     => __("WordPress short-link generator creates shortened URLs for posts, pages or custom post types. In most cases not necessary.", 'wp-optimizer'),
+            'disable.feed-links'   => __('Remove RSS and feed discovery links from page head output and return 404 for feed requests.', 'wp-optimizer'),
+            'disable.oembed_and_rest' => __('Disable public REST API access and oEmbed discovery/output hooks.', 'wp-optimizer'),
+            'disable.post_relational_links' => __('Remove adjacent, parent and index relational link tags from page head.', 'wp-optimizer'),
+            'disable.xmlrpc'       => __('Disable XML-RPC endpoint usage and remove related RSD/WLW discovery tags.', 'wp-optimizer'),
+            'core-sitemap'         => __('Disable the native WordPress XML sitemap feature.', 'wp-optimizer'),
+            'ping'                 => __('Disable outgoing pingbacks/trackbacks handling.', 'wp-optimizer'),
+            'selfping'             => __('Prevent self-pingbacks for internal links on the same site.', 'wp-optimizer'),
+            'emoji'                => __('Disable WordPress emoji scripts, styles and related filters.', 'wp-optimizer'),
+            'disable.custom_css_cb' => __("WordPress Custom CSS is a feature that allows users to add their own custom styles to a WordPress website, without modifying the theme files.", 'wp-optimizer'),
+            'disable.dashicons'     => __('Stop loading Dashicons on the front-end for logged-out visitors.', 'wp-optimizer'),
+            'jquery-migrate'        => __("WordPress jQuery Migrate is a plugin that restores deprecated jQuery features removed in newer versions, ensuring compatibility with older themes and plugins.", 'wp-optimizer')
         ];
     }
 }

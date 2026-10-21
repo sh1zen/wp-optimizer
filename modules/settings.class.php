@@ -125,10 +125,10 @@ class Mod_Settings extends Module
             }
 
             if ($response) {
-                $this->add_notices('success', __('Action was correctly executed', $this->context));
+                $this->add_notices('success', __('Action was correctly executed', 'wp-optimizer'));
             }
             else {
-                $this->add_notices('warning', __('Action execution failed', $this->context));
+                $this->add_notices('warning', __('Action execution failed', 'wp-optimizer'));
             }
         });
     }
@@ -139,7 +139,7 @@ class Mod_Settings extends Module
             add_query_arg(
                 array(
                     'wps-status' => $response ? 'success' : 'warning',
-                    'wps-notice' => $response ? __('Action was correctly executed', $this->context) : __('Action execution failed', $this->context),
+                    'wps-notice' => $response ? __('Action was correctly executed', 'wp-optimizer') : __('Action execution failed', 'wp-optimizer'),
                 ),
                 wps_admin_route_url('wpopt', 'setting-settings')
             )
@@ -151,9 +151,9 @@ class Mod_Settings extends Module
     {
         if (($args['action'] ?? '') === 'reset_module') {
             $this->handle_module_reset_ajax($args, array('tracking'), array(
-                'invalid' => __('Invalid module reset request.', 'wpopt'),
-                'failed'  => __('Factory reset failed for %s.', 'wpopt'),
-                'success' => __('%s has been reset to factory settings.', 'wpopt'),
+                'invalid' => __('Invalid module reset request.', 'wp-optimizer'),
+                'failed'  => __('Factory reset failed for %s.', 'wp-optimizer'),
+                'success' => __('%s has been reset to factory settings.', 'wp-optimizer'),
             ));
             return;
         }
@@ -164,13 +164,13 @@ class Mod_Settings extends Module
         }
 
         $this->handle_settings_autosave_ajax((string)($args['form_data'] ?? ''), array(
-            'invalid_payload' => __('Cannot detect which module must be saved.', 'wpopt'),
-            'invalid_module'  => __('Invalid module settings payload.', 'wpopt'),
-            'save_failed'     => __('Autosave failed while updating settings.', 'wpopt'),
-            'saved'           => __('Settings autosaved.', 'wpopt'),
+            'invalid_payload' => __('Cannot detect which module must be saved.', 'wp-optimizer'),
+            'invalid_module'  => __('Invalid module settings payload.', 'wp-optimizer'),
+            'save_failed'     => __('Autosave failed while updating settings.', 'wp-optimizer'),
+            'saved'           => __('Settings autosaved.', 'wp-optimizer'),
         ), array(
-            'settings' => __('Settings', 'wpopt'),
-            'tools'    => __('Tools', 'wpopt'),
+            'settings' => __('Settings', 'wp-optimizer'),
+            'tools'    => __('Tools', 'wp-optimizer'),
         ), $this->get_nav_icons());
     }
 
@@ -355,23 +355,23 @@ class Mod_Settings extends Module
                             name="<?php echo esc_attr($this->action_hook); ?>"
                             value="reset_options"
                             class="wps wps-button wpopt-btn is-danger"
-                            data-wps-confirm="<?php echo esc_attr__('Are you sure you want to reset plugin options? Current plugin options will be overwritten.', 'wpopt'); ?>">
+                            data-wps-confirm="<?php echo esc_attr__('Are you sure you want to reset plugin options? Current plugin options will be overwritten.', 'wp-optimizer'); ?>">
                         <span class="dashicons dashicons-trash"></span>
-                        <span><?php esc_html_e('Reset Plugin options', 'wpopt'); ?></span>
+                        <span><?php esc_html_e('Reset Plugin options', 'wp-optimizer'); ?></span>
                     </button>
                     <button type="submit"
                             name="<?php echo esc_attr($this->action_hook); ?>"
                             value="restore_options"
                             class="wps wps-button wpopt-btn is-neutral">
                         <span class="dashicons dashicons-update-alt"></span>
-                        <span><?php esc_html_e('Restore Plugin options', 'wpopt'); ?></span>
+                        <span><?php esc_html_e('Restore Plugin options', 'wp-optimizer'); ?></span>
                     </button>
                     <button type="submit"
                             name="<?php echo esc_attr($this->action_hook); ?>"
                             value="export_options"
                             class="wps wps-button wpopt-btn is-info">
                         <span class="dashicons dashicons-upload"></span>
-                        <span><?php esc_html_e('Export Plugin options', 'wpopt'); ?></span>
+                        <span><?php esc_html_e('Export Plugin options', 'wp-optimizer'); ?></span>
                     </button>
                 </row>
                 <row class="wps-custom-action wps-settings-import">
@@ -380,22 +380,22 @@ class Mod_Settings extends Module
                             <?php echo Graphic::icon('external'); ?>
                         </span>
                         <span class="wps-import-dropzone-copy">
-                            <strong><?php esc_html_e('Drop configuration file here', 'wpopt'); ?></strong>
-                            <small><?php esc_html_e('or choose the exported .conf file from your computer.', 'wpopt'); ?></small>
+                            <strong><?php esc_html_e('Drop configuration file here', 'wp-optimizer'); ?></strong>
+                            <small><?php esc_html_e('or choose the exported .conf file from your computer.', 'wp-optimizer'); ?></small>
                         </span>
                         <input id="wpopt-conf-file" class="wps-import-file" type="file" name="conf_file" accept=".conf,text/plain">
                     </label>
-                    <span class="wps-import-divider wpopt-import-divider"><span><?php esc_html_e('or', 'wpopt'); ?></span></span>
+                    <span class="wps-import-divider wpopt-import-divider"><span><?php esc_html_e('or', 'wp-optimizer'); ?></span></span>
                     <div class="wps-import-action wpopt-import-action">
                         <button type="submit"
                                 name="<?php echo esc_attr($this->action_hook); ?>"
                                 value="import_options"
                                 class="wps wps-button wpopt-btn is-info"
-                                data-wps-confirm="<?php echo esc_attr__('Are you sure you want to import plugin options? Current plugin options may be overwritten.', 'wpopt'); ?>">
+                                data-wps-confirm="<?php echo esc_attr__('Are you sure you want to import plugin options? Current plugin options may be overwritten.', 'wp-optimizer'); ?>">
                             <span class="dashicons dashicons-upload"></span>
-                            <span><?php esc_html_e('Import Plugin options', 'wpopt'); ?></span>
+                            <span><?php esc_html_e('Import Plugin options', 'wp-optimizer'); ?></span>
                         </button>
-                        <p><?php esc_html_e('Import settings from a .conf file to apply saved configuration.', 'wpopt'); ?></p>
+                        <p><?php esc_html_e('Import settings from a .conf file to apply saved configuration.', 'wp-optimizer'); ?></p>
                     </div>
                 </row>
             </block>
@@ -415,14 +415,14 @@ class Mod_Settings extends Module
         <block class="wps-gridRow wpopt-configuration-backups">
             <header class="wpopt-configuration-backups-header">
                 <div>
-                    <h2><?php esc_html_e('Configuration backups', 'wpopt'); ?></h2>
-                    <p><?php esc_html_e('A backup is created before configuration changes. If the newest backup is less than 15 minutes old, no new backup is created. WP Optimizer keeps the newest 50 backups and removes older entries automatically.', 'wpopt'); ?></p>
+                    <h2><?php esc_html_e('Configuration backups', 'wp-optimizer'); ?></h2>
+                    <p><?php esc_html_e('A backup is created before configuration changes. If the newest backup is less than 15 minutes old, no new backup is created. WP Optimizer keeps the newest 50 backups and removes older entries automatically.', 'wp-optimizer'); ?></p>
                 </div>
             </header>
 
             <?php if (empty($backups)) : ?>
                 <div class="wpopt-configuration-backups-empty">
-                    <?php esc_html_e('No configuration backups available yet.', 'wpopt'); ?>
+                    <?php esc_html_e('No configuration backups available yet.', 'wp-optimizer'); ?>
                 </div>
             <?php else : ?>
                 <div class="wpopt-configuration-backups-table-wrap">
@@ -449,24 +449,24 @@ class Mod_Settings extends Module
                         name="<?php echo esc_attr($this->action_hook); ?>"
                         value="<?php echo esc_attr('restore_configuration_backup:' . (string)$backup['id']); ?>"
                         class="wps wps-button wpopt-btn is-neutral"
-                        data-wps-confirm="<?php echo esc_attr__('Restore this configuration backup? Current plugin options will be overwritten.', 'wpopt'); ?>">
+                        data-wps-confirm="<?php echo esc_attr__('Restore this configuration backup? Current plugin options will be overwritten.', 'wp-optimizer'); ?>">
                     <span class="dashicons dashicons-update-alt"></span>
-                    <span><?php esc_html_e('Restore', 'wpopt'); ?></span>
+                    <span><?php esc_html_e('Restore', 'wp-optimizer'); ?></span>
                 </button>
                 <button type="submit"
                         name="<?php echo esc_attr($this->action_hook); ?>"
                         value="<?php echo esc_attr('delete_configuration_backup:' . (string)$backup['id']); ?>"
                         class="wps wps-button wpopt-btn is-danger"
-                        data-wps-confirm="<?php echo esc_attr__('Delete this configuration backup?', 'wpopt'); ?>">
+                        data-wps-confirm="<?php echo esc_attr__('Delete this configuration backup?', 'wp-optimizer'); ?>">
                     <span class="dashicons dashicons-trash"></span>
-                    <span><?php esc_html_e('Delete', 'wpopt'); ?></span>
+                    <span><?php esc_html_e('Delete', 'wp-optimizer'); ?></span>
                 </button>
             </div>
             <?php
 
             $rows[] = array(
                 'date' => '<strong>' . esc_html(wp_date(get_option('date_format') . ' ' . get_option('time_format'), $created_at)) . '</strong><code>' . esc_html((string)$backup['id']) . '</code>',
-                'age' => esc_html(sprintf(__('%s ago', 'wpopt'), human_time_diff($created_at, time()))),
+                'age' => esc_html(sprintf(__('%s ago', 'wp-optimizer'), human_time_diff($created_at, time()))),
                 'actions' => ob_get_clean(),
             );
         }
@@ -474,12 +474,12 @@ class Mod_Settings extends Module
         return List_Table::generateHTML_table(array(
             'class' => 'wps wpopt-configuration-backups-table',
             'columns' => array(
-                'date' => __('Date', 'wpopt'),
-                'age' => __('Age', 'wpopt'),
-                'actions' => __('Actions', 'wpopt'),
+                'date' => __('Date', 'wp-optimizer'),
+                'age' => __('Age', 'wp-optimizer'),
+                'actions' => __('Actions', 'wp-optimizer'),
             ),
             'rows' => $rows,
-            'empty' => __('No configuration backups available yet.', 'wpopt'),
+            'empty' => __('No configuration backups available yet.', 'wp-optimizer'),
         ));
     }
 }

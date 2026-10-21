@@ -11,7 +11,3 @@ Mode changes run under a database lock and an InnoDB transaction. Enabling copie
 ## Integration ownership
 
 The plugin publishes `wpopt_media_metadata_state_changed(bool $enabled)` after saving a mode successfully, and `wpopt_media_metadata_invalidated(int $attachment_id)` after invalidating its caches. Consumers own their adapters, competing handlers and derived cache groups. Invalidation may also occur during failed-write cleanup. See [the external API](../EXTERNAL-API.md#media-metadata-lifecycle) for the hook contracts.
-
-## Verification
-
-From the CMS root, run `php mini-test/media-metadata.php` and repeat with `--managed-before-theme`. The tests use the real WordPress hook dispatcher and production metadata classes with isolated database, option and cache fakes. They check standalone plugin startup, successful and failed mode changes, cache invalidation and consumer handler ownership. No site bootstrap, database connection or live migration is performed.

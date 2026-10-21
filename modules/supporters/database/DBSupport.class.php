@@ -231,20 +231,20 @@ class DBSupport
     {
         if ($autoload_size >= 1048576) {
             return array(
-                    'label' => __('Needs attention', 'wpopt'),
+                    'label' => __('Needs attention', 'wp-optimizer'),
                     'class' => 'is-danger',
             );
         }
 
         if ($autoload_size >= 819200) {
             return array(
-                    'label' => __('Review', 'wpopt'),
+                    'label' => __('Review', 'wp-optimizer'),
                     'class' => 'is-warning',
             );
         }
 
         return array(
-                'label' => __('Good', 'wpopt'),
+                'label' => __('Good', 'wp-optimizer'),
                 'class' => 'is-success',
         );
     }
@@ -340,14 +340,14 @@ class DBSupport
 
         $raw_value = (string)($row['option_value'] ?? '');
         $display_value = $raw_value;
-        $type = __('Raw value', 'wpopt');
+        $type = __('Raw value', 'wp-optimizer');
 
         if (function_exists('is_serialized') && is_serialized($raw_value)) {
             $decoded = @unserialize($raw_value, array('allowed_classes' => false));
 
             if (false !== $decoded || 'b:0;' === $raw_value) {
                 $display_value = print_r($decoded, true);
-                $type = __('Serialized value', 'wpopt');
+                $type = __('Serialized value', 'wp-optimizer');
             }
         }
         else {
@@ -358,7 +358,7 @@ class DBSupport
 
                 if (is_string($encoded)) {
                     $display_value = $encoded;
-                    $type = __('JSON value', 'wpopt');
+                    $type = __('JSON value', 'wp-optimizer');
                 }
             }
         }
@@ -388,15 +388,15 @@ class DBSupport
         $row = self::get_option_row_summary($option_name);
 
         if (!$row) {
-            return self::option_action_result(false, __('Option not found.', 'wpopt'));
+            return self::option_action_result(false, __('Option not found.', 'wp-optimizer'));
         }
 
         if (self::is_protected_option($option_name)) {
-            return self::option_action_result(false, __('This WordPress core or plugin-critical option is protected.', 'wpopt'));
+            return self::option_action_result(false, __('This WordPress core or plugin-critical option is protected.', 'wp-optimizer'));
         }
 
         if (!self::option_autoloads($row['autoload'] ?? '')) {
-            return self::option_action_result(true, __('Autoload is already disabled for this option.', 'wpopt'));
+            return self::option_action_result(true, __('Autoload is already disabled for this option.', 'wp-optimizer'));
         }
 
         $updated = $wpdb->update(
@@ -408,12 +408,12 @@ class DBSupport
         );
 
         if (false === $updated) {
-            return self::option_action_result(false, __('Unable to disable autoload for this option.', 'wpopt'));
+            return self::option_action_result(false, __('Unable to disable autoload for this option.', 'wp-optimizer'));
         }
 
         self::clear_option_cache($option_name);
 
-        return self::option_action_result(true, sprintf(__('Autoload disabled for "%s".', 'wpopt'), $option_name));
+        return self::option_action_result(true, sprintf(__('Autoload disabled for "%s".', 'wp-optimizer'), $option_name));
     }
 
     public static function enable_option_autoload(string $option_name): array
@@ -424,15 +424,15 @@ class DBSupport
         $row = self::get_option_row_summary($option_name);
 
         if (!$row) {
-            return self::option_action_result(false, __('Option not found.', 'wpopt'));
+            return self::option_action_result(false, __('Option not found.', 'wp-optimizer'));
         }
 
         if (self::is_protected_option($option_name)) {
-            return self::option_action_result(false, __('This WordPress core or plugin-critical option is protected.', 'wpopt'));
+            return self::option_action_result(false, __('This WordPress core or plugin-critical option is protected.', 'wp-optimizer'));
         }
 
         if (self::option_autoloads($row['autoload'] ?? '')) {
-            return self::option_action_result(true, __('Autoload is already enabled for this option.', 'wpopt'));
+            return self::option_action_result(true, __('Autoload is already enabled for this option.', 'wp-optimizer'));
         }
 
         $updated = $wpdb->update(
@@ -444,12 +444,12 @@ class DBSupport
         );
 
         if (false === $updated) {
-            return self::option_action_result(false, __('Unable to enable autoload for this option.', 'wpopt'));
+            return self::option_action_result(false, __('Unable to enable autoload for this option.', 'wp-optimizer'));
         }
 
         self::clear_option_cache($option_name);
 
-        return self::option_action_result(true, sprintf(__('Autoload enabled for "%s".', 'wpopt'), $option_name));
+        return self::option_action_result(true, sprintf(__('Autoload enabled for "%s".', 'wp-optimizer'), $option_name));
     }
 
     public static function toggle_option_autoload(string $option_name): array
@@ -457,7 +457,7 @@ class DBSupport
         $row = self::get_option_row_summary($option_name);
 
         if (!$row) {
-            return self::option_action_result(false, __('Option not found.', 'wpopt'));
+            return self::option_action_result(false, __('Option not found.', 'wp-optimizer'));
         }
 
         if (self::option_autoloads($row['autoload'] ?? '')) {
@@ -472,20 +472,20 @@ class DBSupport
         $option_name = self::sanitize_option_name($option_name);
 
         if (!self::get_option_row_summary($option_name)) {
-            return self::option_action_result(false, __('Option not found.', 'wpopt'));
+            return self::option_action_result(false, __('Option not found.', 'wp-optimizer'));
         }
 
         if (self::is_protected_option($option_name)) {
-            return self::option_action_result(false, __('This WordPress core or plugin-critical option is protected.', 'wpopt'));
+            return self::option_action_result(false, __('This WordPress core or plugin-critical option is protected.', 'wp-optimizer'));
         }
 
         if (!delete_option($option_name)) {
-            return self::option_action_result(false, __('Unable to delete this option.', 'wpopt'));
+            return self::option_action_result(false, __('Unable to delete this option.', 'wp-optimizer'));
         }
 
         self::clear_option_cache($option_name);
 
-        return self::option_action_result(true, sprintf(__('Option "%s" deleted.', 'wpopt'), $option_name));
+        return self::option_action_result(true, sprintf(__('Option "%s" deleted.', 'wp-optimizer'), $option_name));
     }
 
     public static function is_protected_option(string $option_name): bool

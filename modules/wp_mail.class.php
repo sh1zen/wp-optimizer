@@ -203,7 +203,7 @@ class Mod_WP_Mail extends Module
 
         if (filter_input(INPUT_GET, 'message') == 'wpopt-wpmails-data-erased') {
             add_action('admin_notices', function () {
-                $this->add_notices('success', __('All mails have been successfully deleted.', 'wpopt'));
+                $this->add_notices('success', __('All mails have been successfully deleted.', 'wp-optimizer'));
             }, 0);
         }
     }
@@ -249,7 +249,7 @@ class Mod_WP_Mail extends Module
                     <strong>Actions:</strong>
                     <a href="<?php RequestActions::get_url($this->action_hook, 'reset', false, true); ?>"
                        class="wps wps-button wpopt-btn is-danger">
-                        <?php _e('Reset Log', 'wpopt') ?>
+                        <?php _e('Reset Log', 'wp-optimizer') ?>
                     </a>
                 </div>
             </div>
@@ -299,7 +299,7 @@ class Mod_WP_Mail extends Module
     private function render_mail_daily_chart(array $series): string
     {
         if (empty($series)) {
-            return '<div class="wpopt-perf-empty">' . esc_html__('No mail activity available yet.', 'wpopt') . '</div>';
+            return '<div class="wpopt-perf-empty">' . esc_html__('No mail activity available yet.', 'wp-optimizer') . '</div>';
         }
 
         $max_value = 1;
@@ -370,14 +370,14 @@ class Mod_WP_Mail extends Module
             <div class="wpopt-mails-chart-summary">
                 <div class="wpopt-mails-chart-total">
                     <strong><?php echo number_format_i18n($total_sent); ?></strong>
-                    <span><?php _e('Total sent', 'wpopt'); ?></span>
+                    <span><?php _e('Total sent', 'wp-optimizer'); ?></span>
                 </div>
                 <div class="wpopt-mails-chart-copy">
-                    <b><?php _e('Daily email volume', 'wpopt'); ?></b><br>
-                    <?php echo esc_html(sprintf(_n('Mail trend for the last %s day.', 'Mail trend for the last %s days.', count($series), 'wpopt'), number_format_i18n(count($series)))); ?>
+                    <b><?php _e('Daily email volume', 'wp-optimizer'); ?></b><br>
+                    <?php echo esc_html(sprintf(_n('Mail trend for the last %s day.', 'Mail trend for the last %s days.', count($series), 'wp-optimizer'), number_format_i18n(count($series)))); ?>
                 </div>
             </div>
-            <svg viewBox="0 0 <?php echo $width; ?> <?php echo $height; ?>" width="100%" height="260" role="img" aria-label="<?php esc_attr_e('Mails sent per day', 'wpopt'); ?>">
+            <svg viewBox="0 0 <?php echo $width; ?> <?php echo $height; ?>" width="100%" height="260" role="img" aria-label="<?php esc_attr_e('Mails sent per day', 'wp-optimizer'); ?>">
                 <line x1="<?php echo $padding_left; ?>" y1="<?php echo $padding_top; ?>" x2="<?php echo $padding_left; ?>" y2="<?php echo $padding_top + $plot_height; ?>" stroke="#cbd5e1" stroke-width="1"/>
                 <line x1="<?php echo $padding_left; ?>" y1="<?php echo $padding_top + $plot_height; ?>" x2="<?php echo $padding_left + $plot_width; ?>" y2="<?php echo $padding_top + $plot_height; ?>" stroke="#cbd5e1" stroke-width="1"/>
                 <text x="10" y="<?php echo $padding_top + 8; ?>" fill="#64748b" font-size="11"><?php echo number_format_i18n($max_value); ?></text>
@@ -404,25 +404,25 @@ class Mod_WP_Mail extends Module
         return $this->group_setting_fields(
 
             $this->group_setting_fields(
-                $this->setting_field(__('Server Conf', 'wpopt'), false, "separator"),
-                $this->setting_field(__('Configuration Override', 'wpopt'), "active", "checkbox"),
-                $this->setting_field(__('Host', 'wpopt'), "server.host", "text"),
-                $this->setting_field(__('Port', 'wpopt'), "server.port", "numeric", ['default_value' => 465]),
-                $this->setting_field(__('Timeout', 'wpopt'), "server.timeout", "numeric", ['default_value' => 10]),
-                $this->setting_field(__('SMTP', 'wpopt'), false, "separator"),
-                $this->setting_field(__('Enable', 'wpopt'), "smtp.active", "checkbox"),
-                $this->setting_field(__('Username', 'wpopt'), "smtp.username", "text", ['parent' => 'smtp.active']),
-                $this->setting_field(__('Password', 'wpopt'), "smtp.password", "text", ['parent' => 'smtp.active']),
-                $this->setting_field(__('Encryption', 'wpopt'), "smtp.encryption", "dropdown", ['parent' => 'smtp.active', 'list' => ['ssl', 'tls', ''], 'default_value' => 'ssl']),
-                $this->setting_field(__('AutoTLS', 'wpopt'), "smtp.autotls", "text", ['parent' => 'smtp.active', 'default_value' => false]),
-                $this->setting_field(__('SSL', 'wpopt'), false, "separator"),
-                $this->setting_field(__('Allow self signed ssl certificate', 'wpopt'), "ssl.self-signed", "checkbox", ['default_value' => false, 'risk' => 'danger']),
+                $this->setting_field(__('Server Conf', 'wp-optimizer'), false, "separator"),
+                $this->setting_field(__('Configuration Override', 'wp-optimizer'), "active", "checkbox"),
+                $this->setting_field(__('Host', 'wp-optimizer'), "server.host", "text"),
+                $this->setting_field(__('Port', 'wp-optimizer'), "server.port", "numeric", ['default_value' => 465]),
+                $this->setting_field(__('Timeout', 'wp-optimizer'), "server.timeout", "numeric", ['default_value' => 10]),
+                $this->setting_field(__('SMTP', 'wp-optimizer'), false, "separator"),
+                $this->setting_field(__('Enable', 'wp-optimizer'), "smtp.active", "checkbox"),
+                $this->setting_field(__('Username', 'wp-optimizer'), "smtp.username", "text", ['parent' => 'smtp.active']),
+                $this->setting_field(__('Password', 'wp-optimizer'), "smtp.password", "text", ['parent' => 'smtp.active']),
+                $this->setting_field(__('Encryption', 'wp-optimizer'), "smtp.encryption", "dropdown", ['parent' => 'smtp.active', 'list' => ['ssl', 'tls', ''], 'default_value' => 'ssl']),
+                $this->setting_field(__('AutoTLS', 'wp-optimizer'), "smtp.autotls", "text", ['parent' => 'smtp.active', 'default_value' => false]),
+                $this->setting_field(__('SSL', 'wp-optimizer'), false, "separator"),
+                $this->setting_field(__('Allow self signed ssl certificate', 'wp-optimizer'), "ssl.self-signed", "checkbox", ['default_value' => false, 'risk' => 'danger']),
             ),
 
             $this->group_setting_fields(
-                $this->setting_field(__('General', 'wpopt'), false, "separator"),
-                $this->setting_field(__('Mails logging', 'wpopt'), "log-mail", "checkbox", ['default_value' => true]),
-                $this->setting_field(__('Delete mails older then a week', 'wpopt'), "auto_clear", "checkbox"),
+                $this->setting_field(__('General', 'wp-optimizer'), false, "separator"),
+                $this->setting_field(__('Mails logging', 'wp-optimizer'), "log-mail", "checkbox", ['default_value' => true]),
+                $this->setting_field(__('Delete mails older then a week', 'wp-optimizer'), "auto_clear", "checkbox"),
             )
         );
     }
@@ -430,7 +430,7 @@ class Mod_WP_Mail extends Module
     protected function infos(): array
     {
         return [
-            'active' => __('If enabled allow to inject the below connection specification into phpmailer of WordPress', 'wpopt'),
+            'active' => __('If enabled allow to inject the below connection specification into phpmailer of WordPress', 'wp-optimizer'),
         ];
     }
 }

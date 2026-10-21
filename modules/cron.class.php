@@ -84,11 +84,11 @@ class Mod_Cron extends Module
     protected function infos(): array
     {
         return array(
-            'active'         => __('Enable or disable the Cron Manager. When active, scheduled tasks will run automatically.', 'wpopt'),
-            'execution-time' => __('Set the time of day when the cron task should be executed.', 'wpopt'),
-            'recurrence'     => __('Choose how often the optimization tasks should run.', 'wpopt'),
-            'database.active' => __('Automatically clean and optimize your database on the scheduled interval.', 'wpopt'),
-            'media.active'   => __('Automatically optimize uploaded images on the scheduled interval.', 'wpopt'),
+            'active'         => __('Enable or disable the Cron Manager. When active, scheduled tasks will run automatically.', 'wp-optimizer'),
+            'execution-time' => __('Set the time of day when the cron task should be executed.', 'wp-optimizer'),
+            'recurrence'     => __('Choose how often the optimization tasks should run.', 'wp-optimizer'),
+            'database.active' => __('Automatically clean and optimize your database on the scheduled interval.', 'wp-optimizer'),
+            'media.active'   => __('Automatically optimize uploaded images on the scheduled interval.', 'wp-optimizer'),
         );
     }
 
@@ -128,7 +128,7 @@ class Mod_Cron extends Module
             <?php echo $this->render_create_event_modal($schedules); ?>
 
             <div class="wpopt-cron-schedules-block">
-                <h2><?php _e('Custom schedules', 'wpopt'); ?></h2>
+                <h2><?php _e('Custom schedules', 'wp-optimizer'); ?></h2>
                 <?php echo $this->render_schedules_table($schedules, $custom_schedules); ?>
             </div>
         </section>
@@ -155,12 +155,12 @@ class Mod_Cron extends Module
         }
 
         if (!current_user_can('manage_options')) {
-            $this->add_cron_notice(__('You are not allowed to manage cron events.', 'wpopt'), 'error');
+            $this->add_cron_notice(__('You are not allowed to manage cron events.', 'wp-optimizer'), 'error');
             return;
         }
 
         if (!isset($_POST['_wpnonce']) || !wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['_wpnonce'])), self::ACTION_NONCE)) {
-            $this->add_cron_notice(__('Security check failed.', 'wpopt'), 'error');
+            $this->add_cron_notice(__('Security check failed.', 'wp-optimizer'), 'error');
             return;
         }
 
@@ -201,17 +201,17 @@ class Mod_Cron extends Module
         $args = $this->parse_json_args((string)wp_unslash($_POST['event_args'] ?? ''), $valid_args);
 
         if ('' === $hook || !$this->is_valid_hook($hook)) {
-            $this->add_cron_notice(__('Use a valid hook name. Allowed characters are letters, numbers, underscore, dash, dot, slash and colon.', 'wpopt'), 'error');
+            $this->add_cron_notice(__('Use a valid hook name. Allowed characters are letters, numbers, underscore, dash, dot, slash and colon.', 'wp-optimizer'), 'error');
             return;
         }
 
         if (!$timestamp) {
-            $this->add_cron_notice(__('Use a valid date and time.', 'wpopt'), 'error');
+            $this->add_cron_notice(__('Use a valid date and time.', 'wp-optimizer'), 'error');
             return;
         }
 
         if (!$valid_args) {
-            $this->add_cron_notice(__('Arguments must be a valid JSON array.', 'wpopt'), 'error');
+            $this->add_cron_notice(__('Arguments must be a valid JSON array.', 'wp-optimizer'), 'error');
             return;
         }
 
@@ -222,16 +222,16 @@ class Mod_Cron extends Module
             $scheduled = wp_schedule_event($timestamp, $recurrence, $hook, $args);
         }
         else {
-            $this->add_cron_notice(__('Invalid recurrence selected.', 'wpopt'), 'error');
+            $this->add_cron_notice(__('Invalid recurrence selected.', 'wp-optimizer'), 'error');
             return;
         }
 
         if (false === $scheduled) {
-            $this->add_cron_notice(__('Event was not scheduled. WordPress may already have an identical event at that timestamp.', 'wpopt'), 'error');
+            $this->add_cron_notice(__('Event was not scheduled. WordPress may already have an identical event at that timestamp.', 'wp-optimizer'), 'error');
             return;
         }
 
-        $this->add_cron_notice(__('Cron event scheduled.', 'wpopt'), 'updated');
+        $this->add_cron_notice(__('Cron event scheduled.', 'wp-optimizer'), 'updated');
     }
 
     private function run_event(): void
@@ -239,18 +239,18 @@ class Mod_Cron extends Module
         $event = $this->get_posted_event();
 
         if (!$event) {
-            $this->add_cron_notice(__('Cron event not found.', 'wpopt'), 'error');
+            $this->add_cron_notice(__('Cron event not found.', 'wp-optimizer'), 'error');
             return;
         }
 
         if (!has_action($event['hook'])) {
-            $this->add_cron_notice(__('This event has no registered callback in the current request, so it cannot be run safely from the manager.', 'wpopt'), 'error');
+            $this->add_cron_notice(__('This event has no registered callback in the current request, so it cannot be run safely from the manager.', 'wp-optimizer'), 'error');
             return;
         }
 
         do_action_ref_array($event['hook'], array_values($event['args']));
 
-        $this->add_cron_notice(__('Cron event executed. Its original schedule was preserved.', 'wpopt'), 'updated');
+        $this->add_cron_notice(__('Cron event executed. Its original schedule was preserved.', 'wp-optimizer'), 'updated');
     }
 
     private function delete_event(): void
@@ -258,18 +258,18 @@ class Mod_Cron extends Module
         $event = $this->get_posted_event();
 
         if (!$event) {
-            $this->add_cron_notice(__('Cron event not found.', 'wpopt'), 'error');
+            $this->add_cron_notice(__('Cron event not found.', 'wp-optimizer'), 'error');
             return;
         }
 
         $deleted = wp_unschedule_event($event['timestamp'], $event['hook'], $event['args']);
 
         if (!$deleted) {
-            $this->add_cron_notice(__('Cron event could not be deleted.', 'wpopt'), 'error');
+            $this->add_cron_notice(__('Cron event could not be deleted.', 'wp-optimizer'), 'error');
             return;
         }
 
-        $this->add_cron_notice(__('Cron event deleted.', 'wpopt'), 'updated');
+        $this->add_cron_notice(__('Cron event deleted.', 'wp-optimizer'), 'updated');
     }
 
     private function reschedule_event(): void
@@ -277,7 +277,7 @@ class Mod_Cron extends Module
         $event = $this->get_posted_event();
 
         if (!$event) {
-            $this->add_cron_notice(__('Cron event not found.', 'wpopt'), 'error');
+            $this->add_cron_notice(__('Cron event not found.', 'wp-optimizer'), 'error');
             return;
         }
 
@@ -288,17 +288,17 @@ class Mod_Cron extends Module
         $new_args = $event['args'];
 
         if (!$new_timestamp) {
-            $this->add_cron_notice(__('Use a valid date and time.', 'wpopt'), 'error');
+            $this->add_cron_notice(__('Use a valid date and time.', 'wp-optimizer'), 'error');
             return;
         }
 
         if ('' === $new_hook || !$this->is_valid_hook($new_hook)) {
-            $this->add_cron_notice(__('Use a valid hook name. Allowed characters are letters, numbers, underscore, dash, dot, slash and colon.', 'wpopt'), 'error');
+            $this->add_cron_notice(__('Use a valid hook name. Allowed characters are letters, numbers, underscore, dash, dot, slash and colon.', 'wp-optimizer'), 'error');
             return;
         }
 
         if ('single' !== $new_recurrence && !isset(wp_get_schedules()[$new_recurrence])) {
-            $this->add_cron_notice(__('Invalid recurrence selected.', 'wpopt'), 'error');
+            $this->add_cron_notice(__('Invalid recurrence selected.', 'wp-optimizer'), 'error');
             return;
         }
 
@@ -306,7 +306,7 @@ class Mod_Cron extends Module
             $new_args = $this->parse_json_args($raw_new_args, $valid_args);
 
             if (!$valid_args) {
-                $this->add_cron_notice(__('Arguments must be a valid JSON array.', 'wpopt'), 'error');
+                $this->add_cron_notice(__('Arguments must be a valid JSON array.', 'wp-optimizer'), 'error');
                 return;
             }
         }
@@ -315,7 +315,7 @@ class Mod_Cron extends Module
         $deleted = wp_unschedule_event($event['timestamp'], $event['hook'], $event['args']);
 
         if (!$deleted) {
-            $this->add_cron_notice(__('Cron event could not be rescheduled.', 'wpopt'), 'error');
+            $this->add_cron_notice(__('Cron event could not be rescheduled.', 'wp-optimizer'), 'error');
             return;
         }
 
@@ -328,11 +328,11 @@ class Mod_Cron extends Module
 
         if (false === $scheduled) {
             $this->restore_event($original);
-            $this->add_cron_notice(__('Cron event could not be rescheduled. The original event was restored.', 'wpopt'), 'error');
+            $this->add_cron_notice(__('Cron event could not be rescheduled. The original event was restored.', 'wp-optimizer'), 'error');
             return;
         }
 
-        $this->add_cron_notice(__('Cron event updated.', 'wpopt'), 'updated');
+        $this->add_cron_notice(__('Cron event updated.', 'wp-optimizer'), 'updated');
     }
 
     private function add_schedule(): void
@@ -342,7 +342,7 @@ class Mod_Cron extends Module
         $interval = absint(wp_unslash($_POST['schedule_interval'] ?? 0));
 
         if ('' === $slug || '' === $display || $interval < MINUTE_IN_SECONDS) {
-            $this->add_cron_notice(__('Custom schedules need a slug, label and interval of at least 60 seconds.', 'wpopt'), 'error');
+            $this->add_cron_notice(__('Custom schedules need a slug, label and interval of at least 60 seconds.', 'wp-optimizer'), 'error');
             return;
         }
 
@@ -350,7 +350,7 @@ class Mod_Cron extends Module
         $custom_schedules = $this->get_custom_schedules();
 
         if (isset($schedules[$slug]) && !isset($custom_schedules[$slug])) {
-            $this->add_cron_notice(__('This schedule slug is reserved by WordPress or another plugin.', 'wpopt'), 'error');
+            $this->add_cron_notice(__('This schedule slug is reserved by WordPress or another plugin.', 'wp-optimizer'), 'error');
             return;
         }
 
@@ -360,11 +360,11 @@ class Mod_Cron extends Module
         );
 
         if (!$this->save_custom_schedules($custom_schedules)) {
-            $this->add_cron_notice(__('Custom schedule could not be saved.', 'wpopt'), 'error');
+            $this->add_cron_notice(__('Custom schedule could not be saved.', 'wp-optimizer'), 'error');
             return;
         }
 
-        $this->add_cron_notice(__('Custom schedule saved.', 'wpopt'), 'updated');
+        $this->add_cron_notice(__('Custom schedule saved.', 'wp-optimizer'), 'updated');
     }
 
     private function delete_schedule(): void
@@ -373,18 +373,18 @@ class Mod_Cron extends Module
         $custom_schedules = $this->get_custom_schedules();
 
         if (!isset($custom_schedules[$slug])) {
-            $this->add_cron_notice(__('Custom schedule not found.', 'wpopt'), 'error');
+            $this->add_cron_notice(__('Custom schedule not found.', 'wp-optimizer'), 'error');
             return;
         }
 
         unset($custom_schedules[$slug]);
 
         if (!$this->save_custom_schedules($custom_schedules)) {
-            $this->add_cron_notice(__('Custom schedule could not be deleted.', 'wpopt'), 'error');
+            $this->add_cron_notice(__('Custom schedule could not be deleted.', 'wp-optimizer'), 'error');
             return;
         }
 
-        $this->add_cron_notice(__('Custom schedule deleted. Events already using it should be rescheduled before the next run.', 'wpopt'), 'updated');
+        $this->add_cron_notice(__('Custom schedule deleted. Events already using it should be rescheduled before the next run.', 'wp-optimizer'), 'updated');
     }
 
     private function get_posted_event(): array
@@ -1579,15 +1579,15 @@ class Mod_Cron extends Module
             }
         </style>
         <div class="wpopt-cron-kpis">
-            <div class="wpopt-cron-kpi"><span><?php _e('Events', 'wpopt'); ?></span><strong><?php echo number_format_i18n($summary['total']); ?></strong></div>
-            <div class="wpopt-cron-kpi"><span><?php _e('Due now', 'wpopt'); ?></span><strong><?php echo number_format_i18n($summary['due']); ?></strong></div>
-            <div class="wpopt-cron-kpi"><span><?php _e('Recurring', 'wpopt'); ?></span><strong><?php echo number_format_i18n($summary['recurring']); ?></strong></div>
-            <div class="wpopt-cron-kpi"><span><?php _e('Missing callbacks', 'wpopt'); ?></span><strong><?php echo number_format_i18n($summary['missing_callbacks']); ?></strong></div>
+            <div class="wpopt-cron-kpi"><span><?php _e('Events', 'wp-optimizer'); ?></span><strong><?php echo number_format_i18n($summary['total']); ?></strong></div>
+            <div class="wpopt-cron-kpi"><span><?php _e('Due now', 'wp-optimizer'); ?></span><strong><?php echo number_format_i18n($summary['due']); ?></strong></div>
+            <div class="wpopt-cron-kpi"><span><?php _e('Recurring', 'wp-optimizer'); ?></span><strong><?php echo number_format_i18n($summary['recurring']); ?></strong></div>
+            <div class="wpopt-cron-kpi"><span><?php _e('Missing callbacks', 'wp-optimizer'); ?></span><strong><?php echo number_format_i18n($summary['missing_callbacks']); ?></strong></div>
         </div>
         <div class="wpopt-cron-health">
-            <span class="wpopt-cron-badge <?php echo $summary['due'] ? 'is-warn' : 'is-ok'; ?>"><?php echo $summary['due'] ? esc_html__('Some events are overdue', 'wpopt') : esc_html__('No overdue events', 'wpopt'); ?></span>
-            <span class="wpopt-cron-badge <?php echo $summary['missing_callbacks'] ? 'is-bad' : 'is-ok'; ?>"><?php echo $summary['missing_callbacks'] ? esc_html__('Callbacks need attention', 'wpopt') : esc_html__('Callbacks loaded', 'wpopt'); ?></span>
-            <span class="wpopt-cron-badge"><?php echo $next_event ? esc_html(sprintf(__('Next: %s', 'wpopt'), $this->format_datetime($next_event['timestamp']))) : esc_html__('No upcoming event', 'wpopt'); ?></span>
+            <span class="wpopt-cron-badge <?php echo $summary['due'] ? 'is-warn' : 'is-ok'; ?>"><?php echo $summary['due'] ? esc_html__('Some events are overdue', 'wp-optimizer') : esc_html__('No overdue events', 'wp-optimizer'); ?></span>
+            <span class="wpopt-cron-badge <?php echo $summary['missing_callbacks'] ? 'is-bad' : 'is-ok'; ?>"><?php echo $summary['missing_callbacks'] ? esc_html__('Callbacks need attention', 'wp-optimizer') : esc_html__('Callbacks loaded', 'wp-optimizer'); ?></span>
+            <span class="wpopt-cron-badge"><?php echo $next_event ? esc_html(sprintf(__('Next: %s', 'wp-optimizer'), $this->format_datetime($next_event['timestamp']))) : esc_html__('No upcoming event', 'wp-optimizer'); ?></span>
         </div>
         <?php
         return ob_get_clean();
@@ -1603,24 +1603,24 @@ class Mod_Cron extends Module
             <?php wp_nonce_field(self::ACTION_NONCE); ?>
             <input type="hidden" name="wpopt_cron_action" value="create_event">
             <label>
-                <?php _e('Hook', 'wpopt'); ?>
+                <?php _e('Hook', 'wp-optimizer'); ?>
                 <input type="text" name="event_hook" placeholder="my_plugin_cron_hook" required>
             </label>
             <label>
-                <?php _e('First run', 'wpopt'); ?>
+                <?php _e('First run', 'wp-optimizer'); ?>
                 <input type="datetime-local" name="event_timestamp" value="<?php echo esc_attr($default_time); ?>" required>
             </label>
             <label>
-                <?php _e('Recurrence', 'wpopt'); ?>
+                <?php _e('Recurrence', 'wp-optimizer'); ?>
                 <?php echo $this->render_schedule_select('event_recurrence', 'single', $schedules); ?>
             </label>
             <label class="wpopt-cron-full">
-                <?php _e('Arguments as JSON', 'wpopt'); ?>
+                <?php _e('Arguments as JSON', 'wp-optimizer'); ?>
                 <textarea name="event_args" spellcheck="false">[]</textarea>
             </label>
             <div class="wpopt-cron-full">
-                <button type="submit" class="wps wps-button wpopt-btn is-success"><?php _e('Schedule event', 'wpopt'); ?></button>
-                <span class="wpopt-cron-muted"><?php _e('Arguments are decoded as JSON and passed to the hook callback in order.', 'wpopt'); ?></span>
+                <button type="submit" class="wps wps-button wpopt-btn is-success"><?php _e('Schedule event', 'wp-optimizer'); ?></button>
+                <span class="wpopt-cron-muted"><?php _e('Arguments are decoded as JSON and passed to the hook callback in order.', 'wp-optimizer'); ?></span>
             </div>
         </form>
         <?php
@@ -1632,11 +1632,11 @@ class Mod_Cron extends Module
         ob_start();
         ?>
         <div id="wpopt-cron-create-event" class="wpopt-cron-modal" role="dialog" aria-modal="true" aria-labelledby="wpopt-cron-create-event-title">
-            <a class="wpopt-cron-modal-backdrop" href="#" aria-label="<?php esc_attr_e('Close create event dialog', 'wpopt'); ?>"></a>
+            <a class="wpopt-cron-modal-backdrop" href="#" aria-label="<?php esc_attr_e('Close create event dialog', 'wp-optimizer'); ?>"></a>
             <div class="wpopt-cron-modal-panel">
                 <div class="wpopt-cron-modal-head">
-                    <h2 id="wpopt-cron-create-event-title"><?php _e('Create event', 'wpopt'); ?></h2>
-                    <a class="wpopt-cron-modal-close" href="#" aria-label="<?php esc_attr_e('Close create event dialog', 'wpopt'); ?>">&times;</a>
+                    <h2 id="wpopt-cron-create-event-title"><?php _e('Create event', 'wp-optimizer'); ?></h2>
+                    <a class="wpopt-cron-modal-close" href="#" aria-label="<?php esc_attr_e('Close create event dialog', 'wp-optimizer'); ?>">&times;</a>
                 </div>
                 <?php echo $this->render_event_form($schedules); ?>
             </div>
@@ -1653,52 +1653,52 @@ class Mod_Cron extends Module
             <div class="wpopt-cron-events-title">
                 <span class="wpopt-cron-events-title-icon dashicons dashicons-calendar-alt" aria-hidden="true"></span>
                 <div>
-                    <h2><?php _e('Scheduled events', 'wpopt'); ?></h2>
-                    <p><?php _e('Manage and monitor your scheduled hooks and automated tasks.', 'wpopt'); ?></p>
+                    <h2><?php _e('Scheduled events', 'wp-optimizer'); ?></h2>
+                    <p><?php _e('Manage and monitor your scheduled hooks and automated tasks.', 'wp-optimizer'); ?></p>
                 </div>
             </div>
             <form method="GET" class="wpopt-cron-toolbar">
                 <input type="hidden" name="page" value="<?php echo esc_attr($_GET['page'] ?? 'wpopt-cron'); ?>">
                 <p class="search-box">
-                    <a href="#wpopt-cron-create-event" class="button button-primary wpopt-cron-create-button"><span class="dashicons dashicons-plus-alt2" aria-hidden="true"></span><?php _e('Create event', 'wpopt'); ?></a>
-                    <label class="screen-reader-text" for="wpopt-cron-search-input"><?php _e('Search events', 'wpopt'); ?></label>
-                    <input type="search" id="wpopt-cron-search-input" name="s" placeholder="<?php esc_attr_e('Search events', 'wpopt'); ?>" value="<?php echo esc_attr($search); ?>">
-                    <?php submit_button(__('Search', 'wpopt'), 'button button-primary', false, false, array('id' => 'search-submit')); ?>
+                    <a href="#wpopt-cron-create-event" class="button button-primary wpopt-cron-create-button"><span class="dashicons dashicons-plus-alt2" aria-hidden="true"></span><?php _e('Create event', 'wp-optimizer'); ?></a>
+                    <label class="screen-reader-text" for="wpopt-cron-search-input"><?php _e('Search events', 'wp-optimizer'); ?></label>
+                    <input type="search" id="wpopt-cron-search-input" name="s" placeholder="<?php esc_attr_e('Search events', 'wp-optimizer'); ?>" value="<?php echo esc_attr($search); ?>">
+                    <?php submit_button(__('Search', 'wp-optimizer'), 'button button-primary', false, false, array('id' => 'search-submit')); ?>
                 </p>
             </form>
         </div>
         <div class="wpopt-cron-events">
             <?php if (empty($events)): ?>
-                <div class="wpopt-cron-empty"><?php _e('No cron events found.', 'wpopt'); ?></div>
+                <div class="wpopt-cron-empty"><?php _e('No cron events found.', 'wp-optimizer'); ?></div>
             <?php endif; ?>
             <?php foreach ($events as $event): ?>
                 <details class="wpopt-cron-event-row <?php echo $event['is_due'] ? 'is-due' : ''; ?>">
                     <summary class="wpopt-cron-event-summary">
                         <span class="wpopt-cron-row-icon dashicons dashicons-calendar-alt" aria-hidden="true"></span>
                         <div class="wpopt-cron-time">
-                            <span class="wpopt-cron-cell-label"><?php _e('Next run', 'wpopt'); ?></span>
+                            <span class="wpopt-cron-cell-label"><?php _e('Next run', 'wp-optimizer'); ?></span>
                             <strong><?php echo esc_html($this->format_datetime($event['timestamp'])); ?></strong>
                             <small><?php echo esc_html($this->format_relative_time($event['timestamp'])); ?></small>
                         </div>
                         <div>
-                            <span class="wpopt-cron-cell-label"><?php _e('Hook', 'wpopt'); ?></span>
+                            <span class="wpopt-cron-cell-label"><?php _e('Hook', 'wp-optimizer'); ?></span>
                             <code class="wpopt-cron-hook"><?php echo esc_html($event['hook']); ?></code>
                         </div>
                         <div>
-                            <span class="wpopt-cron-cell-label"><?php _e('Schedule', 'wpopt'); ?></span>
+                            <span class="wpopt-cron-cell-label"><?php _e('Schedule', 'wp-optimizer'); ?></span>
                             <span class="wpopt-cron-schedule">
                                 <span class="dashicons dashicons-update-alt" aria-hidden="true"></span>
                                 <?php echo esc_html($this->format_schedule_label($event, $schedules)); ?>
                             </span>
                         </div>
                         <div>
-                            <span class="wpopt-cron-cell-label"><?php _e('Arguments', 'wpopt'); ?></span>
+                            <span class="wpopt-cron-cell-label"><?php _e('Arguments', 'wp-optimizer'); ?></span>
                             <pre class="wpopt-cron-args"><?php echo esc_html($event['args_json']); ?></pre>
                         </div>
                         <div class="wpopt-cron-status">
-                            <span class="wpopt-cron-cell-label"><?php _e('Status', 'wpopt'); ?></span>
-                            <span class="wpopt-cron-badge <?php echo $event['is_due'] ? 'is-warn' : 'is-ok'; ?>"><?php echo $event['is_due'] ? esc_html__('Due', 'wpopt') : esc_html__('Scheduled', 'wpopt'); ?></span>
-                            <span class="wpopt-cron-badge <?php echo $event['callback_found'] ? 'is-ok' : 'is-bad'; ?>"><?php echo $event['callback_found'] ? esc_html__('Callback found', 'wpopt') : esc_html__('Missing callback', 'wpopt'); ?></span>
+                            <span class="wpopt-cron-cell-label"><?php _e('Status', 'wp-optimizer'); ?></span>
+                            <span class="wpopt-cron-badge <?php echo $event['is_due'] ? 'is-warn' : 'is-ok'; ?>"><?php echo $event['is_due'] ? esc_html__('Due', 'wp-optimizer') : esc_html__('Scheduled', 'wp-optimizer'); ?></span>
+                            <span class="wpopt-cron-badge <?php echo $event['callback_found'] ? 'is-ok' : 'is-bad'; ?>"><?php echo $event['callback_found'] ? esc_html__('Callback found', 'wp-optimizer') : esc_html__('Missing callback', 'wp-optimizer'); ?></span>
                         </div>
                         <span class="wpopt-cron-chevron dashicons dashicons-arrow-down-alt2" aria-hidden="true"></span>
                     </summary>
@@ -1707,30 +1707,30 @@ class Mod_Cron extends Module
                             <?php wp_nonce_field(self::ACTION_NONCE); ?>
                             <?php echo $this->render_event_identity_fields($event); ?>
                             <div class="wpopt-cron-control is-date">
-                                <label><?php _e('Next run', 'wpopt'); ?></label>
+                                <label><?php _e('Next run', 'wp-optimizer'); ?></label>
                                 <input type="datetime-local" name="new_timestamp" value="<?php echo esc_attr($this->format_datetime_input($event['timestamp'])); ?>">
                             </div>
                             <div class="wpopt-cron-control is-schedule">
-                                <label><?php _e('Recurrence', 'wpopt'); ?></label>
+                                <label><?php _e('Recurrence', 'wp-optimizer'); ?></label>
                                 <?php echo $this->render_schedule_select('new_recurrence', $event['schedule'] ?: 'single', $schedules); ?>
                             </div>
                             <details class="wpopt-cron-edit">
-                                <summary><span class="dashicons dashicons-edit" aria-hidden="true"></span><?php _e('Edit hook and arguments', 'wpopt'); ?></summary>
+                                <summary><span class="dashicons dashicons-edit" aria-hidden="true"></span><?php _e('Edit hook and arguments', 'wp-optimizer'); ?></summary>
                                 <div class="wpopt-cron-edit-fields">
                                     <label>
-                                        <?php _e('Hook', 'wpopt'); ?>
+                                        <?php _e('Hook', 'wp-optimizer'); ?>
                                         <input type="text" name="new_hook" value="<?php echo esc_attr($event['hook']); ?>" required>
                                     </label>
                                     <label>
-                                        <?php _e('Arguments as JSON array', 'wpopt'); ?>
+                                        <?php _e('Arguments as JSON array', 'wp-optimizer'); ?>
                                         <textarea name="new_args" spellcheck="false"><?php echo esc_textarea($event['args_json']); ?></textarea>
                                     </label>
                                 </div>
                             </details>
                             <div class="wpopt-cron-action-buttons">
-                                <button type="submit" name="wpopt_cron_action" value="reschedule_event" class="wps wps-button wpopt-btn is-info"><span class="dashicons dashicons-saved" aria-hidden="true"></span><?php _e('Save', 'wpopt'); ?></button>
-                                <button type="submit" name="wpopt_cron_action" value="run_event" class="wps wps-button wpopt-btn is-success" <?php disabled(!$event['callback_found']); ?>><span class="dashicons dashicons-controls-play" aria-hidden="true"></span><?php _e('Run now', 'wpopt'); ?></button>
-                                <button type="submit" name="wpopt_cron_action" value="delete_event" class="wps wps-button wpopt-btn is-danger" data-wps-confirm="<?php echo esc_attr__('Delete this cron event?', 'wpopt'); ?>"><span class="dashicons dashicons-trash" aria-hidden="true"></span><?php _e('Delete', 'wpopt'); ?></button>
+                                <button type="submit" name="wpopt_cron_action" value="reschedule_event" class="wps wps-button wpopt-btn is-info"><span class="dashicons dashicons-saved" aria-hidden="true"></span><?php _e('Save', 'wp-optimizer'); ?></button>
+                                <button type="submit" name="wpopt_cron_action" value="run_event" class="wps wps-button wpopt-btn is-success" <?php disabled(!$event['callback_found']); ?>><span class="dashicons dashicons-controls-play" aria-hidden="true"></span><?php _e('Run now', 'wp-optimizer'); ?></button>
+                                <button type="submit" name="wpopt_cron_action" value="delete_event" class="wps wps-button wpopt-btn is-danger" data-wps-confirm="<?php echo esc_attr__('Delete this cron event?', 'wp-optimizer'); ?>"><span class="dashicons dashicons-trash" aria-hidden="true"></span><?php _e('Delete', 'wp-optimizer'); ?></button>
                             </div>
                         </form>
                     </div>
@@ -1756,20 +1756,20 @@ class Mod_Cron extends Module
                     <?php wp_nonce_field(self::ACTION_NONCE); ?>
                     <input type="hidden" name="wpopt_cron_action" value="delete_schedule">
                     <input type="hidden" name="schedule_slug" value="<?php echo esc_attr($slug); ?>">
-                    <button type="submit" class="wps wps-button wpopt-btn is-danger" data-wps-confirm="<?php echo esc_attr__('Delete this custom schedule?', 'wpopt'); ?>"><?php _e('Delete', 'wpopt'); ?></button>
+                    <button type="submit" class="wps wps-button wpopt-btn is-danger" data-wps-confirm="<?php echo esc_attr__('Delete this custom schedule?', 'wp-optimizer'); ?>"><?php _e('Delete', 'wp-optimizer'); ?></button>
                 </form>
                 <?php
                 $actions = ob_get_clean();
             }
             else {
-                $actions = '<span class="wpopt-cron-pill is-readonly">' . esc_html__('Read only', 'wpopt') . '</span>';
+                $actions = '<span class="wpopt-cron-pill is-readonly">' . esc_html__('Read only', 'wp-optimizer') . '</span>';
             }
 
             $rows[] = array(
                 'slug' => '<code>' . esc_html($slug) . '</code>',
                 'label' => '<span class="wpopt-cron-schedule-label">' . esc_html($schedule['display'] ?? $slug) . '</span>',
                 'interval' => '<span class="wpopt-cron-pill">' . esc_html($this->format_interval(absint($schedule['interval'] ?? 0))) . '</span>',
-                'source' => '<span class="wpopt-cron-pill ' . ($is_custom_schedule ? 'is-source-custom' : '') . '">' . ($is_custom_schedule ? esc_html__('WP Optimizer', 'wpopt') : esc_html__('WordPress/plugin', 'wpopt')) . '</span>',
+                'source' => '<span class="wpopt-cron-pill ' . ($is_custom_schedule ? 'is-source-custom' : '') . '">' . ($is_custom_schedule ? esc_html__('WP Optimizer', 'wp-optimizer') : esc_html__('WordPress/plugin', 'wp-optimizer')) . '</span>',
                 'actions' => $actions,
             );
         }
@@ -1781,25 +1781,25 @@ class Mod_Cron extends Module
             echo List_Table::generateHTML_table(array(
                 'class' => 'striped wpopt-cron-schedules',
                 'columns' => array(
-                    'slug' => __('Slug', 'wpopt'),
-                    'label' => __('Label', 'wpopt'),
-                    'interval' => __('Interval', 'wpopt'),
-                    'source' => __('Source', 'wpopt'),
-                    'actions' => __('Actions', 'wpopt'),
+                    'slug' => __('Slug', 'wp-optimizer'),
+                    'label' => __('Label', 'wp-optimizer'),
+                    'interval' => __('Interval', 'wp-optimizer'),
+                    'source' => __('Source', 'wp-optimizer'),
+                    'actions' => __('Actions', 'wp-optimizer'),
                 ),
                 'rows' => $rows,
-                'empty' => __('No schedules available.', 'wpopt'),
+                'empty' => __('No schedules available.', 'wp-optimizer'),
             ));
             ?>
         </div>
-        <h3><?php _e('Add custom schedule', 'wpopt'); ?></h3>
+        <h3><?php _e('Add custom schedule', 'wp-optimizer'); ?></h3>
         <form method="POST" class="wpopt-cron-actions">
             <?php wp_nonce_field(self::ACTION_NONCE); ?>
             <input type="hidden" name="wpopt_cron_action" value="add_schedule">
             <input type="text" name="schedule_slug" placeholder="every_10_minutes" required>
-            <input type="text" name="schedule_display" placeholder="<?php esc_attr_e('Every 10 minutes', 'wpopt'); ?>" required>
+            <input type="text" name="schedule_display" placeholder="<?php esc_attr_e('Every 10 minutes', 'wp-optimizer'); ?>" required>
             <input type="number" name="schedule_interval" min="60" step="1" placeholder="600" required>
-            <button type="submit" class="wps wps-button wpopt-btn is-success"><?php _e('Add schedule', 'wpopt'); ?></button>
+            <button type="submit" class="wps wps-button wpopt-btn is-success"><?php _e('Add schedule', 'wp-optimizer'); ?></button>
         </form>
         <?php
         return ob_get_clean();
@@ -1820,7 +1820,7 @@ class Mod_Cron extends Module
         ob_start();
         ?>
         <select name="<?php echo esc_attr($name); ?>">
-            <option value="single" <?php selected($selected, 'single'); ?>><?php _e('Single event', 'wpopt'); ?></option>
+            <option value="single" <?php selected($selected, 'single'); ?>><?php _e('Single event', 'wp-optimizer'); ?></option>
             <?php foreach ($schedules as $slug => $schedule): ?>
                 <option value="<?php echo esc_attr($slug); ?>" <?php selected($selected, $slug); ?>>
                     <?php echo esc_html(sprintf('%s (%s)', $schedule['display'] ?? $slug, $this->format_interval(absint($schedule['interval'] ?? 0)))); ?>
@@ -1978,16 +1978,16 @@ class Mod_Cron extends Module
         $now = time();
 
         if ($timestamp <= $now) {
-            return sprintf(__('%s overdue', 'wpopt'), human_time_diff($timestamp, $now));
+            return sprintf(__('%s overdue', 'wp-optimizer'), human_time_diff($timestamp, $now));
         }
 
-        return sprintf(__('in %s', 'wpopt'), human_time_diff($now, $timestamp));
+        return sprintf(__('in %s', 'wp-optimizer'), human_time_diff($now, $timestamp));
     }
 
     private function format_schedule_label(array $event, array $schedules): string
     {
         if (empty($event['schedule'])) {
-            return __('Single event', 'wpopt');
+            return __('Single event', 'wp-optimizer');
         }
 
         $schedule = $schedules[$event['schedule']] ?? array();
@@ -2008,21 +2008,21 @@ class Mod_Cron extends Module
         }
 
         if ($seconds < MINUTE_IN_SECONDS) {
-            return $this->formatted_intervals[$seconds] = sprintf(_n('%s second', '%s seconds', $seconds, 'wpopt'), number_format_i18n($seconds));
+            return $this->formatted_intervals[$seconds] = sprintf(_n('%s second', '%s seconds', $seconds, 'wp-optimizer'), number_format_i18n($seconds));
         }
 
         if ($seconds < HOUR_IN_SECONDS) {
             $minutes = (int)round($seconds / MINUTE_IN_SECONDS);
-            return $this->formatted_intervals[$seconds] = sprintf(_n('%s minute', '%s minutes', $minutes, 'wpopt'), number_format_i18n($minutes));
+            return $this->formatted_intervals[$seconds] = sprintf(_n('%s minute', '%s minutes', $minutes, 'wp-optimizer'), number_format_i18n($minutes));
         }
 
         if ($seconds < DAY_IN_SECONDS) {
             $hours = round($seconds / HOUR_IN_SECONDS, 1);
-            return $this->formatted_intervals[$seconds] = sprintf(_n('%s hour', '%s hours', (int)ceil($hours), 'wpopt'), number_format_i18n($hours, 1));
+            return $this->formatted_intervals[$seconds] = sprintf(_n('%s hour', '%s hours', (int)ceil($hours), 'wp-optimizer'), number_format_i18n($hours, 1));
         }
 
         $days = round($seconds / DAY_IN_SECONDS, 1);
-        return $this->formatted_intervals[$seconds] = sprintf(_n('%s day', '%s days', (int)ceil($days), 'wpopt'), number_format_i18n($days, 1));
+        return $this->formatted_intervals[$seconds] = sprintf(_n('%s day', '%s days', (int)ceil($days), 'wp-optimizer'), number_format_i18n($days, 1));
     }
 
     private function has_callback(string $hook): bool

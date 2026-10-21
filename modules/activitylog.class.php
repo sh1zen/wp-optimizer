@@ -160,7 +160,7 @@ class Mod_ActivityLog extends Module
                     <strong>Actions:</strong>
                     <a href="<?php RequestActions::get_url($this->action_hook, 'reset', false, true); ?>"
                        class="wps wps-button wpopt-btn is-danger">
-                        <?php _e('Reset Log', 'wpopt') ?>
+                        <?php _e('Reset Log', 'wp-optimizer') ?>
                     </a>
                 </div>
             </div>
@@ -460,7 +460,7 @@ class Mod_ActivityLog extends Module
 
         if (filter_input(INPUT_GET, 'message') == 'wpopt-actlog-data-erased') {
             add_action('admin_notices', function () {
-                $this->add_notices('success', __('All activities have been successfully deleted.', 'wpopt'));
+                $this->add_notices('success', __('All activities have been successfully deleted.', 'wp-optimizer'));
             }, 0);
         }
     }
@@ -655,16 +655,16 @@ class Mod_ActivityLog extends Module
         return $this->group_setting_fields(
 
             $this->group_setting_fields(
-                $this->setting_field(__('Log IP addresses', 'wpopt'), "log.ip", "checkbox", ['default_value' => false]),
-                $this->setting_field(__('Log User Agent', 'wpopt'), "log.user_agent", "checkbox", ['default_value' => false]),
-                $this->setting_field(__('Log REQUEST arguments', 'wpopt'), "log.requests", "checkbox", ['default_value' => false]),
+                $this->setting_field(__('Log IP addresses', 'wp-optimizer'), "log.ip", "checkbox", ['default_value' => false]),
+                $this->setting_field(__('Log User Agent', 'wp-optimizer'), "log.user_agent", "checkbox", ['default_value' => false]),
+                $this->setting_field(__('Log REQUEST arguments', 'wp-optimizer'), "log.requests", "checkbox", ['default_value' => false]),
 
             ),
 
             $this->group_setting_fields(
-                $this->setting_field(__('Auto clear logs', 'wpopt'), "auto_clear", "checkbox", ['default_value' => false]),
+                $this->setting_field(__('Auto clear logs', 'wp-optimizer'), "auto_clear", "checkbox", ['default_value' => false]),
                 $this->setting_field(
-                    __('Keeps log for (days)', 'wpopt'),
+                    __('Keeps log for (days)', 'wp-optimizer'),
                     "lifetime",
                     "numeric",
                     $auto_clear_active
@@ -674,28 +674,28 @@ class Mod_ActivityLog extends Module
             ),
 
             $this->group_setting_fields(
-                $this->setting_field(__('User activity log (login, registration, deletion)', 'wpopt'), "users", "checkbox", ['default_value' => true]),
-                $this->setting_field(__('Posts activity log', 'wpopt'), "posts", "checkbox", ['default_value' => false]),
-                $this->setting_field(__('Terms activity log', 'wpopt'), "terms", "checkbox", ['default_value' => false]),
-                $this->setting_field(__('Attachments activity log', 'wpopt'), "attachments", "checkbox", ['default_value' => false]),
+                $this->setting_field(__('User activity log (login, registration, deletion)', 'wp-optimizer'), "users", "checkbox", ['default_value' => true]),
+                $this->setting_field(__('Posts activity log', 'wp-optimizer'), "posts", "checkbox", ['default_value' => false]),
+                $this->setting_field(__('Terms activity log', 'wp-optimizer'), "terms", "checkbox", ['default_value' => false]),
+                $this->setting_field(__('Attachments activity log', 'wp-optimizer'), "attachments", "checkbox", ['default_value' => false]),
             ),
 
             $this->group_setting_fields(
 
-                $this->setting_field(__('Options update log', 'wpopt'), "options", "checkbox", ['default_value' => false]),
-                $this->setting_field(__('Plugin upgrades/installs log', 'wpopt'), "plugins", "checkbox", ['default_value' => true]),
+                $this->setting_field(__('Options update log', 'wp-optimizer'), "options", "checkbox", ['default_value' => false]),
+                $this->setting_field(__('Plugin upgrades/installs log', 'wp-optimizer'), "plugins", "checkbox", ['default_value' => true]),
             ),
 
             $this->group_setting_fields(
-                $this->setting_field(__('404 log', 'wpopt'), "on_404", "checkbox", ['default_value' => false]),
-                $this->setting_field(__('Bad query (maybe info gathering) activity log', 'wpopt'), "bad_query.active", "checkbox", ['default_value' => false]),
-                $this->setting_field(__('Try to match xss attempts', 'wpopt'), "bad_query.xss", "checkbox", ['parent' => 'bad_query.active', 'default_value' => false]),
-                $this->setting_field(__('Try to match sql injections attempts', 'wpopt'), "bad_query.sql", "checkbox", ['parent' => 'bad_query.active', 'default_value' => false]),
-                $this->setting_field(__('Try to match path traversal attempts', 'wpopt'), "bad_query.traversal", "checkbox", ['parent' => 'bad_query.active', 'default_value' => false]),
-                $this->setting_field(__('Try to match command injection attempts', 'wpopt'), "bad_query.command", "checkbox", ['parent' => 'bad_query.active', 'default_value' => false]),
-                $this->setting_field(__('Try to match access to inconsistent data', 'wpopt'), "bad_query.pages", "checkbox", ['parent' => 'bad_query.active', 'default_value' => false]),
-                $this->setting_field(__('Try to match probes and scanner requests', 'wpopt'), "bad_query.probes", "checkbox", ['parent' => 'bad_query.active', 'default_value' => false]),
-                $this->setting_field(__('Custom rules (one per line)', 'wpopt'), "bad_query.regexes", "textarea_array", ['parent' => 'bad_query.active', 'value' => implode(PHP_EOL, $this->option('bad_query.regexes', []))]),
+                $this->setting_field(__('404 log', 'wp-optimizer'), "on_404", "checkbox", ['default_value' => false]),
+                $this->setting_field(__('Bad query (maybe info gathering) activity log', 'wp-optimizer'), "bad_query.active", "checkbox", ['default_value' => false]),
+                $this->setting_field(__('Try to match xss attempts', 'wp-optimizer'), "bad_query.xss", "checkbox", ['parent' => 'bad_query.active', 'default_value' => false]),
+                $this->setting_field(__('Try to match sql injections attempts', 'wp-optimizer'), "bad_query.sql", "checkbox", ['parent' => 'bad_query.active', 'default_value' => false]),
+                $this->setting_field(__('Try to match path traversal attempts', 'wp-optimizer'), "bad_query.traversal", "checkbox", ['parent' => 'bad_query.active', 'default_value' => false]),
+                $this->setting_field(__('Try to match command injection attempts', 'wp-optimizer'), "bad_query.command", "checkbox", ['parent' => 'bad_query.active', 'default_value' => false]),
+                $this->setting_field(__('Try to match access to inconsistent data', 'wp-optimizer'), "bad_query.pages", "checkbox", ['parent' => 'bad_query.active', 'default_value' => false]),
+                $this->setting_field(__('Try to match probes and scanner requests', 'wp-optimizer'), "bad_query.probes", "checkbox", ['parent' => 'bad_query.active', 'default_value' => false]),
+                $this->setting_field(__('Custom rules (one per line)', 'wp-optimizer'), "bad_query.regexes", "textarea_array", ['parent' => 'bad_query.active', 'value' => implode(PHP_EOL, $this->option('bad_query.regexes', []))]),
             )
         );
     }
@@ -703,13 +703,13 @@ class Mod_ActivityLog extends Module
     protected function infos(): array
     {
         return [
-            'bad_query.command' => __('Track suspicious shell-style payloads and command execution attempts in request parameters.', 'wpopt'),
-            'bad_query.pages'   => __('Track requests that look like reconnaissance for sensitive files, backups or environment dumps.', 'wpopt'),
-            'bad_query.probes'  => __('Track automated probes against common exploit paths and scanner fingerprints.', 'wpopt'),
-            'bad_query.regexes' => __('Provide a list of custom regexes that you want to use to monitor bad url.', 'wpopt'),
-            'bad_query.sql'     => __('Track payloads that resemble SQL injection patterns in URLs, query strings and request bodies.', 'wpopt'),
-            'bad_query.traversal' => __('Track attempts to reach files outside the web root through traversal patterns and sensitive OS paths.', 'wpopt'),
-            'bad_query.xss'     => __('Track request payloads that resemble inline script injection or DOM-based XSS vectors.', 'wpopt'),
+            'bad_query.command' => __('Track suspicious shell-style payloads and command execution attempts in request parameters.', 'wp-optimizer'),
+            'bad_query.pages'   => __('Track requests that look like reconnaissance for sensitive files, backups or environment dumps.', 'wp-optimizer'),
+            'bad_query.probes'  => __('Track automated probes against common exploit paths and scanner fingerprints.', 'wp-optimizer'),
+            'bad_query.regexes' => __('Provide a list of custom regexes that you want to use to monitor bad url.', 'wp-optimizer'),
+            'bad_query.sql'     => __('Track payloads that resemble SQL injection patterns in URLs, query strings and request bodies.', 'wp-optimizer'),
+            'bad_query.traversal' => __('Track attempts to reach files outside the web root through traversal patterns and sensitive OS paths.', 'wp-optimizer'),
+            'bad_query.xss'     => __('Track request payloads that resemble inline script injection or DOM-based XSS vectors.', 'wp-optimizer'),
         ];
     }
 
@@ -810,21 +810,21 @@ class Mod_ActivityLog extends Module
                 <div class="wpopt-activity-kpi">
                     <span class="wpopt-activity-kpi-icon"><?php echo Graphic::icon('list'); ?></span>
                     <div>
-                        <span><?php _e('Total logs', 'wpopt'); ?></span>
+                        <span><?php _e('Total logs', 'wp-optimizer'); ?></span>
                         <strong><?php echo number_format_i18n($summary['total_logs']); ?></strong>
                     </div>
                 </div>
                 <div class="wpopt-activity-kpi">
                     <span class="wpopt-activity-kpi-icon"><?php echo Graphic::icon('database'); ?></span>
                     <div>
-                        <span><?php _e('Collected contexts', 'wpopt'); ?></span>
+                        <span><?php _e('Collected contexts', 'wp-optimizer'); ?></span>
                         <strong><?php echo number_format_i18n($summary['total_contexts']); ?></strong>
                     </div>
                 </div>
                 <div class="wpopt-activity-kpi">
                     <span class="wpopt-activity-kpi-icon"><?php echo Graphic::icon('check'); ?></span>
                     <div>
-                        <span><?php _e('Collected actions', 'wpopt'); ?></span>
+                        <span><?php _e('Collected actions', 'wp-optimizer'); ?></span>
                         <strong><?php echo number_format_i18n($summary['total_actions']); ?></strong>
                     </div>
                 </div>
@@ -887,34 +887,34 @@ class Mod_ActivityLog extends Module
         ?>
         <div class="wpopt-activity-daily-head">
             <div class="wpopt-activity-daily-title">
-                <h2><?php _e('Activity volume by day', 'wpopt'); ?></h2>
-                <p><?php echo esc_html(sprintf(_n('Trend for the last %s day.', 'Trend for the last %s days.', count($daily_rows), 'wpopt'), number_format_i18n(count($daily_rows)))); ?></p>
+                <h2><?php _e('Activity volume by day', 'wp-optimizer'); ?></h2>
+                <p><?php echo esc_html(sprintf(_n('Trend for the last %s day.', 'Trend for the last %s days.', count($daily_rows), 'wp-optimizer'), number_format_i18n(count($daily_rows)))); ?></p>
                 <div class="wpopt-activity-legend">
                     <span class="wpopt-activity-legend-item">
                         <i class="wpopt-activity-legend-swatch"></i>
-                        <?php _e('Logs collected', 'wpopt'); ?>
+                        <?php _e('Logs collected', 'wp-optimizer'); ?>
                     </span>
                 </div>
             </div>
             <div class="wpopt-activity-stat-grid">
                 <div class="wpopt-activity-stat-card is-primary">
-                    <span><?php _e('Last period', 'wpopt'); ?></span>
+                    <span><?php _e('Last period', 'wp-optimizer'); ?></span>
                     <strong><?php echo number_format_i18n($total); ?></strong>
-                    <small><?php echo esc_html(sprintf(_n('(Last %s day)', '(Last %s days)', count($daily_rows), 'wpopt'), number_format_i18n(count($daily_rows)))); ?></small>
+                    <small><?php echo esc_html(sprintf(_n('(Last %s day)', '(Last %s days)', count($daily_rows), 'wp-optimizer'), number_format_i18n(count($daily_rows)))); ?></small>
                 </div>
                 <div class="wpopt-activity-stat-card is-average">
-                    <span><?php _e('Avg/day', 'wpopt'); ?></span>
+                    <span><?php _e('Avg/day', 'wp-optimizer'); ?></span>
                     <strong><?php echo number_format_i18n($average, 1); ?></strong>
-                    <small><?php _e('Logs/day', 'wpopt'); ?></small>
+                    <small><?php _e('Logs/day', 'wp-optimizer'); ?></small>
                 </div>
                 <div class="wpopt-activity-stat-card is-peak">
-                    <span><?php _e('Peak day', 'wpopt'); ?></span>
+                    <span><?php _e('Peak day', 'wp-optimizer'); ?></span>
                     <strong><?php echo number_format_i18n($peak_total); ?></strong>
                     <small><?php echo esc_html($peak_label); ?></small>
                 </div>
             </div>
         </div>
-        <svg class="wpopt-activity-line-chart" viewBox="0 0 <?php echo $width; ?> <?php echo $height; ?>" width="100%" height="250" role="img" aria-label="<?php esc_attr_e('Activity log trend by day', 'wpopt'); ?>">
+        <svg class="wpopt-activity-line-chart" viewBox="0 0 <?php echo $width; ?> <?php echo $height; ?>" width="100%" height="250" role="img" aria-label="<?php esc_attr_e('Activity log trend by day', 'wp-optimizer'); ?>">
             <?php for ($step = 0; $step <= 4; $step++): ?>
                 <?php $y = $padding_top + (($plot_height / 4) * $step); ?>
                 <?php $tick_value = $axis_max - (($axis_max / 4) * $step); ?>
@@ -962,7 +962,7 @@ class Mod_ActivityLog extends Module
 
     private function render_activity_empty(): string
     {
-        return '<div class="wpopt-activity-empty">' . esc_html__('No activity data available yet.', 'wpopt') . '</div>';
+        return '<div class="wpopt-activity-empty">' . esc_html__('No activity data available yet.', 'wp-optimizer') . '</div>';
     }
 }
 

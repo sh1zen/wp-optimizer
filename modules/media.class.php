@@ -50,7 +50,7 @@ class Mod_Media extends Module
     public function cron_setting_fields(): array
     {
         return [
-            ['type' => 'checkbox', 'name' => __('Auto optimize images', 'wpopt'), 'id' => 'media.active', 'value' => wps($this->context)->cron->is_active($this->slug), 'depend' => 'active']
+            ['type' => 'checkbox', 'name' => __('Auto optimize images', 'wp-optimizer'), 'id' => 'media.active', 'value' => wps($this->context)->cron->is_active($this->slug), 'depend' => 'active']
         ];
     }
 
@@ -62,45 +62,45 @@ class Mod_Media extends Module
 
             case 'reset-stats':
                 wps('wpopt')->options->remove_all('media', 'stats');
-                $response = __('Media optimization statistics has been successfully reset.', 'wpopt');
+                $response = __('Media optimization statistics has been successfully reset.', 'wp-optimizer');
                 break;
 
             case 'scan-orphaned-media':
                 wpopt_remove_cron_hooks(array('orphaned_media_scanner_cron_handler'));
 
                 if (CronActions::schedule_function('orphaned_media_scanner_cron_handler', array($this, 'orphaned_media_scanner_cron_handler'), time())) {
-                    $response = __('Orphaned media scanner is successfully started.', 'wpopt');
+                    $response = __('Orphaned media scanner is successfully started.', 'wp-optimizer');
                 }
                 else {
-                    $response = __('An error occurred while starting orphaned media scanner.', 'wpopt');
+                    $response = __('An error occurred while starting orphaned media scanner.', 'wp-optimizer');
                 }
                 break;
 
             case 'pause-orphaned-media':
                 $this->status('orphan-media-scanner', 'paused');
                 wpopt_remove_cron_hooks(array('orphaned_media_scanner_cron_handler'));
-                $response = __('Orphaned media scanner is shutting down.', 'wpopt');
+                $response = __('Orphaned media scanner is shutting down.', 'wp-optimizer');
                 break;
 
             case 'reset-orphaned-media':
                 wps('wpopt')->options->remove_all('media', 'orphaned_media');
                 $this->status('orphan-media-scanner', 'paused');
                 wpopt_remove_cron_hooks(array('orphaned_media_scanner_cron_handler'));
-                $response = __('Orphaned media scanner has been successfully reset.', 'wpopt');
+                $response = __('Orphaned media scanner has been successfully reset.', 'wp-optimizer');
                 break;
 
             case 'pause-ipc-posts':
                 $this->status('optimization', 'paused');
                 wpopt_remove_cron_hooks(array('ipc_scanner_cron_handler'));
-                $response = __('Media optimization scan is shutting down.', 'wpopt');
+                $response = __('Media optimization scan is shutting down.', 'wp-optimizer');
                 break;
 
             case 'start-ipc-posts':
                 if (CronActions::schedule_function('ipc_scanner_cron_handler', array($this, 'ipc_scanner_cron_handler'), time())) {
-                    $response = __('Media optimization scan is successfully started.', 'wpopt');
+                    $response = __('Media optimization scan is successfully started.', 'wp-optimizer');
                 }
                 else {
-                    $response = __('An error occurred while starting optimization scan.', 'wpopt');
+                    $response = __('An error occurred while starting optimization scan.', 'wp-optimizer');
                 }
                 break;
 
@@ -108,12 +108,12 @@ class Mod_Media extends Module
                 wps('wpopt')->options->remove_all('media', 'scan_media');
                 wpopt_remove_cron_hooks(array('ipc_scanner_cron_handler'));
                 $this->status('optimization', 'paused');
-                $response = __('Media posts optimization has been successfully reset.', 'wpopt');
+                $response = __('Media posts optimization has been successfully reset.', 'wp-optimizer');
                 break;
         }
 
         if (empty($response)) {
-            Ajax::response(__('Action not supported', 'wpopt'), 'error');
+            Ajax::response(__('Action not supported', 'wp-optimizer'), 'error');
         }
         else {
             Ajax::response($response, 'success');
@@ -170,30 +170,30 @@ class Mod_Media extends Module
             <row class="wps-row">
                 <?php echo Graphic::icon('media-cleaner', 'wps-row-icon'); ?>
                 <div class="wps-option">
-                    <strong><?php _e('Scan orphaned media', 'wpopt'); ?></strong>
-                    <span class="wps-option-description"><?php _e('Find uploaded files that are no longer referenced by WordPress content, then review the results before deleting anything.', 'wpopt'); ?></span>
+                    <strong><?php _e('Scan orphaned media', 'wp-optimizer'); ?></strong>
+                    <span class="wps-option-description"><?php _e('Find uploaded files that are no longer referenced by WordPress content, then review the results before deleting anything.', 'wp-optimizer'); ?></span>
                 </div>
                 <div class="wps-value wps-inline-actions">
                     <?php if ($scannerRunning): ?>
-                        <span class="wps-status-pill is-info"><?php _e('Running', 'wpopt'); ?></span>
+                        <span class="wps-status-pill is-info"><?php _e('Running', 'wp-optimizer'); ?></span>
                     <?php endif; ?>
                     <button class="wps wps-button wpopt-btn is-info"
                         <?php echo $scannerRunning ? 'disabled' : '' ?>
                             data-wps="ajax-action" data-mod="media" data-action="scan-orphaned-media"
                             data-nonce="<?php echo $nonce ?>">
-                        <?php echo __('Scan now', 'wpopt') ?>
+                        <?php echo __('Scan now', 'wp-optimizer') ?>
                     </button>
                     <button class="wps wps-button wpopt-btn is-info"
                         <?php echo $scannerRunning ? '' : 'disabled' ?>
                             data-wps="ajax-action" data-mod="media" data-action="pause-orphaned-media"
                             data-nonce="<?php echo $nonce ?>">
-                        <?php echo __('Pause', 'wpopt') ?>
+                        <?php echo __('Pause', 'wp-optimizer') ?>
                     </button>
                     <button class="wps wps-button wpopt-btn is-danger"
                         <?php echo $scannerRunning ? 'disabled' : '' ?>
                             data-wps="ajax-action" data-mod="media" data-action="reset-orphaned-media"
                             data-nonce="<?php echo $nonce ?>">
-                        <?php echo __('Reset', 'wpopt') ?>
+                        <?php echo __('Reset', 'wp-optimizer') ?>
                     </button>
                 </div>
             </row>
@@ -205,11 +205,11 @@ class Mod_Media extends Module
                 <row class="wps-row">
                     <?php echo Graphic::icon('check', 'wps-row-icon'); ?>
                     <div class="wps-option">
-                        <strong><?php _e('No orphaned media found', 'wpopt'); ?></strong>
-                        <span class="wps-option-description"><?php _e('Run a scan when you want to refresh the orphaned media list.', 'wpopt'); ?></span>
+                        <strong><?php _e('No orphaned media found', 'wp-optimizer'); ?></strong>
+                        <span class="wps-option-description"><?php _e('Run a scan when you want to refresh the orphaned media list.', 'wp-optimizer'); ?></span>
                     </div>
                     <div class="wps-value">
-                        <span class="wps-status-pill"><?php _e('Clean', 'wpopt'); ?></span>
+                        <span class="wps-status-pill"><?php _e('Clean', 'wp-optimizer'); ?></span>
                     </div>
                 </row>
             </block>
@@ -241,36 +241,36 @@ class Mod_Media extends Module
         ob_start();
         ?>
         <notice class="wps wpopt-media-preflight-notice">
-            <h3><?php echo __('Before start optimizing makes sure you did:', 'wpopt') ?></h3>
+            <h3><?php echo __('Before start optimizing makes sure you did:', 'wp-optimizer') ?></h3>
             <ul class="wps-list">
                 <li>
-                    <strong><?php echo sprintf(__('Read related <a href="%s">FAQ</a>.', 'wpopt'), admin_url('admin.php?page=wpopt-faqs')) ?></strong>
+                    <strong><?php echo sprintf(__('Read related <a href="%s">FAQ</a>.', 'wp-optimizer'), admin_url('admin.php?page=wpopt-faqs')) ?></strong>
                 </li>
                 <li>
-                    <strong><?php echo sprintf(__('Set up your optimization parameters <a href="%s">here</a>.', 'wpopt'), wps_module_setting_url('wpopt', 'media')); ?></strong>
+                    <strong><?php echo sprintf(__('Set up your optimization parameters <a href="%s">here</a>.', 'wp-optimizer'), wps_module_setting_url('wpopt', 'media')); ?></strong>
                 </li>
             </ul>
-            <strong><?php echo sprintf(__('Note that optimization will run in background and time required depends on number of media you have. <a href="%s">Cron</a> must be active.', 'wpopt'), wps_admin_route_url('wpopt', 'setting-cron')); ?></strong>
+            <strong><?php echo sprintf(__('Note that optimization will run in background and time required depends on number of media you have. <a href="%s">Cron</a> must be active.', 'wp-optimizer'), wps_admin_route_url('wpopt', 'setting-cron')); ?></strong>
         </notice>
         <block class="wps-options">
             <?php if (!extension_loaded('imagick')): ?>
                 <row class="wps-row">
                     <?php echo Graphic::icon($hasImageEngine ? 'info' : 'tools', 'wps-row-icon'); ?>
                     <div class="wps-option">
-                        <strong><?php _e('Image engine support', 'wpopt'); ?></strong>
+                        <strong><?php _e('Image engine support', 'wp-optimizer'); ?></strong>
                         <span class="wps-option-description">
                             <?php
                             if (!$hasImageEngine) {
-                                echo sprintf(__('Install <a href="%s">Imagick</a> or <a href="%s">GD</a> to run image optimization on this server.', 'wpopt'), 'https://www.php.net/manual/en/book.imagick.php', 'https://www.php.net/manual/en/book.image.php');
+                                echo sprintf(__('Install <a href="%s">Imagick</a> or <a href="%s">GD</a> to run image optimization on this server.', 'wp-optimizer'), 'https://www.php.net/manual/en/book.imagick.php', 'https://www.php.net/manual/en/book.image.php');
                             }
                             else {
-                                echo sprintf(__('GD is available, but <a href="%s">Imagick</a> is recommended for broader image format support and better optimization results.', 'wpopt'), 'https://www.php.net/manual/en/book.imagick.php');
+                                echo sprintf(__('GD is available, but <a href="%s">Imagick</a> is recommended for broader image format support and better optimization results.', 'wp-optimizer'), 'https://www.php.net/manual/en/book.imagick.php');
                             }
                             ?>
                         </span>
                     </div>
                     <div class="wps-value">
-                        <span class="wps-status-pill is-warning"><?php echo $hasImageEngine ? __('Recommended', 'wpopt') : __('Required', 'wpopt'); ?></span>
+                        <span class="wps-status-pill is-warning"><?php echo $hasImageEngine ? __('Recommended', 'wp-optimizer') : __('Required', 'wp-optimizer'); ?></span>
                     </div>
                 </row>
             <?php endif; ?>
@@ -278,41 +278,41 @@ class Mod_Media extends Module
             <row class="wps-row">
                 <?php echo Graphic::icon('image', 'wps-row-icon'); ?>
                 <div class="wps-option">
-                    <strong><?php _e('Optimize media library', 'wpopt'); ?></strong>
+                    <strong><?php _e('Optimize media library', 'wp-optimizer'); ?></strong>
                     <span class="wps-option-description">
                         <?php
                         if ($scheduled) {
-                            echo sprintf(__('Optimization is scheduled for %s.', 'wpopt'), wps_time('mysql', 0, true, $scheduled['timestamp']));
+                            echo sprintf(__('Optimization is scheduled for %s.', 'wp-optimizer'), wps_time('mysql', 0, true, $scheduled['timestamp']));
                         }
                         else {
-                            _e('Runs silently in the background and processes the library according to the current Media Optimizer settings.', 'wpopt');
+                            _e('Runs silently in the background and processes the library according to the current Media Optimizer settings.', 'wp-optimizer');
                         }
                         ?>
                     </span>
                 </div>
                 <div class="wps-value wps-inline-actions">
                     <?php if ($isRunning): ?>
-                        <span class="wps-status-pill is-info"><?php _e('Running', 'wpopt'); ?></span>
+                        <span class="wps-status-pill is-info"><?php _e('Running', 'wp-optimizer'); ?></span>
                     <?php elseif ($scheduled): ?>
-                        <span class="wps-status-pill is-info"><?php _e('Scheduled', 'wpopt'); ?></span>
+                        <span class="wps-status-pill is-info"><?php _e('Scheduled', 'wp-optimizer'); ?></span>
                     <?php endif; ?>
                     <button class="wps wps-button wpopt-btn is-info"
                         <?php echo (!empty($scheduled) || $isRunning) ? 'disabled' : '' ?>
                             data-wps="ajax-action" data-mod="media" data-action="start-ipc-posts"
                             data-nonce="<?php echo $nonce; ?>">
-                        <?php echo __('Start', 'wpopt') ?>
+                        <?php echo __('Start', 'wp-optimizer') ?>
                     </button>
                     <button class="wps wps-button wpopt-btn is-info"
                         <?php echo $isRunning ? '' : 'disabled' ?>
                             data-wps="ajax-action" data-mod="media" data-action="pause-ipc-posts"
                             data-nonce="<?php echo $nonce; ?>">
-                        <?php echo __('Pause', 'wpopt') ?>
+                        <?php echo __('Pause', 'wp-optimizer') ?>
                     </button>
                     <button class="wps wps-button wpopt-btn is-danger"
                         <?php echo $isRunning ? 'disabled' : '' ?>
                             data-wps="ajax-action" data-mod="media" data-action="reset-ipc-posts"
                             data-nonce="<?php echo $nonce; ?>">
-                        <?php echo __('Reset', 'wpopt') ?>
+                        <?php echo __('Reset', 'wp-optimizer') ?>
                     </button>
                 </div>
             </row>
@@ -330,24 +330,24 @@ class Mod_Media extends Module
                 echo Graphic::generateHTML_tabs_panels(array(
                         array(
                             'id'                => 'images-optimizer',
-                            'panel-title'       => __('Images optimizer', 'wpopt'),
-                            'panel-description' => __('Compress, resize and process image attachments in the background.', 'wpopt'),
+                            'panel-title'       => __('Images optimizer', 'wp-optimizer'),
+                            'panel-description' => __('Compress, resize and process image attachments in the background.', 'wp-optimizer'),
                             'panel-icon'        => 'image',
                             'tab-icon'          => 'image',
                             'callback'          => array($this, 'render_imagesOptimizer_Panel')
                         ),
                         array(
                             'id'                => 'media-cleaner',
-                            'panel-title'       => __('Media cleaner', 'wpopt'),
-                            'panel-description' => __('Find attachments that are no longer referenced and review them before removal.', 'wpopt'),
+                            'panel-title'       => __('Media cleaner', 'wp-optimizer'),
+                            'panel-description' => __('Find attachments that are no longer referenced and review them before removal.', 'wp-optimizer'),
                             'panel-icon'        => 'media-cleaner',
                             'tab-icon'          => 'media-cleaner',
                             'callback'          => array($this, 'render_mediaCleaner_Panel')
                         ),
                         array(
                             'id'                => 'stats',
-                            'panel-title'       => __('Stats', 'wpopt'),
-                            'panel-description' => __('Track processed images and estimated space saved by optimization.', 'wpopt'),
+                            'panel-title'       => __('Stats', 'wp-optimizer'),
+                            'panel-description' => __('Track processed images and estimated space saved by optimization.', 'wp-optimizer'),
                             'panel-icon'        => 'chart',
                             'tab-icon'          => 'chart',
                             'callback'          => array($this, 'render_stats')
@@ -447,14 +447,14 @@ class Mod_Media extends Module
                 <div class="wpopt-media-stats-summary-item">
                     <?php echo Graphic::icon('image', 'wpopt-media-stat-icon'); ?>
                     <div class="wpopt-media-stat-copy">
-                        <strong><?php _e('Media optimized', 'wpopt'); ?></strong>
+                        <strong><?php _e('Media optimized', 'wp-optimizer'); ?></strong>
                         <span class="wpopt-media-stat-value"><?php echo esc_html(number_format_i18n($optimized_images_count)); ?></span>
                     </div>
                 </div>
                 <div class="wpopt-media-stats-summary-item">
                     <?php echo Graphic::icon('box', 'wpopt-media-stat-icon'); ?>
                     <div class="wpopt-media-stat-copy">
-                        <strong><?php _e('Left', 'wpopt'); ?></strong>
+                        <strong><?php _e('Left', 'wp-optimizer'); ?></strong>
                         <span class="wpopt-media-stat-value"><?php echo esc_html(number_format_i18n($media_left_count)); ?></span>
                     </div>
                 </div>
@@ -464,23 +464,23 @@ class Mod_Media extends Module
                 <article class="wpopt-media-stat-card">
                     <?php echo Graphic::icon('chart', 'wpopt-media-stat-icon is-green'); ?>
                     <div class="wpopt-media-stat-card-body">
-                        <strong><?php _e('Processed media library', 'wpopt'); ?></strong>
+                        <strong><?php _e('Processed media library', 'wp-optimizer'); ?></strong>
                         <div class="wpopt-media-progress-ring is-complete" style="--wpopt-media-progress: <?php echo esc_attr($processed_progress); ?>%;">
                             <span><?php echo esc_html($format_percent($processed_progress)); ?></span>
                         </div>
-                        <p><?php echo $processed_progress >= 100 ? esc_html__('Your entire media library has been processed.', 'wpopt') : esc_html(sprintf(__('%s of your media library has been processed.', 'wpopt'), $format_percent($processed_progress))); ?></p>
+                        <p><?php echo $processed_progress >= 100 ? esc_html__('Your entire media library has been processed.', 'wp-optimizer') : esc_html(sprintf(__('%s of your media library has been processed.', 'wp-optimizer'), $format_percent($processed_progress))); ?></p>
                     </div>
                 </article>
 
                 <article class="wpopt-media-stat-card">
                     <?php echo Graphic::icon('database', 'wpopt-media-stat-icon'); ?>
                     <div class="wpopt-media-stat-card-body">
-                        <strong><?php _e('Space freed up', 'wpopt'); ?></strong>
+                        <strong><?php _e('Space freed up', 'wp-optimizer'); ?></strong>
                         <span class="wpopt-media-stat-value is-large"><?php echo esc_html(size_format($saved_bytes, 2)); ?></span>
                         <div class="wpopt-media-progress-ring" style="--wpopt-media-progress: <?php echo esc_attr($saved_progress); ?>%;">
                             <span><?php echo esc_html($format_percent($saved_progress)); ?></span>
                         </div>
-                        <p><?php _e('Percentage of total savings capacity achieved.', 'wpopt'); ?></p>
+                        <p><?php _e('Percentage of total savings capacity achieved.', 'wp-optimizer'); ?></p>
                     </div>
                 </article>
             </div>
@@ -488,14 +488,14 @@ class Mod_Media extends Module
             <div class="wpopt-media-stats-reset">
                 <?php echo Graphic::icon('repeat', 'wpopt-media-stat-icon'); ?>
                 <div class="wpopt-media-stat-copy">
-                    <strong><?php _e('Reset statistics', 'wpopt'); ?></strong>
-                    <span><?php _e('This will clear all statistics and start tracking again.', 'wpopt'); ?></span>
+                    <strong><?php _e('Reset statistics', 'wp-optimizer'); ?></strong>
+                    <span><?php _e('This will clear all statistics and start tracking again.', 'wp-optimizer'); ?></span>
                 </div>
                 <button class="wps wps-button wpopt-btn is-neutral"
                     <?php echo $this->status('optimization') === 'running' ? 'disabled' : '' ?>
                         data-wps="ajax-action" data-mod="media" data-action="reset-stats"
                         data-nonce="<?php echo wp_create_nonce('wpopt-ajax-nonce'); ?>">
-                    <?php echo __('Reset', 'wpopt') ?>
+                    <?php echo __('Reset', 'wp-optimizer') ?>
                 </button>
             </div>
         </section>
@@ -530,10 +530,10 @@ class Mod_Media extends Module
     {
         return $this->group_setting_fields(
             $this->group_setting_fields(
-                $this->setting_field(__('Images optimization preferences', 'wpopt'), false, 'separator'),
-                $this->setting_field(__('Auto optimize uploads', 'wpopt'), 'auto_optimize_uploads', 'link', ['value' => ['text' => __('set it here', 'wpopt'), 'href' => wps_admin_route_url('wpopt', 'setting-cron')]]),
-                $this->setting_field(__('Use Imagick (if installed)', 'wpopt'), "use_imagick", "checkbox", ['default_value' => true]),
-                $this->setting_field(__('Optimization intensity', 'wpopt'), "quality", "range", [
+                $this->setting_field(__('Images optimization preferences', 'wp-optimizer'), false, 'separator'),
+                $this->setting_field(__('Auto optimize uploads', 'wp-optimizer'), 'auto_optimize_uploads', 'link', ['value' => ['text' => __('set it here', 'wp-optimizer'), 'href' => wps_admin_route_url('wpopt', 'setting-cron')]]),
+                $this->setting_field(__('Use Imagick (if installed)', 'wp-optimizer'), "use_imagick", "checkbox", ['default_value' => true]),
+                $this->setting_field(__('Optimization intensity', 'wp-optimizer'), "quality", "range", [
                         'default_value' => 8,
                         'value'         => $this->quality_intensity_value(),
                         'classes'       => 'wpopt-optimization-intensity-range',
@@ -543,22 +543,22 @@ class Mod_Media extends Module
                                 'step' => '1',
                         ],
                 ]),
-                $this->setting_field(__('Keep all the EXIF data of your images', 'wpopt'), "keep_exif", "checkbox", ['default_value' => false]),
-                $this->setting_field(__('Resize larger images', 'wpopt'), "resize_larger_images", "checkbox", ['default_value' => false]),
-                $this->setting_field(__('max with (px)', 'wpopt'), "resize_width_px", "number", ['default_value' => 2560, 'parent' => 'resize_larger_images']),
-                $this->setting_field(__('max height (px)', 'wpopt'), "resize_height_px", "number", ['default_value' => 1440, 'parent' => 'resize_larger_images']),
+                $this->setting_field(__('Keep all the EXIF data of your images', 'wp-optimizer'), "keep_exif", "checkbox", ['default_value' => false]),
+                $this->setting_field(__('Resize larger images', 'wp-optimizer'), "resize_larger_images", "checkbox", ['default_value' => false]),
+                $this->setting_field(__('max with (px)', 'wp-optimizer'), "resize_width_px", "number", ['default_value' => 2560, 'parent' => 'resize_larger_images']),
+                $this->setting_field(__('max height (px)', 'wp-optimizer'), "resize_height_px", "number", ['default_value' => 1440, 'parent' => 'resize_larger_images']),
             ),
 
             $this->group_setting_fields(
-                $this->setting_field(__('Formats', 'wpopt'), false, 'separator'),
-                $this->setting_field(__('Convert all images to new webp format', 'wpopt'), "convert_to_webp", "checkbox", ['default_value' => false]),
-                $this->setting_field(__('Convert images to AVIF', 'wpopt'), "convert_to_avif", "checkbox", ['default_value' => false]),
-                $this->setting_field(__('Optimize JPG/JPEG', 'wpopt'), "format.jpg", "checkbox", ['default_value' => true]),
-                $this->setting_field(__('Optimize PNG', 'wpopt'), "format.png", "checkbox", ['default_value' => true]),
-                $this->setting_field(__('Optimize GIF', 'wpopt'), "format.gif", "checkbox", ['default_value' => true]),
-                $this->setting_field(__('Optimize WEBP', 'wpopt'), "format.webp", "checkbox", ['default_value' => true]),
-                $this->setting_field(__('Optimize AVIF', 'wpopt'), "format.avif", "checkbox", ['default_value' => true]),
-                $this->setting_field(__('Optimize other formats (tiff, heic, bmp)', 'wpopt'), "format.others", "checkbox", ['default_value' => false]),
+                $this->setting_field(__('Formats', 'wp-optimizer'), false, 'separator'),
+                $this->setting_field(__('Convert all images to new webp format', 'wp-optimizer'), "convert_to_webp", "checkbox", ['default_value' => false]),
+                $this->setting_field(__('Convert images to AVIF', 'wp-optimizer'), "convert_to_avif", "checkbox", ['default_value' => false]),
+                $this->setting_field(__('Optimize JPG/JPEG', 'wp-optimizer'), "format.jpg", "checkbox", ['default_value' => true]),
+                $this->setting_field(__('Optimize PNG', 'wp-optimizer'), "format.png", "checkbox", ['default_value' => true]),
+                $this->setting_field(__('Optimize GIF', 'wp-optimizer'), "format.gif", "checkbox", ['default_value' => true]),
+                $this->setting_field(__('Optimize WEBP', 'wp-optimizer'), "format.webp", "checkbox", ['default_value' => true]),
+                $this->setting_field(__('Optimize AVIF', 'wp-optimizer'), "format.avif", "checkbox", ['default_value' => true]),
+                $this->setting_field(__('Optimize other formats (tiff, heic, bmp)', 'wp-optimizer'), "format.others", "checkbox", ['default_value' => false]),
             )
         );
     }
@@ -577,10 +577,10 @@ class Mod_Media extends Module
     protected function infos(): array
     {
         return [
-            'auto_optimize_uploads' => __("Automatically compresses and resizes images for faster loading, improving website performance.", 'wpopt'),
-            'use_imagick'           => __("A PHP extension for creating, modifying and manipulating images, it makes optimization faster.", 'wpopt'),
-            'convert_to_webp'       => __("WebP is a modern image format with superior compression efficiency, reducing file size and improving website performance.", 'wpopt'),
-            'convert_to_avif'       => __("Convert selected images to AVIF using the active image library. A successful conversion replaces the original; a failed conversion keeps it. When WebP and AVIF conversion are both enabled, AVIF takes priority.", 'wpopt'),
+            'auto_optimize_uploads' => __("Automatically compresses and resizes images for faster loading, improving website performance.", 'wp-optimizer'),
+            'use_imagick'           => __("A PHP extension for creating, modifying and manipulating images, it makes optimization faster.", 'wp-optimizer'),
+            'convert_to_webp'       => __("WebP is a modern image format with superior compression efficiency, reducing file size and improving website performance.", 'wp-optimizer'),
+            'convert_to_avif'       => __("Convert selected images to AVIF using the active image library. A successful conversion replaces the original; a failed conversion keeps it. When WebP and AVIF conversion are both enabled, AVIF takes priority.", 'wp-optimizer'),
         ];
     }
 }

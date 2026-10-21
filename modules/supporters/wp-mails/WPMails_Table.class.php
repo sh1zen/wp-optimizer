@@ -29,7 +29,7 @@ class WPMails extends \WPS\core\List_Table
     public function __construct($args = array())
     {
         $this->modes = array(
-            'list' => __('List view', 'wpopt'),
+            'list' => __('List view', 'wp-optimizer'),
         );
 
         //$this->settings = $args['settings'];
@@ -37,8 +37,8 @@ class WPMails extends \WPS\core\List_Table
 
         parent::__construct(
             array(
-                'singular' => __('mail', 'wpopt'),
-                'plural'   => __('mails', 'wpopt'),
+                'singular' => __('mail', 'wp-optimizer'),
+                'plural'   => __('mails', 'wp-optimizer'),
                 'ajax'     => false,
                 'screen'   => get_current_screen(),
             )
@@ -53,7 +53,7 @@ class WPMails extends \WPS\core\List_Table
         ?>
         <p class="search-box">
             <label class="screen-reader-text" for="<?php echo esc_attr($input_id); ?>"><?php echo esc_html($text); ?>:</label>
-            <input type="search" id="<?php echo esc_attr($input_id); ?>" name="s" value="<?php echo esc_attr($search_data); ?>" placeholder="<?php esc_attr_e('Search mails...', 'wpopt'); ?>"/>
+            <input type="search" id="<?php echo esc_attr($input_id); ?>" name="s" value="<?php echo esc_attr($search_data); ?>" placeholder="<?php esc_attr_e('Search mails...', 'wp-optimizer'); ?>"/>
             <?php submit_button($text, 'button', false, false, array('id' => 'search-submit')); ?>
         </p>
         <?php
@@ -76,11 +76,11 @@ class WPMails extends \WPS\core\List_Table
         }
 
         $date_options = array(
-            ''          => __('All Time', 'wpopt'),
-            'today'     => __('Today', 'wpopt'),
-            'yesterday' => __('Yesterday', 'wpopt'),
-            'week'      => __('This Week', 'wpopt'),
-            'month'     => __('This Month', 'wpopt'),
+            ''          => __('All Time', 'wp-optimizer'),
+            'today'     => __('Today', 'wp-optimizer'),
+            'yesterday' => __('Yesterday', 'wp-optimizer'),
+            'week'      => __('This Week', 'wp-optimizer'),
+            'month'     => __('This Month', 'wp-optimizer'),
         );
 
         echo '<select name="filter_date" id="hs-filter-date">';
@@ -89,7 +89,7 @@ class WPMails extends \WPS\core\List_Table
         }
         echo '</select>';
 
-        submit_button(__('Filter', 'wpopt'), 'button', 'aal-filter', false, array('id' => 'activity-query-submit'));
+        submit_button(__('Filter', 'wp-optimizer'), 'button', 'aal-filter', false, array('id' => 'activity-query-submit'));
 
         $filters = array(
             'filter_date',
@@ -98,7 +98,7 @@ class WPMails extends \WPS\core\List_Table
 
         foreach ($filters as $filter) {
             if (!empty($_REQUEST[$filter])) {
-                echo '<a href="' . esc_url($this->get_filtered_link()) . '"><span class="dashicons dashicons-dismiss"></span>' . esc_html__('Reset Filters', 'wpopt') . '</a>';
+                echo '<a href="' . esc_url($this->get_filtered_link()) . '"><span class="dashicons dashicons-dismiss"></span>' . esc_html__('Reset Filters', 'wp-optimizer') . '</a>';
                 break;
             }
         }
@@ -119,13 +119,13 @@ class WPMails extends \WPS\core\List_Table
         ?>
         <div class="alignleft actions recordactions">
             <select name="export-format">
-                <option value=""><?php echo esc_attr__('Export File Format', 'wpopt'); ?></option>
+                <option value=""><?php echo esc_attr__('Export File Format', 'wp-optimizer'); ?></option>
                 <?php foreach ($actions as $action_key => $action_title) : ?>
                     <option value="<?php echo esc_attr($action_key); ?>"><?php echo esc_html($action_title); ?></option>
                 <?php endforeach; ?>
             </select>
         </div>
-        <?php echo RequestActions::get_action_button($this->action_hook, 'export', __('Export Data', 'wpopt'), 'wps wps-button wpopt-btn is-info'); ?>
+        <?php echo RequestActions::get_action_button($this->action_hook, 'export', __('Export Data', 'wp-optimizer'), 'wps wps-button wpopt-btn is-info'); ?>
         <?php
     }
 
@@ -263,7 +263,7 @@ class WPMails extends \WPS\core\List_Table
         $output .= '<div class="wpopt-mail-message-preview">' . esc_html($preview_text) . '</div>';
 
         if ($show_more) {
-            $output .= '<a href="#" class="wpopt-mail-message-more" data-mail-message-target="' . esc_attr($modal_id) . '">' . esc_html__('View more', 'wpopt') . '</a>';
+            $output .= '<a href="#" class="wpopt-mail-message-more" data-mail-message-target="' . esc_attr($modal_id) . '">' . esc_html__('View more', 'wp-optimizer') . '</a>';
             $output .= '<div id="' . esc_attr($modal_id) . '" class="hidden"><div class="wpopt-mail-message-modal-text">' . wpautop(esc_html($message), true) . '</div></div>';
         }
 
@@ -299,7 +299,7 @@ class WPMails extends \WPS\core\List_Table
 
                 $timestamp = strtotime($item->$column_name);
 
-                $return = sprintf('<strong>' . __('%s ago', 'wpopt') . '</strong>', human_time_diff($timestamp, wps_time()));
+                $return = sprintf('<strong>' . __('%s ago', 'wp-optimizer') . '</strong>', human_time_diff($timestamp, wps_time()));
 
                 $return .= '<br/><a href="' . esc_url($this->get_filtered_link('filter_date', (string)$item->$column_name)) . '">' . esc_html(wps_time(get_option('date_format'), 0, false, $timestamp)) . '</a>';
 
@@ -429,12 +429,12 @@ class WPMails extends \WPS\core\List_Table
     public function get_columns()
     {
         return array(
-            'id'          => __('N', 'wpopt'),
-            'to_email'    => __('To', 'wpopt'),
-            'subject'     => __('Subject', 'wpopt'),
-            'message'     => __('Message', 'wpopt'),
-            'attachments' => __('Attachments', 'wpopt'),
-            'sent_date'   => __('Date', 'wpopt'),
+            'id'          => __('N', 'wp-optimizer'),
+            'to_email'    => __('To', 'wp-optimizer'),
+            'subject'     => __('Subject', 'wp-optimizer'),
+            'message'     => __('Message', 'wp-optimizer'),
+            'attachments' => __('Attachments', 'wp-optimizer'),
+            'sent_date'   => __('Date', 'wp-optimizer'),
         );
     }
 
@@ -453,7 +453,7 @@ class WPMails extends \WPS\core\List_Table
 
     public function no_items()
     {
-        _e('No Mails found.', 'wpopt');
+        _e('No Mails found.', 'wp-optimizer');
     }
 }
 

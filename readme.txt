@@ -5,7 +5,7 @@ Donate link: https://www.paypal.com/donate/?hosted_button_id=8G8VR4APG9JRU
 Requires at least: 5.0.0
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 2.9.0
+Stable tag: 2.9.2
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -500,6 +500,10 @@ For WordPress Multisite, install WP Optimizer from Network Admin and network act
 
 == Frequently Asked Questions ==
 
+= How are translations managed? =
+
+Translations are managed at https://translate.wordpress.org/projects/wp-plugins/wp-optimizer/. WordPress automatically loads installed language packs for the active locale from its global language directory. Available translation updates can be installed through Dashboard > Updates.
+
 = Is WP Optimizer free? =
 
 Yes. WP Optimizer is free and the performance features described in this readme are not locked behind a premium subscription.
@@ -716,11 +720,16 @@ The uninstall routine removes plugin options, scheduled media hooks and plugin d
 
 == Upgrade Notice ==
 
-= 2.9.0 =
+= 2.9.2 =
 
 Recommended update with compatibility improvements, Multisite enhancements, performance refinements and bug fixes.
 
 == Changelog ==
+
+= 2.9.2 =
+
+* Use native WordPress language packs for translations.
+* Align gettext calls with the wp-optimizer text domain.
 
 = 2.9.0 =
 

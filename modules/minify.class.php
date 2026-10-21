@@ -277,18 +277,18 @@ class Mod_Minify extends Module
     {
         return $this->group_setting_fields(
                 $this->group_setting_fields(
-                        $this->setting_field(__('Minify HTML', 'wpopt'), "html.active", "checkbox", ['default_value' => true]),
-                        $this->setting_field(__('Remove Comments', 'wpopt'), "html.remove_comments", "checkbox", ['parent' => 'html.active']),
-                        $this->setting_field(__('Minify inline css', 'wpopt'), "html.minify_css", "checkbox", ['parent' => 'html.active', 'default_value' => true]),
-                        $this->setting_field(__('Minify inline js', 'wpopt'), "html.minify_js", "checkbox", ['parent' => 'html.active', 'default_value' => false]),
+                        $this->setting_field(__('Minify HTML', 'wp-optimizer'), "html.active", "checkbox", ['default_value' => true]),
+                        $this->setting_field(__('Remove Comments', 'wp-optimizer'), "html.remove_comments", "checkbox", ['parent' => 'html.active']),
+                        $this->setting_field(__('Minify inline css', 'wp-optimizer'), "html.minify_css", "checkbox", ['parent' => 'html.active', 'default_value' => true]),
+                        $this->setting_field(__('Minify inline js', 'wp-optimizer'), "html.minify_js", "checkbox", ['parent' => 'html.active', 'default_value' => false]),
                 ),
                 $this->group_setting_fields(
-                        $this->setting_field(__('Minify JavaScript', 'wpopt'), "js.active", "checkbox"),
-                        $this->setting_field(__('Try to combine scripts', 'wpopt'), "js.combine", "checkbox", ['parent' => 'js.active']),
+                        $this->setting_field(__('Minify JavaScript', 'wp-optimizer'), "js.active", "checkbox"),
+                        $this->setting_field(__('Try to combine scripts', 'wp-optimizer'), "js.combine", "checkbox", ['parent' => 'js.active']),
                 ),
                 $this->group_setting_fields(
-                        $this->setting_field(__('Minify CSS', 'wpopt'), "css.active", "checkbox"),
-                        $this->setting_field(__('Try to combine scripts', 'wpopt'), "css.combine", "checkbox", ['parent' => 'css.active']),
+                        $this->setting_field(__('Minify CSS', 'wp-optimizer'), "css.active", "checkbox"),
+                        $this->setting_field(__('Try to combine scripts', 'wp-optimizer'), "css.combine", "checkbox", ['parent' => 'css.active']),
                 )
         );
     }

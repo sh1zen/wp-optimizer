@@ -32,7 +32,7 @@ class Media_Table extends \WPS\core\List_Table
     public function __construct($args = array())
     {
         $this->modes = array(
-            'list' => __('List view', 'wpopt'),
+            'list' => __('List view', 'wp-optimizer'),
         );
 
         parent::__construct(
@@ -48,7 +48,7 @@ class Media_Table extends \WPS\core\List_Table
             'per_page',
             array(
                 'default' => 50,
-                'label'   => __('Images per page', 'wpopt'),
+                'label'   => __('Images per page', 'wp-optimizer'),
                 'option'  => 'media_cleaner_images_per_page',
             )
         );
@@ -123,10 +123,10 @@ class Media_Table extends \WPS\core\List_Table
     {
         return array(
             'cb'    => '<input type="checkbox" />',
-            'image' => __('Image', 'wpopt'),
-            'path'  => __('Path', 'wpopt'),
-            'size'  => __('Size', 'wpopt'),
-            'cdate' => __('Last Modify Date', 'wpopt')
+            'image' => __('Image', 'wp-optimizer'),
+            'path'  => __('Path', 'wp-optimizer'),
+            'size'  => __('Size', 'wp-optimizer'),
+            'cdate' => __('Last Modify Date', 'wp-optimizer')
         );
     }
 
@@ -134,7 +134,7 @@ class Media_Table extends \WPS\core\List_Table
      */
     public function no_items()
     {
-        _e('No media files found.', 'wpopt');
+        _e('No media files found.', 'wp-optimizer');
     }
 
     /**
@@ -180,7 +180,7 @@ class Media_Table extends \WPS\core\List_Table
                      class='attachment-60x60 size-60x60' loading='lazy'>
             </span>
         <p class="filename">
-            <span class="screen-reader-text"><?php _e('File name:'); ?> </span>
+            <span class="screen-reader-text"><?php _e('File name:', 'wp-optimizer'); ?> </span>
             <?php
             echo esc_html(wp_basename($item['obj_id']));
             ?>
@@ -194,8 +194,8 @@ class Media_Table extends \WPS\core\List_Table
     protected function get_bulk_actions()
     {
         return array(
-            'delete' => __('Delete', 'wpopt'),
-            'ignore' => __('Ignore', 'wpopt')
+            'delete' => __('Delete', 'wp-optimizer'),
+            'ignore' => __('Ignore', 'wp-optimizer')
         );
     }
 

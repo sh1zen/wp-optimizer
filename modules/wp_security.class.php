@@ -160,7 +160,7 @@ class Mod_WP_Security extends Module
 
             if (!$this->constant_enabled('DISALLOW_FILE_MODS') && !WP_Htaccess::is_rules_file_writable()) {
                 add_action('admin_notices', function () {
-                    $this->add_notices('error', sprintf(__("'%1\$s' is not writable. Update its permissions to allow WP Optimizer to apply %2\$s server-rule changes automatically. Until this file is writable, WP Optimizer cannot apply some performance, security, and compatibility improvements automatically.", 'wpopt'), WP_Htaccess::get_rules_path(), WP_Htaccess::get_server_label()));
+                    $this->add_notices('error', sprintf(__("'%1\$s' is not writable. Update its permissions to allow WP Optimizer to apply %2\$s server-rule changes automatically. Until this file is writable, WP Optimizer cannot apply some performance, security, and compatibility improvements automatically.", 'wp-optimizer'), WP_Htaccess::get_rules_path(), WP_Htaccess::get_server_label()));
                 }, 0);
             }
         }
@@ -209,17 +209,17 @@ class Mod_WP_Security extends Module
     protected function print_header(): string
     {
         if ($this->constant_enabled('DISALLOW_FILE_MODS')) {
-            return "<p><b>" . esc_html__('Server-rule changes are disabled because DISALLOW_FILE_MODS is enabled in wp-config.php.', 'wpopt') . "</b></p>";
+            return "<p><b>" . esc_html__('Server-rule changes are disabled because DISALLOW_FILE_MODS is enabled in wp-config.php.', 'wp-optimizer') . "</b></p>";
         }
 
         $this->load_dependencies();
         $header = '';
 
         if (WP_Htaccess::is_nginx()) {
-            $header .= "<p><b>" . esc_html__('Nginx server rules', 'wpopt') . "</b><br>" . sprintf(esc_html__("WP-Optimizer writes Nginx rules to %s. Include this file inside your Nginx server block, then reload Nginx after changes. Optional module directives such as Brotli and PageSpeed are written as comments to avoid reload errors when the module is not installed.", 'wpopt'), '<code>' . esc_html(WP_Htaccess::get_rules_path()) . '</code>') . "</p>";
+            $header .= "<p><b>" . esc_html__('Nginx server rules', 'wp-optimizer') . "</b><br>" . sprintf(esc_html__("WP-Optimizer writes Nginx rules to %s. Include this file inside your Nginx server block, then reload Nginx after changes. Optional module directives such as Brotli and PageSpeed are written as comments to avoid reload errors when the module is not installed.", 'wp-optimizer'), '<code>' . esc_html(WP_Htaccess::get_rules_path()) . '</code>') . "</p>";
         }
         elseif (WP_Htaccess::is_openlitespeed()) {
-            $header .= "<p><b>" . esc_html__('OpenLiteSpeed server rules', 'wpopt') . "</b><br>" . esc_html__('WP-Optimizer writes supported rewrite rules to .htaccess. Enable Auto Load from .htaccess in OpenLiteSpeed WebAdmin; configure security headers and other non-rewrite directives in WebAdmin.', 'wpopt') . "</p>";
+            $header .= "<p><b>" . esc_html__('OpenLiteSpeed server rules', 'wp-optimizer') . "</b><br>" . esc_html__('WP-Optimizer writes supported rewrite rules to .htaccess. Enable Auto Load from .htaccess in OpenLiteSpeed WebAdmin; configure security headers and other non-rewrite directives in WebAdmin.', 'wp-optimizer') . "</p>";
         }
 
         if (!WP_Htaccess::is_rules_file_writable()) {
@@ -234,7 +234,7 @@ class Mod_WP_Security extends Module
 
                 $virtual_page = esc_textarea($htaccess->get_rules());
 
-                return $header . "<p><b>" . sprintf(esc_html__("Your %s file is not modifiable, to make desired enhancements copy and paste those lines to the server configuration file.", 'wpopt'), esc_html(WP_Htaccess::get_rules_file_name())) . "</b><br><br><textarea style='width: 100%; height: 200px'>$virtual_page</textarea></p>";
+                return $header . "<p><b>" . sprintf(esc_html__("Your %s file is not modifiable, to make desired enhancements copy and paste those lines to the server configuration file.", 'wp-optimizer'), esc_html(WP_Htaccess::get_rules_file_name())) . "</b><br><br><textarea style='width: 100%; height: 200px'>$virtual_page</textarea></p>";
             }
         }
 
@@ -243,36 +243,36 @@ class Mod_WP_Security extends Module
 
     protected function setting_fields($filter = ''): array
     {
-        $file_mods_hint = __('Locked by DISALLOW_FILE_MODS in wp-config.php. WordPress has disabled file modifications, so WP Optimizer cannot manage server rules or filesystem-writing features from this screen.', 'wpopt');
-        $file_editor_hint = __('Locked by DISALLOW_FILE_EDIT in wp-config.php. The WordPress file editor is already disabled by configuration.', 'wpopt');
+        $file_mods_hint = __('Locked by DISALLOW_FILE_MODS in wp-config.php. WordPress has disabled file modifications, so WP Optimizer cannot manage server rules or filesystem-writing features from this screen.', 'wp-optimizer');
+        $file_editor_hint = __('Locked by DISALLOW_FILE_EDIT in wp-config.php. The WordPress file editor is already disabled by configuration.', 'wp-optimizer');
         $srv_security_active_args = $this->locked_checkbox_args(['default_value' => true, 'risk' => 'danger'], 'DISALLOW_FILE_MODS', false, $file_mods_hint);
         $disable_file_editor_args = $this->locked_checkbox_args(['parent' => 'a_api.active'], 'DISALLOW_FILE_EDIT', true, $file_editor_hint);
 
         return $this->group_setting_fields(
             $this->group_setting_fields(
-                $this->setting_field(__('Requests and Server', 'wpopt'), "srv_security.active", "checkbox", $srv_security_active_args),
-                $this->setting_field(__('Disable directory listing', 'wpopt'), "srv_security.listings", "checkbox", ['parent' => 'srv_security.active', 'default_value' => true]),
-                $this->setting_field(__('Disable access to configuration files (.htaccess/nginx.conf)', 'wpopt'), "srv_security.protect_htaccess", "checkbox", ['parent' => 'srv_security.active', 'default_value' => true]),
-                $this->setting_field(__('Enable HTTPS Strict Transport Security', 'wpopt'), "srv_security.hsts", "checkbox", ['parent' => 'srv_security.active', 'default_value' => true, 'risk' => 'danger']),
-                $this->setting_field(__('Disable Cross-Origin Resource Sharing', 'wpopt'), "srv_security.cors", "checkbox", ['parent' => 'srv_security.active', 'default_value' => true]),
-                $this->setting_field(__('Disable HTTP Track & Trace', 'wpopt'), "srv_security.http_track&trace", "checkbox", ['parent' => 'srv_security.active', 'default_value' => true]),
-                $this->setting_field(__('Block Cross Site Scripting', 'wpopt'), "srv_security.xss", "checkbox", ['parent' => 'srv_security.active', 'default_value' => true]),
-                $this->setting_field(__('Send No Sniff Header', 'wpopt'), "srv_security.nosniff", "checkbox", ['parent' => 'srv_security.active', 'default_value' => true]),
-                $this->setting_field(__('Send No Referrer Header', 'wpopt'), "srv_security.noreferrer", "checkbox", ['parent' => 'srv_security.active']),
-                $this->setting_field(__('Send No Frame Header', 'wpopt'), "srv_security.noframe", "checkbox", ['parent' => 'srv_security.active']),
-                $this->setting_field(__('Disable server signature ', 'wpopt'), "srv_security.signature", "checkbox", ['parent' => 'srv_security.active', 'default_value' => true]),
+                $this->setting_field(__('Requests and Server', 'wp-optimizer'), "srv_security.active", "checkbox", $srv_security_active_args),
+                $this->setting_field(__('Disable directory listing', 'wp-optimizer'), "srv_security.listings", "checkbox", ['parent' => 'srv_security.active', 'default_value' => true]),
+                $this->setting_field(__('Disable access to configuration files (.htaccess/nginx.conf)', 'wp-optimizer'), "srv_security.protect_htaccess", "checkbox", ['parent' => 'srv_security.active', 'default_value' => true]),
+                $this->setting_field(__('Enable HTTPS Strict Transport Security', 'wp-optimizer'), "srv_security.hsts", "checkbox", ['parent' => 'srv_security.active', 'default_value' => true, 'risk' => 'danger']),
+                $this->setting_field(__('Disable Cross-Origin Resource Sharing', 'wp-optimizer'), "srv_security.cors", "checkbox", ['parent' => 'srv_security.active', 'default_value' => true]),
+                $this->setting_field(__('Disable HTTP Track & Trace', 'wp-optimizer'), "srv_security.http_track&trace", "checkbox", ['parent' => 'srv_security.active', 'default_value' => true]),
+                $this->setting_field(__('Block Cross Site Scripting', 'wp-optimizer'), "srv_security.xss", "checkbox", ['parent' => 'srv_security.active', 'default_value' => true]),
+                $this->setting_field(__('Send No Sniff Header', 'wp-optimizer'), "srv_security.nosniff", "checkbox", ['parent' => 'srv_security.active', 'default_value' => true]),
+                $this->setting_field(__('Send No Referrer Header', 'wp-optimizer'), "srv_security.noreferrer", "checkbox", ['parent' => 'srv_security.active']),
+                $this->setting_field(__('Send No Frame Header', 'wp-optimizer'), "srv_security.noframe", "checkbox", ['parent' => 'srv_security.active']),
+                $this->setting_field(__('Disable server signature ', 'wp-optimizer'), "srv_security.signature", "checkbox", ['parent' => 'srv_security.active', 'default_value' => true]),
             ),
             $this->group_setting_fields(
-                $this->setting_field(__('Disable Information Disclosure & Remove Meta information.', 'wpopt'), "dcl_security.active", "checkbox"),
-                $this->setting_field(__('Hide WordPress Version Number', 'wpopt'), "dcl_security.nowpversion", "checkbox", ['parent' => 'dcl_security.active', 'default_value' => true]),
-                $this->setting_field(__('Remove WordPress Meta Generator Tag', 'wpopt'), "dcl_security.nowpgenerator", "checkbox", ['parent' => 'dcl_security.active', 'default_value' => true]),
-                $this->setting_field(__('Hash versioned Styles and Scripts', 'wpopt'), "dcl_security.hashversion", "checkbox", ['parent' => 'dcl_security.active']),
-                $this->setting_field(__('Hide version from Styles and Scripts', 'wpopt'), "dcl_security.hideversion", "checkbox", ['parent' => 'dcl_security.active']),
+                $this->setting_field(__('Disable Information Disclosure & Remove Meta information.', 'wp-optimizer'), "dcl_security.active", "checkbox"),
+                $this->setting_field(__('Hide WordPress Version Number', 'wp-optimizer'), "dcl_security.nowpversion", "checkbox", ['parent' => 'dcl_security.active', 'default_value' => true]),
+                $this->setting_field(__('Remove WordPress Meta Generator Tag', 'wp-optimizer'), "dcl_security.nowpgenerator", "checkbox", ['parent' => 'dcl_security.active', 'default_value' => true]),
+                $this->setting_field(__('Hash versioned Styles and Scripts', 'wp-optimizer'), "dcl_security.hashversion", "checkbox", ['parent' => 'dcl_security.active']),
+                $this->setting_field(__('Hide version from Styles and Scripts', 'wp-optimizer'), "dcl_security.hideversion", "checkbox", ['parent' => 'dcl_security.active']),
             ),
             $this->group_setting_fields(
-                $this->setting_field(__('Admin & API Security', 'wpopt'), "a_api.active", "checkbox"),
-                $this->setting_field(__('Disable WP User Enumeration', 'wpopt'), "a_api.nousernum", "checkbox", ['parent' => 'a_api.active', 'default_value' => true]),
-                $this->setting_field(__('Disable WP File Editor', 'wpopt'), "a_api.disable_file_editor", "checkbox", $disable_file_editor_args),
+                $this->setting_field(__('Admin & API Security', 'wp-optimizer'), "a_api.active", "checkbox"),
+                $this->setting_field(__('Disable WP User Enumeration', 'wp-optimizer'), "a_api.nousernum", "checkbox", ['parent' => 'a_api.active', 'default_value' => true]),
+                $this->setting_field(__('Disable WP File Editor', 'wp-optimizer'), "a_api.disable_file_editor", "checkbox", $disable_file_editor_args),
             )
         );
     }
@@ -280,25 +280,25 @@ class Mod_WP_Security extends Module
     protected function infos(): array
     {
         return [
-            'srv_security.active'           => __("Enable server-level security hardening rules for Apache, Nginx, LiteSpeed or OpenLiteSpeed environments.", 'wpopt'),
-            'srv_security.listings'         => __("Directory listing is a web server feature that displays the contents of a directory when an index file is not present, potentially exposing sensitive information.", 'wpopt'),
-            'srv_security.protect_htaccess' => __("Disabling public access to server configuration files prevents unauthorized reads of rewrite and hardening rules, improving website security.", 'wpopt'),
-            'srv_security.hsts'             => __("Enabling HTTPS Strict Transport Security (HSTS) enforces secure HTTPS connections, reducing the risk of man-in-the-middle attacks and improving website security.", 'wpopt'),
-            'srv_security.cors'             => __("Disabling Cross-Origin Resource Sharing (CORS) restricts cross-domain requests, improving website security by preventing unauthorized access to resources.", 'wpopt'),
-            'srv_security.http_track&trace' => __("Disabling HTTP track and trace prevents servers from disclosing information about requests, improving website security by reducing the risk of sensitive data leaks.", 'wpopt'),
-            'srv_security.xss'              => __("Blocking cross-site scripting (XSS) prevents malicious scripts from executing on a website, improving website security and protecting user data.", 'wpopt'),
-            'srv_security.nosniff'          => __("Sending NoSniff header instructs web browsers to prevent MIME type sniffing, improving website security by reducing the risk of content spoofing attacks.", 'wpopt'),
-            'srv_security.noreferrer'       => __("Sending no referrer header prevents the browser from sending information about the previous page visited, improving user privacy and security.", 'wpopt'),
-            'srv_security.noframe'          => __("Sending no-frame headers prevent website content from being displayed within an iframe, improving website security and preventing clickjacking attacks.", 'wpopt'),
-            'srv_security.signature'        => __("Disable server signature exposure to reduce information disclosure in HTTP responses.", 'wpopt'),
-            'dcl_security.active'           => __("Enable WordPress metadata and version disclosure protections.", 'wpopt'),
-            'dcl_security.nowpversion'      => __("Remove visible WordPress version references to reduce fingerprinting risk.", 'wpopt'),
-            'dcl_security.nowpgenerator'    => __("Remove WordPress generator meta tags from page output and feeds.", 'wpopt'),
-            'dcl_security.hashversion'      => __("Replace static asset version values with hashed values to reduce version disclosure.", 'wpopt'),
-            'dcl_security.hideversion'      => __("Remove version query strings from scripts and styles URLs.", 'wpopt'),
-            'a_api.active'                  => __("Enable admin and API related hardening options.", 'wpopt'),
-            'a_api.nousernum'               => __("Block basic user enumeration techniques via author archive query parameters.", 'wpopt'),
-            'a_api.disable_file_editor'     => __("Disable the built-in plugin and theme file editor in the WordPress admin.", 'wpopt'),
+            'srv_security.active'           => __("Enable server-level security hardening rules for Apache, Nginx, LiteSpeed or OpenLiteSpeed environments.", 'wp-optimizer'),
+            'srv_security.listings'         => __("Directory listing is a web server feature that displays the contents of a directory when an index file is not present, potentially exposing sensitive information.", 'wp-optimizer'),
+            'srv_security.protect_htaccess' => __("Disabling public access to server configuration files prevents unauthorized reads of rewrite and hardening rules, improving website security.", 'wp-optimizer'),
+            'srv_security.hsts'             => __("Enabling HTTPS Strict Transport Security (HSTS) enforces secure HTTPS connections, reducing the risk of man-in-the-middle attacks and improving website security.", 'wp-optimizer'),
+            'srv_security.cors'             => __("Disabling Cross-Origin Resource Sharing (CORS) restricts cross-domain requests, improving website security by preventing unauthorized access to resources.", 'wp-optimizer'),
+            'srv_security.http_track&trace' => __("Disabling HTTP track and trace prevents servers from disclosing information about requests, improving website security by reducing the risk of sensitive data leaks.", 'wp-optimizer'),
+            'srv_security.xss'              => __("Blocking cross-site scripting (XSS) prevents malicious scripts from executing on a website, improving website security and protecting user data.", 'wp-optimizer'),
+            'srv_security.nosniff'          => __("Sending NoSniff header instructs web browsers to prevent MIME type sniffing, improving website security by reducing the risk of content spoofing attacks.", 'wp-optimizer'),
+            'srv_security.noreferrer'       => __("Sending no referrer header prevents the browser from sending information about the previous page visited, improving user privacy and security.", 'wp-optimizer'),
+            'srv_security.noframe'          => __("Sending no-frame headers prevent website content from being displayed within an iframe, improving website security and preventing clickjacking attacks.", 'wp-optimizer'),
+            'srv_security.signature'        => __("Disable server signature exposure to reduce information disclosure in HTTP responses.", 'wp-optimizer'),
+            'dcl_security.active'           => __("Enable WordPress metadata and version disclosure protections.", 'wp-optimizer'),
+            'dcl_security.nowpversion'      => __("Remove visible WordPress version references to reduce fingerprinting risk.", 'wp-optimizer'),
+            'dcl_security.nowpgenerator'    => __("Remove WordPress generator meta tags from page output and feeds.", 'wp-optimizer'),
+            'dcl_security.hashversion'      => __("Replace static asset version values with hashed values to reduce version disclosure.", 'wp-optimizer'),
+            'dcl_security.hideversion'      => __("Remove version query strings from scripts and styles URLs.", 'wp-optimizer'),
+            'a_api.active'                  => __("Enable admin and API related hardening options.", 'wp-optimizer'),
+            'a_api.nousernum'               => __("Block basic user enumeration techniques via author archive query parameters.", 'wp-optimizer'),
+            'a_api.disable_file_editor'     => __("Disable the built-in plugin and theme file editor in the WordPress admin.", 'wp-optimizer'),
         ];
     }
 }
